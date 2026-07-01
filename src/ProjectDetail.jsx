@@ -1,0 +1,132 @@
+import { useEffect, useState } from 'react'
+import { supabase } from './supabaseClient'
+
+function ProjectDetail({ project, onBack }) {
+  const [tasks, setTasks] = useState([])
+  const [title, setTitle] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    async function loadTasks() {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('project_id', project.id)
+        .order('created_at', { ascending: true })
+
+      if (error) setError(error.message)
+      else setTasks(data)
+      setLoading(false)
+    }
+
+    loadTasks()
+  }, [project.id])
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    const trimmed = title.trim()
+    if (!trimmed) return
+
+    const { data, error } = await supabase
+      .from('tasks')
+      .insert({ title: trimmed, project_id: project.id })
+      .select()
+      .single()
+
+    if (error) {
+      setError(error.message)
+      return
+    }
+
+    setTasks((prev) => [...prev, data])
+    setTitle('')
+  }
+
+  async function toggleComplete(task) {
+    const { data, error } = await supabase
+      .from('tasks')
+      .update({ completed: !task.completed })
+      .eq('id', task.id)
+      .select()
+      .single()
+
+    if (error) {
+      setError(error.message)
+      return
+    }
+
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? data : t)))
+  }
+
+  async function deleteTask(task) {
+    const { error } = await supabase.from('tasks').delete().eq('id', task.id)
+
+    if (error) {
+      setError(error.message)
+      return
+    }
+
+    setTasks((prev) => prev.filter((t) => t.id !== task.id))
+  }
+
+  return (
+    <div className="app">
+      <button type="button" className="back-link" onClick={onBack}>
+        &larr; Back to projects
+      </button>
+
+      <h1>{project.name}</h1>
+      <p className="project-goal">{project.goal}</p>
+      <div className="project-meta">
+        <span className={`priority-badge ${project.priority.toLowerCase()}`}>
+          {project.priority}
+        </span>
+        <span>{project.deadline ?? 'TBD'}</span>
+      </div>
+
+      <h2 className="tasks-heading">Tasks</h2>
+
+      <form onSubmit={handleSubmit} className="task-form">
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Add a task..."
+        />
+        <button type="submit">Add</button>
+      </form>
+
+      {error && <p className="error">{error}</p>}
+
+      <ul className="task-list">
+        {loading && <li className="empty">Loading...</li>}
+        {!loading &&
+          tasks.map((task) => (
+            <li key={task.id} className={task.completed ? 'completed' : ''}>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={task.completed}
+                  onChange={() => toggleComplete(task)}
+                />
+                <span>{task.title}</span>
+              </label>
+              <button
+                type="button"
+                className="delete"
+                onClick={() => deleteTask(task)}
+              >
+                Delete
+              </button>
+            </li>
+          ))}
+        {!loading && tasks.length === 0 && (
+          <li className="empty">No tasks yet</li>
+        )}
+      </ul>
+    </div>
+  )
+}
+
+export default ProjectDetail

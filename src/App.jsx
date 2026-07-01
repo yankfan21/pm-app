@@ -1,117 +1,86 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
+import NewProjectFlow from './NewProjectFlow'
+import ProjectDetail from './ProjectDetail'
 import './App.css'
 
 function App() {
-  const [tasks, setTasks] = useState([])
-  const [title, setTitle] = useState('')
-  const [loading, setLoading] = useState(true)
+  const [projects, setProjects] = useState([])
+  const [projectsLoading, setProjectsLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [showNewProject, setShowNewProject] = useState(false)
+  const [selectedProject, setSelectedProject] = useState(null)
 
   useEffect(() => {
-    async function loadTasks() {
+    async function loadProjects() {
       const { data, error } = await supabase
-        .from('tasks')
+        .from('projects')
         .select('*')
         .order('created_at', { ascending: true })
 
       if (error) setError(error.message)
-      else setTasks(data)
-      setLoading(false)
+      else setProjects(data)
+      setProjectsLoading(false)
     }
 
-    loadTasks()
+    loadProjects()
   }, [])
 
-  async function handleSubmit(e) {
-    e.preventDefault()
-    const trimmed = title.trim()
-    if (!trimmed) return
-
-    const { data, error } = await supabase
-      .from('tasks')
-      .insert({ title: trimmed })
-      .select()
-      .single()
-
-    if (error) {
-      setError(error.message)
-      return
-    }
-
-    setTasks((prev) => [...prev, data])
-    setTitle('')
-  }
-
-  async function toggleComplete(task) {
-    const { data, error } = await supabase
-      .from('tasks')
-      .update({ completed: !task.completed })
-      .eq('id', task.id)
-      .select()
-      .single()
-
-    if (error) {
-      setError(error.message)
-      return
-    }
-
-    setTasks((prev) => prev.map((t) => (t.id === task.id ? data : t)))
-  }
-
-  async function deleteTask(task) {
-    const { error } = await supabase.from('tasks').delete().eq('id', task.id)
-
-    if (error) {
-      setError(error.message)
-      return
-    }
-
-    setTasks((prev) => prev.filter((t) => t.id !== task.id))
+  if (selectedProject) {
+    return (
+      <ProjectDetail
+        project={selectedProject}
+        onBack={() => setSelectedProject(null)}
+      />
+    )
   }
 
   return (
     <div className="app">
-      <h1>Tasks</h1>
-
-      <form onSubmit={handleSubmit} className="task-form">
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Add a task..."
-        />
-        <button type="submit">Add</button>
-      </form>
+      <div className="section-header">
+        <h1>Projects</h1>
+        <button type="button" onClick={() => setShowNewProject(true)}>
+          New Project
+        </button>
+      </div>
 
       {error && <p className="error">{error}</p>}
 
-      <ul className="task-list">
-        {loading && <li className="empty">Loading...</li>}
-        {!loading &&
-          tasks.map((task) => (
-            <li key={task.id} className={task.completed ? 'completed' : ''}>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={task.completed}
-                  onChange={() => toggleComplete(task)}
-                />
-                <span>{task.title}</span>
-              </label>
-              <button
-                type="button"
-                className="delete"
-                onClick={() => deleteTask(task)}
-              >
-                Delete
-              </button>
+      <ul className="project-list">
+        {projectsLoading && <li className="empty">Loading...</li>}
+        {!projectsLoading &&
+          projects.map((project) => (
+            <li
+              key={project.id}
+              className="clickable"
+              onClick={() => setSelectedProject(project)}
+            >
+              <div className="project-name">{project.name}</div>
+              <div className="project-goal">{project.goal}</div>
+              <div className="project-meta">
+                <span
+                  className={`priority-badge ${project.priority.toLowerCase()}`}
+                >
+                  {project.priority}
+                </span>
+                <span>{project.deadline ?? 'TBD'}</span>
+              </div>
             </li>
           ))}
-        {!loading && tasks.length === 0 && (
-          <li className="empty">No tasks yet</li>
+        {!projectsLoading && projects.length === 0 && (
+          <li className="empty">No projects yet</li>
         )}
       </ul>
+
+      {showNewProject && (
+        <NewProjectFlow
+          onClose={() => setShowNewProject(false)}
+          onCreated={(project) => {
+            setProjects((prev) => [...prev, project])
+            setShowNewProject(false)
+          }}
+        />
+      )}
     </div>
   )
 }
