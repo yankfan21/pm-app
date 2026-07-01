@@ -225,6 +225,53 @@
   margin-top: 40px;
 }
 
+.charter-header {
+  margin-top: 40px;
+}
+
+.charter-status {
+  margin-top: 24px;
+  color: var(--text);
+}
+
+.charter {
+  margin-top: 40px;
+}
+
+.charter-heading {
+  font-size: 24px;
+  margin: 0;
+}
+
+.charter-section {
+  margin-top: 16px;
+}
+
+.charter-section h4 {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.charter-section textarea {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: inherit;
+  color: var(--text-h);
+  background: var(--bg);
+  resize: vertical;
+}
+
+.charter-section textarea:focus {
+  outline: none;
+  border-color: var(--accent-border);
+}
+
 .project-name {
   font-size: 17px;
   font-weight: 600;

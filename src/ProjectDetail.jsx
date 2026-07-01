@@ -1,11 +1,17 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
+import CharterFlow from './CharterFlow'
+import CharterView from './CharterView'
 
 function ProjectDetail({ project, onBack }) {
   const [tasks, setTasks] = useState([])
   const [title, setTitle] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+
+  const [charter, setCharter] = useState(null)
+  const [charterLoading, setCharterLoading] = useState(true)
+  const [showCharterFlow, setShowCharterFlow] = useState(false)
 
   useEffect(() => {
     async function loadTasks() {
@@ -20,8 +26,41 @@ function ProjectDetail({ project, onBack }) {
       setLoading(false)
     }
 
+    async function loadCharter() {
+      const { data, error } = await supabase
+        .from('charters')
+        .select('*')
+        .eq('project_id', project.id)
+        .maybeSingle()
+
+      if (error) setError(error.message)
+      else setCharter(data)
+      setCharterLoading(false)
+    }
+
     loadTasks()
+    loadCharter()
   }, [project.id])
+
+  async function handleCharterGenerated(sections, answerList) {
+    const { data, error } = await supabase
+      .from('charters')
+      .insert({
+        project_id: project.id,
+        ...sections,
+        qa_answers: answerList,
+      })
+      .select()
+      .single()
+
+    if (error) {
+      return error.message
+    }
+
+    setCharter(data)
+    setShowCharterFlow(false)
+    return null
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -143,6 +182,37 @@ function ProjectDetail({ project, onBack }) {
           <li className="empty">No tasks yet</li>
         )}
       </ul>
+
+      {charterLoading && <p className="charter-status">Loading...</p>}
+
+      {!charterLoading && !charter && (
+        <div className="section-header charter-header">
+          <h3 className="charter-heading">Charter</h3>
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={() => setShowCharterFlow(true)}
+          >
+            Generate Charter
+          </button>
+        </div>
+      )}
+
+      {!charterLoading && charter && (
+        <CharterView
+          project={project}
+          charter={charter}
+          onUpdate={setCharter}
+        />
+      )}
+
+      {showCharterFlow && (
+        <CharterFlow
+          project={project}
+          onGenerated={handleCharterGenerated}
+          onClose={() => setShowCharterFlow(false)}
+        />
+      )}
     </div>
   )
 }
