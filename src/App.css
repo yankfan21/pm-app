@@ -13,10 +13,7 @@
   font-weight: 800;
   letter-spacing: -0.7px;
   margin: 0;
-  background: linear-gradient(135deg, var(--accent), #5b21b6);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--accent);
 }
 
 .app-title-mark {
@@ -27,7 +24,7 @@
   height: 30px;
   flex-shrink: 0;
   border-radius: 9px;
-  background: linear-gradient(135deg, var(--accent), #5b21b6);
+  background: var(--accent);
   color: white;
 }
 
