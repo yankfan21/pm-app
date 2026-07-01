@@ -38,9 +38,13 @@ function App() {
   return (
     <div className="app">
       <div className="section-header">
-        <h1>Projects</h1>
-        <button type="button" onClick={() => setShowNewProject(true)}>
-          New Project
+        <h1 className="page-title">Projects</h1>
+        <button
+          type="button"
+          className="btn-primary"
+          onClick={() => setShowNewProject(true)}
+        >
+          <span aria-hidden="true">+</span> New Project
         </button>
       </div>
 

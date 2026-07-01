@@ -76,7 +76,7 @@ function ProjectDetail({ project, onBack }) {
         &larr; Back to projects
       </button>
 
-      <h1>{project.name}</h1>
+      <h1 className="page-title">{project.name}</h1>
       <p className="project-goal">{project.goal}</p>
       <div className="project-meta">
         <span className={`priority-badge ${project.priority.toLowerCase()}`}>
