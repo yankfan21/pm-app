@@ -74,13 +74,38 @@ Priority: ${project.priority}
 Deadline: ${project.deadline ?? "TBD"}`
 }
 
+const SECTION_LABELS = {
+  purpose: "Purpose",
+  scope: "Scope",
+  stakeholders: "Stakeholders",
+  success_metrics: "Success Metrics",
+  risks: "Risks",
+  timeline: "Timeline",
+}
+
+function charterText(charter) {
+  return Object.entries(SECTION_LABELS)
+    .map(([key, label]) => `${label}: ${charter[key] || "(empty)"}`)
+    .join("\n")
+}
+
+const REVISE_INSTRUCTIONS = {
+  shorter:
+    "Make this section noticeably more concise. Cut it down while keeping the key point(s) intact.",
+  detail:
+    "Add more relevant detail to this section, elaborating based on the project context provided. Do not invent specifics that aren't implied by the project data.",
+  rephrase:
+    "Rephrase this section with different wording while keeping the same meaning and roughly the same length.",
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders })
   }
 
   try {
-    const { action, project, answers } = await req.json()
+    const { action, project, answers, charter, sectionKey, sectionText, instruction } =
+      await req.json()
 
     if (action === "questions") {
       const system =
@@ -115,6 +140,96 @@ Write a project charter with these sections: Purpose, Scope, Stakeholders, Succe
 
 Return ONLY this JSON shape:
 {"purpose": "...", "scope": "...", "stakeholders": "...", "success_metrics": "...", "risks": "...", "timeline": "..."}`
+
+      const result = await callClaude(system, user)
+      return new Response(JSON.stringify(result), {
+        headers: { ...corsHeaders, "content-type": "application/json" },
+      })
+    }
+
+    if (action === "revise") {
+      const instructionText = REVISE_INSTRUCTIONS[instruction]
+      if (!instructionText) {
+        return new Response(JSON.stringify({ error: `unknown instruction: ${instruction}` }), {
+          status: 400,
+          headers: { ...corsHeaders, "content-type": "application/json" },
+        })
+      }
+
+      const system =
+        "You are a project management assistant revising a single section of an existing project charter. Respond with ONLY a JSON object, no markdown fences, no other text."
+      const user = `${projectContext(project)}
+
+Section: ${SECTION_LABELS[sectionKey] || sectionKey}
+Current text:
+${sectionText}
+
+Instruction: ${instructionText}
+
+Rewrite ONLY this section's text per the instruction. Preserve the original format (plain paragraph vs "- " bullet list) unless the instruction implies otherwise. Do not include the section heading/label, just the body text.
+
+Return ONLY this JSON shape:
+{"revised": "..."}`
+
+      const result = await callClaude(system, user)
+      return new Response(JSON.stringify(result), {
+        headers: { ...corsHeaders, "content-type": "application/json" },
+      })
+    }
+
+    if (action === "followup") {
+      const system =
+        "You are a project management assistant reviewing an existing project charter for gaps or ambiguities. Respond with ONLY a JSON object, no markdown fences, no other text."
+      const user = `${projectContext(project)}
+
+Current charter:
+${charterText(charter)}
+
+Review this charter for gaps, vague statements, or ambiguities. If you find genuine issues, write 1 to 3 short, targeted follow-up questions that would help clarify or improve specific sections. If the charter is already clear and complete, return an empty questions array rather than inventing filler questions.
+
+For each question, decide if it's better answered with free text or a small set of button choices (max 4 choices, only for genuinely categorical answers). Also specify which section key(s) from [purpose, scope, stakeholders, success_metrics, risks, timeline] the answer would primarily update.
+
+Return ONLY this JSON shape:
+{"questions": [{"id": "short_snake_case_id", "text": "question text", "type": "text", "sections": ["stakeholders"]}, {"id": "short_snake_case_id", "text": "question text", "type": "choice", "choices": ["A", "B"], "sections": ["risks", "timeline"]}]}`
+
+      const result = await callClaude(system, user)
+      return new Response(JSON.stringify(result), {
+        headers: { ...corsHeaders, "content-type": "application/json" },
+      })
+    }
+
+    if (action === "apply_followup") {
+      const targetKeys = [...new Set((answers || []).flatMap((a) => a.sections || []))].filter(
+        (key) => SECTION_LABELS[key]
+      )
+
+      if (targetKeys.length === 0) {
+        return new Response(JSON.stringify({ updates: {} }), {
+          headers: { ...corsHeaders, "content-type": "application/json" },
+        })
+      }
+
+      const qaText = (answers || [])
+        .map((a) => `Q: ${a.question}\nA: ${a.answer}`)
+        .join("\n\n")
+      const currentSections = targetKeys
+        .map((key) => `${SECTION_LABELS[key]}: ${charter[key] || "(empty)"}`)
+        .join("\n")
+
+      const system =
+        "You are a project management assistant incorporating new answers into specific sections of an existing project charter. Respond with ONLY a JSON object, no markdown fences, no other text."
+      const user = `${projectContext(project)}
+
+Current text for the sections that need updating:
+${currentSections}
+
+New information from follow-up Q&A:
+${qaText}
+
+For each of these section keys: ${targetKeys.join(", ")} — rewrite that section's text to incorporate the new information above, keeping the rest of the section's existing content intact where still relevant. Preserve the original format (plain paragraph vs "- " bullet list) per section.
+
+Return ONLY this JSON shape:
+{"updates": {${targetKeys.map((k) => `"${k}": "..."`).join(", ")}}}`
 
       const result = await callClaude(system, user)
       return new Response(JSON.stringify(result), {
