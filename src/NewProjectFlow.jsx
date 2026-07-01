@@ -75,6 +75,7 @@ function NewProjectFlow({ onCreated, onClose }) {
             <div className="modal-actions">
               <button
                 type="button"
+                className="btn-primary"
                 disabled={!step1Valid}
                 onClick={() => setStep(2)}
               >
@@ -126,11 +127,16 @@ function NewProjectFlow({ onCreated, onClose }) {
             </label>
 
             <div className="modal-actions">
-              <button type="button" onClick={() => setStep(1)}>
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => setStep(1)}
+              >
                 Back
               </button>
               <button
                 type="button"
+                className="btn-primary"
                 disabled={!step2Valid}
                 onClick={() => setStep(3)}
               >
@@ -159,10 +165,19 @@ function NewProjectFlow({ onCreated, onClose }) {
             {error && <p className="error">{error}</p>}
 
             <div className="modal-actions">
-              <button type="button" onClick={() => setStep(2)}>
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => setStep(2)}
+              >
                 Back
               </button>
-              <button type="button" disabled={submitting} onClick={handleCreate}>
+              <button
+                type="button"
+                className="btn-primary"
+                disabled={submitting}
+                onClick={handleCreate}
+              >
                 {submitting ? 'Creating...' : 'Create Project'}
               </button>
             </div>
