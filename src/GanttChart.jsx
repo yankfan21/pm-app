@@ -1,5 +1,46 @@
 import { Fragment, useLayoutEffect, useRef, useState } from 'react'
-import { computeGanttLayout } from './ganttLayout'
+import { DAY_MS, computeGanttLayout } from './ganttLayout'
+
+// Never coarser than weekly, finer for shorter ranges - capped so a long
+// project doesn't end up with an unreadable wall of tick labels either.
+function pickTickIntervalDays(totalDays) {
+  const candidates = [1, 2, 3, 5, 7]
+  return candidates.find((c) => totalDays / c <= 15) || 7
+}
+
+function computeDateTicks(rangeStart, rangeEndRaw) {
+  const totalDays = Math.round((rangeEndRaw - rangeStart) / DAY_MS)
+  const tickDays = pickTickIntervalDays(totalDays || 1)
+  const ticks = []
+  for (let d = 0; d <= totalDays; d += tickDays) ticks.push(rangeStart + d * DAY_MS)
+
+  const last = ticks[ticks.length - 1]
+  if (last !== rangeEndRaw) {
+    // Avoid a sliver-thin gap between the last regular tick and the range
+    // end by merging them instead of both rendering their own label.
+    if (rangeEndRaw - last < tickDays * DAY_MS * 0.35) {
+      ticks[ticks.length - 1] = rangeEndRaw
+    } else {
+      ticks.push(rangeEndRaw)
+    }
+  }
+  return ticks
+}
+
+function formatTick(ms) {
+  const d = new Date(ms)
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${mm}-${dd}`
+}
+
+function formatLongDate(ms) {
+  return new Date(ms).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
+}
 
 function GanttChart({ project, tasks }) {
   const chartRef = useRef(null)
@@ -11,6 +52,7 @@ function GanttChart({ project, tasks }) {
   const { bars, unscheduled, rangeStart, rangeEndRaw, totalSpan, todayInRange, todayMs } =
     computeGanttLayout(tasks)
   const todayPct = todayInRange ? ((todayMs - rangeStart) / totalSpan) * 100 : null
+  const dateTicks = bars.length > 0 ? computeDateTicks(rangeStart, rangeEndRaw) : []
 
   // Grid rows are 1-indexed: row 1 is the date-range header, rows 2..N+1 are bars.
   const totalRows = bars.length + 1
@@ -113,6 +155,10 @@ function GanttChart({ project, tasks }) {
         </p>
       )}
 
+      {todayInRange && (
+        <p className="gantt-today-note">Today — {formatLongDate(todayMs)}</p>
+      )}
+
       {bars.length > 0 && (
         <div className="gantt-wrap">
           <div
@@ -129,8 +175,17 @@ function GanttChart({ project, tasks }) {
               className="gantt-row-track gantt-range-track gantt-row-header"
               style={{ gridRow: 1, gridColumn: 2 }}
             >
-              <span>{new Date(rangeStart).toISOString().slice(0, 10)}</span>
-              <span>{new Date(rangeEndRaw).toISOString().slice(0, 10)}</span>
+              {dateTicks.map((tickMs, i) => (
+                <span
+                  key={tickMs}
+                  className={`gantt-tick-label ${i === 0 ? 'first' : ''} ${
+                    i === dateTicks.length - 1 ? 'last' : ''
+                  }`}
+                  style={{ left: `${((tickMs - rangeStart) / totalSpan) * 100}%` }}
+                >
+                  {formatTick(tickMs)}
+                </span>
+              ))}
             </div>
 
             {bars.map(({ task, startMs, dueMs }, i) => {
@@ -165,9 +220,11 @@ function GanttChart({ project, tasks }) {
                 className="gantt-today-col"
                 style={{ gridRow: `1 / ${totalRows + 1}`, gridColumn: 2 }}
               >
-                <div className="gantt-today-marker" style={{ left: `${todayPct}%` }}>
-                  <span className="gantt-today-label">Today</span>
-                </div>
+                <div
+                  className="gantt-today-marker"
+                  style={{ left: `${todayPct}%` }}
+                  title={`Today — ${formatLongDate(todayMs)}`}
+                />
               </div>
             )}
 

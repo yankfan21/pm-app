@@ -431,6 +431,32 @@
   margin-top: 40px;
 }
 
+.collapsible-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.collapsible-toggle:hover {
+  color: var(--accent);
+}
+
+.chevron {
+  display: inline-block;
+  font-size: 13px;
+  transition: transform 0.15s ease;
+}
+
+.chevron.collapsed {
+  transform: rotate(-90deg);
+}
+
 .doc-checklist {
   list-style: none;
   margin: 0;
@@ -539,12 +565,32 @@
 }
 
 .gantt-range-track {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   height: auto;
-  font-size: 12px;
+  min-height: 16px;
+  font-size: 11px;
   color: var(--text);
+}
+
+.gantt-tick-label {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.gantt-tick-label.first {
+  transform: translateX(0);
+}
+
+.gantt-tick-label.last {
+  transform: translateX(-100%);
+}
+
+.gantt-today-note {
+  margin: 12px 0 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #ef4444;
 }
 
 .gantt-bar {
@@ -562,6 +608,13 @@
 
 .gantt-today-col {
   position: relative;
+  /* .gantt-chart sets align-items: center for single-row items like bars;
+     without overriding it here, this multi-row-spanning item collapses to
+     its own auto content height (0, since its child is absolutely
+     positioned and contributes nothing to normal flow) instead of
+     stretching across its full row span - which silently zeroed out the
+     today marker's height entirely. */
+  align-self: stretch;
   pointer-events: none;
 }
 
@@ -571,18 +624,6 @@
   bottom: 0;
   width: 0;
   border-left: 2px dashed #ef4444;
-}
-
-.gantt-today-label {
-  position: absolute;
-  top: -18px;
-  left: 2px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  text-transform: uppercase;
-  color: #ef4444;
-  white-space: nowrap;
 }
 
 .gantt-dep-overlay {
