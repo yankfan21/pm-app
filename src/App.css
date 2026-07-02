@@ -1,7 +1,9 @@
 .app {
+  width: 100%;
   max-width: 560px;
   margin: 56px auto;
   padding: 0 20px;
+  box-sizing: border-box;
   text-align: left;
 }
 
@@ -544,6 +546,50 @@
   }
 }
 
+/* Tablet and up: the mobile layout above is untouched below this width. */
+@media (min-width: 768px) {
+  .app {
+    max-width: 700px;
+  }
+
+  .project-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+  }
+
+  .project-list li.empty {
+    grid-column: 1 / -1;
+  }
+
+  .modal {
+    max-width: 480px;
+    padding: 36px 32px 28px;
+  }
+
+  .charter-page {
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+@media (min-width: 1024px) {
+  .app {
+    max-width: 960px;
+  }
+
+  .project-list {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+
+  .modal {
+    max-width: 560px;
+    padding: 44px 40px 32px;
+  }
+}
+
 .project-name {
   font-size: 17px;
   font-weight: 600;
@@ -709,35 +755,29 @@
 }
 
 .qa-suggestion {
-  margin: 6px 0 10px;
-  padding: 10px 12px;
-  border-radius: 6px;
-  border-left: 3px solid var(--accent);
-  background: var(--accent-bg);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 6px;
+  row-gap: 2px;
+  margin: 4px 0 12px;
+  padding-left: 9px;
+  border-left: 2px solid var(--border);
   font-weight: normal;
+  font-size: 12.5px;
+  line-height: 1.5;
 }
 
-.qa-suggestion-label {
-  margin: 0 0 4px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
+.qa-suggestion-tag {
   color: var(--accent);
+  font-weight: 600;
 }
 
 .qa-suggestion-text {
-  margin: 0 0 8px;
-  color: var(--text-h);
+  color: var(--text);
 }
 
-.qa-suggestion-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-.qa-suggestion-actions button {
+.qa-suggestion-link {
   border: none;
   background: none;
   padding: 0;
@@ -748,12 +788,17 @@
   cursor: pointer;
 }
 
-.qa-suggestion-actions button:last-child {
+.qa-suggestion-link:first-of-type {
+  margin-left: auto;
   color: var(--accent);
 }
 
-.qa-suggestion-actions button:hover {
+.qa-suggestion-link:hover {
   text-decoration: underline;
+}
+
+.qa-stepper .step-label {
+  margin-bottom: 24px;
 }
 
 .review-list {
