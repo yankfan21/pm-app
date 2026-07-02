@@ -1,12 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
 import AppHeader from './AppHeader'
-import CharterFlow from './CharterFlow'
-import CharterView from './CharterView'
-import RequirementsFlow from './RequirementsFlow'
-import RequirementsView from './RequirementsView'
-import RiskLogFlow from './RiskLogFlow'
-import RiskLogView from './RiskLogView'
+import { DOCUMENT_TYPES } from './documentTypes'
 
 function ProjectDetail({ project, onBack, onProjectUpdated, onHome }) {
   const [currentProject, setCurrentProject] = useState(project)
@@ -16,17 +11,10 @@ function ProjectDetail({ project, onBack, onProjectUpdated, onHome }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  const [charter, setCharter] = useState(null)
-  const [charterLoading, setCharterLoading] = useState(true)
-  const [showCharterFlow, setShowCharterFlow] = useState(false)
-
-  const [requirementsBrief, setRequirementsBrief] = useState(null)
-  const [requirementsLoading, setRequirementsLoading] = useState(true)
-  const [showRequirementsFlow, setShowRequirementsFlow] = useState(false)
-
-  const [riskLog, setRiskLog] = useState(null)
-  const [riskLogLoading, setRiskLogLoading] = useState(true)
-  const [showRiskLogFlow, setShowRiskLogFlow] = useState(false)
+  const [docs, setDocs] = useState({})
+  const [docsLoading, setDocsLoading] = useState(true)
+  const [activeDocKey, setActiveDocKey] = useState(null)
+  const [activeFlowKey, setActiveFlowKey] = useState(null)
 
   useEffect(() => {
     async function loadTasks() {
@@ -41,54 +29,36 @@ function ProjectDetail({ project, onBack, onProjectUpdated, onHome }) {
       setLoading(false)
     }
 
-    async function loadCharter() {
-      const { data, error } = await supabase
-        .from('charters')
-        .select('*')
-        .eq('project_id', currentProject.id)
-        .maybeSingle()
+    async function loadDocs() {
+      const results = await Promise.all(
+        DOCUMENT_TYPES.map((docType) =>
+          supabase
+            .from(docType.table)
+            .select('*')
+            .eq('project_id', currentProject.id)
+            .maybeSingle()
+        )
+      )
 
-      if (error) setError(error.message)
-      else setCharter(data)
-      setCharterLoading(false)
-    }
-
-    async function loadRequirementsBrief() {
-      const { data, error } = await supabase
-        .from('requirements_briefs')
-        .select('*')
-        .eq('project_id', currentProject.id)
-        .maybeSingle()
-
-      if (error) setError(error.message)
-      else setRequirementsBrief(data)
-      setRequirementsLoading(false)
-    }
-
-    async function loadRiskLog() {
-      const { data, error } = await supabase
-        .from('risk_logs')
-        .select('*')
-        .eq('project_id', currentProject.id)
-        .maybeSingle()
-
-      if (error) setError(error.message)
-      else setRiskLog(data)
-      setRiskLogLoading(false)
+      const next = {}
+      results.forEach(({ data, error }, i) => {
+        if (error) setError(error.message)
+        next[DOCUMENT_TYPES[i].key] = data
+      })
+      setDocs(next)
+      setDocsLoading(false)
     }
 
     loadTasks()
-    loadCharter()
-    loadRequirementsBrief()
-    loadRiskLog()
+    loadDocs()
   }, [currentProject.id])
 
-  async function handleCharterGenerated(sections, answerList) {
+  async function handleDocGenerated(docType, result, answerList) {
     const { data, error } = await supabase
-      .from('charters')
+      .from(docType.table)
       .insert({
         project_id: currentProject.id,
-        ...sections,
+        ...docType.buildInsert(result),
         qa_answers: answerList,
       })
       .select()
@@ -98,49 +68,14 @@ function ProjectDetail({ project, onBack, onProjectUpdated, onHome }) {
       return error.message
     }
 
-    setCharter(data)
-    setShowCharterFlow(false)
+    setDocs((prev) => ({ ...prev, [docType.key]: data }))
+    setActiveFlowKey(null)
+    setActiveDocKey(docType.key)
     return null
   }
 
-  async function handleRequirementsGenerated(sections, answerList) {
-    const { data, error } = await supabase
-      .from('requirements_briefs')
-      .insert({
-        project_id: currentProject.id,
-        ...sections,
-        qa_answers: answerList,
-      })
-      .select()
-      .single()
-
-    if (error) {
-      return error.message
-    }
-
-    setRequirementsBrief(data)
-    setShowRequirementsFlow(false)
-    return null
-  }
-
-  async function handleRiskLogGenerated(risks, answerList) {
-    const { data, error } = await supabase
-      .from('risk_logs')
-      .insert({
-        project_id: currentProject.id,
-        risks,
-        qa_answers: answerList,
-      })
-      .select()
-      .single()
-
-    if (error) {
-      return error.message
-    }
-
-    setRiskLog(data)
-    setShowRiskLogFlow(false)
-    return null
+  function handleDocUpdated(docType, updatedRow) {
+    setDocs((prev) => ({ ...prev, [docType.key]: updatedRow }))
   }
 
   async function handleSubmit(e) {
@@ -212,6 +147,9 @@ function ProjectDetail({ project, onBack, onProjectUpdated, onHome }) {
     setCurrentProject(data)
     onProjectUpdated(data)
   }
+
+  const activeDocType = DOCUMENT_TYPES.find((d) => d.key === activeDocKey)
+  const activeFlowType = DOCUMENT_TYPES.find((d) => d.key === activeFlowKey)
 
   return (
     <div className="app">
@@ -288,101 +226,63 @@ function ProjectDetail({ project, onBack, onProjectUpdated, onHome }) {
         )}
       </ul>
 
-      {(charterLoading || requirementsLoading || riskLogLoading) && (
-        <p className="charter-status">Loading...</p>
-      )}
+      <h2 className="tasks-heading">Documents</h2>
 
-      {!charterLoading &&
-        !requirementsLoading &&
-        !riskLogLoading &&
-        (!charter || !requirementsBrief || !riskLog) && (
-          <div className="section-header charter-header">
-            <h3 className="charter-heading">Documents</h3>
-            <div className="charter-actions">
-              {!charter && (
+      {docsLoading && <p className="charter-status">Loading...</p>}
+
+      {!docsLoading && (
+        <ul className="doc-checklist">
+          {DOCUMENT_TYPES.map((docType) => {
+            const doc = docs[docType.key]
+            const isDone = doc != null
+            return (
+              <li key={docType.key}>
                 <button
                   type="button"
-                  className="btn-primary"
-                  onClick={() => setShowCharterFlow(true)}
+                  className={`doc-checklist-row ${activeDocKey === docType.key ? 'selected' : ''}`}
+                  onClick={() =>
+                    isDone ? setActiveDocKey(docType.key) : setActiveFlowKey(docType.key)
+                  }
                 >
-                  Generate Charter
+                  <span className="doc-checklist-label">{docType.label}</span>
+                  <span className={`doc-status-badge ${isDone ? 'done' : 'pending'}`}>
+                    {isDone ? 'Generated' : 'Not started'}
+                  </span>
                 </button>
-              )}
-              {!requirementsBrief && (
-                <button
-                  type="button"
-                  className="btn-primary"
-                  onClick={() => setShowRequirementsFlow(true)}
-                >
-                  Generate Requirements Brief
-                </button>
-              )}
-              {!riskLog && (
-                <button
-                  type="button"
-                  className="btn-primary"
-                  onClick={() => setShowRiskLogFlow(true)}
-                >
-                  Generate Risk Log
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-
-      {!charterLoading && charter && (
-        <CharterView
-          project={currentProject}
-          charter={charter}
-          onUpdate={setCharter}
-        />
+              </li>
+            )
+          })}
+        </ul>
       )}
 
-      {!requirementsLoading && requirementsBrief && (
-        <RequirementsView
-          project={currentProject}
-          charter={charter}
-          brief={requirementsBrief}
-          onUpdate={setRequirementsBrief}
-        />
-      )}
+      {activeDocType &&
+        docs[activeDocType.key] &&
+        (() => {
+          const { ViewComponent, docProp } = activeDocType
+          return (
+            <ViewComponent
+              project={currentProject}
+              {...{ [docProp]: docs[activeDocType.key] }}
+              {...activeDocType.context(docs)}
+              onUpdate={(updatedRow) => handleDocUpdated(activeDocType, updatedRow)}
+            />
+          )
+        })()}
 
-      {!riskLogLoading && riskLog && (
-        <RiskLogView
-          project={currentProject}
-          charter={charter}
-          brief={requirementsBrief}
-          riskLog={riskLog}
-          onUpdate={setRiskLog}
-        />
-      )}
-
-      {showCharterFlow && (
-        <CharterFlow
-          project={currentProject}
-          onGenerated={handleCharterGenerated}
-          onClose={() => setShowCharterFlow(false)}
-        />
-      )}
-
-      {showRequirementsFlow && (
-        <RequirementsFlow
-          project={currentProject}
-          charter={charter}
-          onGenerated={handleRequirementsGenerated}
-          onClose={() => setShowRequirementsFlow(false)}
-        />
-      )}
-
-      {showRiskLogFlow && (
-        <RiskLogFlow
-          project={currentProject}
-          charter={charter}
-          brief={requirementsBrief}
-          onGenerated={handleRiskLogGenerated}
-          onClose={() => setShowRiskLogFlow(false)}
-        />
-      )}
+      {activeFlowType &&
+        (() => {
+          const { FlowComponent } = activeFlowType
+          return (
+            <FlowComponent
+              project={currentProject}
+              {...activeFlowType.context(docs)}
+              onGenerated={(result, answerList) =>
+                handleDocGenerated(activeFlowType, result, answerList)
+              }
+              onClose={() => setActiveFlowKey(null)}
+            />
+          )
+        })()}
     </div>
   )
 }
