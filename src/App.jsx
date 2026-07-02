@@ -56,23 +56,19 @@ function App() {
     <div className="app">
       <AppHeader />
 
-      <nav className="app-nav">
-        {VIEWS.map(({ key, label }) => (
-          <button
-            type="button"
-            key={key}
-            className={view === key ? 'selected' : ''}
-            onClick={() => setView(key)}
-          >
-            {label}
-          </button>
-        ))}
-      </nav>
-
-      <div className="section-header">
-        <h2 className="page-title">
-          {view === 'dashboard' ? 'Dashboard' : 'All Projects'}
-        </h2>
+      <div className="app-nav-row">
+        <nav className="app-nav">
+          {VIEWS.map(({ key, label }) => (
+            <button
+              type="button"
+              key={key}
+              className={view === key ? 'selected' : ''}
+              onClick={() => setView(key)}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
         <button
           type="button"
           className="btn-primary"
@@ -81,6 +77,10 @@ function App() {
           <span aria-hidden="true">+</span> New Project
         </button>
       </div>
+
+      <h2 className="page-title view-title">
+        {view === 'dashboard' ? 'Dashboard' : 'All Projects'}
+      </h2>
 
       {error && <p className="error">{error}</p>}
 

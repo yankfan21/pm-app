@@ -46,11 +46,23 @@
   margin: 0;
 }
 
+.view-title {
+  margin-bottom: 24px;
+}
+
+.app-nav-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  margin-bottom: 32px;
+  border-bottom: 1px solid var(--border);
+}
+
 .app-nav {
   display: flex;
   gap: 24px;
-  margin-bottom: 32px;
-  border-bottom: 1px solid var(--border);
 }
 
 .app-nav button {
@@ -83,13 +95,54 @@
   margin: 0 0 20px;
 }
 
+.search-input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 14px;
+  margin-bottom: 20px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: inherit;
+  color: var(--text-h);
+  background: var(--bg);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--accent-border);
+}
+
 .list-controls {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
   align-items: center;
   gap: 12px 20px;
   margin-bottom: 20px;
+}
+
+.status-tab {
+  padding: 4px 2px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.status-tab:hover {
+  color: var(--text-h);
+}
+
+.status-tab.selected {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
 }
 
 .toggle-group {
@@ -122,8 +175,9 @@
 
 .toggle-group button.selected {
   border-color: var(--accent);
-  background: var(--accent-bg);
-  color: var(--accent);
+  background: var(--accent);
+  color: white;
+  font-weight: 700;
 }
 
 .task-form {

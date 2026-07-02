@@ -1,12 +1,6 @@
 import { useState } from 'react'
 import ProjectList from './ProjectList'
 
-const FILTER_OPTIONS = [
-  { key: 'all', label: 'All' },
-  { key: 'active', label: 'Active' },
-  { key: 'archived', label: 'Archived' },
-]
-
 const SORT_OPTIONS = [
   { key: 'priority', label: 'Priority' },
   { key: 'deadline', label: 'Deadline' },
@@ -32,52 +26,99 @@ function sortProjects(projects, sort) {
   })
 }
 
+function byRecentlyArchived(a, b) {
+  const aUpdated = a.updated_at || a.created_at
+  const bUpdated = b.updated_at || b.created_at
+  return bUpdated.localeCompare(aUpdated)
+}
+
+function byName(a, b) {
+  return a.name.localeCompare(b.name)
+}
+
+function matchesQuery(project, query) {
+  const q = query.trim().toLowerCase()
+  return (
+    project.name.toLowerCase().includes(q) ||
+    (project.goal || '').toLowerCase().includes(q)
+  )
+}
+
 function AllProjects({ projects, loading, onSelect }) {
-  const [filter, setFilter] = useState('all')
+  const [tab, setTab] = useState('active')
   const [sort, setSort] = useState('priority')
+  const [query, setQuery] = useState('')
 
-  let filtered = projects
-  if (filter === 'active') filtered = projects.filter((p) => p.status !== 'Archived')
-  if (filter === 'archived') filtered = projects.filter((p) => p.status === 'Archived')
+  const isSearching = query.trim() !== ''
 
-  const sorted = sortProjects(filtered, sort)
+  let display
+  if (isSearching) {
+    const matches = projects.filter((p) => matchesQuery(p, query))
+    const activeMatches = matches.filter((p) => p.status !== 'Archived').sort(byName)
+    const archivedMatches = matches.filter((p) => p.status === 'Archived').sort(byName)
+    display = [...activeMatches, ...archivedMatches]
+  } else if (tab === 'archived') {
+    display = projects.filter((p) => p.status === 'Archived').sort(byRecentlyArchived)
+  } else {
+    display = sortProjects(
+      projects.filter((p) => p.status !== 'Archived'),
+      sort
+    )
+  }
 
   return (
     <div className="all-projects">
-      <div className="list-controls">
-        <div className="toggle-group">
-          {FILTER_OPTIONS.map(({ key, label }) => (
-            <button
-              type="button"
-              key={key}
-              className={filter === key ? 'selected' : ''}
-              onClick={() => setFilter(key)}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+      <input
+        type="text"
+        className="search-input"
+        placeholder="Search projects by name or goal..."
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+      />
 
-        <div className="toggle-group">
-          <span className="toggle-group-label">Sort</span>
-          {SORT_OPTIONS.map(({ key, label }) => (
-            <button
-              type="button"
-              key={key}
-              className={sort === key ? 'selected' : ''}
-              onClick={() => setSort(key)}
-            >
-              {label}
-            </button>
-          ))}
+      {!isSearching && (
+        <div className="list-controls">
+          <button
+            type="button"
+            className={`status-tab ${tab === 'active' ? 'selected' : ''}`}
+            onClick={() => setTab('active')}
+          >
+            Active
+          </button>
+
+          {tab === 'active' && (
+            <div className="toggle-group">
+              <span className="toggle-group-label">Sort by</span>
+              {SORT_OPTIONS.map(({ key, label }) => (
+                <button
+                  type="button"
+                  key={key}
+                  className={sort === key ? 'selected' : ''}
+                  onClick={() => setSort(key)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <button
+            type="button"
+            className={`status-tab ${tab === 'archived' ? 'selected' : ''}`}
+            onClick={() => setTab('archived')}
+          >
+            Archived
+          </button>
         </div>
-      </div>
+      )}
 
       <ProjectList
-        projects={sorted}
+        projects={display}
         loading={loading}
         onSelect={onSelect}
-        emptyMessage="No projects match this filter"
+        emptyMessage={
+          isSearching ? 'No projects match your search' : 'No projects match this filter'
+        }
       />
     </div>
   )
