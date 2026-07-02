@@ -12,6 +12,7 @@ function ProjectDetail({ project }) {
   const [title, setTitle] = useState('')
   const [startDate, setStartDate] = useState('')
   const [dueDate, setDueDate] = useState('')
+  const [dependsOn, setDependsOn] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -94,6 +95,7 @@ function ProjectDetail({ project }) {
         project_id: currentProject.id,
         start_date: startDate || null,
         due_date: dueDate || null,
+        depends_on: dependsOn || null,
       })
       .select()
       .single()
@@ -107,6 +109,7 @@ function ProjectDetail({ project }) {
     setTitle('')
     setStartDate('')
     setDueDate('')
+    setDependsOn('')
   }
 
   async function toggleComplete(task) {
@@ -125,7 +128,7 @@ function ProjectDetail({ project }) {
     setTasks((prev) => prev.map((t) => (t.id === task.id ? data : t)))
   }
 
-  async function updateTaskDate(task, field, value) {
+  async function updateTaskField(task, field, value) {
     const { data, error } = await supabase
       .from('tasks')
       .update({ [field]: value || null })
@@ -236,6 +239,17 @@ function ProjectDetail({ project }) {
             onChange={(e) => setDueDate(e.target.value)}
           />
         </label>
+        <label className="task-select-field">
+          Depends on
+          <select value={dependsOn} onChange={(e) => setDependsOn(e.target.value)}>
+            <option value="">None</option>
+            {tasks.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.title}
+              </option>
+            ))}
+          </select>
+        </label>
         <button type="submit">Add</button>
       </form>
 
@@ -269,7 +283,7 @@ function ProjectDetail({ project }) {
                   <input
                     type="date"
                     value={task.start_date || ''}
-                    onChange={(e) => updateTaskDate(task, 'start_date', e.target.value)}
+                    onChange={(e) => updateTaskField(task, 'start_date', e.target.value)}
                   />
                 </label>
                 <label className="task-date-field">
@@ -277,8 +291,24 @@ function ProjectDetail({ project }) {
                   <input
                     type="date"
                     value={task.due_date || ''}
-                    onChange={(e) => updateTaskDate(task, 'due_date', e.target.value)}
+                    onChange={(e) => updateTaskField(task, 'due_date', e.target.value)}
                   />
+                </label>
+                <label className="task-select-field">
+                  Depends on
+                  <select
+                    value={task.depends_on || ''}
+                    onChange={(e) => updateTaskField(task, 'depends_on', e.target.value)}
+                  >
+                    <option value="">None</option>
+                    {tasks
+                      .filter((t) => t.id !== task.id)
+                      .map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.title}
+                        </option>
+                      ))}
+                  </select>
                 </label>
               </div>
             </li>
