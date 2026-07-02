@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
 import AppHeader from './AppHeader'
+import GanttChart from './GanttChart'
 import { DOCUMENT_TYPES } from './documentTypes'
 
 function ProjectDetail({ project, onBack, onProjectUpdated, onHome }) {
@@ -286,6 +287,8 @@ function ProjectDetail({ project, onBack, onProjectUpdated, onHome }) {
           <li className="empty">No tasks yet</li>
         )}
       </ul>
+
+      {!loading && <GanttChart tasks={tasks} />}
 
       <h2 className="tasks-heading">Documents</h2>
 
