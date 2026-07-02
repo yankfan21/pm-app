@@ -1,9 +1,16 @@
 import jsPDF from 'jspdf'
-import html2canvas from 'html2canvas'
 import ExcelJS from 'exceljs'
+import { DAY_MS, computeGanttLayout } from './ganttLayout'
 
-const DAY_MS = 24 * 60 * 60 * 1000
 const INFO_HEADERS = ['Task', 'Start Date', 'Due Date', 'Depends On']
+
+const NAVY = [30, 58, 138]
+const GREEN = [34, 197, 94]
+const DARK_TEXT = [22, 21, 26]
+const MUTED_TEXT = [120, 120, 120]
+const GRIDLINE = [225, 225, 225]
+const DEP_LINE = [148, 163, 184]
+const TODAY_RED = [239, 68, 68]
 
 function sanitizeFilename(name) {
   const cleaned = name.trim().replace(/[^a-zA-Z0-9-_ ]/g, '').replace(/\s+/g, '-')
@@ -149,56 +156,210 @@ export async function exportGanttExcel(project, tasks) {
   await saveWorkbook(workbook, project)
 }
 
-// Captures the chart exactly as it's currently rendered (bars, today
-// marker, dependency arrows, and now-unclipped task labels - see the CSS
-// change making .gantt-row-label wrap instead of truncate) rather than
-// redrawing it, so the PDF matches what's on screen and stays readable as
-// a standalone document.
-export async function exportGanttPdf(project, element) {
-  const canvas = await html2canvas(element, {
-    backgroundColor: '#ffffff',
-    scale: 2,
-    // The chart's label/date text uses var(--text-h)/var(--text), which
-    // resolve to near-white in dark mode (prefers-color-scheme). The canvas
-    // background above is forced to white regardless of theme, so on a
-    // dark-mode system that text would render nearly invisible. onclone
-    // lets us fix colors on the offscreen clone html2canvas rasterizes,
-    // without touching the live page's actual appearance at all.
-    onclone: (clonedDoc, clonedElement) => {
-      clonedElement
-        .querySelectorAll('.gantt-row-label, .gantt-range-track span')
-        .forEach((el) => {
-          el.style.color = '#16151a'
-        })
-    },
-  })
-  const imgData = canvas.toDataURL('image/png')
+// A tick every N days, chosen so there are roughly 8-14 gridlines across
+// the chart regardless of how long the overall range is.
+function pickTickIntervalDays(totalDays) {
+  const candidates = [1, 2, 3, 5, 7, 10, 14, 21, 30, 60, 90, 120]
+  return candidates.find((c) => totalDays / c <= 14) || 180
+}
+
+// Drawn natively with jsPDF rather than screenshotting the DOM - that
+// approach inherited the live page's CSS (including theme-dependent colors
+// that turned invisible on the forced-white export background) and made it
+// hard to control label placement precisely. Native drawing measures each
+// label against its bar with jsPDF's own text metrics, so "does this fit
+// inside the bar" is exact rather than approximated from a rendered clone.
+export async function exportGanttPdf(project, tasks) {
+  const { bars, unscheduled, rangeStart, rangeEndRaw, totalSpan, todayInRange, todayMs } =
+    computeGanttLayout(tasks)
 
   const doc = new jsPDF({ unit: 'pt', format: 'letter', orientation: 'landscape' })
   const marginX = 40
   const pageWidth = doc.internal.pageSize.getWidth()
-  const pageHeight = doc.internal.pageSize.getHeight()
 
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(18)
+  doc.setTextColor(...DARK_TEXT)
   doc.text(project.name, marginX, 40)
 
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(10)
-  doc.setTextColor(120)
+  doc.setTextColor(...MUTED_TEXT)
   doc.text('GANTT CHART', marginX, 56)
-  doc.setTextColor(0)
 
-  const maxWidth = pageWidth - marginX * 2
-  const maxHeight = pageHeight - 90
-  const imgRatio = canvas.width / canvas.height
-  let renderWidth = maxWidth
-  let renderHeight = renderWidth / imgRatio
-  if (renderHeight > maxHeight) {
-    renderHeight = maxHeight
-    renderWidth = renderHeight * imgRatio
+  if (bars.length === 0) {
+    doc.setFontSize(11)
+    doc.setTextColor(...MUTED_TEXT)
+    doc.text('No scheduled tasks to chart yet.', marginX, 84)
+    doc.save(`${sanitizeFilename(project.name)}-Gantt-Chart.pdf`)
+    return
   }
 
-  doc.addImage(imgData, 'PNG', marginX, 72, renderWidth, renderHeight)
+  const frameX0 = marginX
+  const frameX1 = pageWidth - marginX
+  const frameTop = 76
+  const chartX0 = frameX0 + 14
+  const chartX1 = frameX1 - 14
+  const chartWidth = chartX1 - chartX0
+  const axisLabelY = frameTop + 14
+  const gridTop = frameTop + 22
+  const rowHeight = 22
+  const barHeight = 13
+  const gridBottom = gridTop + bars.length * rowHeight
+  const frameBottom = gridBottom + 10
+
+  function xForMs(ms) {
+    return chartX0 + ((ms - rangeStart) / totalSpan) * chartWidth
+  }
+
+  // Outer frame
+  doc.setDrawColor(...GRIDLINE)
+  doc.roundedRect(frameX0, frameTop, frameX1 - frameX0, frameBottom - frameTop, 6, 6, 'S')
+
+  // Vertical date gridlines + axis labels
+  const totalDays = Math.round(totalSpan / DAY_MS)
+  const tickDays = pickTickIntervalDays(totalDays)
+  doc.setFontSize(7)
+  doc.setFont('helvetica', 'normal')
+  // A short date label like "07-01" needs roughly this much horizontal room
+  // to itself - used to drop any tick (including the always-shown range end)
+  // that would otherwise render close enough to another label to overlap it.
+  const MIN_LABEL_GAP = 26
+  let tickMsList = []
+  for (let d = 0; d <= totalDays; d += tickDays) tickMsList.push(rangeStart + d * DAY_MS)
+  const lastRegular = tickMsList[tickMsList.length - 1]
+  if (lastRegular !== rangeEndRaw) {
+    if (xForMs(rangeEndRaw) - xForMs(lastRegular) < MIN_LABEL_GAP) {
+      tickMsList[tickMsList.length - 1] = rangeEndRaw
+    } else {
+      tickMsList.push(rangeEndRaw)
+    }
+  }
+  // The dashed "today" line gets its own label drawn separately below - drop
+  // any regular tick that would land close enough to collide with it.
+  if (todayInRange) {
+    const todayX = xForMs(todayMs)
+    tickMsList = tickMsList.filter((ms) => Math.abs(xForMs(ms) - todayX) >= MIN_LABEL_GAP)
+  }
+
+  tickMsList.forEach((ms) => {
+    const x = xForMs(ms)
+    doc.setDrawColor(...GRIDLINE)
+    doc.line(x, gridTop, x, gridBottom)
+    doc.setTextColor(...MUTED_TEXT)
+    const label = new Date(ms).toISOString().slice(5, 10)
+    doc.text(label, x, axisLabelY, { align: 'center' })
+  })
+
+  // Horizontal row gridlines
+  doc.setDrawColor(...GRIDLINE)
+  for (let r = 0; r <= bars.length; r++) {
+    const y = gridTop + r * rowHeight
+    doc.line(chartX0, y, chartX1, y)
+  }
+
+  // Bars, keeping each task's geometry around for the dependency-arrow pass.
+  const barGeometry = {}
+  bars.forEach(({ task, startMs, dueMs }, i) => {
+    const rowTop = gridTop + i * rowHeight
+    const centerY = rowTop + rowHeight / 2
+    const barY = rowTop + (rowHeight - barHeight) / 2
+
+    const leftPct = (startMs - rangeStart) / totalSpan
+    const widthPct = Math.max((dueMs - startMs) / totalSpan, 0.015)
+    const barX0 = chartX0 + leftPct * chartWidth
+    const barWidth = widthPct * chartWidth
+    const barX1 = barX0 + barWidth
+
+    barGeometry[task.id] = { barX0, barX1, centerY }
+
+    doc.setFillColor(...(task.completed ? GREEN : NAVY))
+    doc.roundedRect(barX0, barY, barWidth, barHeight, 2.5, 2.5, 'F')
+  })
+
+  // Today marker (drawn under the dependency arrows/labels so it doesn't
+  // visually compete with them).
+  if (todayInRange) {
+    const x = xForMs(todayMs)
+    doc.setDrawColor(...TODAY_RED)
+    doc.setLineWidth(1)
+    doc.setLineDashPattern([2, 1.5], 0)
+    doc.line(x, gridTop, x, gridBottom)
+    doc.setLineDashPattern([], 0)
+    doc.setFontSize(7)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(...TODAY_RED)
+    doc.text('TODAY', x, frameTop + 10, { align: 'center' })
+  }
+
+  // Dependency arrows: a straight finish-to-start line from the right edge
+  // of the dependency's bar to the left edge of the dependent's bar, same
+  // semantics as the live chart's SVG overlay.
+  doc.setDrawColor(...DEP_LINE)
+  doc.setLineWidth(1)
+  bars.forEach(({ task }) => {
+    if (!task.depends_on) return
+    const from = barGeometry[task.depends_on]
+    const to = barGeometry[task.id]
+    if (!from || !to) return
+
+    doc.line(from.barX1, from.centerY, to.barX0, to.centerY)
+    doc.setFillColor(...DEP_LINE)
+    doc.triangle(
+      to.barX0,
+      to.centerY,
+      to.barX0 - 5,
+      to.centerY - 3,
+      to.barX0 - 5,
+      to.centerY + 3,
+      'F'
+    )
+  })
+
+  // Labels last, drawn on top of everything else so they're always fully
+  // legible - inside the bar (white text) when it's wide enough to hold the
+  // label; otherwise beside that specific bar (dark text), preferring the
+  // right side but flipping to the left when a bar sits close enough to the
+  // chart's right edge that a right-side label would run off the page.
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(9)
+  bars.forEach(({ task }) => {
+    const { barX0, barX1, centerY } = barGeometry[task.id]
+    const barWidth = barX1 - barX0
+    const label = task.title
+    const textWidth = doc.getTextWidth(label)
+    const pad = 6
+
+    if (textWidth + pad * 2 <= barWidth) {
+      doc.setTextColor(255, 255, 255)
+      doc.text(label, barX0 + pad, centerY, { baseline: 'middle' })
+    } else if (barX1 + 6 + textWidth <= chartX1) {
+      doc.setTextColor(...DARK_TEXT)
+      doc.text(label, barX1 + 6, centerY, { baseline: 'middle' })
+    } else {
+      doc.setTextColor(...DARK_TEXT)
+      doc.text(label, barX0 - 6, centerY, { align: 'right', baseline: 'middle' })
+    }
+  })
+
+  // Unscheduled tasks, listed below the chart so the PDF stays a complete
+  // standalone record even though they have nothing to plot.
+  if (unscheduled.length > 0) {
+    let y = frameBottom + 24
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(9)
+    doc.setTextColor(...MUTED_TEXT)
+    doc.text('UNSCHEDULED', marginX, y)
+    y += 14
+
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(10)
+    doc.setTextColor(...DARK_TEXT)
+    unscheduled.forEach((task) => {
+      doc.text(`• ${task.title}`, marginX, y)
+      y += 14
+    })
+  }
+
   doc.save(`${sanitizeFilename(project.name)}-Gantt-Chart.pdf`)
 }

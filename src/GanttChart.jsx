@@ -1,41 +1,16 @@
 import { Fragment, useLayoutEffect, useRef, useState } from 'react'
+import { computeGanttLayout } from './ganttLayout'
 
-const DAY_MS = 24 * 60 * 60 * 1000
-
-function parseDay(dateStr) {
-  return new Date(`${dateStr}T00:00:00`).getTime()
-}
-
-// A task needs at least one date to appear on the timeline - if only one of
-// start/due is set, it's plotted as a single-day bar on that date.
 function GanttChart({ project, tasks }) {
   const chartRef = useRef(null)
-  const wrapRef = useRef(null)
   const barRefs = useRef({})
   const [depLines, setDepLines] = useState([])
   const [error, setError] = useState(null)
   const [exportingPdf, setExportingPdf] = useState(false)
 
-  const scheduled = tasks.filter((t) => t.start_date || t.due_date)
-  const unscheduled = tasks.filter((t) => !t.start_date && !t.due_date)
-
-  const bars = scheduled.map((task) => {
-    const start = task.start_date || task.due_date
-    const due = task.due_date || task.start_date
-    return { task, startMs: parseDay(start), dueMs: parseDay(due) }
-  })
-
-  const rangeStart = bars.length ? Math.min(...bars.map((b) => b.startMs)) : 0
-  const rangeEndRaw = bars.length ? Math.max(...bars.map((b) => b.dueMs)) : 0
-  // Guard against a zero-width range when every bar falls on the same day.
-  const rangeEnd = rangeEndRaw > rangeStart ? rangeEndRaw : rangeStart + DAY_MS
-  const totalSpan = rangeEnd - rangeStart
-
-  const todayMs = parseDay(new Date().toISOString().slice(0, 10))
-  const todayPct =
-    bars.length > 0 && todayMs >= rangeStart && todayMs <= rangeEnd
-      ? ((todayMs - rangeStart) / totalSpan) * 100
-      : null
+  const { bars, unscheduled, rangeStart, rangeEndRaw, totalSpan, todayInRange, todayMs } =
+    computeGanttLayout(tasks)
+  const todayPct = todayInRange ? ((todayMs - rangeStart) / totalSpan) * 100 : null
 
   // Grid rows are 1-indexed: row 1 is the date-range header, rows 2..N+1 are bars.
   const totalRows = bars.length + 1
@@ -94,14 +69,15 @@ function GanttChart({ project, tasks }) {
   }
 
   async function handleExportPdf() {
-    if (!wrapRef.current) return
     setError(null)
     setExportingPdf(true)
     try {
-      // Lazy-loaded: html2canvas is heavy and would otherwise bloat every
-      // page load even for users who never export.
+      // Lazy-loaded: jspdf is heavy and would otherwise bloat every page
+      // load even for users who never export. Drawn natively rather than
+      // screenshotting the DOM, so it isn't at the mercy of the live
+      // page's theme/CSS (that's what caused the dark-mode text bug).
       const { exportGanttPdf } = await import('./ganttExport')
-      await exportGanttPdf(project, wrapRef.current)
+      await exportGanttPdf(project, tasks)
     } catch (err) {
       setError('Failed to export PDF: ' + err.message)
     }
@@ -138,7 +114,7 @@ function GanttChart({ project, tasks }) {
       )}
 
       {bars.length > 0 && (
-        <div className="gantt-wrap" ref={wrapRef}>
+        <div className="gantt-wrap">
           <div
             className="gantt-chart"
             ref={chartRef}
