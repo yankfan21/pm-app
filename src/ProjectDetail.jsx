@@ -241,7 +241,9 @@ function ProjectDetail({ project, onBack, onProjectUpdated, onHome }) {
                   type="button"
                   className={`doc-checklist-row ${activeDocKey === docType.key ? 'selected' : ''}`}
                   onClick={() =>
-                    isDone ? setActiveDocKey(docType.key) : setActiveFlowKey(docType.key)
+                    isDone
+                      ? setActiveDocKey((prev) => (prev === docType.key ? null : docType.key))
+                      : setActiveFlowKey(docType.key)
                   }
                 >
                   <span className="doc-checklist-label">{docType.label}</span>
