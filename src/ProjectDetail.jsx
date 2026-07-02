@@ -3,6 +3,8 @@ import { supabase } from './supabaseClient'
 import AppHeader from './AppHeader'
 import CharterFlow from './CharterFlow'
 import CharterView from './CharterView'
+import RequirementsFlow from './RequirementsFlow'
+import RequirementsView from './RequirementsView'
 
 function ProjectDetail({ project, onBack, onProjectUpdated }) {
   const [currentProject, setCurrentProject] = useState(project)
@@ -15,6 +17,10 @@ function ProjectDetail({ project, onBack, onProjectUpdated }) {
   const [charter, setCharter] = useState(null)
   const [charterLoading, setCharterLoading] = useState(true)
   const [showCharterFlow, setShowCharterFlow] = useState(false)
+
+  const [requirementsBrief, setRequirementsBrief] = useState(null)
+  const [requirementsLoading, setRequirementsLoading] = useState(true)
+  const [showRequirementsFlow, setShowRequirementsFlow] = useState(false)
 
   useEffect(() => {
     async function loadTasks() {
@@ -41,8 +47,21 @@ function ProjectDetail({ project, onBack, onProjectUpdated }) {
       setCharterLoading(false)
     }
 
+    async function loadRequirementsBrief() {
+      const { data, error } = await supabase
+        .from('requirements_briefs')
+        .select('*')
+        .eq('project_id', currentProject.id)
+        .maybeSingle()
+
+      if (error) setError(error.message)
+      else setRequirementsBrief(data)
+      setRequirementsLoading(false)
+    }
+
     loadTasks()
     loadCharter()
+    loadRequirementsBrief()
   }, [currentProject.id])
 
   async function handleCharterGenerated(sections, answerList) {
@@ -62,6 +81,26 @@ function ProjectDetail({ project, onBack, onProjectUpdated }) {
 
     setCharter(data)
     setShowCharterFlow(false)
+    return null
+  }
+
+  async function handleRequirementsGenerated(sections, answerList) {
+    const { data, error } = await supabase
+      .from('requirements_briefs')
+      .insert({
+        project_id: currentProject.id,
+        ...sections,
+        qa_answers: answerList,
+      })
+      .select()
+      .single()
+
+    if (error) {
+      return error.message
+    }
+
+    setRequirementsBrief(data)
+    setShowRequirementsFlow(false)
     return null
   }
 
@@ -210,18 +249,33 @@ function ProjectDetail({ project, onBack, onProjectUpdated }) {
         )}
       </ul>
 
-      {charterLoading && <p className="charter-status">Loading...</p>}
+      {(charterLoading || requirementsLoading) && (
+        <p className="charter-status">Loading...</p>
+      )}
 
-      {!charterLoading && !charter && (
+      {!charterLoading && !requirementsLoading && (!charter || !requirementsBrief) && (
         <div className="section-header charter-header">
-          <h3 className="charter-heading">Charter</h3>
-          <button
-            type="button"
-            className="btn-primary"
-            onClick={() => setShowCharterFlow(true)}
-          >
-            Generate Charter
-          </button>
+          <h3 className="charter-heading">Documents</h3>
+          <div className="charter-actions">
+            {!charter && (
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={() => setShowCharterFlow(true)}
+              >
+                Generate Charter
+              </button>
+            )}
+            {!requirementsBrief && (
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={() => setShowRequirementsFlow(true)}
+              >
+                Generate Requirements Brief
+              </button>
+            )}
+          </div>
         </div>
       )}
 
@@ -233,11 +287,29 @@ function ProjectDetail({ project, onBack, onProjectUpdated }) {
         />
       )}
 
+      {!requirementsLoading && requirementsBrief && (
+        <RequirementsView
+          project={currentProject}
+          charter={charter}
+          brief={requirementsBrief}
+          onUpdate={setRequirementsBrief}
+        />
+      )}
+
       {showCharterFlow && (
         <CharterFlow
           project={currentProject}
           onGenerated={handleCharterGenerated}
           onClose={() => setShowCharterFlow(false)}
+        />
+      )}
+
+      {showRequirementsFlow && (
+        <RequirementsFlow
+          project={currentProject}
+          charter={charter}
+          onGenerated={handleRequirementsGenerated}
+          onClose={() => setShowRequirementsFlow(false)}
         />
       )}
     </div>
