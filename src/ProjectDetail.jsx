@@ -318,7 +318,7 @@ function ProjectDetail({ project }) {
         )}
       </ul>
 
-      {!loading && <GanttChart tasks={tasks} />}
+      {!loading && <GanttChart project={currentProject} tasks={tasks} />}
 
       <h2 className="tasks-heading">Documents</h2>
 

@@ -495,6 +495,10 @@
   color: var(--text);
 }
 
+.gantt {
+  margin-top: 40px;
+}
+
 .gantt-wrap {
   margin-top: 26px;
   overflow-x: auto;

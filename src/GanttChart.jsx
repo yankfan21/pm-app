@@ -8,10 +8,13 @@ function parseDay(dateStr) {
 
 // A task needs at least one date to appear on the timeline - if only one of
 // start/due is set, it's plotted as a single-day bar on that date.
-function GanttChart({ tasks }) {
+function GanttChart({ project, tasks }) {
   const chartRef = useRef(null)
+  const wrapRef = useRef(null)
   const barRefs = useRef({})
   const [depLines, setDepLines] = useState([])
+  const [error, setError] = useState(null)
+  const [exportingPdf, setExportingPdf] = useState(false)
 
   const scheduled = tasks.filter((t) => t.start_date || t.due_date)
   const unscheduled = tasks.filter((t) => !t.start_date && !t.due_date)
@@ -78,9 +81,53 @@ function GanttChart({ tasks }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tasks])
 
+  async function handleExportExcel() {
+    setError(null)
+    try {
+      // Lazy-loaded: exceljs is heavy and would otherwise bloat every page
+      // load even for users who never export.
+      const { exportGanttExcel } = await import('./ganttExport')
+      await exportGanttExcel(project, tasks)
+    } catch (err) {
+      setError('Failed to export Excel: ' + err.message)
+    }
+  }
+
+  async function handleExportPdf() {
+    if (!wrapRef.current) return
+    setError(null)
+    setExportingPdf(true)
+    try {
+      // Lazy-loaded: html2canvas is heavy and would otherwise bloat every
+      // page load even for users who never export.
+      const { exportGanttPdf } = await import('./ganttExport')
+      await exportGanttPdf(project, wrapRef.current)
+    } catch (err) {
+      setError('Failed to export PDF: ' + err.message)
+    }
+    setExportingPdf(false)
+  }
+
   return (
     <div className="gantt">
-      <h2 className="tasks-heading">Gantt Chart</h2>
+      <div className="section-header">
+        <h2 className="charter-heading">Gantt Chart</h2>
+        <div className="charter-actions">
+          <button type="button" className="btn-secondary" onClick={handleExportExcel}>
+            Export Excel
+          </button>
+          <button
+            type="button"
+            className="btn-secondary"
+            disabled={bars.length === 0 || exportingPdf}
+            onClick={handleExportPdf}
+          >
+            {exportingPdf ? 'Exporting...' : 'Export PDF'}
+          </button>
+        </div>
+      </div>
+
+      {error && <p className="error">{error}</p>}
 
       {tasks.length === 0 && <p className="charter-status">No tasks yet.</p>}
 
@@ -91,7 +138,7 @@ function GanttChart({ tasks }) {
       )}
 
       {bars.length > 0 && (
-        <div className="gantt-wrap">
+        <div className="gantt-wrap" ref={wrapRef}>
           <div
             className="gantt-chart"
             ref={chartRef}
