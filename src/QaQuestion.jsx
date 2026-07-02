@@ -11,16 +11,22 @@ function QaQuestion({ question, value, onChange }) {
 
       {showSuggestion && (
         <div className="qa-suggestion">
-          <p className="qa-suggestion-label">AI suggestion &mdash; not a requirement</p>
-          <p className="qa-suggestion-text">{question.suggested_answer}</p>
-          <div className="qa-suggestion-actions">
-            <button type="button" onClick={() => setDismissed(true)}>
-              Dismiss
-            </button>
-            <button type="button" onClick={() => onChange(question.suggested_answer)}>
-              Use this
-            </button>
-          </div>
+          <span className="qa-suggestion-tag">AI suggestion:</span>
+          <span className="qa-suggestion-text">{question.suggested_answer}</span>
+          <button
+            type="button"
+            className="qa-suggestion-link"
+            onClick={() => onChange(question.suggested_answer)}
+          >
+            Use
+          </button>
+          <button
+            type="button"
+            className="qa-suggestion-link"
+            onClick={() => setDismissed(true)}
+          >
+            Dismiss
+          </button>
         </div>
       )}
 

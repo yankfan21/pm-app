@@ -19,3 +19,9 @@ create table if not exists requirements_briefs (
 
 create unique index if not exists requirements_briefs_project_id_key
   on requirements_briefs (project_id);
+
+-- This Supabase project auto-enables RLS (deny-all) on new tables, unlike
+-- `charters`/`projects`/`tasks` which predate that setting. This app has no
+-- per-user auth (the anon key talks to Postgres directly), so mirror those
+-- tables' effectively-open access rather than leaving inserts/updates blocked.
+alter table requirements_briefs disable row level security;

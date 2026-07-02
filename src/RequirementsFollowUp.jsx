@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
-import QaQuestion from './QaQuestion'
+import QaStepper from './QaStepper'
 
 function RequirementsFollowUp({ project, brief, onApplied, onClose }) {
   const [phase, setPhase] = useState('loading-questions')
@@ -35,8 +35,6 @@ function RequirementsFollowUp({ project, brief, onApplied, onClose }) {
     setQuestions(qs)
     setPhase('answering')
   }
-
-  const anyAnswered = questions.some((q) => (answers[q.id] || '').trim() !== '')
 
   async function handleSubmit() {
     setPhase('applying')
@@ -92,7 +90,6 @@ function RequirementsFollowUp({ project, brief, onApplied, onClose }) {
 
         <div className="modal-step">
           <h2>Ask Follow-up Questions</h2>
-          <p className="step-label">The AI reviews your requirements brief for gaps</p>
 
           {phase === 'loading-questions' && (
             <p className="charter-status">Reviewing the brief...</p>
@@ -134,41 +131,17 @@ function RequirementsFollowUp({ project, brief, onApplied, onClose }) {
           )}
 
           {(phase === 'answering' || phase === 'applying') && (
-            <>
-              <p className="charter-status">
-                Answer any that are relevant, edit or dismiss any AI suggestions, and skip the
-                rest.
-              </p>
-
-              {questions.map((q) => (
-                <QaQuestion
-                  key={q.id}
-                  question={q}
-                  value={answers[q.id]}
-                  onChange={(value) => setAnswers((prev) => ({ ...prev, [q.id]: value }))}
-                />
-              ))}
-
-              {error && <p className="error">{error}</p>}
-
-              <div className="modal-actions">
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={onClose}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="btn-primary"
-                  disabled={!anyAnswered || phase === 'applying'}
-                  onClick={handleSubmit}
-                >
-                  {phase === 'applying' ? 'Updating...' : 'Update Brief'}
-                </button>
-              </div>
-            </>
+            <QaStepper
+              questions={questions}
+              answers={answers}
+              onAnswerChange={(id, value) => setAnswers((prev) => ({ ...prev, [id]: value }))}
+              onSubmit={handleSubmit}
+              submitLabel="Update Brief"
+              loadingLabel="Updating..."
+              submitting={phase === 'applying'}
+              error={error}
+              onCancel={onClose}
+            />
           )}
         </div>
       </div>

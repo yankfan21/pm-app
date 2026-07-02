@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
+import QaStepper from './QaStepper'
 
 function CharterFlow({ project, onGenerated, onClose }) {
   const [phase, setPhase] = useState('loading-questions')
@@ -29,16 +30,16 @@ function CharterFlow({ project, onGenerated, onClose }) {
     setPhase('answering')
   }
 
-  const allAnswered = questions.every((q) => (answers[q.id] || '').trim() !== '')
-
   async function handleSubmit() {
     setPhase('generating')
     setError(null)
 
-    const answerList = questions.map((q) => ({
-      question: q.text,
-      answer: answers[q.id],
-    }))
+    const answerList = questions
+      .filter((q) => (answers[q.id] || '').trim() !== '')
+      .map((q) => ({
+        question: q.text,
+        answer: answers[q.id],
+      }))
 
     const { data, error } = await supabase.functions.invoke('charter', {
       body: { action: 'generate', project, answers: answerList },
@@ -66,9 +67,6 @@ function CharterFlow({ project, onGenerated, onClose }) {
 
         <div className="modal-step">
           <h2>Generate Charter</h2>
-          <p className="step-label">
-            A few quick questions to fill in the gaps
-          </p>
 
           {phase === 'loading-questions' && (
             <p className="charter-status">Thinking of a few questions...</p>
@@ -97,60 +95,17 @@ function CharterFlow({ project, onGenerated, onClose }) {
           )}
 
           {(phase === 'answering' || phase === 'generating') && (
-            <>
-              {questions.map((q) => (
-                <label key={q.id}>
-                  {q.text}
-                  {q.type === 'choice' ? (
-                    <div className="priority-buttons">
-                      {q.choices.map((choice) => (
-                        <button
-                          type="button"
-                          key={choice}
-                          className={answers[q.id] === choice ? 'selected' : ''}
-                          onClick={() =>
-                            setAnswers((prev) => ({ ...prev, [q.id]: choice }))
-                          }
-                        >
-                          {choice}
-                        </button>
-                      ))}
-                    </div>
-                  ) : (
-                    <input
-                      type="text"
-                      value={answers[q.id] || ''}
-                      onChange={(e) =>
-                        setAnswers((prev) => ({
-                          ...prev,
-                          [q.id]: e.target.value,
-                        }))
-                      }
-                    />
-                  )}
-                </label>
-              ))}
-
-              {error && <p className="error">{error}</p>}
-
-              <div className="modal-actions">
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={onClose}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="btn-primary"
-                  disabled={!allAnswered || phase === 'generating'}
-                  onClick={handleSubmit}
-                >
-                  {phase === 'generating' ? 'Generating...' : 'Generate Charter'}
-                </button>
-              </div>
-            </>
+            <QaStepper
+              questions={questions}
+              answers={answers}
+              onAnswerChange={(id, value) => setAnswers((prev) => ({ ...prev, [id]: value }))}
+              onSubmit={handleSubmit}
+              submitLabel="Generate Charter"
+              loadingLabel="Generating..."
+              submitting={phase === 'generating'}
+              error={error}
+              onCancel={onClose}
+            />
           )}
         </div>
       </div>

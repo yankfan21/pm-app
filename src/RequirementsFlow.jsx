@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
-import QaQuestion from './QaQuestion'
+import QaStepper from './QaStepper'
 
 function RequirementsFlow({ project, charter, onGenerated, onClose }) {
   const [phase, setPhase] = useState('loading-questions')
@@ -29,8 +29,6 @@ function RequirementsFlow({ project, charter, onGenerated, onClose }) {
     setQuestions(data.questions || [])
     setPhase('answering')
   }
-
-  const anyAnswered = questions.some((q) => (answers[q.id] || '').trim() !== '')
 
   async function handleSubmit() {
     setPhase('generating')
@@ -69,10 +67,6 @@ function RequirementsFlow({ project, charter, onGenerated, onClose }) {
 
         <div className="modal-step">
           <h2>Generate Requirements Brief</h2>
-          <p className="step-label">
-            A few discovery questions, skipping anything already covered by this project
-            {charter ? ' or its charter' : ''}
-          </p>
 
           {phase === 'loading-questions' && (
             <p className="charter-status">Checking what's already known...</p>
@@ -123,40 +117,17 @@ function RequirementsFlow({ project, charter, onGenerated, onClose }) {
           )}
 
           {(phase === 'answering' || phase === 'generating') && questions.length > 0 && (
-            <>
-              <p className="step-label">
-                Answer what's relevant, edit or dismiss any AI suggestions, and skip the rest.
-              </p>
-
-              {questions.map((q) => (
-                <QaQuestion
-                  key={q.id}
-                  question={q}
-                  value={answers[q.id]}
-                  onChange={(value) => setAnswers((prev) => ({ ...prev, [q.id]: value }))}
-                />
-              ))}
-
-              {error && <p className="error">{error}</p>}
-
-              <div className="modal-actions">
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={onClose}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="btn-primary"
-                  disabled={!anyAnswered || phase === 'generating'}
-                  onClick={handleSubmit}
-                >
-                  {phase === 'generating' ? 'Generating...' : 'Generate Requirements Brief'}
-                </button>
-              </div>
-            </>
+            <QaStepper
+              questions={questions}
+              answers={answers}
+              onAnswerChange={(id, value) => setAnswers((prev) => ({ ...prev, [id]: value }))}
+              onSubmit={handleSubmit}
+              submitLabel="Generate Requirements Brief"
+              loadingLabel="Generating..."
+              submitting={phase === 'generating'}
+              error={error}
+              onCancel={onClose}
+            />
           )}
         </div>
       </div>

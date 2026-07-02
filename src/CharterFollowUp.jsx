@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
+import QaStepper from './QaStepper'
 
 function CharterFollowUp({ project, charter, onApplied, onClose }) {
   const [phase, setPhase] = useState('loading-questions')
@@ -34,8 +35,6 @@ function CharterFollowUp({ project, charter, onApplied, onClose }) {
     setQuestions(qs)
     setPhase('answering')
   }
-
-  const anyAnswered = questions.some((q) => (answers[q.id] || '').trim() !== '')
 
   async function handleSubmit() {
     setPhase('applying')
@@ -91,7 +90,6 @@ function CharterFollowUp({ project, charter, onApplied, onClose }) {
 
         <div className="modal-step">
           <h2>Ask Follow-up Questions</h2>
-          <p className="step-label">The AI reviews your charter for gaps</p>
 
           {phase === 'loading-questions' && (
             <p className="charter-status">Reviewing the charter...</p>
@@ -133,64 +131,17 @@ function CharterFollowUp({ project, charter, onApplied, onClose }) {
           )}
 
           {(phase === 'answering' || phase === 'applying') && (
-            <>
-              <p className="charter-status">
-                Answer any that are relevant &mdash; skip the rest.
-              </p>
-
-              {questions.map((q) => (
-                <label key={q.id}>
-                  {q.text}
-                  {q.type === 'choice' ? (
-                    <div className="priority-buttons">
-                      {q.choices.map((choice) => (
-                        <button
-                          type="button"
-                          key={choice}
-                          className={answers[q.id] === choice ? 'selected' : ''}
-                          onClick={() =>
-                            setAnswers((prev) => ({ ...prev, [q.id]: choice }))
-                          }
-                        >
-                          {choice}
-                        </button>
-                      ))}
-                    </div>
-                  ) : (
-                    <input
-                      type="text"
-                      value={answers[q.id] || ''}
-                      onChange={(e) =>
-                        setAnswers((prev) => ({
-                          ...prev,
-                          [q.id]: e.target.value,
-                        }))
-                      }
-                    />
-                  )}
-                </label>
-              ))}
-
-              {error && <p className="error">{error}</p>}
-
-              <div className="modal-actions">
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={onClose}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="btn-primary"
-                  disabled={!anyAnswered || phase === 'applying'}
-                  onClick={handleSubmit}
-                >
-                  {phase === 'applying' ? 'Updating...' : 'Update Charter'}
-                </button>
-              </div>
-            </>
+            <QaStepper
+              questions={questions}
+              answers={answers}
+              onAnswerChange={(id, value) => setAnswers((prev) => ({ ...prev, [id]: value }))}
+              onSubmit={handleSubmit}
+              submitLabel="Update Charter"
+              loadingLabel="Updating..."
+              submitting={phase === 'applying'}
+              error={error}
+              onCancel={onClose}
+            />
           )}
         </div>
       </div>
