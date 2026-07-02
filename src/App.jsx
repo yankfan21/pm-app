@@ -1,10 +1,19 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
+import AppHeader from './AppHeader'
 import NewProjectFlow from './NewProjectFlow'
 import ProjectDetail from './ProjectDetail'
+import Dashboard from './Dashboard'
+import AllProjects from './AllProjects'
 import './App.css'
 
+const VIEWS = [
+  { key: 'dashboard', label: 'Dashboard' },
+  { key: 'all-projects', label: 'All Projects' },
+]
+
 function App() {
+  const [view, setView] = useState('dashboard')
   const [projects, setProjects] = useState([])
   const [projectsLoading, setProjectsLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -26,37 +35,44 @@ function App() {
     loadProjects()
   }, [])
 
+  function handleProjectUpdated(updatedProject) {
+    setProjects((prev) =>
+      prev.map((p) => (p.id === updatedProject.id ? updatedProject : p))
+    )
+    setSelectedProject(updatedProject)
+  }
+
   if (selectedProject) {
     return (
       <ProjectDetail
         project={selectedProject}
         onBack={() => setSelectedProject(null)}
+        onProjectUpdated={handleProjectUpdated}
       />
     )
   }
 
   return (
     <div className="app">
-      <h1 className="app-title">
-        <span className="app-title-mark" aria-hidden="true">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+      <AppHeader />
+
+      <nav className="app-nav">
+        {VIEWS.map(({ key, label }) => (
+          <button
+            type="button"
+            key={key}
+            className={view === key ? 'selected' : ''}
+            onClick={() => setView(key)}
           >
-            <circle cx="12" cy="12" r="10" />
-            <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
-          </svg>
-        </span>
-        PM-App
-      </h1>
-      <p className="app-subtitle">Your Project Management Assistant</p>
+            {label}
+          </button>
+        ))}
+      </nav>
 
       <div className="section-header">
-        <h2 className="page-title">Projects</h2>
+        <h2 className="page-title">
+          {view === 'dashboard' ? 'Dashboard' : 'All Projects'}
+        </h2>
         <button
           type="button"
           className="btn-primary"
@@ -68,31 +84,19 @@ function App() {
 
       {error && <p className="error">{error}</p>}
 
-      <ul className="project-list">
-        {projectsLoading && <li className="empty">Loading...</li>}
-        {!projectsLoading &&
-          projects.map((project) => (
-            <li
-              key={project.id}
-              className="clickable"
-              onClick={() => setSelectedProject(project)}
-            >
-              <div className="project-name">{project.name}</div>
-              <div className="project-goal">{project.goal}</div>
-              <div className="project-meta">
-                <span
-                  className={`priority-badge ${project.priority.toLowerCase()}`}
-                >
-                  {project.priority}
-                </span>
-                <span>{project.deadline ?? 'TBD'}</span>
-              </div>
-            </li>
-          ))}
-        {!projectsLoading && projects.length === 0 && (
-          <li className="empty">No projects yet</li>
-        )}
-      </ul>
+      {view === 'dashboard' ? (
+        <Dashboard
+          projects={projects}
+          loading={projectsLoading}
+          onSelect={setSelectedProject}
+        />
+      ) : (
+        <AllProjects
+          projects={projects}
+          loading={projectsLoading}
+          onSelect={setSelectedProject}
+        />
+      )}
 
       {showNewProject && (
         <NewProjectFlow

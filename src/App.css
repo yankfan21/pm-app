@@ -46,6 +46,86 @@
   margin: 0;
 }
 
+.app-nav {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 32px;
+  border-bottom: 1px solid var(--border);
+}
+
+.app-nav button {
+  margin-bottom: -1px;
+  padding: 10px 2px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.app-nav button:hover {
+  color: var(--text-h);
+}
+
+.app-nav button.selected {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.dashboard-subtitle {
+  color: var(--text);
+  font-size: 14px;
+  margin: 0 0 20px;
+}
+
+.list-controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px 20px;
+  margin-bottom: 20px;
+}
+
+.toggle-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.toggle-group-label {
+  font-size: 13px;
+  color: var(--text);
+  margin-right: 4px;
+}
+
+.toggle-group button {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--text-h);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.toggle-group button.selected {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
 .task-form {
   display: flex;
   gap: 8px;
@@ -453,6 +533,30 @@
 .priority-badge.critical {
   background: #fee2e2;
   color: #b91c1c;
+}
+
+.status-badge {
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.status-badge.archived {
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.project-list li.archived {
+  opacity: 0.6;
+}
+
+.project-list li.archived .project-name {
+  color: var(--text);
+}
+
+.project-detail-header {
+  margin-top: 24px;
 }
 
 .modal-overlay {

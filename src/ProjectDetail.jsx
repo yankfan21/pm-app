@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
+import AppHeader from './AppHeader'
 import CharterFlow from './CharterFlow'
 import CharterView from './CharterView'
 
-function ProjectDetail({ project, onBack }) {
+function ProjectDetail({ project, onBack, onProjectUpdated }) {
+  const [currentProject, setCurrentProject] = useState(project)
+  const [archiving, setArchiving] = useState(false)
   const [tasks, setTasks] = useState([])
   const [title, setTitle] = useState('')
   const [loading, setLoading] = useState(true)
@@ -18,7 +21,7 @@ function ProjectDetail({ project, onBack }) {
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
-        .eq('project_id', project.id)
+        .eq('project_id', currentProject.id)
         .order('created_at', { ascending: true })
 
       if (error) setError(error.message)
@@ -30,7 +33,7 @@ function ProjectDetail({ project, onBack }) {
       const { data, error } = await supabase
         .from('charters')
         .select('*')
-        .eq('project_id', project.id)
+        .eq('project_id', currentProject.id)
         .maybeSingle()
 
       if (error) setError(error.message)
@@ -40,13 +43,13 @@ function ProjectDetail({ project, onBack }) {
 
     loadTasks()
     loadCharter()
-  }, [project.id])
+  }, [currentProject.id])
 
   async function handleCharterGenerated(sections, answerList) {
     const { data, error } = await supabase
       .from('charters')
       .insert({
-        project_id: project.id,
+        project_id: currentProject.id,
         ...sections,
         qa_answers: answerList,
       })
@@ -69,7 +72,7 @@ function ProjectDetail({ project, onBack }) {
 
     const { data, error } = await supabase
       .from('tasks')
-      .insert({ title: trimmed, project_id: project.id })
+      .insert({ title: trimmed, project_id: currentProject.id })
       .select()
       .single()
 
@@ -109,37 +112,61 @@ function ProjectDetail({ project, onBack }) {
     setTasks((prev) => prev.filter((t) => t.id !== task.id))
   }
 
+  async function toggleArchived() {
+    const nextStatus = currentProject.status === 'Archived' ? 'Active' : 'Archived'
+    setArchiving(true)
+    setError(null)
+
+    const { data, error } = await supabase
+      .from('projects')
+      .update({ status: nextStatus, updated_at: new Date().toISOString() })
+      .eq('id', currentProject.id)
+      .select()
+      .single()
+
+    setArchiving(false)
+
+    if (error) {
+      setError(error.message)
+      return
+    }
+
+    setCurrentProject(data)
+    onProjectUpdated(data)
+  }
+
   return (
     <div className="app">
-      <h1 className="app-title">
-        <span className="app-title-mark" aria-hidden="true">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
-          </svg>
-        </span>
-        PM-App
-      </h1>
-      <p className="app-subtitle">Your Project Management Assistant</p>
+      <AppHeader />
 
       <button type="button" className="btn-secondary back-link" onClick={onBack}>
         &larr; Back to projects
       </button>
 
-      <h2 className="page-title">{project.name}</h2>
-      <p className="project-goal">{project.goal}</p>
+      <div className="section-header project-detail-header">
+        <h2 className="page-title">{currentProject.name}</h2>
+        <button
+          type="button"
+          className="btn-secondary"
+          disabled={archiving}
+          onClick={toggleArchived}
+        >
+          {archiving
+            ? 'Saving...'
+            : currentProject.status === 'Archived'
+              ? 'Unarchive Project'
+              : 'Archive Project'}
+        </button>
+      </div>
+      <p className="project-goal">{currentProject.goal}</p>
       <div className="project-meta">
-        <span className={`priority-badge ${project.priority.toLowerCase()}`}>
-          {project.priority}
+        <span className={`priority-badge ${currentProject.priority.toLowerCase()}`}>
+          {currentProject.priority}
         </span>
-        <span>{project.deadline ?? 'TBD'}</span>
+        {currentProject.status === 'Archived' && (
+          <span className="status-badge archived">Archived</span>
+        )}
+        <span>{currentProject.deadline ?? 'TBD'}</span>
       </div>
 
       <h2 className="tasks-heading">Tasks</h2>
@@ -200,7 +227,7 @@ function ProjectDetail({ project, onBack }) {
 
       {!charterLoading && charter && (
         <CharterView
-          project={project}
+          project={currentProject}
           charter={charter}
           onUpdate={setCharter}
         />
@@ -208,7 +235,7 @@ function ProjectDetail({ project, onBack }) {
 
       {showCharterFlow && (
         <CharterFlow
-          project={project}
+          project={currentProject}
           onGenerated={handleCharterGenerated}
           onClose={() => setShowCharterFlow(false)}
         />
