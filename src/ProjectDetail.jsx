@@ -15,6 +15,7 @@ function ProjectDetail({ project }) {
   const [dependsOn, setDependsOn] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [tasksExpanded, setTasksExpanded] = useState(true)
 
   const [docs, setDocs] = useState({})
   const [docsLoading, setDocsLoading] = useState(true)
@@ -214,109 +215,125 @@ function ProjectDetail({ project }) {
         <span>{currentProject.deadline ?? 'TBD'}</span>
       </div>
 
-      <h2 className="tasks-heading">Tasks</h2>
+      <h2 className="tasks-heading">
+        <button
+          type="button"
+          className="collapsible-toggle"
+          onClick={() => setTasksExpanded((prev) => !prev)}
+          aria-expanded={tasksExpanded}
+        >
+          <span className={`chevron ${tasksExpanded ? '' : 'collapsed'}`} aria-hidden="true">
+            ▾
+          </span>
+          Tasks
+        </button>
+      </h2>
 
-      <form onSubmit={handleSubmit} className="task-form">
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Add a task..."
-        />
-        <label className="task-date-field">
-          Start
+      {tasksExpanded && (
+        <form onSubmit={handleSubmit} className="task-form">
           <input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Add a task..."
           />
-        </label>
-        <label className="task-date-field">
-          Due
-          <input
-            type="date"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-          />
-        </label>
-        <label className="task-select-field">
-          Depends on
-          <select value={dependsOn} onChange={(e) => setDependsOn(e.target.value)}>
-            <option value="">None</option>
-            {tasks.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.title}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button type="submit">Add</button>
-      </form>
+          <label className="task-date-field">
+            Start
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+          </label>
+          <label className="task-date-field">
+            Due
+            <input
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+            />
+          </label>
+          <label className="task-select-field">
+            Depends on
+            <select value={dependsOn} onChange={(e) => setDependsOn(e.target.value)}>
+              <option value="">None</option>
+              {tasks.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.title}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button type="submit">Add</button>
+        </form>
+      )}
 
       {error && <p className="error">{error}</p>}
 
-      <ul className="task-list">
-        {loading && <li className="empty">Loading...</li>}
-        {!loading &&
-          tasks.map((task) => (
-            <li key={task.id} className={task.completed ? 'completed' : ''}>
-              <div className="task-row-main">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={task.completed}
-                    onChange={() => toggleComplete(task)}
-                  />
-                  <span>{task.title}</span>
-                </label>
-                <button
-                  type="button"
-                  className="delete"
-                  onClick={() => deleteTask(task)}
-                >
-                  Delete
-                </button>
-              </div>
-              <div className="task-dates">
-                <label className="task-date-field">
-                  Start
-                  <input
-                    type="date"
-                    value={task.start_date || ''}
-                    onChange={(e) => updateTaskField(task, 'start_date', e.target.value)}
-                  />
-                </label>
-                <label className="task-date-field">
-                  Due
-                  <input
-                    type="date"
-                    value={task.due_date || ''}
-                    onChange={(e) => updateTaskField(task, 'due_date', e.target.value)}
-                  />
-                </label>
-                <label className="task-select-field">
-                  Depends on
-                  <select
-                    value={task.depends_on || ''}
-                    onChange={(e) => updateTaskField(task, 'depends_on', e.target.value)}
+      {tasksExpanded && (
+        <ul className="task-list">
+          {loading && <li className="empty">Loading...</li>}
+          {!loading &&
+            tasks.map((task) => (
+              <li key={task.id} className={task.completed ? 'completed' : ''}>
+                <div className="task-row-main">
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={task.completed}
+                      onChange={() => toggleComplete(task)}
+                    />
+                    <span>{task.title}</span>
+                  </label>
+                  <button
+                    type="button"
+                    className="delete"
+                    onClick={() => deleteTask(task)}
                   >
-                    <option value="">None</option>
-                    {tasks
-                      .filter((t) => t.id !== task.id)
-                      .map((t) => (
-                        <option key={t.id} value={t.id}>
-                          {t.title}
-                        </option>
-                      ))}
-                  </select>
-                </label>
-              </div>
-            </li>
-          ))}
-        {!loading && tasks.length === 0 && (
-          <li className="empty">No tasks yet</li>
-        )}
-      </ul>
+                    Delete
+                  </button>
+                </div>
+                <div className="task-dates">
+                  <label className="task-date-field">
+                    Start
+                    <input
+                      type="date"
+                      value={task.start_date || ''}
+                      onChange={(e) => updateTaskField(task, 'start_date', e.target.value)}
+                    />
+                  </label>
+                  <label className="task-date-field">
+                    Due
+                    <input
+                      type="date"
+                      value={task.due_date || ''}
+                      onChange={(e) => updateTaskField(task, 'due_date', e.target.value)}
+                    />
+                  </label>
+                  <label className="task-select-field">
+                    Depends on
+                    <select
+                      value={task.depends_on || ''}
+                      onChange={(e) => updateTaskField(task, 'depends_on', e.target.value)}
+                    >
+                      <option value="">None</option>
+                      {tasks
+                        .filter((t) => t.id !== task.id)
+                        .map((t) => (
+                          <option key={t.id} value={t.id}>
+                            {t.title}
+                          </option>
+                        ))}
+                    </select>
+                  </label>
+                </div>
+              </li>
+            ))}
+          {!loading && tasks.length === 0 && (
+            <li className="empty">No tasks yet</li>
+          )}
+        </ul>
+      )}
 
       {!loading && <GanttChart project={currentProject} tasks={tasks} />}
 
