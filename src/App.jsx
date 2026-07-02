@@ -42,19 +42,25 @@ function App() {
     setSelectedProject(updatedProject)
   }
 
+  function goHome() {
+    setSelectedProject(null)
+    setView('dashboard')
+  }
+
   if (selectedProject) {
     return (
       <ProjectDetail
         project={selectedProject}
         onBack={() => setSelectedProject(null)}
         onProjectUpdated={handleProjectUpdated}
+        onHome={goHome}
       />
     )
   }
 
   return (
     <div className="app">
-      <AppHeader />
+      <AppHeader onHome={goHome} />
 
       <div className="app-nav-row">
         <nav className="app-nav">

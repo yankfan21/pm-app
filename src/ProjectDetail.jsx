@@ -6,7 +6,7 @@ import CharterView from './CharterView'
 import RequirementsFlow from './RequirementsFlow'
 import RequirementsView from './RequirementsView'
 
-function ProjectDetail({ project, onBack, onProjectUpdated }) {
+function ProjectDetail({ project, onBack, onProjectUpdated, onHome }) {
   const [currentProject, setCurrentProject] = useState(project)
   const [archiving, setArchiving] = useState(false)
   const [tasks, setTasks] = useState([])
@@ -176,7 +176,7 @@ function ProjectDetail({ project, onBack, onProjectUpdated }) {
 
   return (
     <div className="app">
-      <AppHeader />
+      <AppHeader onHome={onHome} />
 
       <button type="button" className="btn-secondary back-link" onClick={onBack}>
         &larr; Back to projects
