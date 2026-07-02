@@ -158,6 +158,19 @@ export async function exportGanttPdf(project, element) {
   const canvas = await html2canvas(element, {
     backgroundColor: '#ffffff',
     scale: 2,
+    // The chart's label/date text uses var(--text-h)/var(--text), which
+    // resolve to near-white in dark mode (prefers-color-scheme). The canvas
+    // background above is forced to white regardless of theme, so on a
+    // dark-mode system that text would render nearly invisible. onclone
+    // lets us fix colors on the offscreen clone html2canvas rasterizes,
+    // without touching the live page's actual appearance at all.
+    onclone: (clonedDoc, clonedElement) => {
+      clonedElement
+        .querySelectorAll('.gantt-row-label, .gantt-range-track span')
+        .forEach((el) => {
+          el.style.color = '#16151a'
+        })
+    },
   })
   const imgData = canvas.toDataURL('image/png')
 
