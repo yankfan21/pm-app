@@ -8,6 +8,8 @@ function ProjectDetail({ project, onBack, onProjectUpdated, onHome }) {
   const [archiving, setArchiving] = useState(false)
   const [tasks, setTasks] = useState([])
   const [title, setTitle] = useState('')
+  const [startDate, setStartDate] = useState('')
+  const [dueDate, setDueDate] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -85,7 +87,12 @@ function ProjectDetail({ project, onBack, onProjectUpdated, onHome }) {
 
     const { data, error } = await supabase
       .from('tasks')
-      .insert({ title: trimmed, project_id: currentProject.id })
+      .insert({
+        title: trimmed,
+        project_id: currentProject.id,
+        start_date: startDate || null,
+        due_date: dueDate || null,
+      })
       .select()
       .single()
 
@@ -96,12 +103,30 @@ function ProjectDetail({ project, onBack, onProjectUpdated, onHome }) {
 
     setTasks((prev) => [...prev, data])
     setTitle('')
+    setStartDate('')
+    setDueDate('')
   }
 
   async function toggleComplete(task) {
     const { data, error } = await supabase
       .from('tasks')
       .update({ completed: !task.completed })
+      .eq('id', task.id)
+      .select()
+      .single()
+
+    if (error) {
+      setError(error.message)
+      return
+    }
+
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? data : t)))
+  }
+
+  async function updateTaskDate(task, field, value) {
+    const { data, error } = await supabase
+      .from('tasks')
+      .update({ [field]: value || null })
       .eq('id', task.id)
       .select()
       .single()
@@ -194,6 +219,22 @@ function ProjectDetail({ project, onBack, onProjectUpdated, onHome }) {
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Add a task..."
         />
+        <label className="task-date-field">
+          Start
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+          />
+        </label>
+        <label className="task-date-field">
+          Due
+          <input
+            type="date"
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
+          />
+        </label>
         <button type="submit">Add</button>
       </form>
 
@@ -204,21 +245,41 @@ function ProjectDetail({ project, onBack, onProjectUpdated, onHome }) {
         {!loading &&
           tasks.map((task) => (
             <li key={task.id} className={task.completed ? 'completed' : ''}>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={task.completed}
-                  onChange={() => toggleComplete(task)}
-                />
-                <span>{task.title}</span>
-              </label>
-              <button
-                type="button"
-                className="delete"
-                onClick={() => deleteTask(task)}
-              >
-                Delete
-              </button>
+              <div className="task-row-main">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={task.completed}
+                    onChange={() => toggleComplete(task)}
+                  />
+                  <span>{task.title}</span>
+                </label>
+                <button
+                  type="button"
+                  className="delete"
+                  onClick={() => deleteTask(task)}
+                >
+                  Delete
+                </button>
+              </div>
+              <div className="task-dates">
+                <label className="task-date-field">
+                  Start
+                  <input
+                    type="date"
+                    value={task.start_date || ''}
+                    onChange={(e) => updateTaskDate(task, 'start_date', e.target.value)}
+                  />
+                </label>
+                <label className="task-date-field">
+                  Due
+                  <input
+                    type="date"
+                    value={task.due_date || ''}
+                    onChange={(e) => updateTaskDate(task, 'due_date', e.target.value)}
+                  />
+                </label>
+              </div>
             </li>
           ))}
         {!loading && tasks.length === 0 && (
