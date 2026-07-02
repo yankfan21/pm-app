@@ -5,6 +5,8 @@ import CharterFlow from './CharterFlow'
 import CharterView from './CharterView'
 import RequirementsFlow from './RequirementsFlow'
 import RequirementsView from './RequirementsView'
+import RiskLogFlow from './RiskLogFlow'
+import RiskLogView from './RiskLogView'
 
 function ProjectDetail({ project, onBack, onProjectUpdated, onHome }) {
   const [currentProject, setCurrentProject] = useState(project)
@@ -21,6 +23,10 @@ function ProjectDetail({ project, onBack, onProjectUpdated, onHome }) {
   const [requirementsBrief, setRequirementsBrief] = useState(null)
   const [requirementsLoading, setRequirementsLoading] = useState(true)
   const [showRequirementsFlow, setShowRequirementsFlow] = useState(false)
+
+  const [riskLog, setRiskLog] = useState(null)
+  const [riskLogLoading, setRiskLogLoading] = useState(true)
+  const [showRiskLogFlow, setShowRiskLogFlow] = useState(false)
 
   useEffect(() => {
     async function loadTasks() {
@@ -59,9 +65,22 @@ function ProjectDetail({ project, onBack, onProjectUpdated, onHome }) {
       setRequirementsLoading(false)
     }
 
+    async function loadRiskLog() {
+      const { data, error } = await supabase
+        .from('risk_logs')
+        .select('*')
+        .eq('project_id', currentProject.id)
+        .maybeSingle()
+
+      if (error) setError(error.message)
+      else setRiskLog(data)
+      setRiskLogLoading(false)
+    }
+
     loadTasks()
     loadCharter()
     loadRequirementsBrief()
+    loadRiskLog()
   }, [currentProject.id])
 
   async function handleCharterGenerated(sections, answerList) {
@@ -101,6 +120,26 @@ function ProjectDetail({ project, onBack, onProjectUpdated, onHome }) {
 
     setRequirementsBrief(data)
     setShowRequirementsFlow(false)
+    return null
+  }
+
+  async function handleRiskLogGenerated(risks, answerList) {
+    const { data, error } = await supabase
+      .from('risk_logs')
+      .insert({
+        project_id: currentProject.id,
+        risks,
+        qa_answers: answerList,
+      })
+      .select()
+      .single()
+
+    if (error) {
+      return error.message
+    }
+
+    setRiskLog(data)
+    setShowRiskLogFlow(false)
     return null
   }
 
@@ -249,35 +288,47 @@ function ProjectDetail({ project, onBack, onProjectUpdated, onHome }) {
         )}
       </ul>
 
-      {(charterLoading || requirementsLoading) && (
+      {(charterLoading || requirementsLoading || riskLogLoading) && (
         <p className="charter-status">Loading...</p>
       )}
 
-      {!charterLoading && !requirementsLoading && (!charter || !requirementsBrief) && (
-        <div className="section-header charter-header">
-          <h3 className="charter-heading">Documents</h3>
-          <div className="charter-actions">
-            {!charter && (
-              <button
-                type="button"
-                className="btn-primary"
-                onClick={() => setShowCharterFlow(true)}
-              >
-                Generate Charter
-              </button>
-            )}
-            {!requirementsBrief && (
-              <button
-                type="button"
-                className="btn-primary"
-                onClick={() => setShowRequirementsFlow(true)}
-              >
-                Generate Requirements Brief
-              </button>
-            )}
+      {!charterLoading &&
+        !requirementsLoading &&
+        !riskLogLoading &&
+        (!charter || !requirementsBrief || !riskLog) && (
+          <div className="section-header charter-header">
+            <h3 className="charter-heading">Documents</h3>
+            <div className="charter-actions">
+              {!charter && (
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={() => setShowCharterFlow(true)}
+                >
+                  Generate Charter
+                </button>
+              )}
+              {!requirementsBrief && (
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={() => setShowRequirementsFlow(true)}
+                >
+                  Generate Requirements Brief
+                </button>
+              )}
+              {!riskLog && (
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={() => setShowRiskLogFlow(true)}
+                >
+                  Generate Risk Log
+                </button>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {!charterLoading && charter && (
         <CharterView
@@ -296,6 +347,16 @@ function ProjectDetail({ project, onBack, onProjectUpdated, onHome }) {
         />
       )}
 
+      {!riskLogLoading && riskLog && (
+        <RiskLogView
+          project={currentProject}
+          charter={charter}
+          brief={requirementsBrief}
+          riskLog={riskLog}
+          onUpdate={setRiskLog}
+        />
+      )}
+
       {showCharterFlow && (
         <CharterFlow
           project={currentProject}
@@ -310,6 +371,16 @@ function ProjectDetail({ project, onBack, onProjectUpdated, onHome }) {
           charter={charter}
           onGenerated={handleRequirementsGenerated}
           onClose={() => setShowRequirementsFlow(false)}
+        />
+      )}
+
+      {showRiskLogFlow && (
+        <RiskLogFlow
+          project={currentProject}
+          charter={charter}
+          brief={requirementsBrief}
+          onGenerated={handleRiskLogGenerated}
+          onClose={() => setShowRiskLogFlow(false)}
         />
       )}
     </div>
