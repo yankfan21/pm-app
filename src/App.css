@@ -432,24 +432,32 @@
 }
 
 .collapsible-toggle {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  width: 100%;
   border: none;
   background: none;
-  padding: 0;
+  padding: 6px 8px;
+  margin: -6px -8px;
+  border-radius: 6px;
   font: inherit;
-  color: inherit;
+  color: var(--text-h);
+  text-align: left;
   cursor: pointer;
+  transition: background 0.15s ease;
 }
 
 .collapsible-toggle:hover {
-  color: var(--accent);
+  background: var(--code-bg);
 }
 
 .chevron {
-  display: inline-block;
-  font-size: 13px;
+  display: inline-flex;
+  flex-shrink: 0;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--accent);
   transition: transform 0.15s ease;
 }
 
