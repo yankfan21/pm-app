@@ -20,6 +20,7 @@
   font-weight: 800;
   letter-spacing: -0.7px;
   color: var(--accent);
+  text-decoration: none;
   border: none;
   background: none;
   padding: 0;
@@ -79,7 +80,7 @@
   gap: 24px;
 }
 
-.app-nav button {
+.app-nav a {
   margin-bottom: -1px;
   padding: 10px 2px;
   border: none;
@@ -88,17 +89,18 @@
   font: inherit;
   font-weight: 600;
   color: var(--text);
+  text-decoration: none;
   cursor: pointer;
   transition:
     color 0.15s ease,
     border-color 0.15s ease;
 }
 
-.app-nav button:hover {
+.app-nav a:hover {
   color: var(--text-h);
 }
 
-.app-nav button.selected {
+.app-nav a.selected {
   color: var(--accent);
   border-bottom-color: var(--accent);
 }
@@ -326,6 +328,7 @@
   background: var(--accent);
   font: inherit;
   font-weight: 600;
+  text-decoration: none;
   cursor: pointer;
   transition: filter 0.15s ease;
 }
@@ -346,6 +349,7 @@
   background: var(--bg);
   font: inherit;
   font-weight: 600;
+  text-decoration: none;
   cursor: pointer;
   transition:
     background 0.15s ease,

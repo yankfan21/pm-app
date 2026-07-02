@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useOutletContext } from 'react-router-dom'
 import ProjectList from './ProjectList'
 
 const SORT_OPTIONS = [
@@ -44,7 +45,8 @@ function matchesQuery(project, query) {
   )
 }
 
-function AllProjects({ projects, loading, onSelect }) {
+function AllProjects() {
+  const { projects, loading } = useOutletContext()
   const [tab, setTab] = useState('active')
   const [sort, setSort] = useState('priority')
   const [query, setQuery] = useState('')
@@ -68,6 +70,7 @@ function AllProjects({ projects, loading, onSelect }) {
 
   return (
     <div className="all-projects">
+      <h2 className="page-title view-title">All Projects</h2>
       <input
         type="text"
         className="search-input"
@@ -115,7 +118,6 @@ function AllProjects({ projects, loading, onSelect }) {
       <ProjectList
         projects={display}
         loading={loading}
-        onSelect={onSelect}
         emptyMessage={
           isSearching ? 'No projects match your search' : 'No projects match this filter'
         }

@@ -1,8 +1,10 @@
-function AppHeader({ onHome }) {
+import { Link } from 'react-router-dom'
+
+function AppHeader() {
   return (
     <>
       <h1 className="app-title">
-        <button type="button" className="app-title-link" onClick={onHome}>
+        <Link to="/" className="app-title-link">
           <span className="app-title-mark" aria-hidden="true">
             <svg
               viewBox="0 0 24 24"
@@ -17,7 +19,7 @@ function AppHeader({ onHome }) {
             </svg>
           </span>
           PM-App
-        </button>
+        </Link>
       </h1>
       <p className="app-subtitle">Your Project Management Assistant</p>
     </>

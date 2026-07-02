@@ -1,3 +1,4 @@
+import { useOutletContext } from 'react-router-dom'
 import ProjectList from './ProjectList'
 
 function byDeadlineSoonestFirst(a, b) {
@@ -7,22 +8,19 @@ function byDeadlineSoonestFirst(a, b) {
   return a.deadline.localeCompare(b.deadline)
 }
 
-function Dashboard({ projects, loading, onSelect }) {
+function Dashboard() {
+  const { projects, loading } = useOutletContext()
   const active = projects
     .filter((p) => p.status !== 'Archived')
     .sort(byDeadlineSoonestFirst)
 
   return (
     <div className="dashboard">
+      <h2 className="page-title view-title">Dashboard</h2>
       <p className="dashboard-subtitle">
         Active projects, soonest deadline first.
       </p>
-      <ProjectList
-        projects={active}
-        loading={loading}
-        onSelect={onSelect}
-        emptyMessage="No active projects"
-      />
+      <ProjectList projects={active} loading={loading} emptyMessage="No active projects" />
     </div>
   )
 }

@@ -1,4 +1,8 @@
-function ProjectList({ projects, loading, onSelect, emptyMessage }) {
+import { useNavigate } from 'react-router-dom'
+
+function ProjectList({ projects, loading, emptyMessage }) {
+  const navigate = useNavigate()
+
   return (
     <ul className="project-list">
       {loading && <li className="empty">Loading...</li>}
@@ -9,7 +13,7 @@ function ProjectList({ projects, loading, onSelect, emptyMessage }) {
             className={
               project.status === 'Archived' ? 'clickable archived' : 'clickable'
             }
-            onClick={() => onSelect(project)}
+            onClick={() => navigate(`/projects/${project.id}`)}
           >
             <div className="project-name">{project.name}</div>
             <div className="project-goal">{project.goal}</div>

@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import AppHeader from './AppHeader'
 import GanttChart from './GanttChart'
 import { DOCUMENT_TYPES } from './documentTypes'
 
-function ProjectDetail({ project, onBack, onProjectUpdated, onHome }) {
+function ProjectDetail({ project }) {
   const [currentProject, setCurrentProject] = useState(project)
   const [archiving, setArchiving] = useState(false)
   const [tasks, setTasks] = useState([])
@@ -171,7 +172,6 @@ function ProjectDetail({ project, onBack, onProjectUpdated, onHome }) {
     }
 
     setCurrentProject(data)
-    onProjectUpdated(data)
   }
 
   const activeDocType = DOCUMENT_TYPES.find((d) => d.key === activeDocKey)
@@ -179,11 +179,11 @@ function ProjectDetail({ project, onBack, onProjectUpdated, onHome }) {
 
   return (
     <div className="app">
-      <AppHeader onHome={onHome} />
+      <AppHeader />
 
-      <button type="button" className="btn-secondary back-link" onClick={onBack}>
+      <Link to="/projects" className="btn-secondary back-link">
         &larr; Back to projects
-      </button>
+      </Link>
 
       <div className="section-header project-detail-header">
         <h2 className="page-title">{currentProject.name}</h2>
