@@ -8,17 +8,33 @@ function pickTickIntervalDays(totalDays) {
   return candidates.find((c) => totalDays / c <= 15) || 7
 }
 
-function computeDateTicks(rangeStart, rangeEndRaw) {
-  const totalDays = Math.round((rangeEndRaw - rangeStart) / DAY_MS)
-  const tickDays = pickTickIntervalDays(totalDays || 1)
+// A "MM-DD" label needs about this many pixels to itself before it starts
+// touching its neighbor at the chart's 11px tick font size.
+const TICK_LABEL_WIDTH_PX = 34
+
+// Ticks start at the weekly-or-finer interval, then widen just enough (in
+// whole days, not forced to a round multiple like 7/14/21 - rounding a
+// barely-too-tight weekly interval up to the next multiple overshoots to
+// double the spacing for almost no reason) to keep labels from overlapping
+// at the *actual measured* track width. A percentage-of-range guess isn't
+// reliable here since a fixed-width label doesn't scale with the range,
+// only the available pixels do.
+function computeDateTicks(rangeStart, rangeEndRaw, trackWidth) {
+  const totalSpan = rangeEndRaw - rangeStart || DAY_MS
+  const totalDays = Math.round(totalSpan / DAY_MS)
+  const baseTickDays = pickTickIntervalDays(totalDays || 1)
+
+  const pxPerDay = trackWidth / (totalDays || 1)
+  const minStepDays = TICK_LABEL_WIDTH_PX / Math.max(pxPerDay, 0.01)
+  const tickDays = Math.max(baseTickDays, Math.ceil(minStepDays))
+
   const ticks = []
   for (let d = 0; d <= totalDays; d += tickDays) ticks.push(rangeStart + d * DAY_MS)
 
   const last = ticks[ticks.length - 1]
   if (last !== rangeEndRaw) {
-    // Avoid a sliver-thin gap between the last regular tick and the range
-    // end by merging them instead of both rendering their own label.
-    if (rangeEndRaw - last < tickDays * DAY_MS * 0.35) {
+    const lastPx = ((last - rangeStart) / totalSpan) * trackWidth
+    if (trackWidth - lastPx < TICK_LABEL_WIDTH_PX) {
       ticks[ticks.length - 1] = rangeEndRaw
     } else {
       ticks.push(rangeEndRaw)
@@ -44,15 +60,20 @@ function formatLongDate(ms) {
 
 function GanttChart({ project, tasks }) {
   const chartRef = useRef(null)
+  const trackRef = useRef(null)
   const barRefs = useRef({})
   const [depLines, setDepLines] = useState([])
+  // Conservative fallback for the first paint, before the real track width
+  // is measured - deliberately on the narrow side so an early render never
+  // shows crowded ticks (see the layout effect below).
+  const [trackWidth, setTrackWidth] = useState(400)
   const [error, setError] = useState(null)
   const [exportingPdf, setExportingPdf] = useState(false)
 
   const { bars, unscheduled, rangeStart, rangeEndRaw, totalSpan, todayInRange, todayMs } =
     computeGanttLayout(tasks)
   const todayPct = todayInRange ? ((todayMs - rangeStart) / totalSpan) * 100 : null
-  const dateTicks = bars.length > 0 ? computeDateTicks(rangeStart, rangeEndRaw) : []
+  const dateTicks = bars.length > 0 ? computeDateTicks(rangeStart, rangeEndRaw, trackWidth) : []
 
   // Grid rows are 1-indexed: row 1 is the date-range header, rows 2..N+1 are bars.
   const totalRows = bars.length + 1
@@ -67,6 +88,10 @@ function GanttChart({ project, tasks }) {
     function measure() {
       const container = chartRef.current
       if (!container) return
+
+      if (trackRef.current) {
+        setTrackWidth(trackRef.current.getBoundingClientRect().width)
+      }
 
       const containerRect = container.getBoundingClientRect()
       const lines = []
@@ -172,15 +197,14 @@ function GanttChart({ project, tasks }) {
               aria-hidden="true"
             />
             <div
+              ref={trackRef}
               className="gantt-row-track gantt-range-track gantt-row-header"
               style={{ gridRow: 1, gridColumn: 2 }}
             >
-              {dateTicks.map((tickMs, i) => (
+              {dateTicks.map((tickMs) => (
                 <span
                   key={tickMs}
-                  className={`gantt-tick-label ${i === 0 ? 'first' : ''} ${
-                    i === dateTicks.length - 1 ? 'last' : ''
-                  }`}
+                  className="gantt-tick-label"
                   style={{ left: `${((tickMs - rangeStart) / totalSpan) * 100}%` }}
                 >
                   {formatTick(tickMs)}
@@ -256,6 +280,34 @@ function GanttChart({ project, tasks }) {
               </svg>
             )}
           </div>
+        </div>
+      )}
+
+      {bars.length > 0 && (
+        <div className="gantt-legend">
+          <span className="gantt-legend-item">
+            <span className="gantt-legend-swatch bar" />
+            Task (start–due)
+          </span>
+          <span className="gantt-legend-item">
+            <span className="gantt-legend-swatch dot" />
+            Single date only
+          </span>
+          <span className="gantt-legend-item">
+            <span className="gantt-legend-swatch bar completed" />
+            Completed
+          </span>
+          <span className="gantt-legend-item">
+            <svg className="gantt-legend-arrow" viewBox="0 0 20 10" width="20" height="10" aria-hidden="true">
+              <line x1="0" y1="5" x2="14" y2="5" stroke="#94a3b8" strokeWidth="1.5" />
+              <path d="M14,2 L20,5 L14,8 Z" fill="#94a3b8" />
+            </svg>
+            Dependency
+          </span>
+          <span className="gantt-legend-item">
+            <span className="gantt-legend-swatch today-line" />
+            Today
+          </span>
         </div>
       )}
 

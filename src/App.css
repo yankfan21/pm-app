@@ -539,7 +539,13 @@
   overflow-y: visible;
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 4px 16px 10px;
+  /* Extra left/right padding vs. other sections: the first/last date-tick
+     labels are centered on the 0%/100% edge of the track like every other
+     tick (see .gantt-tick-label below), so they overhang the edge by
+     roughly half their own width - this padding is what keeps that
+     overhang from getting clipped by overflow-x: auto instead of just
+     sitting in the gutter. */
+  padding: 4px 24px 10px;
 }
 
 .gantt-chart {
@@ -584,14 +590,6 @@
   top: 0;
   transform: translateX(-50%);
   white-space: nowrap;
-}
-
-.gantt-tick-label.first {
-  transform: translateX(0);
-}
-
-.gantt-tick-label.last {
-  transform: translateX(-100%);
 }
 
 .gantt-today-note {
@@ -650,6 +648,55 @@
 
 .gantt-dep-arrowhead {
   fill: #94a3b8;
+}
+
+.gantt-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 18px;
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--text);
+}
+
+.gantt-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gantt-legend-swatch {
+  display: inline-block;
+  flex-shrink: 0;
+  border-radius: 3px;
+}
+
+.gantt-legend-swatch.bar {
+  width: 20px;
+  height: 10px;
+  background: var(--accent);
+}
+
+.gantt-legend-swatch.bar.completed {
+  background: #22c55e;
+}
+
+.gantt-legend-swatch.dot {
+  width: 7px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+.gantt-legend-swatch.today-line {
+  width: 0;
+  height: 12px;
+  border-left: 2px dashed #ef4444;
+}
+
+.gantt-legend-arrow {
+  flex-shrink: 0;
 }
 
 .gantt-unscheduled {

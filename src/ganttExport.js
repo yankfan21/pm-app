@@ -197,7 +197,9 @@ export async function exportGanttPdf(project, tasks) {
 
   const frameX0 = marginX
   const frameX1 = pageWidth - marginX
-  const frameTop = 76
+  // Extra headroom above the frame so the "TODAY" label has its own row,
+  // clear of the date-tick labels at any X position (see below).
+  const frameTop = 84
   const chartX0 = frameX0 + 14
   const chartX1 = frameX1 - 14
   const chartWidth = chartX1 - chartX0
@@ -216,16 +218,19 @@ export async function exportGanttPdf(project, tasks) {
   doc.setDrawColor(...GRIDLINE)
   doc.roundedRect(frameX0, frameTop, frameX1 - frameX0, frameBottom - frameTop, 6, 6, 'S')
 
-  // Vertical date gridlines + axis labels
+  // Vertical date gridlines + axis labels, always at a consistent interval
+  // regardless of where "today" falls - it renders as a separate overlay
+  // (own line, own label row above the frame) rather than competing for a
+  // slot in this list, so it can never displace a regular tick.
   const totalDays = Math.round(totalSpan / DAY_MS)
   const tickDays = pickTickIntervalDays(totalDays)
   doc.setFontSize(7)
   doc.setFont('helvetica', 'normal')
   // A short date label like "07-01" needs roughly this much horizontal room
-  // to itself - used to drop any tick (including the always-shown range end)
-  // that would otherwise render close enough to another label to overlap it.
+  // to itself - used to drop the always-shown range-end tick if it would
+  // otherwise render close enough to the last regular tick to overlap it.
   const MIN_LABEL_GAP = 26
-  let tickMsList = []
+  const tickMsList = []
   for (let d = 0; d <= totalDays; d += tickDays) tickMsList.push(rangeStart + d * DAY_MS)
   const lastRegular = tickMsList[tickMsList.length - 1]
   if (lastRegular !== rangeEndRaw) {
@@ -234,12 +239,6 @@ export async function exportGanttPdf(project, tasks) {
     } else {
       tickMsList.push(rangeEndRaw)
     }
-  }
-  // The dashed "today" line gets its own label drawn separately below - drop
-  // any regular tick that would land close enough to collide with it.
-  if (todayInRange) {
-    const todayX = xForMs(todayMs)
-    tickMsList = tickMsList.filter((ms) => Math.abs(xForMs(ms) - todayX) >= MIN_LABEL_GAP)
   }
 
   tickMsList.forEach((ms) => {
@@ -277,8 +276,10 @@ export async function exportGanttPdf(project, tasks) {
     doc.roundedRect(barX0, barY, barWidth, barHeight, 2.5, 2.5, 'F')
   })
 
-  // Today marker (drawn under the dependency arrows/labels so it doesn't
-  // visually compete with them).
+  // Today marker: a dashed line plus its own label row above the frame
+  // entirely, well clear of the date-tick labels at axisLabelY - so it
+  // coexists with whatever regular tick happens to land nearby instead of
+  // needing to displace one to avoid overlapping it.
   if (todayInRange) {
     const x = xForMs(todayMs)
     doc.setDrawColor(...TODAY_RED)
@@ -289,7 +290,7 @@ export async function exportGanttPdf(project, tasks) {
     doc.setFontSize(7)
     doc.setFont('helvetica', 'bold')
     doc.setTextColor(...TODAY_RED)
-    doc.text('TODAY', x, frameTop + 10, { align: 'center' })
+    doc.text('TODAY', x, frameTop - 12, { align: 'center' })
   }
 
   // Dependency arrows: a straight finish-to-start line from the right edge
@@ -342,10 +343,51 @@ export async function exportGanttPdf(project, tasks) {
     }
   })
 
+  // Legend explaining the visual vocabulary, so the chart is readable as a
+  // standalone document without needing the app for context. Shown as a
+  // fixed reference (not conditioned on what's actually present in this
+  // particular chart) for consistency across exports.
+  const legendY = frameBottom + 22
+  doc.setFontSize(8)
+  doc.setFont('helvetica', 'normal')
+  let lx = marginX
+  const swatchH = 8
+
+  function advance(swatchW, label) {
+    doc.setTextColor(...DARK_TEXT)
+    doc.text(label, lx + swatchW + 5, legendY, { baseline: 'middle' })
+    lx += swatchW + 5 + doc.getTextWidth(label) + 16
+  }
+
+  doc.setFillColor(...NAVY)
+  doc.roundedRect(lx, legendY - swatchH / 2, 18, swatchH, 2, 2, 'F')
+  advance(18, 'Task (start–due)')
+
+  doc.setFillColor(...NAVY)
+  doc.roundedRect(lx, legendY - swatchH / 2, 6, swatchH, 1.5, 1.5, 'F')
+  advance(6, 'Single date only')
+
+  doc.setFillColor(...GREEN)
+  doc.roundedRect(lx, legendY - swatchH / 2, 18, swatchH, 2, 2, 'F')
+  advance(18, 'Completed')
+
+  doc.setDrawColor(...DEP_LINE)
+  doc.setLineWidth(1)
+  doc.line(lx, legendY, lx + 13, legendY)
+  doc.setFillColor(...DEP_LINE)
+  doc.triangle(lx + 18, legendY, lx + 13, legendY - 2.5, lx + 13, legendY + 2.5, 'F')
+  advance(18, 'Dependency')
+
+  doc.setDrawColor(...TODAY_RED)
+  doc.setLineDashPattern([2, 1.5], 0)
+  doc.line(lx + 9, legendY - swatchH / 2, lx + 9, legendY + swatchH / 2)
+  doc.setLineDashPattern([], 0)
+  advance(18, 'Today')
+
   // Unscheduled tasks, listed below the chart so the PDF stays a complete
   // standalone record even though they have nothing to plot.
   if (unscheduled.length > 0) {
-    let y = frameBottom + 24
+    let y = legendY + 26
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(9)
     doc.setTextColor(...MUTED_TEXT)
