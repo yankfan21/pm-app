@@ -71,7 +71,7 @@ function GanttChart({ project, tasks }) {
   const [exportingPdf, setExportingPdf] = useState(false)
 
   const { bars, unscheduled, rangeStart, rangeEndRaw, totalSpan, todayInRange, todayMs } =
-    computeGanttLayout(tasks)
+    computeGanttLayout(tasks, project)
   const todayPct = todayInRange ? ((todayMs - rangeStart) / totalSpan) * 100 : null
   const dateTicks = bars.length > 0 ? computeDateTicks(rangeStart, rangeEndRaw, trackWidth) : []
 

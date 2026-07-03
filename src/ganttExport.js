@@ -184,7 +184,7 @@ function formatTickLabel(ms) {
 // inside the bar" is exact rather than approximated from a rendered clone.
 export async function exportGanttPdf(project, tasks) {
   const { bars, unscheduled, rangeStart, rangeEndRaw, totalSpan, todayInRange, todayMs } =
-    computeGanttLayout(tasks)
+    computeGanttLayout(tasks, project)
 
   const doc = new jsPDF({ unit: 'pt', format: 'letter', orientation: 'landscape' })
   const marginX = 40
