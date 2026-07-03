@@ -163,6 +163,19 @@ function pickTickIntervalDays(totalDays) {
   return candidates.find((c) => totalDays / c <= 14) || 180
 }
 
+// ms values here (rangeStart, tick positions, todayMs) all come from
+// ganttLayout's parseDay(), which is local-midnight. Formatting them via
+// toISOString() would read that back as a *UTC* calendar date instead,
+// which disagrees with the local one for part of the day depending on the
+// viewer's offset - use local getters instead, same as the live chart's
+// own tick formatting.
+function formatTickLabel(ms) {
+  const d = new Date(ms)
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${mm}-${dd}`
+}
+
 // Drawn natively with jsPDF rather than screenshotting the DOM - that
 // approach inherited the live page's CSS (including theme-dependent colors
 // that turned invisible on the forced-white export background) and made it
@@ -246,7 +259,7 @@ export async function exportGanttPdf(project, tasks) {
     doc.setDrawColor(...GRIDLINE)
     doc.line(x, gridTop, x, gridBottom)
     doc.setTextColor(...MUTED_TEXT)
-    const label = new Date(ms).toISOString().slice(5, 10)
+    const label = formatTickLabel(ms)
     doc.text(label, x, axisLabelY, { align: 'center' })
   })
 

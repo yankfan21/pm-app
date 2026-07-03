@@ -8,6 +8,20 @@ export function parseDay(dateStr) {
   return new Date(`${dateStr}T00:00:00`).getTime()
 }
 
+// "What day is it right now" has to be read via local getters, not
+// toISOString() (which reports the UTC calendar date). Those two disagree
+// whenever the viewer is far enough from UTC that the date has already
+// rolled over in one but not the other - e.g. anyone west of UTC in the
+// evening sees toISOString() report tomorrow, since UTC has already
+// crossed midnight while it's still "today" locally.
+function todayLocalDateString() {
+  const now = new Date()
+  const y = now.getFullYear()
+  const m = String(now.getMonth() + 1).padStart(2, '0')
+  const d = String(now.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
 // A task needs at least one date to appear on the timeline - if only one of
 // start/due is set, it's plotted as a single-day bar on that date.
 export function computeGanttLayout(tasks) {
@@ -26,7 +40,7 @@ export function computeGanttLayout(tasks) {
   const rangeEnd = rangeEndRaw > rangeStart ? rangeEndRaw : rangeStart + DAY_MS
   const totalSpan = rangeEnd - rangeStart
 
-  const todayMs = parseDay(new Date().toISOString().slice(0, 10))
+  const todayMs = parseDay(todayLocalDateString())
   const todayInRange = bars.length > 0 && todayMs >= rangeStart && todayMs <= rangeEnd
 
   return { bars, unscheduled, rangeStart, rangeEnd, rangeEndRaw, totalSpan, todayMs, todayInRange }
