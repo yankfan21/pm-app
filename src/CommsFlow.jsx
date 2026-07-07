@@ -1,8 +1,14 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
 import QaStepper from './QaStepper'
+import { COMMS_VARIANTS } from './commsSections'
 
-function RiskLogFlow({ project, charter, brief, onGenerated, onClose }) {
+// Shared Q&A generation flow for both Stakeholder Comms Plan document types
+// (Exec Comms Plan, Team Newsletter). The two documents share one Q&A
+// intake - the "variant" prop only changes the title and which edge
+// function "generate" branch produces the output.
+function CommsFlow({ variant, project, charter, brief, riskLog, onGenerated, onClose }) {
+  const { title } = COMMS_VARIANTS[variant]
   const [phase, setPhase] = useState('loading-questions')
   const [questions, setQuestions] = useState([])
   const [answers, setAnswers] = useState({})
@@ -16,8 +22,8 @@ function RiskLogFlow({ project, charter, brief, onGenerated, onClose }) {
     setPhase('loading-questions')
     setError(null)
 
-    const { data, error } = await supabase.functions.invoke('risk-log', {
-      body: { action: 'questions', project, charter, brief },
+    const { data, error } = await supabase.functions.invoke('comms-plan', {
+      body: { action: 'questions', variant, project, charter, brief, riskLog },
     })
 
     if (error || data?.error) {
@@ -41,8 +47,8 @@ function RiskLogFlow({ project, charter, brief, onGenerated, onClose }) {
         answer: answers[q.id],
       }))
 
-    const { data, error } = await supabase.functions.invoke('risk-log', {
-      body: { action: 'generate', project, charter, brief, answers: answerList },
+    const { data, error } = await supabase.functions.invoke('comms-plan', {
+      body: { action: 'generate', variant, project, charter, brief, riskLog, answers: answerList },
     })
 
     if (error || data?.error) {
@@ -51,7 +57,7 @@ function RiskLogFlow({ project, charter, brief, onGenerated, onClose }) {
       return
     }
 
-    const saveError = await onGenerated(data.risks || [], answerList)
+    const saveError = await onGenerated(data, answerList)
     if (saveError) {
       setError(saveError)
       setPhase('answering')
@@ -61,7 +67,7 @@ function RiskLogFlow({ project, charter, brief, onGenerated, onClose }) {
   return (
     <div className="charter">
       <div className="section-header">
-        <h3 className="charter-heading">Generate Risk Log</h3>
+        <h3 className="charter-heading">Generate {title}</h3>
         <div className="charter-actions">
           <button type="button" className="btn-secondary" onClick={onClose}>
             Cancel
@@ -99,8 +105,8 @@ function RiskLogFlow({ project, charter, brief, onGenerated, onClose }) {
         {phase === 'answering' && questions.length === 0 && (
           <>
             <p className="charter-status">
-              Nothing genuinely missing &mdash; the project data already covers the basics. You
-              can still generate a risk log from what's known.
+              Nothing genuinely missing &mdash; the project data already cover the basics. You
+              can still generate a {title.toLowerCase()} from what's known.
             </p>
             <div className="modal-actions">
               <button
@@ -111,7 +117,7 @@ function RiskLogFlow({ project, charter, brief, onGenerated, onClose }) {
                 Cancel
               </button>
               <button type="button" className="btn-primary" onClick={handleSubmit}>
-                Generate Risk Log
+                Generate {title}
               </button>
             </div>
           </>
@@ -123,7 +129,7 @@ function RiskLogFlow({ project, charter, brief, onGenerated, onClose }) {
             answers={answers}
             onAnswerChange={(id, value) => setAnswers((prev) => ({ ...prev, [id]: value }))}
             onSubmit={handleSubmit}
-            submitLabel="Generate Risk Log"
+            submitLabel={`Generate ${title}`}
             loadingLabel="Generating..."
             submitting={phase === 'generating'}
             error={error}
@@ -135,4 +141,4 @@ function RiskLogFlow({ project, charter, brief, onGenerated, onClose }) {
   )
 }
 
-export default RiskLogFlow
+export default CommsFlow

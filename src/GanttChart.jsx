@@ -58,7 +58,7 @@ function formatLongDate(ms) {
   })
 }
 
-function GanttChart({ project, tasks }) {
+function GanttChart({ project, tasks, expanded, onToggle }) {
   const chartRef = useRef(null)
   const trackRef = useRef(null)
   const barRefs = useRef({})
@@ -81,9 +81,12 @@ function GanttChart({ project, tasks }) {
   // Dependency lines are drawn from measured bar positions (not percentages)
   // because rows have gaps between them - a percentage-of-total-height
   // formula doesn't linearly map to "row center" once gaps are involved.
-  // Re-measure whenever the bars change or the window resizes (the chart's
-  // own horizontal scroll doesn't need a re-measure: the SVG overlay scrolls
-  // together with the bars, so their relative offsets stay constant).
+  // Re-measure whenever the bars change, the window resizes, or the section
+  // expands (refs are null while collapsed, since the chart isn't mounted;
+  // expanding needs a fresh measurement rather than relying on stale state
+  // from before it was hidden). The chart's own horizontal scroll doesn't
+  // need a re-measure: the SVG overlay scrolls together with the bars, so
+  // their relative offsets stay constant.
   useLayoutEffect(() => {
     function measure() {
       const container = chartRef.current
@@ -121,7 +124,7 @@ function GanttChart({ project, tasks }) {
     window.addEventListener('resize', measure)
     return () => window.removeEventListener('resize', measure)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tasks])
+  }, [tasks, expanded])
 
   async function handleExportExcel() {
     setError(null)
@@ -153,8 +156,22 @@ function GanttChart({ project, tasks }) {
 
   return (
     <div className="gantt">
-      <div className="section-header">
-        <h2 className="charter-heading">Gantt Chart</h2>
+      <h2 className="tasks-heading">
+        <button
+          type="button"
+          className="collapsible-toggle"
+          onClick={onToggle}
+          aria-expanded={expanded}
+        >
+          <span className={`chevron ${expanded ? '' : 'collapsed'}`} aria-hidden="true">
+            ▾
+          </span>
+          <span className={`status-dot ${bars.length > 0 ? 'done' : 'pending'}`} aria-hidden="true" />
+          Gantt Chart
+        </button>
+      </h2>
+
+      {expanded && (
         <div className="charter-actions">
           <button type="button" className="btn-secondary" onClick={handleExportExcel}>
             Export Excel
@@ -168,23 +185,23 @@ function GanttChart({ project, tasks }) {
             {exportingPdf ? 'Exporting...' : 'Export PDF'}
           </button>
         </div>
-      </div>
+      )}
 
-      {error && <p className="error">{error}</p>}
+      {expanded && error && <p className="error">{error}</p>}
 
-      {tasks.length === 0 && <p className="charter-status">No tasks yet.</p>}
+      {expanded && tasks.length === 0 && <p className="charter-status">No tasks yet.</p>}
 
-      {tasks.length > 0 && bars.length === 0 && (
+      {expanded && tasks.length > 0 && bars.length === 0 && (
         <p className="charter-status">
           Add a start or due date to a task to see it on the timeline.
         </p>
       )}
 
-      {todayInRange && (
+      {expanded && todayInRange && (
         <p className="gantt-today-note">Today — {formatLongDate(todayMs)}</p>
       )}
 
-      {bars.length > 0 && (
+      {expanded && bars.length > 0 && (
         <div className="gantt-wrap">
           <div
             className="gantt-chart"
@@ -283,7 +300,7 @@ function GanttChart({ project, tasks }) {
         </div>
       )}
 
-      {bars.length > 0 && (
+      {expanded && bars.length > 0 && (
         <div className="gantt-legend">
           <span className="gantt-legend-item">
             <span className="gantt-legend-swatch bar" />
@@ -311,7 +328,7 @@ function GanttChart({ project, tasks }) {
         </div>
       )}
 
-      {unscheduled.length > 0 && (
+      {expanded && unscheduled.length > 0 && (
         <div className="gantt-unscheduled">
           <p className="gantt-unscheduled-label">Unscheduled</p>
           <ul className="gantt-unscheduled-list">

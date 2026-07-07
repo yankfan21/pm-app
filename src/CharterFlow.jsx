@@ -59,55 +59,56 @@ function CharterFlow({ project, onGenerated, onClose }) {
   }
 
   return (
-    <div className="modal-overlay">
-      <div className="modal">
-        <button type="button" className="modal-close" onClick={onClose}>
-          &times;
-        </button>
-
-        <div className="modal-step">
-          <h2>Generate Charter</h2>
-
-          {phase === 'loading-questions' && (
-            <p className="charter-status">Thinking of a few questions...</p>
-          )}
-
-          {phase === 'error' && (
-            <>
-              <p className="error">{error}</p>
-              <div className="modal-actions">
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={onClose}
-                >
-                  Close
-                </button>
-                <button
-                  type="button"
-                  className="btn-primary"
-                  onClick={loadQuestions}
-                >
-                  Retry
-                </button>
-              </div>
-            </>
-          )}
-
-          {(phase === 'answering' || phase === 'generating') && (
-            <QaStepper
-              questions={questions}
-              answers={answers}
-              onAnswerChange={(id, value) => setAnswers((prev) => ({ ...prev, [id]: value }))}
-              onSubmit={handleSubmit}
-              submitLabel="Generate Charter"
-              loadingLabel="Generating..."
-              submitting={phase === 'generating'}
-              error={error}
-              onCancel={onClose}
-            />
-          )}
+    <div className="charter">
+      <div className="section-header">
+        <h3 className="charter-heading">Generate Charter</h3>
+        <div className="charter-actions">
+          <button type="button" className="btn-secondary" onClick={onClose}>
+            Cancel
+          </button>
         </div>
+      </div>
+
+      <div className="modal-step">
+        {phase === 'loading-questions' && (
+          <p className="charter-status">Thinking of a few questions...</p>
+        )}
+
+        {phase === 'error' && (
+          <>
+            <p className="error">{error}</p>
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={onClose}
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={loadQuestions}
+              >
+                Retry
+              </button>
+            </div>
+          </>
+        )}
+
+        {(phase === 'answering' || phase === 'generating') && (
+          <QaStepper
+            questions={questions}
+            answers={answers}
+            onAnswerChange={(id, value) => setAnswers((prev) => ({ ...prev, [id]: value }))}
+            onSubmit={handleSubmit}
+            submitLabel="Generate Charter"
+            loadingLabel="Generating..."
+            submitting={phase === 'generating'}
+            error={error}
+            onCancel={onClose}
+          />
+        )}
       </div>
     </div>
   )

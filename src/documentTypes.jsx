@@ -4,6 +4,8 @@ import RequirementsFlow from './RequirementsFlow'
 import RequirementsView from './RequirementsView'
 import RiskLogFlow from './RiskLogFlow'
 import RiskLogView from './RiskLogView'
+import CommsFlow from './CommsFlow'
+import CommsView from './CommsView'
 
 // Single source of truth for every AI-generated project document type.
 // The Documents checklist, generate flow, and view on the project detail
@@ -47,5 +49,25 @@ export const DOCUMENT_TYPES = [
     ViewComponent: RiskLogView,
     context: (docs) => ({ charter: docs.charter, brief: docs.requirements_brief }),
     buildInsert: (result) => ({ risks: result }),
+  },
+  {
+    key: 'exec_comms_plan',
+    label: 'Exec Comms Plan',
+    table: 'exec_comms_plans',
+    docProp: 'doc',
+    FlowComponent: (props) => <CommsFlow variant="exec" {...props} />,
+    ViewComponent: (props) => <CommsView variant="exec" {...props} />,
+    context: (docs) => ({ charter: docs.charter, brief: docs.requirements_brief, riskLog: docs.risk_log }),
+    buildInsert: (result) => result,
+  },
+  {
+    key: 'team_newsletter',
+    label: 'Team Newsletter',
+    table: 'team_newsletters',
+    docProp: 'doc',
+    FlowComponent: (props) => <CommsFlow variant="newsletter" {...props} />,
+    ViewComponent: (props) => <CommsView variant="newsletter" {...props} />,
+    context: (docs) => ({ charter: docs.charter, brief: docs.requirements_brief, riskLog: docs.risk_log }),
+    buildInsert: (result) => result,
   },
 ]

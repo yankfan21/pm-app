@@ -14,12 +14,26 @@ export function parseDay(dateStr) {
 // rolled over in one but not the other - e.g. anyone west of UTC in the
 // evening sees toISOString() report tomorrow, since UTC has already
 // crossed midnight while it's still "today" locally.
-function todayLocalDateString() {
+export function todayLocalDateString() {
   const now = new Date()
   const y = now.getFullYear()
   const m = String(now.getMonth() + 1).padStart(2, '0')
   const d = String(now.getDate()).padStart(2, '0')
   return `${y}-${m}-${d}`
+}
+
+// Adds (or subtracts, for negative n) whole days to a "YYYY-MM-DD" date
+// string, staying in local calendar time throughout (parse via the same
+// T00:00:00-suffixed local-time constructor used everywhere else in this
+// file) so it never drifts a day off across a UTC offset boundary the way
+// pure ms-based arithmetic could.
+export function addDaysLocal(dateStr, n) {
+  const d = new Date(`${dateStr}T00:00:00`)
+  d.setDate(d.getDate() + n)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
 }
 
 // A task needs at least one date to appear on the timeline - if only one of

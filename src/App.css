@@ -474,6 +474,11 @@
   gap: 8px;
 }
 
+.doc-checklist-item {
+  display: flex;
+  flex-direction: column;
+}
+
 .doc-checklist-row {
   display: flex;
   align-items: center;
@@ -502,8 +507,28 @@
 }
 
 .doc-checklist-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-weight: 600;
   color: var(--text-h);
+}
+
+.status-dot {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #94a3b8;
+}
+
+.status-dot.done {
+  background: #22c55e;
+}
+
+.status-dot.pending {
+  background: #94a3b8;
 }
 
 .doc-status-badge {
@@ -735,7 +760,7 @@
 }
 
 .charter {
-  margin-top: 40px;
+  margin-top: 16px;
 }
 
 .charter-heading {
@@ -1306,6 +1331,52 @@ textarea.risk-cell-input {
 
 .risk-add-btn {
   margin-top: 12px;
+}
+
+.ai-task-gen-trigger {
+  margin: 4px 0 20px;
+}
+
+.task-gen-table select,
+.task-gen-table input[type='number'] {
+  display: block;
+  width: 100%;
+  min-width: 90px;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  color: var(--text-h);
+  cursor: pointer;
+}
+
+.task-gen-table input[type='number'] {
+  cursor: text;
+}
+
+.task-gen-table select:hover,
+.task-gen-table input[type='number']:hover {
+  background: rgba(127, 127, 127, 0.08);
+}
+
+.task-gen-table select:focus,
+.task-gen-table input[type='number']:focus {
+  outline: none;
+  border-color: var(--accent-border);
+  background: var(--bg);
+}
+
+.task-gen-table th:first-child,
+.task-gen-table td:first-child {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.task-gen-row-excluded {
+  opacity: 0.5;
 }
 
 .risk-suggestions {

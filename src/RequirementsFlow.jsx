@@ -59,77 +59,78 @@ function RequirementsFlow({ project, charter, onGenerated, onClose }) {
   }
 
   return (
-    <div className="modal-overlay">
-      <div className="modal">
-        <button type="button" className="modal-close" onClick={onClose}>
-          &times;
-        </button>
-
-        <div className="modal-step">
-          <h2>Generate Requirements Brief</h2>
-
-          {phase === 'loading-questions' && (
-            <p className="charter-status">Checking what's already known...</p>
-          )}
-
-          {phase === 'error' && (
-            <>
-              <p className="error">{error}</p>
-              <div className="modal-actions">
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={onClose}
-                >
-                  Close
-                </button>
-                <button
-                  type="button"
-                  className="btn-primary"
-                  onClick={loadQuestions}
-                >
-                  Retry
-                </button>
-              </div>
-            </>
-          )}
-
-          {phase === 'answering' && questions.length === 0 && (
-            <>
-              <p className="charter-status">
-                Nothing genuinely missing &mdash; the project data
-                {charter ? ' and charter' : ''} already cover the basics. You can still generate
-                a brief from what's known.
-              </p>
-              <div className="modal-actions">
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={onClose}
-                >
-                  Cancel
-                </button>
-                <button type="button" className="btn-primary" onClick={handleSubmit}>
-                  Generate Requirements Brief
-                </button>
-              </div>
-            </>
-          )}
-
-          {(phase === 'answering' || phase === 'generating') && questions.length > 0 && (
-            <QaStepper
-              questions={questions}
-              answers={answers}
-              onAnswerChange={(id, value) => setAnswers((prev) => ({ ...prev, [id]: value }))}
-              onSubmit={handleSubmit}
-              submitLabel="Generate Requirements Brief"
-              loadingLabel="Generating..."
-              submitting={phase === 'generating'}
-              error={error}
-              onCancel={onClose}
-            />
-          )}
+    <div className="charter">
+      <div className="section-header">
+        <h3 className="charter-heading">Generate Requirements Brief</h3>
+        <div className="charter-actions">
+          <button type="button" className="btn-secondary" onClick={onClose}>
+            Cancel
+          </button>
         </div>
+      </div>
+
+      <div className="modal-step">
+        {phase === 'loading-questions' && (
+          <p className="charter-status">Checking what's already known...</p>
+        )}
+
+        {phase === 'error' && (
+          <>
+            <p className="error">{error}</p>
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={onClose}
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={loadQuestions}
+              >
+                Retry
+              </button>
+            </div>
+          </>
+        )}
+
+        {phase === 'answering' && questions.length === 0 && (
+          <>
+            <p className="charter-status">
+              Nothing genuinely missing &mdash; the project data
+              {charter ? ' and charter' : ''} already cover the basics. You can still generate
+              a brief from what's known.
+            </p>
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={onClose}
+              >
+                Cancel
+              </button>
+              <button type="button" className="btn-primary" onClick={handleSubmit}>
+                Generate Requirements Brief
+              </button>
+            </div>
+          </>
+        )}
+
+        {(phase === 'answering' || phase === 'generating') && questions.length > 0 && (
+          <QaStepper
+            questions={questions}
+            answers={answers}
+            onAnswerChange={(id, value) => setAnswers((prev) => ({ ...prev, [id]: value }))}
+            onSubmit={handleSubmit}
+            submitLabel="Generate Requirements Brief"
+            loadingLabel="Generating..."
+            submitting={phase === 'generating'}
+            error={error}
+            onCancel={onClose}
+          />
+        )}
       </div>
     </div>
   )

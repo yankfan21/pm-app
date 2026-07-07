@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import AppHeader from './AppHeader'
 import GanttChart from './GanttChart'
+import TaskGenFlow from './TaskGenFlow'
 import { DOCUMENT_TYPES } from './documentTypes'
 
 function ProjectDetail({ project }) {
@@ -15,12 +16,22 @@ function ProjectDetail({ project }) {
   const [dependsOn, setDependsOn] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [tasksExpanded, setTasksExpanded] = useState(true)
 
   const [docs, setDocs] = useState({})
   const [docsLoading, setDocsLoading] = useState(true)
-  const [activeDocKey, setActiveDocKey] = useState(null)
+  // Which single section is expanded ('tasks' | 'gantt' | 'ai-tasks' | a
+  // DOCUMENT_TYPES key | null). One value, not a set, so opening any section
+  // collapses whatever was previously open - an accordion across the whole
+  // page. Every section starts collapsed, and this state is local to
+  // ProjectDetail, so leaving the page (a route change, since
+  // project-to-project navigation always goes back through the list)
+  // naturally resets it on return.
+  const [expandedSection, setExpandedSection] = useState(null)
   const [activeFlowKey, setActiveFlowKey] = useState(null)
+
+  function toggleSection(key) {
+    setExpandedSection((prev) => (prev === key ? null : key))
+  }
 
   useEffect(() => {
     async function loadTasks() {
@@ -76,7 +87,7 @@ function ProjectDetail({ project }) {
 
     setDocs((prev) => ({ ...prev, [docType.key]: data }))
     setActiveFlowKey(null)
-    setActiveDocKey(docType.key)
+    setExpandedSection(docType.key)
     return null
   }
 
@@ -178,9 +189,6 @@ function ProjectDetail({ project }) {
     setCurrentProject(data)
   }
 
-  const activeDocType = DOCUMENT_TYPES.find((d) => d.key === activeDocKey)
-  const activeFlowType = DOCUMENT_TYPES.find((d) => d.key === activeFlowKey)
-
   return (
     <div className="app">
       <AppHeader />
@@ -219,17 +227,41 @@ function ProjectDetail({ project }) {
         <button
           type="button"
           className="collapsible-toggle"
-          onClick={() => setTasksExpanded((prev) => !prev)}
-          aria-expanded={tasksExpanded}
+          onClick={() => toggleSection('tasks')}
+          aria-expanded={expandedSection === 'tasks'}
         >
-          <span className={`chevron ${tasksExpanded ? '' : 'collapsed'}`} aria-hidden="true">
+          <span className={`chevron ${expandedSection === 'tasks' ? '' : 'collapsed'}`} aria-hidden="true">
             ▾
           </span>
+          <span className={`status-dot ${tasks.length > 0 ? 'done' : 'pending'}`} aria-hidden="true" />
           Tasks
         </button>
       </h2>
 
-      {tasksExpanded && (
+      {docs.charter && (
+        <button
+          type="button"
+          className="btn-secondary ai-task-gen-trigger"
+          onClick={() => toggleSection('ai-tasks')}
+        >
+          {tasks.length > 0 ? 'Generate More Tasks from Charter' : 'Generate Starter Tasks from Charter'}
+        </button>
+      )}
+
+      {expandedSection === 'ai-tasks' && (
+        <TaskGenFlow
+          project={currentProject}
+          charter={docs.charter}
+          brief={docs.requirements_brief}
+          riskLog={docs.risk_log}
+          existingTasks={tasks.map((t) => ({ id: t.id, title: t.title, due_date: t.due_date }))}
+          onCommitted={(insertedTasks) => setTasks((prev) => [...prev, ...insertedTasks])}
+          onDone={() => setExpandedSection('tasks')}
+          onCancel={() => setExpandedSection((prev) => (prev === 'ai-tasks' ? null : prev))}
+        />
+      )}
+
+      {expandedSection === 'tasks' && (
         <form onSubmit={handleSubmit} className="task-form">
           <input
             type="text"
@@ -270,7 +302,7 @@ function ProjectDetail({ project }) {
 
       {error && <p className="error">{error}</p>}
 
-      {tasksExpanded && (
+      {expandedSection === 'tasks' && (
         <ul className="task-list">
           {loading && <li className="empty">Loading...</li>}
           {!loading &&
@@ -335,7 +367,14 @@ function ProjectDetail({ project }) {
         </ul>
       )}
 
-      {!loading && <GanttChart project={currentProject} tasks={tasks} />}
+      {!loading && (
+        <GanttChart
+          project={currentProject}
+          tasks={tasks}
+          expanded={expandedSection === 'gantt'}
+          onToggle={() => toggleSection('gantt')}
+        />
+      )}
 
       <h2 className="tasks-heading">Documents</h2>
 
@@ -346,56 +385,54 @@ function ProjectDetail({ project }) {
           {DOCUMENT_TYPES.map((docType) => {
             const doc = docs[docType.key]
             const isDone = doc != null
+            const isViewOpen = expandedSection === docType.key
+            const isFlowOpen = activeFlowKey === docType.key
+            const { ViewComponent, FlowComponent, docProp } = docType
+
             return (
-              <li key={docType.key}>
+              <li key={docType.key} className="doc-checklist-item">
                 <button
                   type="button"
-                  className={`doc-checklist-row ${activeDocKey === docType.key ? 'selected' : ''}`}
+                  className={`doc-checklist-row ${isViewOpen || isFlowOpen ? 'selected' : ''}`}
                   onClick={() =>
                     isDone
-                      ? setActiveDocKey((prev) => (prev === docType.key ? null : docType.key))
-                      : setActiveFlowKey(docType.key)
+                      ? toggleSection(docType.key)
+                      : setActiveFlowKey((prev) => (prev === docType.key ? null : docType.key))
                   }
                 >
-                  <span className="doc-checklist-label">{docType.label}</span>
+                  <span className="doc-checklist-label">
+                    <span className={`status-dot ${isDone ? 'done' : 'pending'}`} aria-hidden="true" />
+                    {docType.label}
+                  </span>
                   <span className={`doc-status-badge ${isDone ? 'done' : 'pending'}`}>
                     {isDone ? 'Generated' : 'Not started'}
                   </span>
                 </button>
+
+                {isViewOpen && doc && (
+                  <ViewComponent
+                    project={currentProject}
+                    {...{ [docProp]: doc }}
+                    {...docType.context(docs)}
+                    onUpdate={(updatedRow) => handleDocUpdated(docType, updatedRow)}
+                  />
+                )}
+
+                {isFlowOpen && (
+                  <FlowComponent
+                    project={currentProject}
+                    {...docType.context(docs)}
+                    onGenerated={(result, answerList) =>
+                      handleDocGenerated(docType, result, answerList)
+                    }
+                    onClose={() => setActiveFlowKey(null)}
+                  />
+                )}
               </li>
             )
           })}
         </ul>
       )}
-
-      {activeDocType &&
-        docs[activeDocType.key] &&
-        (() => {
-          const { ViewComponent, docProp } = activeDocType
-          return (
-            <ViewComponent
-              project={currentProject}
-              {...{ [docProp]: docs[activeDocType.key] }}
-              {...activeDocType.context(docs)}
-              onUpdate={(updatedRow) => handleDocUpdated(activeDocType, updatedRow)}
-            />
-          )
-        })()}
-
-      {activeFlowType &&
-        (() => {
-          const { FlowComponent } = activeFlowType
-          return (
-            <FlowComponent
-              project={currentProject}
-              {...activeFlowType.context(docs)}
-              onGenerated={(result, answerList) =>
-                handleDocGenerated(activeFlowType, result, answerList)
-              }
-              onClose={() => setActiveFlowKey(null)}
-            />
-          )
-        })()}
     </div>
   )
 }
