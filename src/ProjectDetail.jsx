@@ -413,7 +413,7 @@ function ProjectDetail({ project }) {
                   <ViewComponent
                     project={currentProject}
                     {...{ [docProp]: doc }}
-                    {...docType.context(docs)}
+                    {...docType.context(docs, tasks)}
                     onUpdate={(updatedRow) => handleDocUpdated(docType, updatedRow)}
                   />
                 )}
@@ -421,7 +421,7 @@ function ProjectDetail({ project }) {
                 {isFlowOpen && (
                   <FlowComponent
                     project={currentProject}
-                    {...docType.context(docs)}
+                    {...docType.context(docs, tasks)}
                     onGenerated={(result, answerList) =>
                       handleDocGenerated(docType, result, answerList)
                     }

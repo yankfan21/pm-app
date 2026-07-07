@@ -6,6 +6,8 @@ import RiskLogFlow from './RiskLogFlow'
 import RiskLogView from './RiskLogView'
 import CommsFlow from './CommsFlow'
 import CommsView from './CommsView'
+import BudgetFlow from './BudgetFlow'
+import BudgetView from './BudgetView'
 
 // Single source of truth for every AI-generated project document type.
 // The Documents checklist, generate flow, and view on the project detail
@@ -15,8 +17,9 @@ import CommsView from './CommsView'
 //
 // - table: the Supabase table (one row per project, project_id column)
 // - docProp: the prop name the View/Flow components use for "this document"
-// - context(docs): extra props (other already-generated docs) the
-//   Flow/View components need for cross-document context
+// - context(docs, tasks): extra props (other already-generated docs, plus
+//   the project's live task list) the Flow/View components need for
+//   cross-document context
 // - buildInsert(result): maps what the Flow's onGenerated callback receives
 //   into the column(s) to insert
 export const DOCUMENT_TYPES = [
@@ -69,5 +72,19 @@ export const DOCUMENT_TYPES = [
     ViewComponent: (props) => <CommsView variant="newsletter" {...props} />,
     context: (docs) => ({ charter: docs.charter, brief: docs.requirements_brief, riskLog: docs.risk_log }),
     buildInsert: (result) => result,
+  },
+  {
+    key: 'budget_tracker',
+    label: 'Budget Tracker',
+    table: 'budget_trackers',
+    docProp: 'budget',
+    FlowComponent: BudgetFlow,
+    ViewComponent: BudgetView,
+    context: (docs, tasks) => ({
+      charter: docs.charter,
+      brief: docs.requirements_brief,
+      tasks: tasks || [],
+    }),
+    buildInsert: (result) => ({ line_items: result }),
   },
 ]
