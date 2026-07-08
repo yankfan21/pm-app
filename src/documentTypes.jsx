@@ -10,6 +10,8 @@ import BudgetFlow from './BudgetFlow'
 import BudgetView from './BudgetView'
 import StatusUpdateFlow from './StatusUpdateFlow'
 import StatusUpdateHistory from './StatusUpdateHistory'
+import PostMortemFlow from './PostMortemFlow'
+import PostMortemView from './PostMortemView'
 
 // Single source of truth for every AI-generated project document type.
 // The Documents checklist, generate flow, and view on the project detail
@@ -31,6 +33,11 @@ import StatusUpdateHistory from './StatusUpdateHistory'
 //   (e.g. a dated log) rather than the default one-row-per-project/upsert
 //   shape - ProjectDetail.jsx loads/appends these as an array instead of
 //   loading/replacing a single row
+// - available(project) (optional): gates whether the PM can *start* this
+//   doc type yet - ProjectDetail.jsx renders a locked, non-interactive row
+//   instead when this returns false. Only applies before anything has been
+//   generated; a doc that already exists always renders normally regardless
+//   of what available() returns later (e.g. if the project gets unarchived)
 export const DOCUMENT_TYPES = [
   {
     key: 'charter',
@@ -122,6 +129,24 @@ export const DOCUMENT_TYPES = [
       tasks: tasks || [],
     }),
     buildInsert: (result) => ({ line_items: result }),
+  },
+  {
+    key: 'post_mortem',
+    label: 'Post-Mortem',
+    table: 'post_mortems',
+    docProp: 'postMortem',
+    // Only worth writing once the project is done - starting one on an
+    // active project would mean reflecting on a story that isn't over yet.
+    available: (project) => project.status === 'Archived',
+    FlowComponent: PostMortemFlow,
+    ViewComponent: PostMortemView,
+    context: (docs) => ({
+      charter: docs.charter,
+      riskLog: docs.risk_log,
+      statusUpdates: docs.status_update || [],
+      budget: docs.budget_tracker,
+    }),
+    buildInsert: (result) => result,
   },
 ]
 

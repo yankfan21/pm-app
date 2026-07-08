@@ -216,6 +216,29 @@ function ProjectDetail({ project }) {
     const doc = docs[docType.key]
     const isRepeatable = !!docType.repeatable
     const isDone = isDocDone(docType, doc)
+    // A doc type's `available` gate only blocks *starting* it - once
+    // something exists, it keeps rendering normally even if the gate would
+    // now say no (e.g. the project got unarchived after a post-mortem was
+    // already written).
+    const isLocked = !!docType.available && !docType.available(currentProject) && !isDone
+
+    if (isLocked) {
+      return (
+        <li key={docType.key} className="doc-checklist-item">
+          <div
+            className="doc-checklist-row doc-checklist-row-locked"
+            title="Available once the project is archived"
+          >
+            <span className="doc-checklist-label">
+              <span className="status-dot pending" aria-hidden="true" />
+              {docType.label}
+            </span>
+            <span className="doc-status-badge pending">Locked</span>
+          </div>
+        </li>
+      )
+    }
+
     const isViewOpen = expandedSection === docType.key
     const isFlowOpen = activeFlowKey === docType.key
     const { ViewComponent, FlowComponent, docProp } = docType
