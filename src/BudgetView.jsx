@@ -38,7 +38,7 @@ function healthStatus(estimated, actual) {
   return { key: 'over', label: 'Over Budget' }
 }
 
-function BudgetView({ project, charter, brief, tasks, budget, onUpdate }) {
+function BudgetView({ project, charter, brief, tasks, budget, canEdit, onUpdate }) {
   const [rows, setRows] = useState(() => withIds(budget.line_items))
   const [error, setError] = useState(null)
   const [view, setView] = useState('summary')
@@ -220,14 +220,16 @@ function BudgetView({ project, charter, brief, tasks, budget, onUpdate }) {
           <button type="button" className="btn-secondary" disabled={!!exporting} onClick={handleExportExcel}>
             {exporting === 'excel' ? 'Exporting...' : 'Export Excel'}
           </button>
-          <button
-            type="button"
-            className="btn-secondary"
-            disabled={suggestLoading}
-            onClick={handleSuggest}
-          >
-            {suggestLoading ? 'Thinking...' : 'Suggest Additional Line Items'}
-          </button>
+          {canEdit && (
+            <button
+              type="button"
+              className="btn-secondary"
+              disabled={suggestLoading}
+              onClick={handleSuggest}
+            >
+              {suggestLoading ? 'Thinking...' : 'Suggest Additional Line Items'}
+            </button>
+          )}
         </div>
       </div>
 
@@ -394,6 +396,7 @@ function BudgetView({ project, charter, brief, tasks, budget, onUpdate }) {
                     type="text"
                     className="risk-cell-input"
                     value={row.category}
+                    readOnly={!canEdit}
                     onChange={(e) => updateCell(row.id, 'category', e.target.value)}
                     onBlur={handleTextBlur}
                   />
@@ -403,6 +406,7 @@ function BudgetView({ project, charter, brief, tasks, budget, onUpdate }) {
                     type="text"
                     className="risk-cell-input"
                     value={row.name}
+                    readOnly={!canEdit}
                     onChange={(e) => updateCell(row.id, 'name', e.target.value)}
                     onBlur={handleTextBlur}
                   />
@@ -410,6 +414,7 @@ function BudgetView({ project, charter, brief, tasks, budget, onUpdate }) {
                 <td>
                   <select
                     value={row.task_id || ''}
+                    disabled={!canEdit}
                     onChange={(e) => handleFieldChange(row.id, 'task_id', e.target.value || null)}
                   >
                     <option value="">None</option>
@@ -427,6 +432,7 @@ function BudgetView({ project, charter, brief, tasks, budget, onUpdate }) {
                     step="0.01"
                     className="risk-cell-input"
                     value={row.estimated_amount}
+                    readOnly={!canEdit}
                     onChange={(e) => updateCell(row.id, 'estimated_amount', Math.max(0, Number(e.target.value) || 0))}
                     onBlur={handleTextBlur}
                   />
@@ -438,6 +444,7 @@ function BudgetView({ project, charter, brief, tasks, budget, onUpdate }) {
                     step="0.01"
                     className="risk-cell-input"
                     value={row.actual_amount}
+                    readOnly={!canEdit}
                     onChange={(e) => updateCell(row.id, 'actual_amount', Math.max(0, Number(e.target.value) || 0))}
                     onBlur={handleTextBlur}
                   />
@@ -447,19 +454,22 @@ function BudgetView({ project, charter, brief, tasks, budget, onUpdate }) {
                     type="text"
                     className="risk-cell-input"
                     value={row.notes}
+                    readOnly={!canEdit}
                     onChange={(e) => updateCell(row.id, 'notes', e.target.value)}
                     onBlur={handleTextBlur}
                   />
                 </td>
                 <td>
-                  <button
-                    type="button"
-                    className="risk-delete-btn"
-                    aria-label="Delete line item"
-                    onClick={() => deleteRow(row.id)}
-                  >
-                    &times;
-                  </button>
+                  {canEdit && (
+                    <button
+                      type="button"
+                      className="risk-delete-btn"
+                      aria-label="Delete line item"
+                      onClick={() => deleteRow(row.id)}
+                    >
+                      &times;
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}
@@ -474,11 +484,13 @@ function BudgetView({ project, charter, brief, tasks, budget, onUpdate }) {
         </table>
       </div>
 
-      <button type="button" className="btn-secondary risk-add-btn" onClick={addRow}>
-        + Add Line Item
-      </button>
+      {canEdit && (
+        <button type="button" className="btn-secondary risk-add-btn" onClick={addRow}>
+          + Add Line Item
+        </button>
+      )}
 
-      {suggestions != null && (
+      {suggestions != null && canEdit && (
         <div className="risk-suggestions">
           {suggestions.length === 0 ? (
             <p className="charter-status">

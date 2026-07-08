@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { supabase } from './supabaseClient'
+import { useAuth } from './AuthContext'
 import AppHeader from './AppHeader'
 import ProjectDetail from './ProjectDetail'
 
 function ProjectDetailPage() {
   const { projectId } = useParams()
+  const { user } = useAuth()
   const [project, setProject] = useState(null)
+  const [role, setRole] = useState(null) // 'owner' | 'editor' | 'viewer' | null
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -25,9 +28,40 @@ function ProjectDetailPage() {
 
       if (cancelled) return
 
-      if (error) setError(error.message)
-      else if (!data) setError('Project not found.')
-      else setProject(data)
+      // RLS already means a non-member's query above returns no row at all
+      // - "not found" is the right message either way, since revealing
+      // "this project exists but you can't see it" would leak more than
+      // just saying nothing's there.
+      if (error) {
+        setError(error.message)
+        setLoading(false)
+        return
+      }
+      if (!data) {
+        setError('Project not found.')
+        setLoading(false)
+        return
+      }
+
+      setProject(data)
+
+      if (data.owner_id === user.id) {
+        setRole('owner')
+        setLoading(false)
+        return
+      }
+
+      const { data: collaboratorRow, error: collabError } = await supabase
+        .from('project_collaborators')
+        .select('role')
+        .eq('project_id', projectId)
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      if (cancelled) return
+
+      if (collabError) setError(collabError.message)
+      else setRole(collaboratorRow?.role ?? null)
       setLoading(false)
     }
 
@@ -35,7 +69,7 @@ function ProjectDetailPage() {
     return () => {
       cancelled = true
     }
-  }, [projectId])
+  }, [projectId, user.id])
 
   if (loading) {
     return (
@@ -58,7 +92,10 @@ function ProjectDetailPage() {
     )
   }
 
-  return <ProjectDetail project={project} />
+  const isOwner = role === 'owner'
+  const canEdit = role === 'owner' || role === 'editor'
+
+  return <ProjectDetail project={project} isOwner={isOwner} canEdit={canEdit} />
 }
 
 export default ProjectDetailPage

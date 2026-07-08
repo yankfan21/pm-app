@@ -19,7 +19,7 @@ function withIds(risks) {
   return (risks || []).map((r) => (r.id ? r : { ...r, id: crypto.randomUUID() }))
 }
 
-function RiskLogView({ project, charter, brief, riskLog, onUpdate }) {
+function RiskLogView({ project, charter, brief, riskLog, canEdit, onUpdate }) {
   const [rows, setRows] = useState(() => withIds(riskLog.risks))
   const [error, setError] = useState(null)
   const [suggestions, setSuggestions] = useState(null)
@@ -126,14 +126,16 @@ function RiskLogView({ project, charter, brief, riskLog, onUpdate }) {
           <button type="button" className="btn-secondary" onClick={handleExportDocx}>
             Export Word
           </button>
-          <button
-            type="button"
-            className="btn-secondary"
-            disabled={suggestLoading}
-            onClick={handleSuggest}
-          >
-            {suggestLoading ? 'Thinking...' : 'Suggest Additional Risks'}
-          </button>
+          {canEdit && (
+            <button
+              type="button"
+              className="btn-secondary"
+              disabled={suggestLoading}
+              onClick={handleSuggest}
+            >
+              {suggestLoading ? 'Thinking...' : 'Suggest Additional Risks'}
+            </button>
+          )}
         </div>
       </div>
 
@@ -159,6 +161,7 @@ function RiskLogView({ project, charter, brief, riskLog, onUpdate }) {
                     className="risk-cell-input"
                     value={row.risk}
                     rows={2}
+                    readOnly={!canEdit}
                     onChange={(e) => updateCell(row.id, 'risk', e.target.value)}
                     onBlur={handleTextBlur}
                   />
@@ -167,6 +170,7 @@ function RiskLogView({ project, charter, brief, riskLog, onUpdate }) {
                   <select
                     className={`risk-level-select risk-level-${row.likelihood.toLowerCase()}`}
                     value={row.likelihood}
+                    disabled={!canEdit}
                     onChange={(e) => handleSelectChange(row.id, 'likelihood', e.target.value)}
                   >
                     {LEVELS.map((level) => (
@@ -180,6 +184,7 @@ function RiskLogView({ project, charter, brief, riskLog, onUpdate }) {
                   <select
                     className={`risk-level-select risk-level-${row.impact.toLowerCase()}`}
                     value={row.impact}
+                    disabled={!canEdit}
                     onChange={(e) => handleSelectChange(row.id, 'impact', e.target.value)}
                   >
                     {LEVELS.map((level) => (
@@ -194,6 +199,7 @@ function RiskLogView({ project, charter, brief, riskLog, onUpdate }) {
                     className="risk-cell-input"
                     value={row.mitigation}
                     rows={2}
+                    readOnly={!canEdit}
                     onChange={(e) => updateCell(row.id, 'mitigation', e.target.value)}
                     onBlur={handleTextBlur}
                   />
@@ -203,19 +209,22 @@ function RiskLogView({ project, charter, brief, riskLog, onUpdate }) {
                     type="text"
                     className="risk-cell-input"
                     value={row.owner}
+                    readOnly={!canEdit}
                     onChange={(e) => updateCell(row.id, 'owner', e.target.value)}
                     onBlur={handleTextBlur}
                   />
                 </td>
                 <td>
-                  <button
-                    type="button"
-                    className="risk-delete-btn"
-                    aria-label="Delete risk"
-                    onClick={() => deleteRow(row.id)}
-                  >
-                    &times;
-                  </button>
+                  {canEdit && (
+                    <button
+                      type="button"
+                      className="risk-delete-btn"
+                      aria-label="Delete risk"
+                      onClick={() => deleteRow(row.id)}
+                    >
+                      &times;
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}
@@ -230,11 +239,13 @@ function RiskLogView({ project, charter, brief, riskLog, onUpdate }) {
         </table>
       </div>
 
-      <button type="button" className="btn-secondary risk-add-btn" onClick={addRow}>
-        + Add Risk
-      </button>
+      {canEdit && (
+        <button type="button" className="btn-secondary risk-add-btn" onClick={addRow}>
+          + Add Risk
+        </button>
+      )}
 
-      {suggestions != null && (
+      {suggestions != null && canEdit && (
         <div className="risk-suggestions">
           {suggestions.length === 0 ? (
             <p className="charter-status">

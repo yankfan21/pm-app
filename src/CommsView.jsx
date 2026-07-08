@@ -40,7 +40,7 @@ function formatDate(iso) {
 // accepted version. Accepting snapshots the row being superseded into the
 // generic `document_versions` table before overwriting it, which backs the
 // "History" panel below.
-function CommsView({ variant, project, charter, brief, riskLog, statusUpdates, doc, onUpdate }) {
+function CommsView({ variant, project, charter, brief, riskLog, statusUpdates, doc, canEdit, onUpdate }) {
   const { table, title, pageSubtitle, sections } = COMMS_VARIANTS[variant]
   const docTypeKey = DOC_TYPE_BY_VARIANT[variant]
   const [values, setValues] = useState(() =>
@@ -258,32 +258,36 @@ function CommsView({ variant, project, charter, brief, riskLog, statusUpdates, d
           <button type="button" className="btn-secondary" onClick={handleExportDocx}>
             Export Word
           </button>
-          <button
-            type="button"
-            className="btn-secondary"
-            onClick={() => setShowFollowUp(true)}
-          >
-            Ask Follow-up Questions
-          </button>
-          <button
-            type="button"
-            className="btn-secondary"
-            disabled={!!regenerating}
-            onClick={() => requestNewVersion(null)}
-          >
-            {regenerating === 'regenerate' ? 'Regenerating...' : 'Regenerate'}
-          </button>
-          <button
-            type="button"
-            className="btn-secondary"
-            disabled={!!regenerating || !latestStatus}
-            title={!latestStatus ? 'Log a Status Update first' : undefined}
-            onClick={() => requestNewVersion(latestStatus)}
-          >
-            {regenerating === 'status'
-              ? 'Drafting...'
-              : `Update ${variant === 'exec' ? 'Exec Comms' : 'Newsletter'} from Latest Status`}
-          </button>
+          {canEdit && (
+            <>
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => setShowFollowUp(true)}
+              >
+                Ask Follow-up Questions
+              </button>
+              <button
+                type="button"
+                className="btn-secondary"
+                disabled={!!regenerating}
+                onClick={() => requestNewVersion(null)}
+              >
+                {regenerating === 'regenerate' ? 'Regenerating...' : 'Regenerate'}
+              </button>
+              <button
+                type="button"
+                className="btn-secondary"
+                disabled={!!regenerating || !latestStatus}
+                title={!latestStatus ? 'Log a Status Update first' : undefined}
+                onClick={() => requestNewVersion(latestStatus)}
+              >
+                {regenerating === 'status'
+                  ? 'Drafting...'
+                  : `Update ${variant === 'exec' ? 'Exec Comms' : 'Newsletter'} from Latest Status`}
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -319,24 +323,27 @@ function CommsView({ variant, project, charter, brief, riskLog, statusUpdates, d
           <div className="charter-doc-section" key={key}>
             <div className="charter-doc-heading-row">
               <h4 className="charter-doc-heading">{label}</h4>
-              <div className="section-actions">
-                {REVISE_ACTIONS.map(({ instruction, label: actionLabel }) => (
-                  <button
-                    type="button"
-                    key={instruction}
-                    disabled={revisions[key]?.loading}
-                    onClick={() => handleRevise(key, instruction)}
-                  >
-                    {actionLabel}
-                  </button>
-                ))}
-              </div>
+              {canEdit && (
+                <div className="section-actions">
+                  {REVISE_ACTIONS.map(({ instruction, label: actionLabel }) => (
+                    <button
+                      type="button"
+                      key={instruction}
+                      disabled={revisions[key]?.loading}
+                      onClick={() => handleRevise(key, instruction)}
+                    >
+                      {actionLabel}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <textarea
               ref={(el) => (textareaRefs.current[key] = el)}
               className="charter-doc-body"
               value={values[key]}
+              readOnly={!canEdit}
               onChange={(e) => {
                 setValues((prev) => ({ ...prev, [key]: e.target.value }))
                 autoResize(e.target)

@@ -55,6 +55,27 @@
   margin: 4px 0 36px 40px;
 }
 
+.app-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.account-menu {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  padding-top: 6px;
+}
+
+.account-menu-email {
+  font-size: 14px;
+  color: var(--text);
+}
+
 .page-title {
   font-size: 30px;
   letter-spacing: -0.5px;
@@ -1723,4 +1744,127 @@ textarea.risk-cell-input {
   letter-spacing: 0.4px;
   text-transform: uppercase;
   color: var(--text);
+}
+
+.login-card {
+  max-width: 380px;
+  margin: 32px auto 0;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 24px;
+  box-shadow: var(--shadow);
+}
+
+.login-toggle {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 3px;
+}
+
+.login-toggle button {
+  flex: 1;
+  border: none;
+  background: none;
+  padding: 8px 0;
+  border-radius: 6px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.login-toggle button.selected {
+  background: var(--accent);
+  color: white;
+}
+
+.login-form label {
+  display: block;
+  margin-bottom: 16px;
+  font-weight: 500;
+  color: var(--text-h);
+}
+
+.login-form input {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: inherit;
+  color: var(--text-h);
+  background: var(--bg);
+  box-sizing: border-box;
+}
+
+.login-form .btn-primary {
+  width: 100%;
+}
+
+.login-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 20px 0;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.login-divider::before,
+.login-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.login-google-btn {
+  width: 100%;
+}
+
+.collaborator-list {
+  list-style: none;
+  margin: 12px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.collaborator-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+}
+
+.collaborator-email {
+  flex: 1;
+  color: var(--text-h);
+}
+
+.collaborator-invite-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 16px 0 0;
+}
+
+.collaborator-invite-form input[type='email'] {
+  flex: 1 1 220px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: inherit;
+  color: var(--text-h);
+  background: var(--bg);
 }

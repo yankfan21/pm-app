@@ -4,9 +4,10 @@ import { supabase } from './supabaseClient'
 import AppHeader from './AppHeader'
 import GanttChart from './GanttChart'
 import TaskGenFlow from './TaskGenFlow'
+import ManageAccess from './ManageAccess'
 import { DOCUMENT_TYPES, groupDocumentTypes } from './documentTypes'
 
-function ProjectDetail({ project }) {
+function ProjectDetail({ project, isOwner, canEdit }) {
   const [currentProject, setCurrentProject] = useState(project)
   const [archiving, setArchiving] = useState(false)
   const [tasks, setTasks] = useState([])
@@ -269,23 +270,27 @@ function ProjectDetail({ project }) {
                 {badgeLabel}
               </span>
             </button>
-            <button
-              type="button"
-              className="btn-secondary status-update-log-trigger"
-              onClick={() => setActiveFlowKey((prev) => (prev === docType.key ? null : docType.key))}
-            >
-              + {docType.actionLabel}
-            </button>
+            {canEdit && (
+              <button
+                type="button"
+                className="btn-secondary status-update-log-trigger"
+                onClick={() => setActiveFlowKey((prev) => (prev === docType.key ? null : docType.key))}
+              >
+                + {docType.actionLabel}
+              </button>
+            )}
           </div>
         ) : (
           <button
             type="button"
             className={`doc-checklist-row ${isViewOpen || isFlowOpen ? 'selected' : ''}`}
-            onClick={() =>
-              isDone
-                ? toggleSection(docType.key)
-                : setActiveFlowKey((prev) => (prev === docType.key ? null : docType.key))
-            }
+            onClick={() => {
+              if (isDone) {
+                toggleSection(docType.key)
+              } else if (canEdit) {
+                setActiveFlowKey((prev) => (prev === docType.key ? null : docType.key))
+              }
+            }}
           >
             <span className="doc-checklist-label">
               <span className={`status-dot ${badgeColorClass}`} aria-hidden="true" />
@@ -302,11 +307,12 @@ function ProjectDetail({ project }) {
             project={currentProject}
             {...{ [docProp]: doc }}
             {...docType.context(docs, tasks)}
+            canEdit={canEdit}
             onUpdate={(updatedRow) => handleDocUpdated(docType, updatedRow)}
           />
         )}
 
-        {isFlowOpen && (
+        {isFlowOpen && canEdit && (
           <FlowComponent
             project={currentProject}
             {...docType.context(docs, tasks)}
@@ -330,18 +336,20 @@ function ProjectDetail({ project }) {
 
       <div className="section-header project-detail-header">
         <h2 className="page-title">{currentProject.name}</h2>
-        <button
-          type="button"
-          className="btn-secondary"
-          disabled={archiving}
-          onClick={toggleArchived}
-        >
-          {archiving
-            ? 'Saving...'
-            : currentProject.status === 'Archived'
-              ? 'Unarchive Project'
-              : 'Archive Project'}
-        </button>
+        {canEdit && (
+          <button
+            type="button"
+            className="btn-secondary"
+            disabled={archiving}
+            onClick={toggleArchived}
+          >
+            {archiving
+              ? 'Saving...'
+              : currentProject.status === 'Archived'
+                ? 'Unarchive Project'
+                : 'Archive Project'}
+          </button>
+        )}
       </div>
       <p className="project-goal">{currentProject.goal}</p>
       <div className="project-meta">
@@ -353,6 +361,26 @@ function ProjectDetail({ project }) {
         )}
         <span>{currentProject.deadline ?? 'TBD'}</span>
       </div>
+
+      {isOwner && (
+        <>
+          <h2 className="tasks-heading">
+            <button
+              type="button"
+              className="collapsible-toggle"
+              onClick={() => toggleSection('access')}
+              aria-expanded={expandedSection === 'access'}
+            >
+              <span className={`chevron ${expandedSection === 'access' ? '' : 'collapsed'}`} aria-hidden="true">
+                ▾
+              </span>
+              Manage Access
+            </button>
+          </h2>
+
+          {expandedSection === 'access' && <ManageAccess project={currentProject} />}
+        </>
+      )}
 
       <h2 className="tasks-heading">
         <button
@@ -374,7 +402,7 @@ function ProjectDetail({ project }) {
         </button>
       </h2>
 
-      {docs.charter && (
+      {docs.charter && canEdit && (
         <button
           type="button"
           className="btn-secondary ai-task-gen-trigger"
@@ -384,7 +412,7 @@ function ProjectDetail({ project }) {
         </button>
       )}
 
-      {expandedSection === 'ai-tasks' && (
+      {expandedSection === 'ai-tasks' && canEdit && (
         <TaskGenFlow
           project={currentProject}
           charter={docs.charter}
@@ -397,7 +425,7 @@ function ProjectDetail({ project }) {
         />
       )}
 
-      {expandedSection === 'tasks' && (
+      {expandedSection === 'tasks' && canEdit && (
         <form onSubmit={handleSubmit} className="task-form">
           <input
             type="text"
@@ -449,17 +477,20 @@ function ProjectDetail({ project }) {
                     <input
                       type="checkbox"
                       checked={task.completed}
+                      disabled={!canEdit}
                       onChange={() => toggleComplete(task)}
                     />
                     <span>{task.title}</span>
                   </label>
-                  <button
-                    type="button"
-                    className="delete"
-                    onClick={() => deleteTask(task)}
-                  >
-                    Delete
-                  </button>
+                  {canEdit && (
+                    <button
+                      type="button"
+                      className="delete"
+                      onClick={() => deleteTask(task)}
+                    >
+                      Delete
+                    </button>
+                  )}
                 </div>
                 <div className="task-dates">
                   <label className="task-date-field">
@@ -467,6 +498,7 @@ function ProjectDetail({ project }) {
                     <input
                       type="date"
                       value={task.start_date || ''}
+                      disabled={!canEdit}
                       onChange={(e) => updateTaskField(task, 'start_date', e.target.value)}
                     />
                   </label>
@@ -475,6 +507,7 @@ function ProjectDetail({ project }) {
                     <input
                       type="date"
                       value={task.due_date || ''}
+                      disabled={!canEdit}
                       onChange={(e) => updateTaskField(task, 'due_date', e.target.value)}
                     />
                   </label>
@@ -482,6 +515,7 @@ function ProjectDetail({ project }) {
                     Depends on
                     <select
                       value={task.depends_on || ''}
+                      disabled={!canEdit}
                       onChange={(e) => updateTaskField(task, 'depends_on', e.target.value)}
                     >
                       <option value="">None</option>

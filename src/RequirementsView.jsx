@@ -25,7 +25,7 @@ function autoResize(el) {
   el.style.height = `${el.scrollHeight}px`
 }
 
-function RequirementsView({ project, charter, brief, onUpdate }) {
+function RequirementsView({ project, charter, brief, canEdit, onUpdate }) {
   const [values, setValues] = useState(() =>
     Object.fromEntries(SECTIONS.map((s) => [s.key, brief[s.key] || '']))
   )
@@ -186,21 +186,25 @@ function RequirementsView({ project, charter, brief, onUpdate }) {
           <button type="button" className="btn-secondary" onClick={handleExportDocx}>
             Export Word
           </button>
-          <button
-            type="button"
-            className="btn-secondary"
-            onClick={() => setShowFollowUp(true)}
-          >
-            Ask Follow-up Questions
-          </button>
-          <button
-            type="button"
-            className="btn-secondary"
-            disabled={regenerating}
-            onClick={handleRegenerate}
-          >
-            {regenerating ? 'Regenerating...' : 'Regenerate'}
-          </button>
+          {canEdit && (
+            <>
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => setShowFollowUp(true)}
+              >
+                Ask Follow-up Questions
+              </button>
+              <button
+                type="button"
+                className="btn-secondary"
+                disabled={regenerating}
+                onClick={handleRegenerate}
+              >
+                {regenerating ? 'Regenerating...' : 'Regenerate'}
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -214,24 +218,27 @@ function RequirementsView({ project, charter, brief, onUpdate }) {
           <div className="charter-doc-section" key={key}>
             <div className="charter-doc-heading-row">
               <h4 className="charter-doc-heading">{label}</h4>
-              <div className="section-actions">
-                {REVISE_ACTIONS.map(({ instruction, label: actionLabel }) => (
-                  <button
-                    type="button"
-                    key={instruction}
-                    disabled={revisions[key]?.loading}
-                    onClick={() => handleRevise(key, instruction)}
-                  >
-                    {actionLabel}
-                  </button>
-                ))}
-              </div>
+              {canEdit && (
+                <div className="section-actions">
+                  {REVISE_ACTIONS.map(({ instruction, label: actionLabel }) => (
+                    <button
+                      type="button"
+                      key={instruction}
+                      disabled={revisions[key]?.loading}
+                      onClick={() => handleRevise(key, instruction)}
+                    >
+                      {actionLabel}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <textarea
               ref={(el) => (textareaRefs.current[key] = el)}
               className="charter-doc-body"
               value={values[key]}
+              readOnly={!canEdit}
               onChange={(e) => {
                 setValues((prev) => ({ ...prev, [key]: e.target.value }))
                 autoResize(e.target)

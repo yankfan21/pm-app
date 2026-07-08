@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { supabase } from './supabaseClient'
+import { useAuth } from './AuthContext'
 
 const PRIORITIES = ['Low', 'Medium', 'High', 'Critical']
 
 function NewProjectFlow({ onCreated, onClose }) {
+  const { user } = useAuth()
   const [step, setStep] = useState(1)
   const [name, setName] = useState('')
   const [goal, setGoal] = useState('')
@@ -27,6 +29,7 @@ function NewProjectFlow({ onCreated, onClose }) {
         goal: goal.trim(),
         priority,
         deadline: tbd ? null : deadline,
+        owner_id: user.id,
       })
       .select()
       .single()
