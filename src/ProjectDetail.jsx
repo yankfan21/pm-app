@@ -208,10 +208,14 @@ function ProjectDetail({ project }) {
     setCurrentProject(data)
   }
 
+  function isDocDone(docType, doc) {
+    return docType.repeatable ? (doc?.length ?? 0) > 0 : doc != null
+  }
+
   function renderDocRow(docType) {
     const doc = docs[docType.key]
     const isRepeatable = !!docType.repeatable
-    const isDone = isRepeatable ? (doc?.length ?? 0) > 0 : doc != null
+    const isDone = isDocDone(docType, doc)
     const isViewOpen = expandedSection === docType.key
     const isFlowOpen = activeFlowKey === docType.key
     const { ViewComponent, FlowComponent, docProp } = docType
@@ -486,6 +490,12 @@ function ProjectDetail({ project }) {
             if (row.type === 'doc') return renderDocRow(row.docType)
 
             const isGroupOpen = expandedGroup === row.key
+            const doneCount = row.items.filter((docType) => isDocDone(docType, docs[docType.key])).length
+            const groupStatus =
+              doneCount === 0 ? 'pending' : doneCount === row.items.length ? 'done' : 'partial'
+            const groupStatusLabel =
+              groupStatus === 'done' ? 'Generated' : groupStatus === 'partial' ? 'In Progress' : 'Not started'
+
             return (
               <li key={row.key} className="doc-checklist-item doc-group">
                 <button
@@ -494,10 +504,16 @@ function ProjectDetail({ project }) {
                   onClick={() => toggleGroup(row.key)}
                   aria-expanded={isGroupOpen}
                 >
-                  <span className={`chevron ${isGroupOpen ? '' : 'collapsed'}`} aria-hidden="true">
-                    ▾
+                  <span className="doc-group-header-main">
+                    <span className={`chevron ${isGroupOpen ? '' : 'collapsed'}`} aria-hidden="true">
+                      ▾
+                    </span>
+                    <span className="doc-checklist-label">
+                      <span className={`status-dot ${groupStatus}`} aria-hidden="true" />
+                      {row.label}
+                    </span>
                   </span>
-                  {row.label}
+                  <span className={`doc-status-badge ${groupStatus}`}>{groupStatusLabel}</span>
                 </button>
 
                 {isGroupOpen && (

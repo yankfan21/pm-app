@@ -531,6 +531,10 @@
   background: #94a3b8;
 }
 
+.status-dot.partial {
+  background: #d97706;
+}
+
 .doc-status-badge {
   flex-shrink: 0;
   padding: 3px 10px;
@@ -549,7 +553,13 @@
   color: var(--text);
 }
 
+.doc-status-badge.partial {
+  background: #fef3c7;
+  color: #b45309;
+}
+
 .doc-group-header {
+  justify-content: space-between;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--bg);
@@ -557,6 +567,12 @@
 
 .doc-group-header:hover {
   border-color: var(--accent-border);
+}
+
+.doc-group-header-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .doc-group-items {
