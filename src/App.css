@@ -558,8 +558,17 @@
   color: #b45309;
 }
 
-.doc-group-header {
+.toggle-header-with-badge {
   justify-content: space-between;
+}
+
+.toggle-header-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.doc-group-header {
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--bg);
@@ -567,12 +576,6 @@
 
 .doc-group-header:hover {
   border-color: var(--accent-border);
-}
-
-.doc-group-header-main {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
 }
 
 .doc-group-items {

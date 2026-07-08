@@ -330,15 +330,20 @@ function ProjectDetail({ project }) {
       <h2 className="tasks-heading">
         <button
           type="button"
-          className="collapsible-toggle"
+          className="collapsible-toggle toggle-header-with-badge"
           onClick={() => toggleSection('tasks')}
           aria-expanded={expandedSection === 'tasks'}
         >
-          <span className={`chevron ${expandedSection === 'tasks' ? '' : 'collapsed'}`} aria-hidden="true">
-            ▾
+          <span className="toggle-header-main">
+            <span className={`chevron ${expandedSection === 'tasks' ? '' : 'collapsed'}`} aria-hidden="true">
+              ▾
+            </span>
+            <span className={`status-dot ${tasks.length > 0 ? 'done' : 'pending'}`} aria-hidden="true" />
+            Tasks
           </span>
-          <span className={`status-dot ${tasks.length > 0 ? 'done' : 'pending'}`} aria-hidden="true" />
-          Tasks
+          <span className={`doc-status-badge ${tasks.length > 0 ? 'done' : 'pending'}`}>
+            {tasks.length > 0 ? `${tasks.length} Task${tasks.length === 1 ? '' : 's'}` : 'Not started'}
+          </span>
         </button>
       </h2>
 
@@ -500,11 +505,11 @@ function ProjectDetail({ project }) {
               <li key={row.key} className="doc-checklist-item doc-group">
                 <button
                   type="button"
-                  className="collapsible-toggle doc-group-header"
+                  className="collapsible-toggle doc-group-header toggle-header-with-badge"
                   onClick={() => toggleGroup(row.key)}
                   aria-expanded={isGroupOpen}
                 >
-                  <span className="doc-group-header-main">
+                  <span className="toggle-header-main">
                     <span className={`chevron ${isGroupOpen ? '' : 'collapsed'}`} aria-hidden="true">
                       ▾
                     </span>

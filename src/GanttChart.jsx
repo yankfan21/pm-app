@@ -159,15 +159,20 @@ function GanttChart({ project, tasks, expanded, onToggle }) {
       <h2 className="tasks-heading">
         <button
           type="button"
-          className="collapsible-toggle"
+          className="collapsible-toggle toggle-header-with-badge"
           onClick={onToggle}
           aria-expanded={expanded}
         >
-          <span className={`chevron ${expanded ? '' : 'collapsed'}`} aria-hidden="true">
-            ▾
+          <span className="toggle-header-main">
+            <span className={`chevron ${expanded ? '' : 'collapsed'}`} aria-hidden="true">
+              ▾
+            </span>
+            <span className={`status-dot ${bars.length > 0 ? 'done' : 'pending'}`} aria-hidden="true" />
+            Gantt Chart
           </span>
-          <span className={`status-dot ${bars.length > 0 ? 'done' : 'pending'}`} aria-hidden="true" />
-          Gantt Chart
+          <span className={`doc-status-badge ${bars.length > 0 ? 'done' : 'pending'}`}>
+            {bars.length > 0 ? 'Generated' : 'Not started'}
+          </span>
         </button>
       </h2>
 
