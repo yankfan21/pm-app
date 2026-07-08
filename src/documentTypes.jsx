@@ -8,6 +8,8 @@ import CommsFlow from './CommsFlow'
 import CommsView from './CommsView'
 import BudgetFlow from './BudgetFlow'
 import BudgetView from './BudgetView'
+import StatusUpdateFlow from './StatusUpdateFlow'
+import StatusUpdateHistory from './StatusUpdateHistory'
 
 // Single source of truth for every AI-generated project document type.
 // The Documents checklist, generate flow, and view on the project detail
@@ -22,6 +24,13 @@ import BudgetView from './BudgetView'
 //   cross-document context
 // - buildInsert(result): maps what the Flow's onGenerated callback receives
 //   into the column(s) to insert
+// - group (optional): key into DOCUMENT_GROUPS below - entries sharing a
+//   group are nested under one collapsible group row instead of rendering
+//   as flat top-level checklist rows
+// - repeatable (optional): true for doc types with many rows per project
+//   (e.g. a dated log) rather than the default one-row-per-project/upsert
+//   shape - ProjectDetail.jsx loads/appends these as an array instead of
+//   loading/replacing a single row
 export const DOCUMENT_TYPES = [
   {
     key: 'charter',
@@ -58,9 +67,15 @@ export const DOCUMENT_TYPES = [
     label: 'Exec Comms Plan',
     table: 'exec_comms_plans',
     docProp: 'doc',
+    group: 'communications',
     FlowComponent: (props) => <CommsFlow variant="exec" {...props} />,
     ViewComponent: (props) => <CommsView variant="exec" {...props} />,
-    context: (docs) => ({ charter: docs.charter, brief: docs.requirements_brief, riskLog: docs.risk_log }),
+    context: (docs) => ({
+      charter: docs.charter,
+      brief: docs.requirements_brief,
+      riskLog: docs.risk_log,
+      statusUpdates: docs.status_update || [],
+    }),
     buildInsert: (result) => result,
   },
   {
@@ -68,9 +83,30 @@ export const DOCUMENT_TYPES = [
     label: 'Team Newsletter',
     table: 'team_newsletters',
     docProp: 'doc',
+    group: 'communications',
     FlowComponent: (props) => <CommsFlow variant="newsletter" {...props} />,
     ViewComponent: (props) => <CommsView variant="newsletter" {...props} />,
-    context: (docs) => ({ charter: docs.charter, brief: docs.requirements_brief, riskLog: docs.risk_log }),
+    context: (docs) => ({
+      charter: docs.charter,
+      brief: docs.requirements_brief,
+      riskLog: docs.risk_log,
+      statusUpdates: docs.status_update || [],
+    }),
+    buildInsert: (result) => result,
+  },
+  {
+    key: 'status_update',
+    label: 'Status Update',
+    table: 'status_updates',
+    docProp: 'entries',
+    group: 'communications',
+    // Many rows per project, no upsert/replace semantics - the checklist
+    // and ProjectDetail.jsx branch on this flag to load/append an array
+    // instead of loading/replacing a single row.
+    repeatable: true,
+    FlowComponent: StatusUpdateFlow,
+    ViewComponent: StatusUpdateHistory,
+    context: () => ({}),
     buildInsert: (result) => result,
   },
   {
@@ -88,3 +124,42 @@ export const DOCUMENT_TYPES = [
     buildInsert: (result) => ({ line_items: result }),
   },
 ]
+
+// Labels for the groups referenced by DOCUMENT_TYPES entries' `group` field.
+// A doc type with no `group` renders as a flat top-level checklist row.
+export const DOCUMENT_GROUPS = {
+  communications: { label: 'Communications' },
+}
+
+// Reduces the flat DOCUMENT_TYPES list into the ordered rows the checklist
+// renders: ungrouped entries pass through as-is, and consecutive entries
+// sharing a `group` are collected under one group row (in DOCUMENT_TYPES'
+// order, so where a group's items are declared controls where the group
+// header appears). Keeps DOCUMENT_TYPES itself flat - a single source of
+// truth - while ProjectDetail.jsx does one grouping pass before rendering.
+export function groupDocumentTypes(types) {
+  const rows = []
+  const groupRowByKey = {}
+
+  types.forEach((docType) => {
+    if (!docType.group) {
+      rows.push({ type: 'doc', docType })
+      return
+    }
+
+    let groupRow = groupRowByKey[docType.group]
+    if (!groupRow) {
+      groupRow = {
+        type: 'group',
+        key: docType.group,
+        label: DOCUMENT_GROUPS[docType.group]?.label || docType.group,
+        items: [],
+      }
+      groupRowByKey[docType.group] = groupRow
+      rows.push(groupRow)
+    }
+    groupRow.items.push(docType)
+  })
+
+  return rows
+}

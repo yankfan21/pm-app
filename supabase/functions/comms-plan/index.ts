@@ -133,6 +133,34 @@ function establishedContext(charter, brief, riskLog) {
   return parts.length > 0 ? parts.join("\n\n") : null
 }
 
+// The latest Status Update entry, when a regeneration was triggered via
+// "Update from Latest Status" rather than a plain Regenerate/manual intake.
+function statusUpdateText(status) {
+  if (!status) return null
+  const parts = []
+  if (status.what_got_done) parts.push(`What got done: ${status.what_got_done}`)
+  if (status.whats_blocked) parts.push(`What's blocked: ${status.whats_blocked}`)
+  if (status.whats_coming_up) parts.push(`What's coming up: ${status.whats_coming_up}`)
+  if (parts.length === 0) return null
+
+  const dated = status.created_at ? ` (logged ${String(status.created_at).slice(0, 10)})` : ""
+  return `Latest Status Update${dated}:\n${parts.join("\n")}`
+}
+
+// Exec Comms regeneration must always surface current high-impact risks so
+// leadership sees them without the PM needing to remember to mention them -
+// "severity" here is the risk log's Impact field (High/Medium/Low).
+function highSeverityRisksText(riskLog) {
+  const risks = (riskLog?.risks || []).filter((r) => r.impact === "High")
+  if (risks.length === 0) return null
+  return risks
+    .map(
+      (r, i) =>
+        `${i + 1}. ${r.risk} | Mitigation: ${r.mitigation || "(none)"} | Owner: ${r.owner || "(unassigned)"}`
+    )
+    .join("\n")
+}
+
 const SECTION_LABELS_BY_VARIANT = {
   exec: {
     status_summary: "Status Summary",
@@ -190,6 +218,7 @@ Deno.serve(async (req) => {
       sectionKey,
       sectionText,
       instruction,
+      latestStatus,
     } = await req.json()
 
     if (action === "questions") {
@@ -230,6 +259,8 @@ ${QUESTION_SHAPE_HINT}`
       const qaText = (answers || [])
         .map((a) => `Q: ${a.question}\nA: ${a.answer}`)
         .join("\n\n")
+      const statusText = statusUpdateText(latestStatus)
+      const highRisksText = variant === "exec" ? highSeverityRisksText(riskLog) : null
 
       const system =
         variant === "exec"
@@ -244,11 +275,12 @@ ${QUESTION_SHAPE_HINT}`
       const user = `${projectContext(project)}
 
 ${context ? `${context}\n` : ""}
+${statusText ? `${statusText}\nTreat this Status Update as the primary, freshest source for what's new since the last version - don't just restate older charter/brief context as if it were still current.\n` : ""}
 Additional context from communications Q&A:
 ${qaText || "(none provided)"}
 
-${instructions} Base it on the project data, charter/brief/risk log (if provided), and Q&A above; do not invent specifics that weren't provided.
-
+${instructions} Base it on the project data, charter/brief/risk log (if provided), status update (if provided), and Q&A above; do not invent specifics that weren't provided.
+${highRisksText ? `\nThe Risks & Blockers section MUST explicitly mention every one of these current high-impact risks, in addition to anything else relevant:\n${highRisksText}\n` : ""}
 Return ONLY this JSON shape:
 {${Object.keys(SECTION_LABELS_BY_VARIANT[variant])
         .map((k) => `"${k}": "..."`)

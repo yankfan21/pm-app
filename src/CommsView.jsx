@@ -10,25 +10,53 @@ const REVISE_ACTIONS = [
   { instruction: 'rephrase', label: 'Rephrase' },
 ]
 
+const DOC_TYPE_BY_VARIANT = {
+  exec: 'exec_comms_plan',
+  newsletter: 'team_newsletter',
+}
+
 function autoResize(el) {
   if (!el) return
   el.style.height = 'auto'
   el.style.height = `${el.scrollHeight}px`
 }
 
+function formatDate(iso) {
+  return new Date(iso).toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
 // Shared view/regenerate/revise/export component for both Stakeholder Comms
 // Plan document types. See CommsFlow.jsx for why this is one parameterized
 // component rather than two near-duplicate files.
-function CommsView({ variant, project, charter, brief, riskLog, doc, onUpdate }) {
+//
+// Whole-document regeneration (manual "Regenerate" or "Update from Latest
+// Status") never writes straight to the DB - the edge function's draft is
+// held as `proposedVersion` until the PM explicitly Accepts or Discards it,
+// per the app's guardrail that AI output never silently replaces an
+// accepted version. Accepting snapshots the row being superseded into the
+// generic `document_versions` table before overwriting it, which backs the
+// "History" panel below.
+function CommsView({ variant, project, charter, brief, riskLog, statusUpdates, doc, onUpdate }) {
   const { table, title, pageSubtitle, sections } = COMMS_VARIANTS[variant]
+  const docTypeKey = DOC_TYPE_BY_VARIANT[variant]
   const [values, setValues] = useState(() =>
     Object.fromEntries(sections.map((s) => [s.key, doc[s.key] || '']))
   )
-  const [regenerating, setRegenerating] = useState(false)
+  const [regenerating, setRegenerating] = useState(null) // null | 'regenerate' | 'status'
+  const [proposedVersion, setProposedVersion] = useState(null) // { content, fromStatus }
   const [error, setError] = useState(null)
   const [revisions, setRevisions] = useState({})
   const [showFollowUp, setShowFollowUp] = useState(false)
+  const [historyOpen, setHistoryOpen] = useState(false)
+  const [versions, setVersions] = useState(null) // null = not loaded yet
+  const [versionsLoading, setVersionsLoading] = useState(false)
   const textareaRefs = useRef({})
+
+  const latestStatus = statusUpdates && statusUpdates.length > 0 ? statusUpdates[0] : null
 
   useEffect(() => {
     sections.forEach(({ key }) => autoResize(textareaRefs.current[key]))
@@ -52,13 +80,8 @@ function CommsView({ variant, project, charter, brief, riskLog, doc, onUpdate })
     onUpdate(data)
   }
 
-  async function handleRegenerate() {
-    const confirmed = window.confirm(
-      `Regenerating will overwrite the current ${title.toLowerCase()} content with a new AI draft. Continue?`
-    )
-    if (!confirmed) return
-
-    setRegenerating(true)
+  async function requestNewVersion(fromStatus) {
+    setRegenerating(fromStatus ? 'status' : 'regenerate')
     setError(null)
 
     const { data: generated, error: genError } = await supabase.functions.invoke('comms-plan', {
@@ -70,23 +93,51 @@ function CommsView({ variant, project, charter, brief, riskLog, doc, onUpdate })
         brief,
         riskLog,
         answers: doc.qa_answers || [],
+        latestStatus: fromStatus || null,
       },
     })
 
+    setRegenerating(null)
+
     if (genError || generated?.error) {
       setError(genError?.message || generated.error)
-      setRegenerating(false)
+      return
+    }
+
+    setProposedVersion({ content: generated, fromStatus: !!fromStatus })
+  }
+
+  function discardProposedVersion() {
+    setProposedVersion(null)
+  }
+
+  async function acceptProposedVersion() {
+    if (!proposedVersion) return
+    setError(null)
+
+    // Snapshot the version being superseded before overwriting it, dated by
+    // when it actually became current (not "now").
+    const { error: snapshotError } = await supabase.from('document_versions').insert({
+      project_id: project.id,
+      doc_type: docTypeKey,
+      content: {
+        ...Object.fromEntries(sections.map((s) => [s.key, doc[s.key] || ''])),
+        qa_answers: doc.qa_answers || [],
+      },
+      created_at: doc.updated_at,
+    })
+
+    if (snapshotError) {
+      setError(snapshotError.message)
       return
     }
 
     const { data, error } = await supabase
       .from(table)
-      .update({ ...generated, updated_at: new Date().toISOString() })
+      .update({ ...proposedVersion.content, updated_at: new Date().toISOString() })
       .eq('id', doc.id)
       .select()
       .single()
-
-    setRegenerating(false)
 
     if (error) {
       setError(error.message)
@@ -95,7 +146,32 @@ function CommsView({ variant, project, charter, brief, riskLog, doc, onUpdate })
 
     setValues(Object.fromEntries(sections.map((s) => [s.key, data[s.key] || ''])))
     setRevisions({})
+    setProposedVersion(null)
+    setVersions(null) // stale - refetch next time History is opened
     onUpdate(data)
+  }
+
+  async function loadVersions() {
+    setVersionsLoading(true)
+    const { data, error } = await supabase
+      .from('document_versions')
+      .select('*')
+      .eq('project_id', project.id)
+      .eq('doc_type', docTypeKey)
+      .order('created_at', { ascending: false })
+
+    setVersionsLoading(false)
+    if (error) {
+      setError(error.message)
+      return
+    }
+    setVersions(data)
+  }
+
+  function toggleHistory() {
+    const opening = !historyOpen
+    setHistoryOpen(opening)
+    if (opening && versions == null) loadVersions()
   }
 
   async function handleExportPdf() {
@@ -192,15 +268,48 @@ function CommsView({ variant, project, charter, brief, riskLog, doc, onUpdate })
           <button
             type="button"
             className="btn-secondary"
-            disabled={regenerating}
-            onClick={handleRegenerate}
+            disabled={!!regenerating}
+            onClick={() => requestNewVersion(null)}
           >
-            {regenerating ? 'Regenerating...' : 'Regenerate'}
+            {regenerating === 'regenerate' ? 'Regenerating...' : 'Regenerate'}
+          </button>
+          <button
+            type="button"
+            className="btn-secondary"
+            disabled={!!regenerating || !latestStatus}
+            title={!latestStatus ? 'Log a Status Update first' : undefined}
+            onClick={() => requestNewVersion(latestStatus)}
+          >
+            {regenerating === 'status'
+              ? 'Drafting...'
+              : `Update ${variant === 'exec' ? 'Exec Comms' : 'Newsletter'} from Latest Status`}
           </button>
         </div>
       </div>
 
       {error && <p className="error">{error}</p>}
+
+      {proposedVersion && (
+        <div className="revision-preview version-proposal-preview">
+          <p className="revision-label">
+            Proposed new version{proposedVersion.fromStatus ? ' (from latest Status Update)' : ''} &mdash; review before it replaces the current version
+          </p>
+          {sections.map(({ key, label }) => (
+            <div className="charter-doc-section" key={key}>
+              <h4 className="charter-doc-heading">{label}</h4>
+              <p className="revision-text">{proposedVersion.content[key] || String.fromCharCode(8212)}</p>
+            </div>
+          ))}
+          <div className="revision-actions">
+            <button type="button" className="btn-secondary" onClick={discardProposedVersion}>
+              Discard
+            </button>
+            <button type="button" className="btn-primary" onClick={acceptProposedVersion}>
+              Accept as New Version
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="charter-page">
         <h2 className="charter-page-title">{project.name}</h2>
@@ -264,6 +373,42 @@ function CommsView({ variant, project, charter, brief, riskLog, doc, onUpdate })
             )}
           </div>
         ))}
+      </div>
+
+      <div className="version-history">
+        <button
+          type="button"
+          className="collapsible-toggle"
+          onClick={toggleHistory}
+          aria-expanded={historyOpen}
+        >
+          <span className={`chevron ${historyOpen ? '' : 'collapsed'}`} aria-hidden="true">
+            ▾
+          </span>
+          History
+        </button>
+
+        {historyOpen && (
+          <div className="version-history-list">
+            {versionsLoading && <p className="charter-status">Loading...</p>}
+            {!versionsLoading && versions && versions.length === 0 && (
+              <p className="charter-status">No past versions yet.</p>
+            )}
+            {!versionsLoading &&
+              versions &&
+              versions.map((v) => (
+                <div className="version-history-entry" key={v.id}>
+                  <p className="version-history-date">Version from {formatDate(v.created_at)}</p>
+                  {sections.map(({ key, label }) => (
+                    <div className="charter-doc-section" key={key}>
+                      <h4 className="charter-doc-heading">{label}</h4>
+                      <p className="revision-text">{v.content?.[key] || String.fromCharCode(8212)}</p>
+                    </div>
+                  ))}
+                </div>
+              ))}
+          </div>
+        )}
       </div>
 
       {showFollowUp && (

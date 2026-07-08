@@ -4,7 +4,7 @@ import { supabase } from './supabaseClient'
 import AppHeader from './AppHeader'
 import GanttChart from './GanttChart'
 import TaskGenFlow from './TaskGenFlow'
-import { DOCUMENT_TYPES } from './documentTypes'
+import { DOCUMENT_TYPES, groupDocumentTypes } from './documentTypes'
 
 function ProjectDetail({ project }) {
   const [currentProject, setCurrentProject] = useState(project)
@@ -28,9 +28,18 @@ function ProjectDetail({ project }) {
   // naturally resets it on return.
   const [expandedSection, setExpandedSection] = useState(null)
   const [activeFlowKey, setActiveFlowKey] = useState(null)
+  // Which single Documents group (e.g. 'communications') is expanded. A
+  // separate, independent accordion slot from expandedSection/activeFlowKey
+  // for the same reason those two are separate: expanding a group shouldn't
+  // collapse whichever doc's view/flow happens to be open inside it.
+  const [expandedGroup, setExpandedGroup] = useState(null)
 
   function toggleSection(key) {
     setExpandedSection((prev) => (prev === key ? null : key))
+  }
+
+  function toggleGroup(key) {
+    setExpandedGroup((prev) => (prev === key ? null : key))
   }
 
   useEffect(() => {
@@ -48,13 +57,20 @@ function ProjectDetail({ project }) {
 
     async function loadDocs() {
       const results = await Promise.all(
-        DOCUMENT_TYPES.map((docType) =>
-          supabase
+        DOCUMENT_TYPES.map((docType) => {
+          const query = supabase
             .from(docType.table)
             .select('*')
             .eq('project_id', currentProject.id)
-            .maybeSingle()
-        )
+
+          // Repeatable doc types (e.g. Status Update) are a dated history -
+          // many rows per project - rather than the one-row-per-project
+          // shape every other doc type uses, so they load as an array
+          // ordered most-recent-first instead of a single row.
+          return docType.repeatable
+            ? query.order('created_at', { ascending: false })
+            : query.maybeSingle()
+        })
       )
 
       const next = {}
@@ -76,7 +92,7 @@ function ProjectDetail({ project }) {
       .insert({
         project_id: currentProject.id,
         ...docType.buildInsert(result),
-        qa_answers: answerList,
+        ...(docType.repeatable ? {} : { qa_answers: answerList }),
       })
       .select()
       .single()
@@ -85,7 +101,10 @@ function ProjectDetail({ project }) {
       return error.message
     }
 
-    setDocs((prev) => ({ ...prev, [docType.key]: data }))
+    setDocs((prev) => ({
+      ...prev,
+      [docType.key]: docType.repeatable ? [data, ...(prev[docType.key] || [])] : data,
+    }))
     setActiveFlowKey(null)
     setExpandedSection(docType.key)
     return null
@@ -187,6 +206,87 @@ function ProjectDetail({ project }) {
     }
 
     setCurrentProject(data)
+  }
+
+  function renderDocRow(docType) {
+    const doc = docs[docType.key]
+    const isRepeatable = !!docType.repeatable
+    const isDone = isRepeatable ? (doc?.length ?? 0) > 0 : doc != null
+    const isViewOpen = expandedSection === docType.key
+    const isFlowOpen = activeFlowKey === docType.key
+    const { ViewComponent, FlowComponent, docProp } = docType
+    const badgeLabel = isRepeatable
+      ? `${doc?.length ?? 0} logged`
+      : isDone
+        ? 'Generated'
+        : 'Not started'
+
+    return (
+      <li key={docType.key} className="doc-checklist-item">
+        {isRepeatable ? (
+          <div className="doc-checklist-row-group">
+            <button
+              type="button"
+              className={`doc-checklist-row ${isViewOpen || isFlowOpen ? 'selected' : ''}`}
+              onClick={() => toggleSection(docType.key)}
+            >
+              <span className="doc-checklist-label">
+                <span className={`status-dot ${isDone ? 'done' : 'pending'}`} aria-hidden="true" />
+                {docType.label}
+              </span>
+              <span className={`doc-status-badge ${isDone ? 'done' : 'pending'}`}>
+                {badgeLabel}
+              </span>
+            </button>
+            <button
+              type="button"
+              className="btn-secondary status-update-log-trigger"
+              onClick={() => setActiveFlowKey((prev) => (prev === docType.key ? null : docType.key))}
+            >
+              + Log Status Update
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            className={`doc-checklist-row ${isViewOpen || isFlowOpen ? 'selected' : ''}`}
+            onClick={() =>
+              isDone
+                ? toggleSection(docType.key)
+                : setActiveFlowKey((prev) => (prev === docType.key ? null : docType.key))
+            }
+          >
+            <span className="doc-checklist-label">
+              <span className={`status-dot ${isDone ? 'done' : 'pending'}`} aria-hidden="true" />
+              {docType.label}
+            </span>
+            <span className={`doc-status-badge ${isDone ? 'done' : 'pending'}`}>
+              {badgeLabel}
+            </span>
+          </button>
+        )}
+
+        {isViewOpen && doc && (
+          <ViewComponent
+            project={currentProject}
+            {...{ [docProp]: doc }}
+            {...docType.context(docs, tasks)}
+            onUpdate={(updatedRow) => handleDocUpdated(docType, updatedRow)}
+          />
+        )}
+
+        {isFlowOpen && (
+          <FlowComponent
+            project={currentProject}
+            {...docType.context(docs, tasks)}
+            onGenerated={(result, answerList) =>
+              handleDocGenerated(docType, result, answerList)
+            }
+            onClose={() => setActiveFlowKey(null)}
+          />
+        )}
+      </li>
+    )
   }
 
   return (
@@ -382,51 +482,28 @@ function ProjectDetail({ project }) {
 
       {!docsLoading && (
         <ul className="doc-checklist">
-          {DOCUMENT_TYPES.map((docType) => {
-            const doc = docs[docType.key]
-            const isDone = doc != null
-            const isViewOpen = expandedSection === docType.key
-            const isFlowOpen = activeFlowKey === docType.key
-            const { ViewComponent, FlowComponent, docProp } = docType
+          {groupDocumentTypes(DOCUMENT_TYPES).map((row) => {
+            if (row.type === 'doc') return renderDocRow(row.docType)
 
+            const isGroupOpen = expandedGroup === row.key
             return (
-              <li key={docType.key} className="doc-checklist-item">
+              <li key={row.key} className="doc-checklist-item doc-group">
                 <button
                   type="button"
-                  className={`doc-checklist-row ${isViewOpen || isFlowOpen ? 'selected' : ''}`}
-                  onClick={() =>
-                    isDone
-                      ? toggleSection(docType.key)
-                      : setActiveFlowKey((prev) => (prev === docType.key ? null : docType.key))
-                  }
+                  className="collapsible-toggle doc-group-header"
+                  onClick={() => toggleGroup(row.key)}
+                  aria-expanded={isGroupOpen}
                 >
-                  <span className="doc-checklist-label">
-                    <span className={`status-dot ${isDone ? 'done' : 'pending'}`} aria-hidden="true" />
-                    {docType.label}
+                  <span className={`chevron ${isGroupOpen ? '' : 'collapsed'}`} aria-hidden="true">
+                    ▾
                   </span>
-                  <span className={`doc-status-badge ${isDone ? 'done' : 'pending'}`}>
-                    {isDone ? 'Generated' : 'Not started'}
-                  </span>
+                  {row.label}
                 </button>
 
-                {isViewOpen && doc && (
-                  <ViewComponent
-                    project={currentProject}
-                    {...{ [docProp]: doc }}
-                    {...docType.context(docs, tasks)}
-                    onUpdate={(updatedRow) => handleDocUpdated(docType, updatedRow)}
-                  />
-                )}
-
-                {isFlowOpen && (
-                  <FlowComponent
-                    project={currentProject}
-                    {...docType.context(docs, tasks)}
-                    onGenerated={(result, answerList) =>
-                      handleDocGenerated(docType, result, answerList)
-                    }
-                    onClose={() => setActiveFlowKey(null)}
-                  />
+                {isGroupOpen && (
+                  <ul className="doc-checklist doc-group-items">
+                    {row.items.map((docType) => renderDocRow(docType))}
+                  </ul>
                 )}
               </li>
             )
