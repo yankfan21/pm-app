@@ -242,11 +242,15 @@ function ProjectDetail({ project }) {
     const isViewOpen = expandedSection === docType.key
     const isFlowOpen = activeFlowKey === docType.key
     const { ViewComponent, FlowComponent, docProp } = docType
-    const badgeLabel = isRepeatable
-      ? `${doc?.length ?? 0} logged`
-      : isDone
-        ? 'Generated'
-        : 'Not started'
+    const customBadge = docType.badgeFor ? docType.badgeFor(doc) : null
+    const badgeColorClass = customBadge ? customBadge.colorClass : isDone ? 'done' : 'pending'
+    const badgeLabel = customBadge
+      ? customBadge.label
+      : isRepeatable
+        ? `${doc?.length ?? 0} logged`
+        : isDone
+          ? 'Generated'
+          : 'Not started'
 
     return (
       <li key={docType.key} className="doc-checklist-item">
@@ -258,10 +262,10 @@ function ProjectDetail({ project }) {
               onClick={() => toggleSection(docType.key)}
             >
               <span className="doc-checklist-label">
-                <span className={`status-dot ${isDone ? 'done' : 'pending'}`} aria-hidden="true" />
+                <span className={`status-dot ${badgeColorClass}`} aria-hidden="true" />
                 {docType.label}
               </span>
-              <span className={`doc-status-badge ${isDone ? 'done' : 'pending'}`}>
+              <span className={`doc-status-badge ${badgeColorClass}`}>
                 {badgeLabel}
               </span>
             </button>
@@ -270,7 +274,7 @@ function ProjectDetail({ project }) {
               className="btn-secondary status-update-log-trigger"
               onClick={() => setActiveFlowKey((prev) => (prev === docType.key ? null : docType.key))}
             >
-              + Log Status Update
+              + {docType.actionLabel}
             </button>
           </div>
         ) : (
@@ -284,10 +288,10 @@ function ProjectDetail({ project }) {
             }
           >
             <span className="doc-checklist-label">
-              <span className={`status-dot ${isDone ? 'done' : 'pending'}`} aria-hidden="true" />
+              <span className={`status-dot ${badgeColorClass}`} aria-hidden="true" />
               {docType.label}
             </span>
-            <span className={`doc-status-badge ${isDone ? 'done' : 'pending'}`}>
+            <span className={`doc-status-badge ${badgeColorClass}`}>
               {badgeLabel}
             </span>
           </button>

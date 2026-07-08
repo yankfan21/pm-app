@@ -1,0 +1,135 @@
+import jsPDF from 'jspdf'
+import { Document, HeadingLevel, Packer, Paragraph, TextRun } from 'docx'
+
+const HEALTH_LABELS = {
+  on_track: 'On Track',
+  at_risk: 'At Risk',
+  off_track: 'Off Track',
+}
+
+function sanitizeFilename(name) {
+  const cleaned = name.trim().replace(/[^a-zA-Z0-9-_ ]/g, '').replace(/\s+/g, '-')
+  return cleaned || 'Untitled'
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+
+function formatDate(iso) {
+  return new Date(iso).toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
+export function exportProjectEvalPdf(project, evaluation) {
+  const doc = new jsPDF({ unit: 'pt', format: 'letter' })
+  const marginX = 56
+  const pageWidth = doc.internal.pageSize.getWidth()
+  const pageHeight = doc.internal.pageSize.getHeight()
+  const maxWidth = pageWidth - marginX * 2
+  let y = 64
+
+  function ensureSpace(lineHeight) {
+    if (y + lineHeight > pageHeight - 56) {
+      doc.addPage()
+      y = 64
+    }
+  }
+
+  doc.setFont('times', 'bold')
+  doc.setFontSize(20)
+  doc.splitTextToSize(project.name, maxWidth).forEach((line) => {
+    ensureSpace(26)
+    doc.text(line, marginX, y)
+    y += 26
+  })
+
+  doc.setFont('times', 'normal')
+  doc.setFontSize(11)
+  doc.setTextColor(120)
+  ensureSpace(18)
+  doc.text(`PROJECT EVALUATION - ${formatDate(evaluation.created_at).toUpperCase()}`, marginX, y)
+  y += 30
+  doc.setTextColor(0)
+
+  ensureSpace(24)
+  doc.setFont('times', 'bold')
+  doc.setFontSize(13)
+  doc.text(`Health: ${HEALTH_LABELS[evaluation.health_status] || evaluation.health_status}`, marginX, y)
+  y += 26
+
+  doc.setFont('times', 'normal')
+  doc.setFontSize(11)
+  doc.splitTextToSize(evaluation.rationale || '', maxWidth).forEach((line) => {
+    ensureSpace(16)
+    doc.text(line, marginX, y)
+    y += 16
+  })
+  y += 20
+
+  if ((evaluation.recommendations || []).length > 0) {
+    ensureSpace(24)
+    doc.setFont('times', 'bold')
+    doc.setFontSize(13)
+    doc.text('Recommended Actions', marginX, y)
+    y += 18
+
+    doc.setFont('times', 'normal')
+    doc.setFontSize(11)
+    evaluation.recommendations.forEach((rec) => {
+      doc.splitTextToSize(`- ${rec}`, maxWidth).forEach((line) => {
+        ensureSpace(16)
+        doc.text(line, marginX, y)
+        y += 16
+      })
+    })
+  }
+
+  doc.save(`${sanitizeFilename(project.name)}-Evaluation-${evaluation.created_at.slice(0, 10)}.pdf`)
+}
+
+export async function exportProjectEvalDocx(project, evaluation) {
+  const children = [
+    new Paragraph({ text: project.name, heading: HeadingLevel.TITLE }),
+    new Paragraph({
+      text: `Project Evaluation - ${formatDate(evaluation.created_at)}`,
+      spacing: { after: 300 },
+    }),
+    new Paragraph({
+      text: `Health: ${HEALTH_LABELS[evaluation.health_status] || evaluation.health_status}`,
+      heading: HeadingLevel.HEADING_1,
+      spacing: { after: 120 },
+    }),
+  ]
+
+  ;(evaluation.rationale || '').split('\n').forEach((line) => {
+    children.push(new Paragraph({ children: [new TextRun(line)], spacing: { after: 100 } }))
+  })
+
+  if ((evaluation.recommendations || []).length > 0) {
+    children.push(
+      new Paragraph({
+        text: 'Recommended Actions',
+        heading: HeadingLevel.HEADING_1,
+        spacing: { before: 300, after: 120 },
+      })
+    )
+    evaluation.recommendations.forEach((rec) => {
+      children.push(new Paragraph({ text: rec, bullet: { level: 0 }, spacing: { after: 80 } }))
+    })
+  }
+
+  const doc = new Document({ sections: [{ children }] })
+  const blob = await Packer.toBlob(doc)
+  downloadBlob(blob, `${sanitizeFilename(project.name)}-Evaluation-${evaluation.created_at.slice(0, 10)}.docx`)
+}

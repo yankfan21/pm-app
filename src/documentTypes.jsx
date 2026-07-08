@@ -12,6 +12,8 @@ import StatusUpdateFlow from './StatusUpdateFlow'
 import StatusUpdateHistory from './StatusUpdateHistory'
 import PostMortemFlow from './PostMortemFlow'
 import PostMortemView from './PostMortemView'
+import ProjectEvalFlow from './ProjectEvalFlow'
+import ProjectEvalView from './ProjectEvalView'
 
 // Single source of truth for every AI-generated project document type.
 // The Documents checklist, generate flow, and view on the project detail
@@ -38,6 +40,12 @@ import PostMortemView from './PostMortemView'
 //   instead when this returns false. Only applies before anything has been
 //   generated; a doc that already exists always renders normally regardless
 //   of what available() returns later (e.g. if the project gets unarchived)
+// - actionLabel (repeatable types only): the text after "+ " on the
+//   always-visible trigger button (e.g. "Log Status Update")
+// - badgeFor(doc) (optional): overrides the checklist row's default status
+//   pill - returns { label, colorClass } (colorClass matches a status-dot/
+//   doc-status-badge modifier: done/pending/partial/critical), or null to
+//   fall back to the default Generated/Not started (or "N logged") badge
 export const DOCUMENT_TYPES = [
   {
     key: 'charter',
@@ -111,6 +119,7 @@ export const DOCUMENT_TYPES = [
     // and ProjectDetail.jsx branch on this flag to load/append an array
     // instead of loading/replacing a single row.
     repeatable: true,
+    actionLabel: 'Log Status Update',
     FlowComponent: StatusUpdateFlow,
     ViewComponent: StatusUpdateHistory,
     context: () => ({}),
@@ -129,6 +138,34 @@ export const DOCUMENT_TYPES = [
       tasks: tasks || [],
     }),
     buildInsert: (result) => ({ line_items: result }),
+  },
+  {
+    key: 'project_evaluation',
+    label: 'Project Evaluation',
+    table: 'project_evaluations',
+    docProp: 'evaluations',
+    repeatable: true,
+    actionLabel: 'Evaluate Project',
+    // The checklist row shows the latest evaluation's health status
+    // (color-coded) instead of a generic count, since at-a-glance health is
+    // more useful here than activity volume.
+    badgeFor: (doc) => {
+      if (!doc || doc.length === 0) return { label: 'Not started', colorClass: 'pending' }
+      const status = doc[0].health_status
+      const label = { on_track: 'On Track', at_risk: 'At Risk', off_track: 'Off Track' }[status] || 'Evaluated'
+      const colorClass = { on_track: 'done', at_risk: 'partial', off_track: 'critical' }[status] || 'pending'
+      return { label, colorClass }
+    },
+    FlowComponent: ProjectEvalFlow,
+    ViewComponent: ProjectEvalView,
+    context: (docs, tasks) => ({
+      charter: docs.charter,
+      riskLog: docs.risk_log,
+      budget: docs.budget_tracker,
+      tasks: tasks || [],
+      statusUpdates: docs.status_update || [],
+    }),
+    buildInsert: (result) => result,
   },
   {
     key: 'post_mortem',
