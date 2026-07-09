@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from './supabaseClient'
+import { assignTaskToSprint } from './sprintAssignment'
 
 const STORY_POINT_OPTIONS = [1, 2, 3, 5, 8, 13]
 
@@ -79,9 +80,17 @@ function BacklogView({ project, tasks, setTasks, sprints, canEdit, expanded, onT
     setTasks((prev) => prev.map((t) => (t.id === task.id ? data : t)))
   }
 
-  function assignToSprint(task, sprintId) {
+  async function assignToSprint(task, sprintId) {
     if (!sprintId) return
-    updateItem(task, { sprint_id: sprintId, backlog_status: 'in_sprint', board_status: 'todo' })
+    setError(null)
+    const { data, error } = await assignTaskToSprint(task.id, sprintId)
+
+    if (error) {
+      setError(error.message)
+      return
+    }
+
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? data : t)))
   }
 
   async function moveItem(task, direction) {

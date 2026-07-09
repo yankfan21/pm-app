@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from './supabaseClient'
+import { assignTaskToSprint } from './sprintAssignment'
 
 const BOARD_COLUMNS = [
   { key: 'todo', label: 'To Do', colorClass: 'pending' },
@@ -49,6 +50,9 @@ function SprintBoardView({ project, tasks, setTasks, sprints, setSprints, canEdi
   const pointsCompleted = sprintTasks
     .filter((t) => t.board_status === 'done')
     .reduce((sum, t) => sum + (t.story_points ?? 0), 0)
+  // Same eligibility rule as Backlog's "Assign to sprint..." dropdown: ready
+  // and not already sitting in some other sprint.
+  const unassignedReadyItems = tasks.filter((t) => t.backlog_status === 'ready' && t.sprint_id == null)
 
   async function handleCreateSprint(e) {
     e.preventDefault()
@@ -107,6 +111,19 @@ function SprintBoardView({ project, tasks, setTasks, sprints, setSprints, canEdi
     }
 
     setTasks((prev) => prev.map((t) => (t.id === task.id ? data : t)))
+  }
+
+  async function handleAddFromBacklog(taskId) {
+    if (!taskId || !selectedSprint) return
+    setError(null)
+    const { data, error } = await assignTaskToSprint(taskId, selectedSprint.id)
+
+    if (error) {
+      setError(error.message)
+      return
+    }
+
+    setTasks((prev) => prev.map((t) => (t.id === taskId ? data : t)))
   }
 
   return (
@@ -200,6 +217,25 @@ function SprintBoardView({ project, tasks, setTasks, sprints, setSprints, canEdi
                     <span>{pointsCommitted} pts committed</span>
                     <span>{pointsCompleted} pts completed</span>
                   </div>
+
+                  {canEdit && (
+                    <label className="sprint-select-field">
+                      Add from Backlog
+                      <select value="" onChange={(e) => handleAddFromBacklog(e.target.value)}>
+                        <option value="">
+                          {unassignedReadyItems.length > 0
+                            ? 'Select a ready item...'
+                            : 'No ready items available'}
+                        </option>
+                        {unassignedReadyItems.map((t) => (
+                          <option key={t.id} value={t.id}>
+                            {t.title}
+                            {t.story_points != null ? ` (${t.story_points} pts)` : ''}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
 
                   <div className="kanban-board">
                     {BOARD_COLUMNS.map((col) => {
