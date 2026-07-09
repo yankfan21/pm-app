@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import AppHeader from './AppHeader'
 import GanttChart from './GanttChart'
+import BacklogView from './BacklogView'
 import TaskGenFlow from './TaskGenFlow'
 import ManageAccess from './ManageAccess'
 import { DOCUMENT_TYPES, groupDocumentTypes } from './documentTypes'
@@ -544,9 +545,20 @@ function ProjectDetail({ project, isOwner, canEdit }) {
       {!loading && (
         <GanttChart
           project={currentProject}
-          tasks={tasks}
+          tasks={tasks.filter((t) => t.backlog_status == null)}
           expanded={expandedSection === 'gantt'}
           onToggle={() => toggleSection('gantt')}
+        />
+      )}
+
+      {!loading && currentProject.methodology !== 'waterfall' && (
+        <BacklogView
+          project={currentProject}
+          tasks={tasks}
+          setTasks={setTasks}
+          canEdit={canEdit}
+          expanded={expandedSection === 'backlog'}
+          onToggle={() => toggleSection('backlog')}
         />
       )}
 

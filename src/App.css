@@ -346,6 +346,172 @@
   padding: 4px 8px;
 }
 
+.backlog-create-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 24px 0;
+}
+
+.backlog-create-form input[type='text'] {
+  flex: 1 1 200px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: inherit;
+  color: var(--text-h);
+  background: var(--bg);
+}
+
+.backlog-create-form .backlog-epic-input {
+  flex: 1 1 140px;
+}
+
+.backlog-create-form select {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: inherit;
+  color: var(--text-h);
+  background: var(--bg);
+}
+
+.backlog-create-form button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  background: var(--accent);
+  font: inherit;
+  cursor: pointer;
+}
+
+.backlog-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.backlog-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.backlog-item.empty,
+.backlog-list li.empty {
+  border-style: dashed;
+  color: var(--text);
+}
+
+.backlog-rank-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.backlog-rank-controls button {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text-h);
+  font-size: 10px;
+  line-height: 1;
+  padding: 3px 6px;
+  cursor: pointer;
+}
+
+.backlog-rank-controls button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.backlog-item-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.backlog-item-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.backlog-item-title {
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.backlog-item-description {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.story-points-badge {
+  flex-shrink: 0;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--code-bg);
+  color: var(--text-h);
+}
+
+.epic-tag {
+  flex-shrink: 0;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  color: var(--text-h);
+}
+
+.backlog-status-select {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border: none;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.backlog-status-select:disabled {
+  cursor: default;
+  opacity: 0.8;
+}
+
+.backlog-status-select.pending {
+  background: var(--code-bg);
+  color: var(--text);
+}
+
+.backlog-status-select.ready {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.backlog-status-select.partial {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.backlog-status-select.done {
+  background: #dcfce7;
+  color: #166534;
+}
+
 .error {
   color: #d1242f;
   margin: 0 0 16px;
