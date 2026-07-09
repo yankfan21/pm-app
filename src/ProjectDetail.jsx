@@ -556,7 +556,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
         </ul>
       )}
 
-      {!loading && (
+      {!loading && currentProject.methodology !== 'agile' && (
         <GanttChart
           project={currentProject}
           tasks={tasks.filter((t) => t.backlog_status == null)}
