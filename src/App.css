@@ -671,6 +671,24 @@
   color: #166534;
 }
 
+.kanban-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.kanban-card-remove {
+  border: none;
+  background: none;
+  color: #d1242f;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  padding: 4px 0;
+}
+
 @media (max-width: 720px) {
   .kanban-board {
     grid-template-columns: 1fr;

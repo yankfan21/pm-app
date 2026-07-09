@@ -113,6 +113,30 @@ function SprintBoardView({ project, tasks, setTasks, sprints, setSprints, canEdi
     setTasks((prev) => prev.map((t) => (t.id === task.id ? data : t)))
   }
 
+  async function handleRemoveFromSprint(task) {
+    const confirmed = window.confirm(
+      `Remove "${task.title}" from this sprint? This discards its board progress (currently ${
+        BOARD_COLUMNS.find((c) => c.key === (task.board_status ?? 'todo'))?.label
+      }) and puts it back in the backlog as Ready.`
+    )
+    if (!confirmed) return
+
+    setError(null)
+    const { data, error } = await supabase
+      .from('tasks')
+      .update({ sprint_id: null, board_status: null, backlog_status: 'ready' })
+      .eq('id', task.id)
+      .select()
+      .single()
+
+    if (error) {
+      setError(error.message)
+      return
+    }
+
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? data : t)))
+  }
+
   async function handleAddFromBacklog(taskId) {
     if (!taskId || !selectedSprint) return
     setError(null)
@@ -263,18 +287,30 @@ function SprintBoardView({ project, tasks, setTasks, sprints, setSprints, canEdi
                                   )}
                                 </div>
 
-                                <select
-                                  className={`board-status-select ${col.colorClass}`}
-                                  value={task.board_status ?? 'todo'}
-                                  disabled={!canEdit}
-                                  onChange={(e) => updateBoardStatus(task, e.target.value)}
-                                >
-                                  {BOARD_COLUMNS.map((c) => (
-                                    <option key={c.key} value={c.key}>
-                                      {c.label}
-                                    </option>
-                                  ))}
-                                </select>
+                                <div className="kanban-card-actions">
+                                  <select
+                                    className={`board-status-select ${col.colorClass}`}
+                                    value={task.board_status ?? 'todo'}
+                                    disabled={!canEdit}
+                                    onChange={(e) => updateBoardStatus(task, e.target.value)}
+                                  >
+                                    {BOARD_COLUMNS.map((c) => (
+                                      <option key={c.key} value={c.key}>
+                                        {c.label}
+                                      </option>
+                                    ))}
+                                  </select>
+
+                                  {canEdit && (
+                                    <button
+                                      type="button"
+                                      className="kanban-card-remove"
+                                      onClick={() => handleRemoveFromSprint(task)}
+                                    >
+                                      Remove from sprint
+                                    </button>
+                                  )}
+                                </div>
                               </li>
                             ))}
                             {cards.length === 0 && <li className="empty">No items</li>}
