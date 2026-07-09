@@ -31,12 +31,18 @@ function AppHeader() {
         <p className="app-subtitle">Your Project Management Assistant</p>
       </div>
 
-      {user && (
+      {user ? (
         <div className="account-menu">
           <span className="account-menu-email">{user.email}</span>
           <button type="button" className="btn-secondary" onClick={signOut}>
             Sign out
           </button>
+        </div>
+      ) : (
+        <div className="account-menu">
+          <Link to="/login" className="btn-secondary">
+            Sign In
+          </Link>
         </div>
       )}
     </div>

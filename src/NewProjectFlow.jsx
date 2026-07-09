@@ -29,7 +29,7 @@ function NewProjectFlow({ onCreated, onClose }) {
         goal: goal.trim(),
         priority,
         deadline: tbd ? null : deadline,
-        owner_id: user.id,
+        owner_id: user?.id ?? null,
       })
       .select()
       .single()

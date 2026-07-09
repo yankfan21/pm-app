@@ -45,6 +45,15 @@ function ProjectDetailPage() {
 
       setProject(data)
 
+      // No session at all: treat like the pre-auth app (full read/write,
+      // just no owner-only "Manage Access" UI - there's no owner to manage
+      // access on behalf of).
+      if (!user) {
+        setRole('editor')
+        setLoading(false)
+        return
+      }
+
       if (data.owner_id === user.id) {
         setRole('owner')
         setLoading(false)
@@ -69,7 +78,7 @@ function ProjectDetailPage() {
     return () => {
       cancelled = true
     }
-  }, [projectId, user.id])
+  }, [projectId, user?.id])
 
   if (loading) {
     return (
