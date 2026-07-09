@@ -6,6 +6,7 @@ import GanttChart from './GanttChart'
 import BacklogView from './BacklogView'
 import SprintBoardView from './SprintBoardView'
 import TaskGenFlow from './TaskGenFlow'
+import BacklogGenFlow from './BacklogGenFlow'
 import ManageAccess from './ManageAccess'
 import { DOCUMENT_TYPES, groupDocumentTypes } from './documentTypes'
 import { METHODOLOGY_LABELS } from './methodology'
@@ -421,7 +422,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
         </button>
       </h2>
 
-      {docs.charter && canEdit && (
+      {docs.charter && canEdit && currentProject.methodology !== 'agile' && (
         <button
           type="button"
           className="btn-secondary ai-task-gen-trigger"
@@ -429,6 +430,23 @@ function ProjectDetail({ project, isOwner, canEdit }) {
         >
           {tasks.length > 0 ? 'Generate More Tasks from Charter' : 'Generate Starter Tasks from Charter'}
         </button>
+      )}
+
+      {docs.charter && canEdit && currentProject.methodology !== 'waterfall' && (
+        <button
+          type="button"
+          className="btn-secondary ai-task-gen-trigger"
+          onClick={() => toggleSection('ai-backlog')}
+        >
+          Generate Backlog from Charter
+        </button>
+      )}
+
+      {docs.charter && canEdit && currentProject.methodology === 'hybrid' && (
+        <p className="charter-status">
+          Waterfall tasks and Backlog items are separate, non-overlapping actions - generating one
+          doesn&rsquo;t touch the other.
+        </p>
       )}
 
       {expandedSection === 'ai-tasks' && canEdit && (
@@ -441,6 +459,21 @@ function ProjectDetail({ project, isOwner, canEdit }) {
           onCommitted={(insertedTasks) => setTasks((prev) => [...prev, ...insertedTasks])}
           onDone={() => setExpandedSection('tasks')}
           onCancel={() => setExpandedSection((prev) => (prev === 'ai-tasks' ? null : prev))}
+        />
+      )}
+
+      {expandedSection === 'ai-backlog' && canEdit && (
+        <BacklogGenFlow
+          project={currentProject}
+          charter={docs.charter}
+          brief={docs.requirements_brief}
+          riskLog={docs.risk_log}
+          existingBacklogItems={tasks
+            .filter((t) => t.backlog_status != null)
+            .map((t) => ({ id: t.id, title: t.title, story_points: t.story_points, backlog_rank: t.backlog_rank }))}
+          onCommitted={(insertedTasks) => setTasks((prev) => [...prev, ...insertedTasks])}
+          onDone={() => setExpandedSection('backlog')}
+          onCancel={() => setExpandedSection((prev) => (prev === 'ai-backlog' ? null : prev))}
         />
       )}
 

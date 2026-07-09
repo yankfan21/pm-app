@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { supabase } from './supabaseClient'
 import { assignTaskToSprint } from './sprintAssignment'
-
-const STORY_POINT_OPTIONS = [1, 2, 3, 5, 8, 13]
+import { STORY_POINT_OPTIONS } from './storyPoints'
 
 const STATUS_OPTIONS = [
   { key: 'backlog', label: 'Backlog', colorClass: 'pending' },
