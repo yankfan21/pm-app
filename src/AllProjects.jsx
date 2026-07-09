@@ -1,11 +1,17 @@
 import { useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import ProjectList from './ProjectList'
+import { METHODOLOGIES, METHODOLOGY_LABELS } from './methodology'
 
 const SORT_OPTIONS = [
   { key: 'priority', label: 'Priority' },
   { key: 'deadline', label: 'Deadline' },
   { key: 'updated', label: 'Recently Updated' },
+]
+
+const METHODOLOGY_FILTERS = [
+  { key: 'all', label: 'All Projects' },
+  ...METHODOLOGIES.map((key) => ({ key, label: METHODOLOGY_LABELS[key] })),
 ]
 
 const PRIORITY_RANK = { Critical: 0, High: 1, Medium: 2, Low: 3 }
@@ -37,6 +43,10 @@ function byName(a, b) {
   return a.name.localeCompare(b.name)
 }
 
+function matchesMethodology(project, methodology) {
+  return methodology === 'all' || project.methodology === methodology
+}
+
 function matchesQuery(project, query) {
   const q = query.trim().toLowerCase()
   return (
@@ -50,20 +60,22 @@ function AllProjects() {
   const [tab, setTab] = useState('active')
   const [sort, setSort] = useState('priority')
   const [query, setQuery] = useState('')
+  const [methodology, setMethodology] = useState('all')
 
   const isSearching = query.trim() !== ''
+  const scoped = projects.filter((p) => matchesMethodology(p, methodology))
 
   let display
   if (isSearching) {
-    const matches = projects.filter((p) => matchesQuery(p, query))
+    const matches = scoped.filter((p) => matchesQuery(p, query))
     const activeMatches = matches.filter((p) => p.status !== 'Archived').sort(byName)
     const archivedMatches = matches.filter((p) => p.status === 'Archived').sort(byName)
     display = [...activeMatches, ...archivedMatches]
   } else if (tab === 'archived') {
-    display = projects.filter((p) => p.status === 'Archived').sort(byRecentlyArchived)
+    display = scoped.filter((p) => p.status === 'Archived').sort(byRecentlyArchived)
   } else {
     display = sortProjects(
-      projects.filter((p) => p.status !== 'Archived'),
+      scoped.filter((p) => p.status !== 'Archived'),
       sort
     )
   }
@@ -78,6 +90,19 @@ function AllProjects() {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />
+
+      <div className="toggle-group methodology-filter">
+        {METHODOLOGY_FILTERS.map(({ key, label }) => (
+          <button
+            type="button"
+            key={key}
+            className={methodology === key ? 'selected' : ''}
+            onClick={() => setMethodology(key)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
       {!isSearching && (
         <div className="list-controls">

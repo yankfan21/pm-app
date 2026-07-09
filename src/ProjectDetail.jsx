@@ -6,6 +6,7 @@ import GanttChart from './GanttChart'
 import TaskGenFlow from './TaskGenFlow'
 import ManageAccess from './ManageAccess'
 import { DOCUMENT_TYPES, groupDocumentTypes } from './documentTypes'
+import { METHODOLOGY_LABELS } from './methodology'
 
 function ProjectDetail({ project, isOwner, canEdit }) {
   const [currentProject, setCurrentProject] = useState(project)
@@ -353,6 +354,9 @@ function ProjectDetail({ project, isOwner, canEdit }) {
       </div>
       <p className="project-goal">{currentProject.goal}</p>
       <div className="project-meta">
+        <span className="methodology-badge">
+          {METHODOLOGY_LABELS[currentProject.methodology] ?? currentProject.methodology}
+        </span>
         <span className={`priority-badge ${currentProject.priority.toLowerCase()}`}>
           {currentProject.priority}
         </span>

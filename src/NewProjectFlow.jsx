@@ -4,9 +4,16 @@ import { useAuth } from './AuthContext'
 
 const PRIORITIES = ['Low', 'Medium', 'High', 'Critical']
 
+const METHODOLOGIES = [
+  { value: 'waterfall', label: 'Waterfall', description: 'Sequential phases, fixed plan up front' },
+  { value: 'agile', label: 'Agile', description: 'Iterative sprints, evolving backlog' },
+  { value: 'hybrid', label: 'Hybrid', description: 'Waterfall structure with agile execution' },
+]
+
 function NewProjectFlow({ onCreated, onClose }) {
   const { user } = useAuth()
   const [step, setStep] = useState(1)
+  const [methodology, setMethodology] = useState(null)
   const [name, setName] = useState('')
   const [goal, setGoal] = useState('')
   const [priority, setPriority] = useState(null)
@@ -15,8 +22,8 @@ function NewProjectFlow({ onCreated, onClose }) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
 
-  const step1Valid = name.trim() !== '' && goal.trim() !== ''
-  const step2Valid = priority !== null && (tbd || deadline !== '')
+  const step2Valid = name.trim() !== '' && goal.trim() !== ''
+  const step3Valid = priority !== null && (tbd || deadline !== '')
 
   async function handleCreate() {
     setSubmitting(true)
@@ -29,6 +36,7 @@ function NewProjectFlow({ onCreated, onClose }) {
         goal: goal.trim(),
         priority,
         deadline: tbd ? null : deadline,
+        methodology,
         owner_id: user?.id ?? null,
       })
       .select()
@@ -54,7 +62,40 @@ function NewProjectFlow({ onCreated, onClose }) {
         {step === 1 && (
           <div className="modal-step">
             <h2>New Project</h2>
-            <p className="step-label">Step 1 of 3</p>
+            <p className="step-label">Step 1 of 4</p>
+
+            <label>Methodology</label>
+            <div className="methodology-buttons">
+              {METHODOLOGIES.map((m) => (
+                <button
+                  type="button"
+                  key={m.value}
+                  className={methodology === m.value ? 'selected' : ''}
+                  onClick={() => setMethodology(m.value)}
+                >
+                  <span className="methodology-name">{m.label}</span>
+                  <span className="methodology-description">{m.description}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="btn-primary"
+                disabled={methodology === null}
+                onClick={() => setStep(2)}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div className="modal-step">
+            <h2>New Project</h2>
+            <p className="step-label">Step 2 of 4</p>
 
             <label>
               Project name
@@ -78,9 +119,16 @@ function NewProjectFlow({ onCreated, onClose }) {
             <div className="modal-actions">
               <button
                 type="button"
+                className="btn-secondary"
+                onClick={() => setStep(1)}
+              >
+                Back
+              </button>
+              <button
+                type="button"
                 className="btn-primary"
-                disabled={!step1Valid}
-                onClick={() => setStep(2)}
+                disabled={!step2Valid}
+                onClick={() => setStep(3)}
               >
                 Next
               </button>
@@ -88,10 +136,10 @@ function NewProjectFlow({ onCreated, onClose }) {
           </div>
         )}
 
-        {step === 2 && (
+        {step === 3 && (
           <div className="modal-step">
             <h2>New Project</h2>
-            <p className="step-label">Step 2 of 3</p>
+            <p className="step-label">Step 3 of 4</p>
 
             <label>Priority</label>
             <div className="priority-buttons">
@@ -133,15 +181,15 @@ function NewProjectFlow({ onCreated, onClose }) {
               <button
                 type="button"
                 className="btn-secondary"
-                onClick={() => setStep(1)}
+                onClick={() => setStep(2)}
               >
                 Back
               </button>
               <button
                 type="button"
                 className="btn-primary"
-                disabled={!step2Valid}
-                onClick={() => setStep(3)}
+                disabled={!step3Valid}
+                onClick={() => setStep(4)}
               >
                 Next
               </button>
@@ -149,12 +197,14 @@ function NewProjectFlow({ onCreated, onClose }) {
           </div>
         )}
 
-        {step === 3 && (
+        {step === 4 && (
           <div className="modal-step">
             <h2>New Project</h2>
-            <p className="step-label">Step 3 of 3 &mdash; Review</p>
+            <p className="step-label">Step 4 of 4 &mdash; Review</p>
 
             <dl className="review-list">
+              <dt>Methodology</dt>
+              <dd>{METHODOLOGIES.find((m) => m.value === methodology)?.label}</dd>
               <dt>Name</dt>
               <dd>{name}</dd>
               <dt>Goal</dt>
@@ -171,7 +221,7 @@ function NewProjectFlow({ onCreated, onClose }) {
               <button
                 type="button"
                 className="btn-secondary"
-                onClick={() => setStep(2)}
+                onClick={() => setStep(3)}
               >
                 Back
               </button>

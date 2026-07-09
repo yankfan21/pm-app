@@ -189,6 +189,10 @@
   gap: 6px;
 }
 
+.methodology-filter {
+  margin-bottom: 20px;
+}
+
 .toggle-group-label {
   font-size: 13px;
   color: var(--text);
@@ -1198,9 +1202,17 @@
 }
 
 .project-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 17px;
   font-weight: 600;
   color: var(--text-h);
+}
+
+.project-name .methodology-badge {
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .project-goal {
@@ -1359,6 +1371,54 @@
   border-color: var(--accent);
   background: var(--accent-bg);
   color: var(--accent);
+}
+
+.methodology-buttons {
+  display: flex;
+  gap: 12px;
+  margin: 8px 0 16px;
+}
+
+.methodology-buttons button {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 20px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text-h);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+}
+
+.methodology-buttons button.selected {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+.methodology-name {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.methodology-description {
+  font-size: 12px;
+  font-weight: normal;
+  color: var(--text);
+}
+
+.methodology-badge {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  color: var(--text-h);
 }
 
 .qa-suggestion {

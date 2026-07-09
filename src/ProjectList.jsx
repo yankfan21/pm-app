@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { METHODOLOGY_LABELS } from './methodology'
 
 function ProjectList({ projects, loading, emptyMessage }) {
   const navigate = useNavigate()
@@ -15,7 +16,12 @@ function ProjectList({ projects, loading, emptyMessage }) {
             }
             onClick={() => navigate(`/projects/${project.id}`)}
           >
-            <div className="project-name">{project.name}</div>
+            <div className="project-name">
+              {project.name}
+              <span className="methodology-badge">
+                {METHODOLOGY_LABELS[project.methodology] ?? project.methodology}
+              </span>
+            </div>
             <div className="project-goal">{project.goal}</div>
             <div className="project-meta">
               <span
