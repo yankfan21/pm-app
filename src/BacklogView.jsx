@@ -16,7 +16,7 @@ function byBacklogRank(a, b) {
   return (a.backlog_rank ?? 0) - (b.backlog_rank ?? 0)
 }
 
-function BacklogView({ project, tasks, setTasks, canEdit, expanded, onToggle }) {
+function BacklogView({ project, tasks, setTasks, sprints, canEdit, expanded, onToggle }) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [storyPoints, setStoryPoints] = useState('')
@@ -77,6 +77,11 @@ function BacklogView({ project, tasks, setTasks, canEdit, expanded, onToggle }) 
     }
 
     setTasks((prev) => prev.map((t) => (t.id === task.id ? data : t)))
+  }
+
+  function assignToSprint(task, sprintId) {
+    if (!sprintId) return
+    updateItem(task, { sprint_id: sprintId, backlog_status: 'in_sprint', board_status: 'todo' })
   }
 
   async function moveItem(task, direction) {
@@ -224,6 +229,21 @@ function BacklogView({ project, tasks, setTasks, canEdit, expanded, onToggle }) 
                     </option>
                   ))}
                 </select>
+
+                {canEdit && item.backlog_status === 'ready' && sprints.length > 0 && (
+                  <select
+                    className="backlog-assign-select"
+                    value=""
+                    onChange={(e) => assignToSprint(item, e.target.value)}
+                  >
+                    <option value="">Assign to sprint...</option>
+                    {sprints.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </li>
             ))}
             {items.length === 0 && <li className="empty">No backlog items yet</li>}

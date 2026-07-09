@@ -4,6 +4,7 @@ import { supabase } from './supabaseClient'
 import AppHeader from './AppHeader'
 import GanttChart from './GanttChart'
 import BacklogView from './BacklogView'
+import SprintBoardView from './SprintBoardView'
 import TaskGenFlow from './TaskGenFlow'
 import ManageAccess from './ManageAccess'
 import { DOCUMENT_TYPES, groupDocumentTypes } from './documentTypes'
@@ -13,6 +14,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
   const [currentProject, setCurrentProject] = useState(project)
   const [archiving, setArchiving] = useState(false)
   const [tasks, setTasks] = useState([])
+  const [sprints, setSprints] = useState([])
   const [title, setTitle] = useState('')
   const [startDate, setStartDate] = useState('')
   const [dueDate, setDueDate] = useState('')
@@ -58,6 +60,17 @@ function ProjectDetail({ project, isOwner, canEdit }) {
       setLoading(false)
     }
 
+    async function loadSprints() {
+      const { data, error } = await supabase
+        .from('sprints')
+        .select('*')
+        .eq('project_id', currentProject.id)
+        .order('start_date', { ascending: true })
+
+      if (error) setError(error.message)
+      else setSprints(data)
+    }
+
     async function loadDocs() {
       const results = await Promise.all(
         DOCUMENT_TYPES.map((docType) => {
@@ -86,6 +99,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
     }
 
     loadTasks()
+    loadSprints()
     loadDocs()
   }, [currentProject.id])
 
@@ -556,9 +570,23 @@ function ProjectDetail({ project, isOwner, canEdit }) {
           project={currentProject}
           tasks={tasks}
           setTasks={setTasks}
+          sprints={sprints}
           canEdit={canEdit}
           expanded={expandedSection === 'backlog'}
           onToggle={() => toggleSection('backlog')}
+        />
+      )}
+
+      {!loading && currentProject.methodology !== 'waterfall' && (
+        <SprintBoardView
+          project={currentProject}
+          tasks={tasks}
+          setTasks={setTasks}
+          sprints={sprints}
+          setSprints={setSprints}
+          canEdit={canEdit}
+          expanded={expandedSection === 'sprint-board'}
+          onToggle={() => toggleSection('sprint-board')}
         />
       )}
 
