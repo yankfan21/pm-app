@@ -1,6 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { supabase } from './supabaseClient'
 import { assignTaskToSprint } from './sprintAssignment'
+import { formatSprintLabel, useSprintSelection } from './useSprintSelection'
+import { computeSprintPoints } from './sprintStats'
 
 const BOARD_COLUMNS = [
   { key: 'todo', label: 'To Do', colorClass: 'pending' },
@@ -8,21 +10,8 @@ const BOARD_COLUMNS = [
   { key: 'done', label: 'Done', colorClass: 'done' },
 ]
 
-function todayLocalDateString() {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
-
-function formatSprintLabel(sprint) {
-  if (sprint.start_date && sprint.end_date) {
-    return `${sprint.name} (${sprint.start_date} – ${sprint.end_date})`
-  }
-  return sprint.name
-}
-
 function SprintBoardView({ project, tasks, setTasks, sprints, setSprints, canEdit, expanded, onToggle }) {
-  const [selectedSprintId, setSelectedSprintId] = useState(null)
-  const autoSelectedRef = useRef(false)
+  const [selectedSprintId, setSelectedSprintId] = useSprintSelection(sprints)
 
   const [name, setName] = useState('')
   const [startDate, setStartDate] = useState('')
@@ -33,23 +22,11 @@ function SprintBoardView({ project, tasks, setTasks, sprints, setSprints, canEdi
 
   const isHybrid = project.methodology === 'hybrid'
 
-  useEffect(() => {
-    if (autoSelectedRef.current || sprints.length === 0) return
-    autoSelectedRef.current = true
-
-    const todayStr = todayLocalDateString()
-    const current = sprints.find(
-      (s) => s.start_date && s.end_date && s.start_date <= todayStr && todayStr <= s.end_date
-    )
-    if (current) setSelectedSprintId(current.id)
-  }, [sprints])
-
   const selectedSprint = sprints.find((s) => s.id === selectedSprintId) || null
-  const sprintTasks = selectedSprint ? tasks.filter((t) => t.sprint_id === selectedSprint.id) : []
-  const pointsCommitted = sprintTasks.reduce((sum, t) => sum + (t.story_points ?? 0), 0)
-  const pointsCompleted = sprintTasks
-    .filter((t) => t.board_status === 'done')
-    .reduce((sum, t) => sum + (t.story_points ?? 0), 0)
+  const { sprintTasks, committed: pointsCommitted, completed: pointsCompleted } = computeSprintPoints(
+    tasks,
+    selectedSprint?.id
+  )
   // Same eligibility rule as Backlog's "Assign to sprint..." dropdown: ready
   // and not already sitting in some other sprint.
   const unassignedReadyItems = tasks.filter((t) => t.backlog_status === 'ready' && t.sprint_id == null)

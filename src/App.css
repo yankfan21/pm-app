@@ -1899,8 +1899,20 @@
   font: inherit;
   font-size: 14px;
   color: var(--text-h);
+  -webkit-text-fill-color: var(--text-h);
+  opacity: 1;
   resize: none;
   line-height: 1.4;
+}
+
+/* WebKit/Chromium renders read-only text fields with dimmed text via
+   -webkit-text-fill-color, which plain `color` doesn't override - this
+   shows up whenever canEdit is false (a Viewer, or a locked Sprint Retro),
+   not just on Risk Log's already-editable common case. */
+.risk-cell-input:read-only {
+  color: var(--text-h);
+  -webkit-text-fill-color: var(--text-h);
+  opacity: 1;
 }
 
 textarea.risk-cell-input {
@@ -1958,6 +1970,77 @@ textarea.risk-cell-input {
 
 .risk-add-btn {
   margin-top: 12px;
+}
+
+.retro-entry-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.retro-entry-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.retro-entry-row .risk-cell-input {
+  flex: 1;
+}
+
+.retro-add-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.retro-add-form input[type='text'] {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: inherit;
+  color: var(--text-h);
+  background: var(--bg);
+}
+
+.retro-add-form button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  background: var(--accent);
+  font: inherit;
+  cursor: pointer;
+}
+
+.retro-sections {
+  margin-top: 20px;
+}
+
+/* .charter-doc-heading's muted #6b6a62 is tuned for sitting on
+   .charter-page's hardcoded light "paper" background (Charter/Post-Mortem/
+   Risk Log) - retro-sections has no such background, so on the app's real
+   (theme-aware, often dark) background that same muted color reads as too
+   low-contrast. These are section headers and should stand out more than
+   the body text below them, not less. */
+.retro-sections .charter-doc-heading {
+  color: var(--text-h);
+  font-size: 15px;
+}
+
+.retro-start-section {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
 }
 
 .ai-task-gen-trigger {

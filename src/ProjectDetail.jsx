@@ -5,6 +5,7 @@ import AppHeader from './AppHeader'
 import GanttChart from './GanttChart'
 import BacklogView from './BacklogView'
 import SprintBoardView from './SprintBoardView'
+import SprintRetroView from './SprintRetroView'
 import TaskGenFlow from './TaskGenFlow'
 import BacklogGenFlow from './BacklogGenFlow'
 import ManageAccess from './ManageAccess'
@@ -16,6 +17,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
   const [archiving, setArchiving] = useState(false)
   const [tasks, setTasks] = useState([])
   const [sprints, setSprints] = useState([])
+  const [retros, setRetros] = useState([])
   const [title, setTitle] = useState('')
   const [startDate, setStartDate] = useState('')
   const [dueDate, setDueDate] = useState('')
@@ -68,8 +70,25 @@ function ProjectDetail({ project, isOwner, canEdit }) {
         .eq('project_id', currentProject.id)
         .order('start_date', { ascending: true })
 
-      if (error) setError(error.message)
-      else setSprints(data)
+      if (error) {
+        setError(error.message)
+        return
+      }
+      setSprints(data)
+
+      const sprintIds = data.map((s) => s.id)
+      if (sprintIds.length === 0) {
+        setRetros([])
+        return
+      }
+
+      const { data: retroData, error: retroError } = await supabase
+        .from('sprint_retros')
+        .select('*')
+        .in('sprint_id', sprintIds)
+
+      if (retroError) setError(retroError.message)
+      else setRetros(retroData)
     }
 
     async function loadDocs() {
@@ -620,6 +639,19 @@ function ProjectDetail({ project, isOwner, canEdit }) {
           canEdit={canEdit}
           expanded={expandedSection === 'sprint-board'}
           onToggle={() => toggleSection('sprint-board')}
+        />
+      )}
+
+      {!loading && currentProject.methodology !== 'waterfall' && (
+        <SprintRetroView
+          project={currentProject}
+          sprints={sprints}
+          retros={retros}
+          setRetros={setRetros}
+          tasks={tasks}
+          canEdit={canEdit}
+          expanded={expandedSection === 'sprint-retro'}
+          onToggle={() => toggleSection('sprint-retro')}
         />
       )}
 
