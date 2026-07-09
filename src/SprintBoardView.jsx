@@ -20,6 +20,12 @@ function SprintBoardView({ project, tasks, setTasks, sprints, setSprints, canEdi
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState(null)
 
+  const [showPullForward, setShowPullForward] = useState(false)
+  const [pullTargets, setPullTargets] = useState({})
+  const [pullingTaskId, setPullingTaskId] = useState(null)
+  const [newSprintNameInline, setNewSprintNameInline] = useState('')
+  const [creatingInlineSprint, setCreatingInlineSprint] = useState(false)
+
   const isHybrid = project.methodology === 'hybrid'
 
   const selectedSprint = sprints.find((s) => s.id === selectedSprintId) || null
@@ -30,6 +36,8 @@ function SprintBoardView({ project, tasks, setTasks, sprints, setSprints, canEdi
   // Same eligibility rule as Backlog's "Assign to sprint..." dropdown: ready
   // and not already sitting in some other sprint.
   const unassignedReadyItems = tasks.filter((t) => t.backlog_status === 'ready' && t.sprint_id == null)
+  const unfinishedItems = sprintTasks.filter((t) => (t.board_status ?? 'todo') !== 'done')
+  const otherSprints = sprints.filter((s) => s.id !== selectedSprint?.id)
 
   async function handleCreateSprint(e) {
     e.preventDefault()
@@ -125,6 +133,64 @@ function SprintBoardView({ project, tasks, setTasks, sprints, setSprints, canEdi
     }
 
     setTasks((prev) => prev.map((t) => (t.id === taskId ? data : t)))
+  }
+
+  // "Pull to sprint" - fresh start in the target sprint: board_status
+  // resets to todo, but backlog_status stays 'in_sprint' (it's still
+  // assigned to a sprint, just a different one) and everything else
+  // (story_points/title/epic_name) is untouched.
+  async function handlePullToSprint(task) {
+    const targetSprintId = pullTargets[task.id]
+    if (!targetSprintId) return
+
+    setPullingTaskId(task.id)
+    setError(null)
+
+    const { data, error } = await supabase
+      .from('tasks')
+      .update({ sprint_id: targetSprintId, board_status: 'todo' })
+      .eq('id', task.id)
+      .select()
+      .single()
+
+    setPullingTaskId(null)
+
+    if (error) {
+      setError(error.message)
+      return
+    }
+
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? data : t)))
+    setPullTargets((prev) => {
+      const next = { ...prev }
+      delete next[task.id]
+      return next
+    })
+  }
+
+  async function handleCreateInlineSprint(e) {
+    e.preventDefault()
+    const trimmed = newSprintNameInline.trim()
+    if (!trimmed) return
+
+    setCreatingInlineSprint(true)
+    setError(null)
+
+    const { data, error } = await supabase
+      .from('sprints')
+      .insert({ project_id: project.id, name: trimmed })
+      .select()
+      .single()
+
+    setCreatingInlineSprint(false)
+
+    if (error) {
+      setError(error.message)
+      return
+    }
+
+    setSprints((prev) => [...prev, data])
+    setNewSprintNameInline('')
   }
 
   return (
@@ -236,6 +302,101 @@ function SprintBoardView({ project, tasks, setTasks, sprints, setSprints, canEdi
                         ))}
                       </select>
                     </label>
+                  )}
+
+                  {canEdit && (
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      disabled={unfinishedItems.length === 0}
+                      onClick={() => setShowPullForward((prev) => !prev)}
+                    >
+                      Pull Unfinished Forward
+                    </button>
+                  )}
+
+                  {showPullForward && canEdit && (
+                    <div className="pull-forward-panel">
+                      {unfinishedItems.length === 0 ? (
+                        <p className="charter-status">Nothing unfinished in this sprint.</p>
+                      ) : (
+                        <>
+                          <p className="charter-status">
+                            Pick an action for each unfinished item below - nothing moves until you
+                            confirm each one.
+                          </p>
+
+                          <ul className="pull-forward-list">
+                            {unfinishedItems.map((task) => (
+                              <li key={task.id} className="kanban-card">
+                                <div className="backlog-item-title-row">
+                                  <span className="backlog-item-title">{task.title}</span>
+                                  {task.story_points != null && (
+                                    <span className="story-points-badge">{task.story_points} pts</span>
+                                  )}
+                                  {isHybrid && task.epic_name && (
+                                    <span className="epic-tag">{task.epic_name}</span>
+                                  )}
+                                </div>
+
+                                <div className="pull-forward-actions">
+                                  {otherSprints.length > 0 && (
+                                    <>
+                                      <select
+                                        value={pullTargets[task.id] || ''}
+                                        onChange={(e) =>
+                                          setPullTargets((prev) => ({ ...prev, [task.id]: e.target.value }))
+                                        }
+                                      >
+                                        <option value="">Pull to sprint...</option>
+                                        {otherSprints.map((s) => (
+                                          <option key={s.id} value={s.id}>
+                                            {formatSprintLabel(s)}
+                                          </option>
+                                        ))}
+                                      </select>
+                                      <button
+                                        type="button"
+                                        className="btn-primary"
+                                        disabled={!pullTargets[task.id] || pullingTaskId === task.id}
+                                        onClick={() => handlePullToSprint(task)}
+                                      >
+                                        {pullingTaskId === task.id ? 'Pulling...' : 'Pull'}
+                                      </button>
+                                    </>
+                                  )}
+
+                                  <button
+                                    type="button"
+                                    className="kanban-card-remove"
+                                    onClick={() => handleRemoveFromSprint(task)}
+                                  >
+                                    Return to Backlog
+                                  </button>
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+
+                          {otherSprints.length === 0 && (
+                            <form className="pull-forward-create-sprint" onSubmit={handleCreateInlineSprint}>
+                              <span className="charter-status">
+                                No other sprints exist yet - create one to pull items into:
+                              </span>
+                              <input
+                                type="text"
+                                value={newSprintNameInline}
+                                onChange={(e) => setNewSprintNameInline(e.target.value)}
+                                placeholder="New sprint name..."
+                              />
+                              <button type="submit" disabled={creatingInlineSprint}>
+                                {creatingInlineSprint ? 'Creating...' : 'Create Sprint'}
+                              </button>
+                            </form>
+                          )}
+                        </>
+                      )}
+                    </div>
                   )}
 
                   <div className="kanban-board">
