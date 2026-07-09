@@ -14,6 +14,13 @@ function extractJson(text) {
   return JSON.parse(raw.trim())
 }
 
+// max_tokens was 1200 - too low. apply_followup can rewrite up to all 6
+// charter sections in one call, and Claude's "thinking" content block
+// (which showed up in production, unprompted) draws from the same
+// max_tokens budget as the actual text output - the combination hit the
+// ceiling mid-JSON on a real charter with several sections touched at
+// once, producing an unparseable truncated response. Bumped generously;
+// max_tokens is only a ceiling, so this doesn't force longer output.
 async function callClaude(system, user, attempt = 1) {
   const apiKey = Deno.env.get("ANTHROPIC_API_KEY")
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY secret is not set")
@@ -27,7 +34,7 @@ async function callClaude(system, user, attempt = 1) {
     },
     body: JSON.stringify({
       model: MODEL,
-      max_tokens: 1200,
+      max_tokens: 4000,
       system,
       messages: [{ role: "user", content: user }],
     }),

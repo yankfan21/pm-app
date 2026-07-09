@@ -24,6 +24,11 @@ function extractJson(text) {
   return JSON.parse(raw.trim())
 }
 
+// Bumped from 1500 - charter's apply_followup hit this same ceiling in
+// production (Claude's "thinking" content block draws from the same
+// max_tokens budget as the actual JSON output, and a multi-item proposal
+// can exceed a low ceiling and truncate mid-JSON). max_tokens is only a
+// ceiling, so raising it doesn't force longer output.
 async function callClaude(system, user, attempt = 1) {
   const apiKey = Deno.env.get("ANTHROPIC_API_KEY")
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY secret is not set")
@@ -37,7 +42,7 @@ async function callClaude(system, user, attempt = 1) {
     },
     body: JSON.stringify({
       model: MODEL,
-      max_tokens: 1500,
+      max_tokens: 4000,
       system,
       messages: [{ role: "user", content: user }],
     }),
