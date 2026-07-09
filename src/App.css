@@ -2048,7 +2048,8 @@ textarea.risk-cell-input {
 }
 
 .task-gen-table select,
-.task-gen-table input[type='number'] {
+.task-gen-table input[type='number'],
+.task-gen-table input[type='date'] {
   display: block;
   width: 100%;
   min-width: 90px;
@@ -2063,17 +2064,20 @@ textarea.risk-cell-input {
   cursor: pointer;
 }
 
-.task-gen-table input[type='number'] {
+.task-gen-table input[type='number'],
+.task-gen-table input[type='date'] {
   cursor: text;
 }
 
 .task-gen-table select:hover,
-.task-gen-table input[type='number']:hover {
+.task-gen-table input[type='number']:hover,
+.task-gen-table input[type='date']:hover {
   background: rgba(127, 127, 127, 0.08);
 }
 
 .task-gen-table select:focus,
-.task-gen-table input[type='number']:focus {
+.task-gen-table input[type='number']:focus,
+.task-gen-table input[type='date']:focus {
   outline: none;
   border-color: var(--accent-border);
   background: var(--bg);
@@ -2087,6 +2091,50 @@ textarea.risk-cell-input {
 
 .task-gen-row-excluded {
   opacity: 0.5;
+}
+
+.import-mapping-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.import-mapping-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-weight: 500;
+  color: var(--text-h);
+}
+
+.import-mapping-row select {
+  min-width: 220px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--text-h);
+  background: var(--bg);
+}
+
+.import-row-issue {
+  background: rgba(217, 119, 6, 0.08);
+}
+
+.import-issues-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 160px;
+}
+
+.import-issue-tag {
+  font-size: 12px;
+  font-weight: 600;
+  color: #b45309;
 }
 
 .risk-suggestions {

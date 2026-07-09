@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { supabase } from './supabaseClient'
 import { assignTaskToSprint } from './sprintAssignment'
 import { STORY_POINT_OPTIONS } from './storyPoints'
+import BacklogImportFlow from './BacklogImportFlow'
 
 const STATUS_OPTIONS = [
   { key: 'backlog', label: 'Backlog', colorClass: 'pending' },
@@ -23,6 +24,7 @@ function BacklogView({ project, tasks, setTasks, sprints, canEdit, expanded, onT
   const [epicName, setEpicName] = useState('')
   const [error, setError] = useState(null)
   const [reorderingId, setReorderingId] = useState(null)
+  const [showImport, setShowImport] = useState(false)
 
   const isHybrid = project.methodology === 'hybrid'
   const items = tasks.filter((t) => t.backlog_status != null).sort(byBacklogRank)
@@ -184,6 +186,26 @@ function BacklogView({ project, tasks, setTasks, sprints, canEdit, expanded, onT
               )}
               <button type="submit">Add</button>
             </form>
+          )}
+
+          {canEdit && !showImport && (
+            <button
+              type="button"
+              className="btn-secondary ai-task-gen-trigger"
+              onClick={() => setShowImport(true)}
+            >
+              Import from Excel
+            </button>
+          )}
+
+          {showImport && canEdit && (
+            <BacklogImportFlow
+              project={project}
+              existingBacklogItems={items}
+              onCommitted={(inserted) => setTasks((prev) => [...prev, ...inserted])}
+              onDone={() => setShowImport(false)}
+              onCancel={() => setShowImport(false)}
+            />
           )}
 
           <ul className="backlog-list">

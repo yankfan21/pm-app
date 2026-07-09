@@ -111,8 +111,27 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { action, project, answers, charter, sectionKey, sectionText, instruction } =
+    const { action, project, answers, charter, sectionKey, sectionText, instruction, documentText } =
       await req.json()
+
+    if (action === "from_document") {
+      const system =
+        "You are a project management assistant extracting a structured project charter from an existing document someone has uploaded. Base the charter primarily on the document's actual content; only fall back to the project data provided for anything the document doesn't cover, and never fabricate specifics that aren't implied by either source. Respond with ONLY a JSON object, no markdown fences, no other text."
+      const user = `${projectContext(project)}
+
+Uploaded document text:
+${documentText}
+
+Extract/write a project charter with these sections: Purpose, Scope, Stakeholders, Success Metrics, Risks, Timeline. Keep each section concise (2-5 sentences, or a short bullet list using "- " prefixes). Base it primarily on the uploaded document above.
+
+Return ONLY this JSON shape:
+{"purpose": "...", "scope": "...", "stakeholders": "...", "success_metrics": "...", "risks": "...", "timeline": "..."}`
+
+      const result = await callClaude(system, user)
+      return new Response(JSON.stringify(result), {
+        headers: { ...corsHeaders, "content-type": "application/json" },
+      })
+    }
 
     if (action === "questions") {
       const system =

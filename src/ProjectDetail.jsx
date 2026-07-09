@@ -8,6 +8,7 @@ import SprintBoardView from './SprintBoardView'
 import SprintRetroView from './SprintRetroView'
 import TaskGenFlow from './TaskGenFlow'
 import BacklogGenFlow from './BacklogGenFlow'
+import TaskImportFlow from './TaskImportFlow'
 import ManageAccess from './ManageAccess'
 import { DOCUMENT_TYPES, groupDocumentTypes } from './documentTypes'
 import { METHODOLOGY_LABELS } from './methodology'
@@ -451,6 +452,16 @@ function ProjectDetail({ project, isOwner, canEdit }) {
         </button>
       )}
 
+      {canEdit && currentProject.methodology !== 'agile' && (
+        <button
+          type="button"
+          className="btn-secondary ai-task-gen-trigger"
+          onClick={() => toggleSection('import-tasks')}
+        >
+          Import from Excel
+        </button>
+      )}
+
       {docs.charter && canEdit && currentProject.methodology !== 'waterfall' && (
         <button
           type="button"
@@ -478,6 +489,16 @@ function ProjectDetail({ project, isOwner, canEdit }) {
           onCommitted={(insertedTasks) => setTasks((prev) => [...prev, ...insertedTasks])}
           onDone={() => setExpandedSection('tasks')}
           onCancel={() => setExpandedSection((prev) => (prev === 'ai-tasks' ? null : prev))}
+        />
+      )}
+
+      {expandedSection === 'import-tasks' && canEdit && (
+        <TaskImportFlow
+          project={currentProject}
+          existingTasks={tasks.map((t) => ({ id: t.id, title: t.title }))}
+          onCommitted={(insertedTasks) => setTasks((prev) => [...prev, ...insertedTasks])}
+          onDone={() => setExpandedSection('tasks')}
+          onCancel={() => setExpandedSection((prev) => (prev === 'import-tasks' ? null : prev))}
         />
       )}
 
