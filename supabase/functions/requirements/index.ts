@@ -14,6 +14,12 @@ function extractJson(text) {
   return JSON.parse(raw.trim())
 }
 
+// Bumped from 1200 - this function's "generate" writes 7 brief sections and
+// "apply_followup" can rewrite several at once, the same ceiling that
+// truncated charter's apply_followup in production (Claude's "thinking"
+// content block draws from the same max_tokens budget as the actual JSON
+// output). max_tokens is only a ceiling, so raising it doesn't force longer
+// output.
 async function callClaude(system, user, attempt = 1) {
   const apiKey = Deno.env.get("ANTHROPIC_API_KEY")
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY secret is not set")
@@ -27,7 +33,7 @@ async function callClaude(system, user, attempt = 1) {
     },
     body: JSON.stringify({
       model: MODEL,
-      max_tokens: 1200,
+      max_tokens: 4000,
       system,
       messages: [{ role: "user", content: user }],
     }),
@@ -35,6 +41,13 @@ async function callClaude(system, user, attempt = 1) {
 
   if (!resp.ok) {
     const errText = await resp.text()
+    // 429 (rate limited) and 5xx/529 (overloaded/transient) are worth a
+    // retry; anything else (bad request, auth, etc.) is not.
+    const retryable = resp.status === 429 || resp.status === 529 || resp.status >= 500
+    if (retryable && attempt < 3) {
+      await new Promise((r) => setTimeout(r, 500 * attempt))
+      return callClaude(system, user, attempt + 1)
+    }
     throw new Error(`Anthropic API error (${resp.status}): ${errText}`)
   }
 

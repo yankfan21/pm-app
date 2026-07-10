@@ -60,6 +60,13 @@ async function callClaude(system, user, attempt = 1) {
 
   if (!resp.ok) {
     const errText = await resp.text()
+    // 429 (rate limited) and 5xx/529 (overloaded/transient) are worth a
+    // retry; anything else (bad request, auth, etc.) is not.
+    const retryable = resp.status === 429 || resp.status === 529 || resp.status >= 500
+    if (retryable && attempt < 3) {
+      await new Promise((r) => setTimeout(r, 500 * attempt))
+      return callClaude(system, user, attempt + 1)
+    }
     throw new Error(`Anthropic API error (${resp.status}): ${errText}`)
   }
 
