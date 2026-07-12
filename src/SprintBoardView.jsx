@@ -10,7 +10,7 @@ const BOARD_COLUMNS = [
   { key: 'done', label: 'Done', colorClass: 'done' },
 ]
 
-function SprintBoardView({ project, tasks, setTasks, sprints, setSprints, canEdit, expanded, onToggle }) {
+function SprintBoardView({ project, tasks, setTasks, sprints, setSprints, milestones, canEdit, expanded, onToggle }) {
   const [selectedSprintId, setSelectedSprintId] = useSprintSelection(sprints)
 
   const [name, setName] = useState('')
@@ -27,6 +27,13 @@ function SprintBoardView({ project, tasks, setTasks, sprints, setSprints, canEdi
   const [creatingInlineSprint, setCreatingInlineSprint] = useState(false)
 
   const isHybrid = project.methodology === 'hybrid'
+
+  function epicLabel(task) {
+    if (task.milestone_id) {
+      return milestones.find((m) => m.id === task.milestone_id)?.name ?? 'Unknown milestone'
+    }
+    return task.epic_name || null
+  }
 
   const selectedSprint = sprints.find((s) => s.id === selectedSprintId) || null
   const { sprintTasks, committed: pointsCommitted, completed: pointsCompleted } = computeSprintPoints(
@@ -334,8 +341,8 @@ function SprintBoardView({ project, tasks, setTasks, sprints, setSprints, canEdi
                                   {task.story_points != null && (
                                     <span className="story-points-badge">{task.story_points} pts</span>
                                   )}
-                                  {isHybrid && task.epic_name && (
-                                    <span className="epic-tag">{task.epic_name}</span>
+                                  {isHybrid && epicLabel(task) && (
+                                    <span className="epic-tag">{epicLabel(task)}</span>
                                   )}
                                 </div>
 
@@ -420,8 +427,8 @@ function SprintBoardView({ project, tasks, setTasks, sprints, setSprints, canEdi
                                   {task.story_points != null && (
                                     <span className="story-points-badge">{task.story_points} pts</span>
                                   )}
-                                  {isHybrid && task.epic_name && (
-                                    <span className="epic-tag">{task.epic_name}</span>
+                                  {isHybrid && epicLabel(task) && (
+                                    <span className="epic-tag">{epicLabel(task)}</span>
                                   )}
                                 </div>
 

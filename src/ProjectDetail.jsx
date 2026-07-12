@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import AppHeader from './AppHeader'
 import GanttChart from './GanttChart'
+import MilestonesView from './MilestonesView'
 import BacklogView from './BacklogView'
 import SprintBoardView from './SprintBoardView'
 import SprintRetroView from './SprintRetroView'
@@ -19,10 +20,12 @@ function ProjectDetail({ project, isOwner, canEdit }) {
   const [tasks, setTasks] = useState([])
   const [sprints, setSprints] = useState([])
   const [retros, setRetros] = useState([])
+  const [milestones, setMilestones] = useState([])
   const [title, setTitle] = useState('')
   const [startDate, setStartDate] = useState('')
   const [dueDate, setDueDate] = useState('')
   const [dependsOn, setDependsOn] = useState('')
+  const [milestoneId, setMilestoneId] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -92,6 +95,17 @@ function ProjectDetail({ project, isOwner, canEdit }) {
       else setRetros(retroData)
     }
 
+    async function loadMilestones() {
+      const { data, error } = await supabase
+        .from('milestones')
+        .select('*')
+        .eq('project_id', currentProject.id)
+        .order('start_date', { ascending: true })
+
+      if (error) setError(error.message)
+      else setMilestones(data)
+    }
+
     async function loadDocs() {
       const results = await Promise.all(
         DOCUMENT_TYPES.map((docType) => {
@@ -121,6 +135,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
 
     loadTasks()
     loadSprints()
+    loadMilestones()
     loadDocs()
   }, [currentProject.id])
 
@@ -165,6 +180,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
         start_date: startDate || null,
         due_date: dueDate || null,
         depends_on: dependsOn || null,
+        milestone_id: currentProject.methodology !== 'agile' ? milestoneId || null : null,
       })
       .select()
       .single()
@@ -179,6 +195,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
     setStartDate('')
     setDueDate('')
     setDependsOn('')
+    setMilestoneId('')
   }
 
   async function toggleComplete(task) {
@@ -552,6 +569,19 @@ function ProjectDetail({ project, isOwner, canEdit }) {
               ))}
             </select>
           </label>
+          {currentProject.methodology !== 'agile' && (
+            <label className="task-select-field">
+              Milestone
+              <select value={milestoneId} onChange={(e) => setMilestoneId(e.target.value)}>
+                <option value="">None</option>
+                {milestones.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <button type="submit">Add</button>
         </form>
       )}
@@ -620,6 +650,23 @@ function ProjectDetail({ project, isOwner, canEdit }) {
                         ))}
                     </select>
                   </label>
+                  {currentProject.methodology !== 'agile' && (
+                    <label className="task-select-field">
+                      Milestone
+                      <select
+                        value={task.milestone_id || ''}
+                        disabled={!canEdit}
+                        onChange={(e) => updateTaskField(task, 'milestone_id', e.target.value)}
+                      >
+                        <option value="">None</option>
+                        {milestones.map((m) => (
+                          <option key={m.id} value={m.id}>
+                            {m.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
                 </div>
               </li>
             ))}
@@ -627,6 +674,17 @@ function ProjectDetail({ project, isOwner, canEdit }) {
             <li className="empty">No tasks yet</li>
           )}
         </ul>
+      )}
+
+      {!loading && currentProject.methodology !== 'agile' && (
+        <MilestonesView
+          project={currentProject}
+          milestones={milestones}
+          setMilestones={setMilestones}
+          canEdit={canEdit}
+          expanded={expandedSection === 'milestones'}
+          onToggle={() => toggleSection('milestones')}
+        />
       )}
 
       {!loading && currentProject.methodology !== 'agile' && (
@@ -644,6 +702,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
           tasks={tasks}
           setTasks={setTasks}
           sprints={sprints}
+          milestones={milestones}
           canEdit={canEdit}
           expanded={expandedSection === 'backlog'}
           onToggle={() => toggleSection('backlog')}
@@ -657,6 +716,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
           setTasks={setTasks}
           sprints={sprints}
           setSprints={setSprints}
+          milestones={milestones}
           canEdit={canEdit}
           expanded={expandedSection === 'sprint-board'}
           onToggle={() => toggleSection('sprint-board')}

@@ -17,11 +17,11 @@ function byBacklogRank(a, b) {
   return (a.backlog_rank ?? 0) - (b.backlog_rank ?? 0)
 }
 
-function BacklogView({ project, tasks, setTasks, sprints, canEdit, expanded, onToggle }) {
+function BacklogView({ project, tasks, setTasks, sprints, milestones, canEdit, expanded, onToggle }) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [storyPoints, setStoryPoints] = useState('')
-  const [epicName, setEpicName] = useState('')
+  const [milestoneId, setMilestoneId] = useState('')
   const [error, setError] = useState(null)
   const [reorderingId, setReorderingId] = useState(null)
   const [showImport, setShowImport] = useState(false)
@@ -45,7 +45,7 @@ function BacklogView({ project, tasks, setTasks, sprints, canEdit, expanded, onT
         title: trimmed,
         description: description.trim() || null,
         story_points: storyPoints ? Number(storyPoints) : null,
-        epic_name: isHybrid ? epicName.trim() || null : null,
+        milestone_id: isHybrid ? milestoneId || null : null,
         backlog_rank: nextRank,
         backlog_status: 'backlog',
       })
@@ -61,7 +61,7 @@ function BacklogView({ project, tasks, setTasks, sprints, canEdit, expanded, onT
     setTitle('')
     setDescription('')
     setStoryPoints('')
-    setEpicName('')
+    setMilestoneId('')
   }
 
   async function updateItem(task, fields) {
@@ -176,13 +176,18 @@ function BacklogView({ project, tasks, setTasks, sprints, canEdit, expanded, onT
                 ))}
               </select>
               {isHybrid && (
-                <input
-                  type="text"
-                  value={epicName}
-                  onChange={(e) => setEpicName(e.target.value)}
-                  placeholder="Epic (optional)"
+                <select
+                  value={milestoneId}
+                  onChange={(e) => setMilestoneId(e.target.value)}
                   className="backlog-epic-input"
-                />
+                >
+                  <option value="">Epic (optional)</option>
+                  {milestones.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name}
+                    </option>
+                  ))}
+                </select>
               )}
               <button type="submit">Add</button>
             </form>
@@ -238,8 +243,15 @@ function BacklogView({ project, tasks, setTasks, sprints, canEdit, expanded, onT
                     {item.story_points != null && (
                       <span className="story-points-badge">{item.story_points} pts</span>
                     )}
-                    {isHybrid && item.epic_name && (
-                      <span className="epic-tag">{item.epic_name}</span>
+                    {isHybrid && item.milestone_id && (
+                      <span className="epic-tag">
+                        {milestones.find((m) => m.id === item.milestone_id)?.name ?? 'Unknown milestone'}
+                      </span>
+                    )}
+                    {isHybrid && !item.milestone_id && item.epic_name && (
+                      <span className="epic-tag" title="Free-text epic from before Milestones existed - not linked to a milestone yet">
+                        {item.epic_name} (unmapped)
+                      </span>
                     )}
                   </div>
                   {item.description && (
@@ -259,6 +271,23 @@ function BacklogView({ project, tasks, setTasks, sprints, canEdit, expanded, onT
                     </option>
                   ))}
                 </select>
+
+                {canEdit && isHybrid && (
+                  <select
+                    className="backlog-assign-select"
+                    value={item.milestone_id || ''}
+                    onChange={(e) => updateItem(item, { milestone_id: e.target.value || null })}
+                  >
+                    <option value="">
+                      {item.epic_name && !item.milestone_id ? 'Map to milestone...' : 'No milestone'}
+                    </option>
+                    {milestones.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
 
                 {canEdit && item.backlog_status === 'ready' && sprints.length > 0 && (
                   <select

@@ -337,13 +337,15 @@
   color: var(--text);
 }
 
-.task-list .delete {
+.task-list .delete,
+.milestone-list .delete {
   border: none;
   background: none;
   color: #d1242f;
   cursor: pointer;
   font: inherit;
   padding: 4px 8px;
+  flex-shrink: 0;
 }
 
 .backlog-create-form {
