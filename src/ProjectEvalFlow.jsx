@@ -9,7 +9,7 @@ import { todayLocalDateString } from './ganttLayout'
 // GanttChart does - comparing due dates against the viewer's actual local
 // calendar day, not whatever day it happens to be in the edge function's
 // server timezone.
-function ProjectEvalFlow({ project, charter, riskLog, budget, tasks, statusUpdates, onGenerated, onClose }) {
+function ProjectEvalFlow({ project, charter, riskLog, budget, tasks, statusUpdates, sprints, retros, milestones, onGenerated, onClose }) {
   const [phase, setPhase] = useState('evaluating')
   const [error, setError] = useState(null)
   // Unlike the other Flow components' mount effect (which only fetches
@@ -39,6 +39,9 @@ function ProjectEvalFlow({ project, charter, riskLog, budget, tasks, statusUpdat
         budget,
         tasks,
         statusUpdates,
+        sprints,
+        retros,
+        milestones,
         today: todayLocalDateString(),
       },
     })
@@ -70,7 +73,8 @@ function ProjectEvalFlow({ project, charter, riskLog, budget, tasks, statusUpdat
       <div className="modal-step">
         {phase === 'evaluating' && (
           <p className="charter-status">
-            Reviewing the charter, risk log, budget, tasks, and status history...
+            Reviewing the charter, risk log, budget, and status history, plus milestones/tasks or
+            sprints/backlog/retros depending on methodology...
           </p>
         )}
 

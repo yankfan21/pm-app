@@ -4,11 +4,28 @@
 // Evaluate Project is a one-shot, read-only diagnostic - no Q&A intake, no
 // PM editing, nothing it does ever writes back to tasks/budget/risks. The
 // one thing that makes this different from every other doc type's edge
-// function: the numbers it needs (overdue tasks, budget variance, risk
-// age) have to be arithmetically exact, and LLMs are unreliable at date
-// math and counting over a raw list. So this function computes every
-// derived stat in plain code first and hands Claude already-computed facts
-// to synthesize/narrate, rather than asking it to do the counting itself.
+// function: the numbers it needs (overdue tasks/milestones, budget
+// variance, risk age, sprint velocity) have to be arithmetically exact,
+// and LLMs are unreliable at date math and counting over a raw list. So
+// this function computes every derived stat in plain code first and hands
+// Claude already-computed facts to synthesize/narrate, rather than asking
+// it to do the counting itself.
+//
+// Methodology-aware: `tasks` holds both classic Waterfall tasks and
+// Backlog/Sprint items in one table, distinguished only by backlog_status
+// (null = task, set = backlog item - same filter GanttChart.jsx/
+// BacklogView.jsx already use). Earlier this function ran taskStats over
+// the raw unfiltered array for every methodology, which silently produced
+// wrong numbers for Agile/Hybrid (backlog items never set the `completed`
+// column Backlog/Sprint Board doesn't use, so "% tasks complete" read as
+// a bogus 0% while real progress lived in backlog_status/board_status
+// instead). Now: Waterfall primary signal = milestones + their linked
+// tasks; Agile primary signal = sprint velocity + backlog health + locked
+// retro themes, no dates/overdue framing since Agile has no fixed
+// schedule; Hybrid leads with milestones (like Waterfall) and pulls in
+// velocity/backlog/retro evidence scoped to whichever milestone(s) are
+// currently active, as supporting evidence for that milestone's verdict.
+// Risks and budget stay in the evaluation across all three, unscoped.
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -37,11 +54,14 @@ async function callClaude(system, user, attempt = 1) {
     },
     body: JSON.stringify({
       model: MODEL,
-      // A dense, fully-cross-referenced one-paragraph rationale plus up to
-      // 5 specific recommendations occasionally ran past 2000 and got
-      // truncated mid-JSON (same failure mode fixed in post-mortem/index.ts
-      // by raising its budget) - give this comparable headroom.
-      max_tokens: 3000,
+      // Bumped from 3000 - a dense, fully-cross-referenced rationale plus
+      // up to 5 recommendations already sat close to that ceiling before,
+      // and the methodology-aware version adds meaningfully more context
+      // (per-milestone breakdowns, multi-sprint velocity series, retro
+      // excerpts) for Claude to cross-reference. max_tokens is only a
+      // ceiling, so raising it doesn't force longer output. Matches the
+      // fixed ceiling task-gen/backlog-gen/milestone-gen already use.
+      max_tokens: 4000,
       system,
       messages: [{ role: "user", content: user }],
     }),
@@ -93,7 +113,8 @@ function projectContext(project) {
 Goal: ${project.goal}
 Priority: ${project.priority}
 Deadline: ${project.deadline ?? "TBD"}
-Status: ${project.status}`
+Status: ${project.status}
+Methodology: ${project.methodology}`
 }
 
 function parseDay(dateStr) {
@@ -175,6 +196,9 @@ function budgetStatsText(stats) {
   return `${categoryLines.join("\n")}\n\nOverall: estimated $${stats.totalEstimated.toFixed(2)}, actual $${stats.totalActual.toFixed(2)}, variance ${stats.variance >= 0 ? "+" : ""}$${stats.variance.toFixed(2)}${stats.variancePct != null ? ` (${stats.variancePct >= 0 ? "+" : ""}${stats.variancePct.toFixed(1)}%)` : ""}`
 }
 
+// Waterfall-side task stats - called only on tasks with backlog_status ==
+// null (see the module comment). Unchanged logic from before this
+// refactor, just scoped to the right subset now.
 function taskStats(tasks, today) {
   const list = tasks || []
   const incomplete = list.filter((t) => !t.completed)
@@ -234,9 +258,180 @@ function taskStatsText(stats) {
   return parts.join(" ")
 }
 
+// Per-milestone exact facts: date-range status against today, and
+// completion of whatever's linked to it via milestone_id (union of
+// Waterfall tasks and backlog items - covers Hybrid's dual usage
+// naturally, degrades to just tasks for pure Waterfall since backlogItems
+// is always empty there).
+//
+// The core signal this exists to catch: an end_date that has already
+// passed while linked work is still incomplete. That's computed here as
+// an explicit `overdue` flag with exact days-overdue, not left as a soft
+// "the date is in the past" fact for Claude to (possibly) soften.
+function milestoneStats(milestones, waterfallTasks, backlogItems, today) {
+  const list = milestones || []
+  return list.map((m) => {
+    const linked = [
+      ...waterfallTasks.filter((t) => t.milestone_id === m.id),
+      ...backlogItems.filter((t) => t.milestone_id === m.id),
+    ]
+    const linkedTotal = linked.length
+    const linkedCompleted = linked.filter((t) =>
+      t.backlog_status != null ? t.backlog_status === "done" : !!t.completed
+    ).length
+    const linkedIncomplete = linkedTotal - linkedCompleted
+
+    const hasDates = !!(m.start_date && m.end_date)
+    let dateStatus = "undated"
+    let daysOverdue = null
+    let daysUntilStart = null
+    let daysUntilEnd = null
+
+    if (hasDates) {
+      if (today < m.start_date) {
+        dateStatus = "upcoming"
+        daysUntilStart = daysBetween(today, m.start_date)
+      } else if (today <= m.end_date) {
+        dateStatus = "active"
+        daysUntilEnd = daysBetween(today, m.end_date)
+      } else {
+        dateStatus = "past"
+        daysOverdue = daysBetween(m.end_date, today)
+      }
+    }
+
+    const overdue = dateStatus === "past" && linkedIncomplete > 0
+
+    // Drives which milestone(s) get scoped sprint/backlog/retro evidence
+    // pulled in for Hybrid. An overdue milestone still deserves that
+    // evidence (it's exactly the "compounding concern" case). An undated
+    // milestone with unfinished linked work is still "in flight" and
+    // shouldn't be excluded just because no dates were set.
+    const isActive = dateStatus === "active" || overdue || (dateStatus === "undated" && linkedIncomplete > 0)
+
+    return { milestone: m, linked, linkedTotal, linkedCompleted, linkedIncomplete, dateStatus, daysOverdue, daysUntilStart, daysUntilEnd, overdue, isActive }
+  })
+}
+
+function milestoneStatsText(stats) {
+  if (stats.length === 0) return null
+  const lines = stats.map((s) => {
+    const m = s.milestone
+    const dateLabel = s.dateStatus === "undated" ? "no dates set" : `${m.start_date} to ${m.end_date}`
+
+    let statusLabel
+    if (s.overdue) {
+      statusLabel = `OVERDUE by ${s.daysOverdue} day(s) - end date has passed with incomplete linked work`
+    } else if (s.dateStatus === "past" && s.linkedTotal === 0) {
+      statusLabel = "end date passed, but no items are linked to this milestone - completion can't be verified from the data"
+    } else if (s.dateStatus === "past") {
+      statusLabel = "end date passed, all linked items complete"
+    } else if (s.dateStatus === "active") {
+      statusLabel = `in progress, ${s.daysUntilEnd} day(s) until end date`
+    } else if (s.dateStatus === "upcoming") {
+      statusLabel = `upcoming, starts in ${s.daysUntilStart} day(s)`
+    } else {
+      statusLabel = "no dates set to judge schedule against"
+    }
+
+    const itemsLabel = s.linkedTotal === 0 ? "no items linked yet" : `${s.linkedCompleted} of ${s.linkedTotal} linked item(s) complete`
+
+    return `- "${m.name}" (${dateLabel}): ${statusLabel}. ${itemsLabel}.`
+  })
+  return lines.join("\n")
+}
+
+// Committed-vs-completed story points per sprint, chronological, capped to
+// the most recent 5 sprints that actually have committed points (bounded
+// enough to read as a trend without diluting into long-past noise - same
+// spirit as taskStats' 14-day upcoming cutoff). Optionally scoped to only
+// backlog items carrying a given milestone_id, for Hybrid's per-milestone
+// evidence.
+function velocityStats(sprints, backlogItems, milestoneId) {
+  const scoped = milestoneId != null ? backlogItems.filter((t) => t.milestone_id === milestoneId) : backlogItems
+
+  const bySprintId = new Map()
+  scoped.forEach((t) => {
+    if (!t.sprint_id) return
+    const entry = bySprintId.get(t.sprint_id) || { committed: 0, completed: 0 }
+    entry.committed += t.story_points ?? 0
+    if (t.board_status === "done") entry.completed += t.story_points ?? 0
+    bySprintId.set(t.sprint_id, entry)
+  })
+
+  const relevantSprints = (sprints || [])
+    .filter((s) => bySprintId.has(s.id))
+    .sort((a, b) => (a.start_date || "").localeCompare(b.start_date || "") || (a.created_at || "").localeCompare(b.created_at || ""))
+
+  return relevantSprints.slice(-5).map((s) => ({ sprint: s, ...bySprintId.get(s.id) }))
+}
+
+function velocityStatsText(stats) {
+  if (stats.length === 0) return null
+  return stats
+    .map(({ sprint, committed, completed }) => {
+      const pct = committed > 0 ? Math.round((completed / committed) * 100) : null
+      const dateRange = sprint.start_date ? ` (${sprint.start_date} to ${sprint.end_date ?? "TBD"})` : ""
+      return `- ${sprint.name}${dateRange}: committed ${committed} pt(s), completed ${completed} pt(s)${pct != null ? ` (${pct}%)` : ""}.`
+    })
+    .join("\n")
+}
+
+// Backlog pipeline health: counts by backlog_status, plus an "ungroomed"
+// proxy (sitting in plain backlog status with no story-point estimate yet
+// - the concrete sign nobody's triaged it). Optionally scoped to a
+// milestone_id for Hybrid's per-milestone evidence.
+function backlogHealthStats(backlogItems, milestoneId) {
+  const scoped = milestoneId != null ? backlogItems.filter((t) => t.milestone_id === milestoneId) : backlogItems
+  const byStatus = { backlog: 0, ready: 0, in_sprint: 0, done: 0 }
+  let ungroomed = 0
+  scoped.forEach((t) => {
+    if (t.backlog_status in byStatus) byStatus[t.backlog_status] += 1
+    if (t.backlog_status === "backlog" && t.story_points == null) ungroomed += 1
+  })
+  return { total: scoped.length, byStatus, ungroomed }
+}
+
+function backlogHealthStatsText(stats) {
+  if (stats.total === 0) return null
+  return `${stats.total} backlog item(s) total - ${stats.byStatus.backlog} in Backlog, ${stats.byStatus.ready} Ready, ${stats.byStatus.in_sprint} In Sprint, ${stats.byStatus.done} Done. ${stats.ungroomed} item(s) sitting in Backlog status with no story-point estimate (ungroomed).`
+}
+
+// Only locked retros count - an in-progress retro isn't a settled
+// reflection yet. Oldest-first, same "momentum over time" convention as
+// statusUpdatesText. Optionally restricted to a set of sprint ids, for
+// Hybrid's per-milestone evidence. Pattern-spotting across entries (e.g. a
+// recurring "didn't go well" theme) is left to Claude - that's a
+// text-synthesis task, not arithmetic.
+function retroThemesText(retros, sprints, sprintIdFilter) {
+  const sprintById = new Map((sprints || []).map((s) => [s.id, s]))
+  let list = (retros || []).filter((r) => r.is_locked)
+  if (sprintIdFilter) list = list.filter((r) => sprintIdFilter.has(r.sprint_id))
+  if (list.length === 0) return null
+
+  const sorted = [...list].sort((a, b) => {
+    const sa = sprintById.get(a.sprint_id)
+    const sb = sprintById.get(b.sprint_id)
+    return (sa?.start_date || "").localeCompare(sb?.start_date || "")
+  })
+
+  return sorted
+    .map((r) => {
+      const sprintName = sprintById.get(r.sprint_id)?.name || "(unknown sprint)"
+      const wentWell = (r.went_well || []).map((e) => e.text).filter(Boolean)
+      const didntGoWell = (r.didnt_go_well || []).map((e) => e.text).filter(Boolean)
+      const parts = []
+      if (wentWell.length > 0) parts.push(`Went well: ${wentWell.join("; ")}`)
+      if (didntGoWell.length > 0) parts.push(`Didn't go well: ${didntGoWell.join("; ")}`)
+      return `${sprintName}: ${parts.join(" | ") || "(no details logged)"}`
+    })
+    .join("\n")
+}
+
 // Status Updates load most-recent-first everywhere else in the app; a
 // health check reasons about momentum over time, so present them
-// oldest-first here (same choice as the post-mortem function).
+// oldest-first here (same choice as the post-mortem function). Methodology-
+// agnostic PM-authored freeform text, so this stays included for all three.
 function statusUpdatesText(statusUpdates) {
   const entries = statusUpdates || []
   if (entries.length === 0) return null
@@ -253,6 +448,16 @@ function statusUpdatesText(statusUpdates) {
     .join("\n")
 }
 
+function methodologyInstructions(methodology) {
+  if (methodology === "agile") {
+    return `This is an Agile project - there are no milestones and no fixed task schedule to evaluate against. Base the evaluation primarily on sprint velocity trend (is committed-vs-completed velocity stable, improving, or declining across the recent sprints given), backlog health (a healthy pipeline of groomed/Ready items vs. everything stuck ungroomed in Backlog), and any locked retro themes (a recurring "didn't go well" pattern across retros is a real signal). Do NOT evaluate this project against calendar dates or "overdue tasks" - that concept doesn't apply to Agile work here.`
+  }
+  if (methodology === "hybrid") {
+    return `This is a Hybrid project - lead the evaluation with milestone/phase status, the same way you would for Waterfall: are milestones on track against their date ranges, and are their linked tasks progressing or overdue. A milestone marked OVERDUE in the data below (end date passed with incomplete linked work) is a concrete red flag - name it directly and let it drive health_status toward at_risk/off_track, don't soften it into a neutral "that milestone is in the past" observation. For whichever milestone(s) are currently active, use the supporting sprint velocity / backlog health / retro evidence given for that milestone to reinforce or complicate its own verdict - e.g. "Milestone X is on track, and velocity for its linked sprints is also strong, reinforcing confidence" or "Milestone X's timeline is at risk, and velocity for its sprints has also been declining, compounding the concern." Treat that evidence as support for the milestone's verdict, not a separate parallel verdict.`
+  }
+  return `This is a Waterfall project - evaluate primarily on milestones and tasks: are milestones on track against their date ranges, and are tasks progressing or overdue relative to their milestone. A milestone marked OVERDUE in the data below (end date passed with incomplete linked work) is a concrete red flag - name it directly and let it drive health_status toward at_risk/off_track, don't soften it into a neutral "that milestone is in the past" observation.`
+}
+
 const HEALTH_VALUES = ["on_track", "at_risk", "off_track"]
 
 Deno.serve(async (req) => {
@@ -261,7 +466,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { action, project, charter, riskLog, budget, tasks, statusUpdates, today } = await req.json()
+    const { action, project, charter, riskLog, budget, tasks, statusUpdates, sprints, retros, milestones, today } = await req.json()
 
     if (action !== "evaluate") {
       return new Response(JSON.stringify({ error: "invalid action" }), {
@@ -271,10 +476,14 @@ Deno.serve(async (req) => {
     }
 
     const todayStr = today || new Date().toISOString().slice(0, 10)
+    const methodology = project?.methodology
+
+    const allTasks = tasks || []
+    const waterfallTasks = allTasks.filter((t) => t.backlog_status == null)
+    const backlogItems = allTasks.filter((t) => t.backlog_status != null)
 
     const rStats = riskStats(riskLog, todayStr)
     const bStats = budgetStats(budget)
-    const tStats = taskStats(tasks, todayStr)
 
     const daysUntilDeadline = project.deadline ? daysBetween(todayStr, project.deadline) : null
 
@@ -288,8 +497,54 @@ Deno.serve(async (req) => {
     const bText = budgetStatsText(bStats)
     if (bText) contextParts.push(`Budget Tracker (planned vs. actual, computed exactly - use these figures as-is, do not recompute):\n${bText}`)
 
-    const tText = taskStatsText(tStats)
-    if (tText) contextParts.push(`Tasks (computed exactly - use these figures as-is, do not recompute):\n${tText}`)
+    if (methodology === "agile") {
+      const vText = velocityStatsText(velocityStats(sprints, backlogItems, null))
+      contextParts.push(
+        vText
+          ? `Sprint Velocity, recent sprints, computed exactly (use these figures as-is, do not recompute):\n${vText}`
+          : "Sprint Velocity: no sprint has any committed backlog points yet."
+      )
+
+      const bhText = backlogHealthStatsText(backlogHealthStats(backlogItems, null))
+      if (bhText) contextParts.push(`Backlog Health (computed exactly):\n${bhText}`)
+
+      const rtText = retroThemesText(retros, sprints, null)
+      if (rtText) contextParts.push(`Locked Sprint Retro themes, oldest first:\n${rtText}`)
+    } else {
+      const mStats = milestoneStats(milestones, waterfallTasks, backlogItems, todayStr)
+      const mText = milestoneStatsText(mStats)
+      contextParts.push(
+        mText
+          ? `Milestones (computed exactly - use these figures as-is, do not recompute):\n${mText}`
+          : "Milestones: none created yet for this project."
+      )
+
+      const tText = taskStatsText(taskStats(waterfallTasks, todayStr))
+      if (tText) contextParts.push(`Tasks, Waterfall side (computed exactly - use these figures as-is, do not recompute):\n${tText}`)
+
+      if (methodology === "hybrid") {
+        mStats
+          .filter((s) => s.isActive)
+          .forEach((s) => {
+            const mId = s.milestone.id
+            const vText = velocityStatsText(velocityStats(sprints, backlogItems, mId))
+            const bhText = backlogHealthStatsText(backlogHealthStats(backlogItems, mId))
+            const linkedSprintIds = new Set(
+              backlogItems.filter((t) => t.milestone_id === mId && t.sprint_id).map((t) => t.sprint_id)
+            )
+            const rtText = retroThemesText(retros, sprints, linkedSprintIds)
+
+            const evidenceParts = []
+            if (vText) evidenceParts.push(`Velocity for sprints linked to this milestone:\n${vText}`)
+            if (bhText) evidenceParts.push(`Backlog health for items linked to this milestone:\n${bhText}`)
+            if (rtText) evidenceParts.push(`Locked retro themes for sprints linked to this milestone:\n${rtText}`)
+
+            if (evidenceParts.length > 0) {
+              contextParts.push(`Supporting evidence for active milestone "${s.milestone.name}":\n${evidenceParts.join("\n\n")}`)
+            }
+          })
+      }
+    }
 
     const sText = statusUpdatesText(statusUpdates)
     if (sText) contextParts.push(`Status Update history, oldest first (momentum over time):\n${sText}`)
@@ -303,19 +558,21 @@ Deno.serve(async (req) => {
     const context = contextParts.length > 0 ? contextParts.join("\n\n") : null
 
     const system =
-      "You are a project management assistant performing an on-demand project health check. You are given exact, pre-computed facts (task overdue counts, budget variance, risk counts) - never recompute or contradict these numbers, only interpret and connect them. Your value is synthesis: connecting facts across categories (e.g. relate budget pace to schedule pace, relate open risk exposure to task slippage, relate status update momentum to the deadline) rather than restating any single number in isolation. Respond with ONLY a JSON object, no markdown fences, no other text."
+      "You are a project management assistant performing an on-demand project health check. You are given exact, pre-computed facts (milestone/task status, budget variance, risk counts, sprint velocity, backlog health) - never recompute or contradict these numbers, only interpret and connect them. Your value is synthesis: connecting facts across categories relevant to this project's methodology (e.g. relate milestone schedule status to its linked task progress and to risk exposure, or relate sprint velocity trend to backlog health and retro themes) rather than restating any single number in isolation. Respond with ONLY a JSON object, no markdown fences, no other text."
 
     const user = `${projectContext(project)}
 Today's date: ${todayStr}
 
-${context || "No charter, risk log, budget tracker, tasks, or status updates exist for this project yet - note the evaluation will be very limited."}
+${methodologyInstructions(methodology)}
+
+${context || "No charter, risk log, budget tracker, milestones, tasks, sprints, or status updates exist for this project yet - note the evaluation will be very limited."}
 
 Perform a project health check:
 1. Decide an overall health_status: exactly one of "on_track", "at_risk", or "off_track".
-2. Write a one-paragraph rationale that explains the reasoning by connecting specific data points across categories - e.g. don't just say "budget is 80% spent", relate it to something else like schedule pace, risk exposure, or how much work is actually done. Never simply restate a single number in isolation; every claim should connect at least two facts.
-3. Write 2 to 5 recommended actions - specific and concrete, naming the actual task/risk/category involved (e.g. "Address the N High-impact risks still open" or "\\"Task title\\" is blocking N other tasks and is Y days overdue"), not generic advice.
+2. Write a one-paragraph rationale that explains the reasoning by connecting specific data points across categories appropriate to this project's methodology (see the guidance above) - e.g. don't just say "budget is 80% spent", relate it to something else like milestone/schedule pace, risk exposure, or velocity trend. Never simply restate a single number in isolation; every claim should connect at least two facts.
+3. Write 2 to 5 recommended actions - specific and concrete, naming the actual milestone/task/sprint/risk/category involved (e.g. "Milestone \\"Design Complete\\" is 12 day(s) overdue with 3 incomplete linked items" or "Address the N High-impact risks still open"), not generic advice.
 
-Ground everything in the facts given above; never invent numbers, task names, or risks that weren't provided.
+Ground everything in the facts given above; never invent numbers, milestone/task/sprint names, or risks that weren't provided.
 
 Return ONLY this JSON shape:
 {"health_status": "on_track" | "at_risk" | "off_track", "rationale": "...", "recommendations": ["...", "..."]}`

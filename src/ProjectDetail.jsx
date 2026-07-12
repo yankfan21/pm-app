@@ -361,7 +361,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
           <ViewComponent
             project={currentProject}
             {...{ [docProp]: doc }}
-            {...docType.context(docs, tasks)}
+            {...docType.context(docs, tasks, { sprints, retros, milestones })}
             canEdit={canEdit}
             onUpdate={(updatedRow) => handleDocUpdated(docType, updatedRow)}
           />
@@ -370,7 +370,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
         {isFlowOpen && canEdit && (
           <FlowComponent
             project={currentProject}
-            {...docType.context(docs, tasks)}
+            {...docType.context(docs, tasks, { sprints, retros, milestones })}
             onGenerated={(result, answerList) =>
               handleDocGenerated(docType, result, answerList)
             }

@@ -23,9 +23,11 @@ import ProjectEvalView from './ProjectEvalView'
 //
 // - table: the Supabase table (one row per project, project_id column)
 // - docProp: the prop name the View/Flow components use for "this document"
-// - context(docs, tasks): extra props (other already-generated docs, plus
-//   the project's live task list) the Flow/View components need for
-//   cross-document context
+// - context(docs, tasks, extra): extra props (other already-generated
+//   docs, the project's live task list, and - via the third `extra` arg -
+//   { sprints, retros, milestones }) the Flow/View components need for
+//   cross-document context. Most entries only need docs/tasks and ignore
+//   the third arg.
 // - buildInsert(result): maps what the Flow's onGenerated callback receives
 //   into the column(s) to insert
 // - group (optional): key into DOCUMENT_GROUPS below - entries sharing a
@@ -158,12 +160,15 @@ export const DOCUMENT_TYPES = [
     },
     FlowComponent: ProjectEvalFlow,
     ViewComponent: ProjectEvalView,
-    context: (docs, tasks) => ({
+    context: (docs, tasks, extra) => ({
       charter: docs.charter,
       riskLog: docs.risk_log,
       budget: docs.budget_tracker,
       tasks: tasks || [],
       statusUpdates: docs.status_update || [],
+      sprints: extra?.sprints || [],
+      retros: extra?.retros || [],
+      milestones: extra?.milestones || [],
     }),
     buildInsert: (result) => result,
   },
