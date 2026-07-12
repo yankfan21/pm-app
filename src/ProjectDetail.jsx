@@ -9,6 +9,7 @@ import SprintBoardView from './SprintBoardView'
 import SprintRetroView from './SprintRetroView'
 import TaskGenFlow from './TaskGenFlow'
 import BacklogGenFlow from './BacklogGenFlow'
+import MilestoneGenFlow from './MilestoneGenFlow'
 import TaskImportFlow from './TaskImportFlow'
 import ManageAccess from './ManageAccess'
 import { DOCUMENT_TYPES, groupDocumentTypes } from './documentTypes'
@@ -463,6 +464,16 @@ function ProjectDetail({ project, isOwner, canEdit }) {
         <button
           type="button"
           className="btn-secondary ai-task-gen-trigger"
+          onClick={() => toggleSection('ai-milestones')}
+        >
+          {milestones.length > 0 ? 'Generate More Milestones from Charter' : 'Generate Milestones from Charter'}
+        </button>
+      )}
+
+      {docs.charter && canEdit && currentProject.methodology !== 'agile' && (
+        <button
+          type="button"
+          className="btn-secondary ai-task-gen-trigger"
           onClick={() => toggleSection('ai-tasks')}
         >
           {tasks.length > 0 ? 'Generate More Tasks from Charter' : 'Generate Starter Tasks from Charter'}
@@ -491,9 +502,23 @@ function ProjectDetail({ project, isOwner, canEdit }) {
 
       {docs.charter && canEdit && currentProject.methodology === 'hybrid' && (
         <p className="charter-status">
-          Waterfall tasks and Backlog items are separate, non-overlapping actions - generating one
-          doesn&rsquo;t touch the other.
+          Milestones, Waterfall tasks, and Backlog items are separate, non-overlapping actions -
+          generating one doesn&rsquo;t touch the others, whether or not you&rsquo;ve already run
+          Task Gen or Backlog Gen.
         </p>
+      )}
+
+      {expandedSection === 'ai-milestones' && canEdit && (
+        <MilestoneGenFlow
+          project={currentProject}
+          charter={docs.charter}
+          brief={docs.requirements_brief}
+          riskLog={docs.risk_log}
+          existingMilestones={milestones.map((m) => ({ id: m.id, name: m.name, start_date: m.start_date, end_date: m.end_date }))}
+          onCommitted={(insertedMilestones) => setMilestones((prev) => [...prev, ...insertedMilestones])}
+          onDone={() => setExpandedSection('milestones')}
+          onCancel={() => setExpandedSection((prev) => (prev === 'ai-milestones' ? null : prev))}
+        />
       )}
 
       {expandedSection === 'ai-tasks' && canEdit && (
