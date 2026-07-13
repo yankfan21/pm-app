@@ -13,7 +13,65 @@ import MilestoneGenFlow from './MilestoneGenFlow'
 import TaskImportFlow from './TaskImportFlow'
 import ManageAccess from './ManageAccess'
 import { DOCUMENT_TYPES, groupDocumentTypes } from './documentTypes'
-import { METHODOLOGY_LABELS } from './methodology'
+import { METHODOLOGIES, METHODOLOGY_LABELS } from './methodology'
+
+// Which "side" (Waterfall: Milestones/Tasks/Gantt, Agile: Backlog/Sprint
+// Board/Sprint Retro) is visible for a given methodology. Hybrid shows
+// both - this is the single source of truth both the section gating below
+// and the type-switch data warning are built from, so they can't drift
+// out of sync with each other.
+function visibleSides(methodology) {
+  return {
+    waterfall: methodology !== 'agile',
+    agile: methodology !== 'waterfall',
+  }
+}
+
+// Builds the confirmation message for switching methodology when doing so
+// would hide a side that currently has real data on it - null if nothing
+// would be hidden (either the target side is still visible, e.g. anything
+// switching to Hybrid, or the side being hidden is already empty).
+function buildMethodologySwitchWarning(fromMethodology, toMethodology, counts) {
+  const before = visibleSides(fromMethodology)
+  const after = visibleSides(toMethodology)
+  const messages = []
+
+  if (before.waterfall && !after.waterfall) {
+    const bits = []
+    if (counts.milestoneCount > 0) {
+      bits.push(`${counts.milestoneCount} milestone${counts.milestoneCount === 1 ? '' : 's'}`)
+    }
+    if (counts.waterfallTaskCount > 0) {
+      bits.push(`${counts.waterfallTaskCount} Waterfall task${counts.waterfallTaskCount === 1 ? '' : 's'}`)
+    }
+    if (bits.length > 0) {
+      messages.push(
+        `This project has ${bits.join(' and ')}. Switching to ${METHODOLOGY_LABELS[toMethodology]} will hide the Milestones, Waterfall Tasks, and Gantt Chart sections.`
+      )
+    }
+  }
+
+  if (before.agile && !after.agile) {
+    const bits = []
+    if (counts.backlogCount > 0) {
+      bits.push(`${counts.backlogCount} backlog item${counts.backlogCount === 1 ? '' : 's'}`)
+    }
+    if (counts.sprintCount > 0) {
+      bits.push(`${counts.sprintCount} sprint${counts.sprintCount === 1 ? '' : 's'}`)
+    }
+    if (counts.retroCount > 0) {
+      bits.push(`${counts.retroCount} sprint retro${counts.retroCount === 1 ? '' : 's'}`)
+    }
+    if (bits.length > 0) {
+      messages.push(
+        `This project has ${bits.join(', ')}. Switching to ${METHODOLOGY_LABELS[toMethodology]} will hide the Backlog, Sprint Board, and Sprint Retro sections.`
+      )
+    }
+  }
+
+  if (messages.length === 0) return null
+  return `${messages.join(' ')} Your data won't be deleted - switching back to a type that shows it will bring it back exactly as it was.`
+}
 
 function ProjectDetail({ project, isOwner, canEdit }) {
   const [currentProject, setCurrentProject] = useState(project)
@@ -264,6 +322,35 @@ function ProjectDetail({ project, isOwner, canEdit }) {
     setCurrentProject(data)
   }
 
+  async function handleMethodologyChange(nextMethodology) {
+    if (nextMethodology === currentProject.methodology) return
+
+    const warning = buildMethodologySwitchWarning(currentProject.methodology, nextMethodology, {
+      milestoneCount: milestones.length,
+      waterfallTaskCount: tasks.filter((t) => t.backlog_status == null).length,
+      backlogCount: tasks.filter((t) => t.backlog_status != null).length,
+      sprintCount: sprints.length,
+      retroCount: retros.length,
+    })
+
+    if (warning && !window.confirm(`${warning}\n\nContinue?`)) return
+
+    setError(null)
+    const { data, error } = await supabase
+      .from('projects')
+      .update({ methodology: nextMethodology, updated_at: new Date().toISOString() })
+      .eq('id', currentProject.id)
+      .select()
+      .single()
+
+    if (error) {
+      setError(error.message)
+      return
+    }
+
+    setCurrentProject(data)
+  }
+
   function isDocDone(docType, doc) {
     return docType.repeatable ? (doc?.length ?? 0) > 0 : doc != null
   }
@@ -408,9 +495,24 @@ function ProjectDetail({ project, isOwner, canEdit }) {
       </div>
       <p className="project-goal">{currentProject.goal}</p>
       <div className="project-meta">
-        <span className="methodology-badge">
-          {METHODOLOGY_LABELS[currentProject.methodology] ?? currentProject.methodology}
-        </span>
+        {canEdit ? (
+          <select
+            className="methodology-badge methodology-badge-select"
+            aria-label="Methodology"
+            value={currentProject.methodology}
+            onChange={(e) => handleMethodologyChange(e.target.value)}
+          >
+            {METHODOLOGIES.map((m) => (
+              <option key={m} value={m}>
+                {METHODOLOGY_LABELS[m] ?? m}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <span className="methodology-badge">
+            {METHODOLOGY_LABELS[currentProject.methodology] ?? currentProject.methodology}
+          </span>
+        )}
         <span className={`priority-badge ${currentProject.priority.toLowerCase()}`}>
           {currentProject.priority}
         </span>
@@ -440,25 +542,27 @@ function ProjectDetail({ project, isOwner, canEdit }) {
         </>
       )}
 
-      <h2 className="tasks-heading">
-        <button
-          type="button"
-          className="collapsible-toggle toggle-header-with-badge"
-          onClick={() => toggleSection('tasks')}
-          aria-expanded={expandedSection === 'tasks'}
-        >
-          <span className="toggle-header-main">
-            <span className={`chevron ${expandedSection === 'tasks' ? '' : 'collapsed'}`} aria-hidden="true">
-              ▾
+      {currentProject.methodology !== 'agile' && (
+        <h2 className="tasks-heading">
+          <button
+            type="button"
+            className="collapsible-toggle toggle-header-with-badge"
+            onClick={() => toggleSection('tasks')}
+            aria-expanded={expandedSection === 'tasks'}
+          >
+            <span className="toggle-header-main">
+              <span className={`chevron ${expandedSection === 'tasks' ? '' : 'collapsed'}`} aria-hidden="true">
+                ▾
+              </span>
+              <span className={`status-dot ${tasks.length > 0 ? 'done' : 'pending'}`} aria-hidden="true" />
+              Tasks
             </span>
-            <span className={`status-dot ${tasks.length > 0 ? 'done' : 'pending'}`} aria-hidden="true" />
-            Tasks
-          </span>
-          <span className={`doc-status-badge ${tasks.length > 0 ? 'done' : 'pending'}`}>
-            {tasks.length > 0 ? `${tasks.length} Task${tasks.length === 1 ? '' : 's'}` : 'Not started'}
-          </span>
-        </button>
-      </h2>
+            <span className={`doc-status-badge ${tasks.length > 0 ? 'done' : 'pending'}`}>
+              {tasks.length > 0 ? `${tasks.length} Task${tasks.length === 1 ? '' : 's'}` : 'Not started'}
+            </span>
+          </button>
+        </h2>
+      )}
 
       {docs.charter && canEdit && currentProject.methodology !== 'agile' && (
         <button
@@ -559,7 +663,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
         />
       )}
 
-      {expandedSection === 'tasks' && canEdit && (
+      {currentProject.methodology !== 'agile' && expandedSection === 'tasks' && canEdit && (
         <form onSubmit={handleSubmit} className="task-form">
           <input
             type="text"
@@ -613,7 +717,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
 
       {error && <p className="error">{error}</p>}
 
-      {expandedSection === 'tasks' && (
+      {currentProject.methodology !== 'agile' && expandedSection === 'tasks' && (
         <ul className="task-list">
           {loading && <li className="empty">Loading...</li>}
           {!loading &&
