@@ -62,6 +62,23 @@ function ProjectDetailPage() {
         return
       }
 
+      // Unclaimed project (owner_id is null): RLS already grants any
+      // logged-in user full read/write via is_project_unclaimed() at the
+      // database level - this just matches that at the frontend role
+      // level, so canEdit-gated controls actually render instead of RLS
+      // permitting a write the UI never offers a button for. 'editor', not
+      // 'owner' - this user hasn't claimed the project (that's a separate,
+      // still-unbuilt action that would actually write owner_id), they
+      // just get the same edit rights RLS already allows pre-claim. No
+      // project_collaborators row can exist on an unclaimed project either
+      // (adding one requires is_project_owner(), which is false for
+      // everyone here), so there's no need to even query that table.
+      if (data.owner_id == null) {
+        setRole('editor')
+        setLoading(false)
+        return
+      }
+
       const { data: collaboratorRow, error: collabError } = await supabase
         .from('project_collaborators')
         .select('role')
