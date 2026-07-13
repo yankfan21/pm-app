@@ -35,9 +35,23 @@ function StatusUpdateHistory({ entries, canEdit, onUpdate }) {
     )
     if (!confirmed) return
 
-    const { error } = await supabase.from('status_updates').delete().eq('id', entry.id)
+    const { data, error } = await supabase
+      .from('status_updates')
+      .delete()
+      .eq('id', entry.id)
+      .select()
+
     if (error) {
       window.alert(error.message)
+      return
+    }
+
+    // RLS blocking a delete looks identical to a successful one at the
+    // error level - a blocked delete matches zero rows and still comes
+    // back with error: null. Chaining .select() gets the deleted row(s)
+    // back, so an empty result here means nothing was actually removed.
+    if (!data || data.length === 0) {
+      window.alert('Delete failed — you may not have permission to delete this entry.')
       return
     }
 
