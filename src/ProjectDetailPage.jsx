@@ -45,11 +45,13 @@ function ProjectDetailPage() {
 
       setProject(data)
 
-      // No session at all: treat like the pre-auth app (full read/write,
-      // just no owner-only "Manage Access" UI - there's no owner to manage
-      // access on behalf of).
+      // No session at all: read-only. Anonymous visitors can still browse
+      // every project (RLS keeps reads open pre-phase4), but every
+      // canEdit-gated write control across the app should be disabled for
+      // them - there's no user id to attribute a write to, and once RLS is
+      // tightened an anon write would just 403 anyway.
       if (!user) {
-        setRole('editor')
+        setRole('viewer')
         setLoading(false)
         return
       }

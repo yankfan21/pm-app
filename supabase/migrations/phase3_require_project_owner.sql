@@ -1,3 +1,17 @@
+-- SUPERSEDED / ON HOLD as of 2026-07-13 - DO NOT RUN THIS.
+--
+-- Decision made 2026-07-13: anonymous project creation (owner_id left
+-- null on insert) is a permanent, ongoing supported feature, not just
+-- pre-rollout legacy data to backfill once. Setting owner_id NOT NULL
+-- here would permanently break every future anonymous project creation
+-- with a constraint violation, before RLS even gets involved. The
+-- phase4_lockdown_rls.sql projects policies were rewritten to keep
+-- working correctly with owner_id staying nullable indefinitely (see the
+-- comment at the top of that file's "projects" section) - this migration
+-- is no longer part of the rollout sequence unless that decision changes.
+--
+-- Original phase 3 description follows, kept for history:
+--
 -- PHASE 3 of the auth/access-control rollout.
 --
 -- Run this ONLY after you've signed up for your own account (Phase 2's

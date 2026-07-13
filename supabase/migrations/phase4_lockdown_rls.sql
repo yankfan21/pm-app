@@ -4,6 +4,11 @@
 --   1. phase1_access_control_schema.sql has been run
 --   2. Phase 2's frontend (login page, RequireAuth, etc.) is deployed
 --   3. phase3_require_project_owner.sql's backfill + NOT NULL have been done
+--      - SUPERSEDED as of 2026-07-13, see that file - do NOT run it.
+--        owner_id must stay nullable permanently now that anonymous
+--        project creation is a supported, ongoing feature, not just
+--        pre-rollout legacy data. The projects policies below were
+--        written assuming owner_id can be null indefinitely.
 --
 -- After this runs, an unauthenticated request or a request from a user who
 -- isn't a project's owner/collaborator returns zero rows (reads) or is
@@ -17,6 +22,51 @@
 -- editor, never a viewer) - projects and project_collaborators are
 -- bespoke since neither has a plain project_id column to check the same
 -- way every other table does.
+--
+-- projects is further bespoke on top of that: owner_id is nullable (see
+-- above), and anonymous project creation must keep working permanently,
+-- so projects gets extra anon policies and a narrow "claim" update policy
+-- that no other table in this migration has. Confirmed against live data
+-- on 2026-07-13: 16 of 19 existing projects currently have owner_id null
+-- (phase3 was never run) - without the anon/owner_id-is-null carve-outs
+-- below, all 16 would become completely unreadable and unclaimable the
+-- moment this migration runs, not just future anon-created ones.
+--
+-- That same owner_id-is-null carve-out has to reach every other
+-- project-scoped table's SELECT policy too, or logged-in users hit a
+-- silent-empty-result trap on real data: found 2026-07-13 testing against
+-- WMS Tower App (project_id 46fb50a1-916b-4a20-9a15-5a15c952a750, owner_id
+-- null, 20+ real tasks) - has_project_access(project_id) alone is false
+-- for an ownerless project (no owner, no collaborator row can exist
+-- either, since only an owner can add one), so a logged-in user's tasks
+-- query returned zero rows despite the data being intact. is_project_unclaimed()
+-- below is the reusable version of the inline "owner_id is null" check
+-- projects' own policy uses directly - projects doesn't need the helper
+-- since it's already querying itself, but every other table needs to
+-- join back to projects to ask the same question, hence a function
+-- instead of repeating the same subquery in every table's policy.
+-- Applied so far to tasks and charters only (2026-07-13) - the same gap
+-- likely exists on every other project-scoped table below
+-- (requirements_briefs, risk_logs, exec_comms_plans, team_newsletters,
+-- budget_trackers, status_updates, document_versions, post_mortems,
+-- project_evaluations all currently only use has_project_access(project_id)
+-- with no ownerless-project carve-out) - not fixed here since it wasn't
+-- confirmed against real hidden data the way tasks/charters were, but
+-- worth auditing before this migration ships.
+
+create or replace function public.is_project_unclaimed(p_project_id uuid)
+returns boolean
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select exists (
+    select 1 from projects where id = p_project_id and owner_id is null
+  );
+$$;
+
+grant execute on function public.is_project_unclaimed(uuid) to authenticated;
 
 -- projects ---------------------------------------------------------------
 
@@ -25,16 +75,42 @@ drop policy if exists "authenticated full access (temporary)" on projects;
 
 create policy "project members can view" on projects
   for select to authenticated
-  using (has_project_access(id));
+  using (has_project_access(id) or owner_id is null);
+
+-- Anonymous visitors need to be able to see unclaimed projects too -
+-- both ones they just created (owner_id is null right after an anon
+-- insert - there's no auth.uid() to have set) and any other project
+-- still sitting unclaimed, including the 16 pre-existing rows above.
+create policy "anyone can view unclaimed projects" on projects
+  for select to anon
+  using (owner_id is null);
 
 create policy "authenticated users can create projects" on projects
   for insert to authenticated
   with check (owner_id = auth.uid());
 
+-- Anonymous project creation is a permanent, supported feature (not
+-- legacy/temporary) - decided 2026-07-13. Scoped tightly to owner_id is
+-- null so anon can never set owner_id to someone else's id.
+create policy "anon can create unowned projects" on projects
+  for insert to anon
+  with check (owner_id is null);
+
 create policy "project editors can update" on projects
   for update to authenticated
   using (can_edit_project(id))
   with check (can_edit_project(id));
+
+-- Additive, not a replacement for the policy above: lets any logged-in
+-- user claim an unowned project by setting themselves as owner. Only
+-- applies while owner_id is currently null (using clause) and only
+-- allows setting it to the claimant's own id (with check) - never
+-- loosens access to a project that already has an owner, and can't be
+-- used to reassign an already-claimed project to someone else.
+create policy "authenticated users can claim unowned projects" on projects
+  for update to authenticated
+  using (owner_id is null)
+  with check (owner_id = auth.uid());
 
 create policy "owner can delete" on projects
   for delete to authenticated
@@ -67,7 +143,7 @@ drop policy if exists "anon full access" on tasks;
 drop policy if exists "authenticated full access (temporary)" on tasks;
 
 create policy "project members can view" on tasks
-  for select to authenticated using (has_project_access(project_id));
+  for select to authenticated using (has_project_access(project_id) or is_project_unclaimed(project_id));
 create policy "project editors can insert" on tasks
   for insert to authenticated with check (can_edit_project(project_id));
 create policy "project editors can update" on tasks
@@ -75,19 +151,57 @@ create policy "project editors can update" on tasks
 create policy "project editors can delete" on tasks
   for delete to authenticated using (can_edit_project(project_id));
 
+-- Deliberate risk-accepted decision, 2026-07-13: unclaimed projects
+-- (owner_id is null) are fully open to anon on tasks/charters specifically
+-- - view AND write, no account needed - while claimed projects stay fully
+-- private via the authenticated-only policies above. Scoped tightly to
+-- is_project_unclaimed(project_id): the instant a project's owner_id gets
+-- set (via the "claim" policy on projects), that function starts
+-- returning false for it and all 4 of these policies stop applying to it
+-- automatically - no per-project cleanup needed. Deliberately not
+-- extended to any other table or to the authenticated policies above.
+create policy "anyone can view tasks on unclaimed projects" on tasks
+  for select to anon
+  using (is_project_unclaimed(project_id));
+create policy "anyone can create tasks on unclaimed projects" on tasks
+  for insert to anon
+  with check (is_project_unclaimed(project_id));
+create policy "anyone can update tasks on unclaimed projects" on tasks
+  for update to anon
+  using (is_project_unclaimed(project_id))
+  with check (is_project_unclaimed(project_id));
+create policy "anyone can delete tasks on unclaimed projects" on tasks
+  for delete to anon
+  using (is_project_unclaimed(project_id));
+
 -- charters -------------------------------------------------------------------
 
 drop policy if exists "anon full access" on charters;
 drop policy if exists "authenticated full access (temporary)" on charters;
 
 create policy "project members can view" on charters
-  for select to authenticated using (has_project_access(project_id));
+  for select to authenticated using (has_project_access(project_id) or is_project_unclaimed(project_id));
 create policy "project editors can insert" on charters
   for insert to authenticated with check (can_edit_project(project_id));
 create policy "project editors can update" on charters
   for update to authenticated using (can_edit_project(project_id)) with check (can_edit_project(project_id));
 create policy "project editors can delete" on charters
   for delete to authenticated using (can_edit_project(project_id));
+
+-- Same deliberate risk-accepted decision as tasks above, same reasoning.
+create policy "anyone can view charters on unclaimed projects" on charters
+  for select to anon
+  using (is_project_unclaimed(project_id));
+create policy "anyone can create charters on unclaimed projects" on charters
+  for insert to anon
+  with check (is_project_unclaimed(project_id));
+create policy "anyone can update charters on unclaimed projects" on charters
+  for update to anon
+  using (is_project_unclaimed(project_id))
+  with check (is_project_unclaimed(project_id));
+create policy "anyone can delete charters on unclaimed projects" on charters
+  for delete to anon
+  using (is_project_unclaimed(project_id));
 
 -- requirements_briefs --------------------------------------------------------
 
