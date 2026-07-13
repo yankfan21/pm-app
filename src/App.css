@@ -1527,6 +1527,18 @@
   margin: 0 0 12px;
 }
 
+/* .charter-page is a hardcoded light "paper" background with no dark-mode
+   variant (Charter/Requirements/Comms/Post-Mortem all render inside it) -
+   var(--text-h) flips to a near-white color in dark mode, which would sit
+   unreadably on that still-white paper. Status Update is the one place
+   .charter-doc-body/.revision-text sit directly on the real, theme-aware
+   app background instead, so it needs the var(--text-h) default above;
+   this override restores a fixed dark color just for the paper context. */
+.charter-page .charter-doc-body,
+.charter-page .revision-text {
+  color: #232219;
+}
+
 .revision-actions {
   display: flex;
   justify-content: flex-end;
