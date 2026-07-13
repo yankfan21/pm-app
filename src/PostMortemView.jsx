@@ -52,14 +52,18 @@ function PostMortemView({ project, charter, riskLog, statusUpdates, budget, post
       .update({ [key]: values[key], updated_at: new Date().toISOString() })
       .eq('id', postMortem.id)
       .select()
-      .single()
 
     if (error) {
       setError(error.message)
       return
     }
 
-    onUpdate(data)
+    if (!data || data.length === 0) {
+      setError('Update failed — you may not have permission to edit this post-mortem.')
+      return
+    }
+
+    onUpdate(data[0])
   }
 
   async function handleRegenerate() {
@@ -94,7 +98,6 @@ function PostMortemView({ project, charter, riskLog, statusUpdates, budget, post
       .update({ ...generated, updated_at: new Date().toISOString() })
       .eq('id', postMortem.id)
       .select()
-      .single()
 
     setRegenerating(false)
 
@@ -103,9 +106,15 @@ function PostMortemView({ project, charter, riskLog, statusUpdates, budget, post
       return
     }
 
-    setValues(Object.fromEntries(SECTIONS.map((s) => [s.key, data[s.key] || ''])))
+    if (!data || data.length === 0) {
+      setError('Update failed — you may not have permission to edit this post-mortem.')
+      return
+    }
+
+    const updated = data[0]
+    setValues(Object.fromEntries(SECTIONS.map((s) => [s.key, updated[s.key] || ''])))
     setRevisions({})
-    onUpdate(data)
+    onUpdate(updated)
   }
 
   async function handleExportPdf() {
@@ -159,14 +168,18 @@ function PostMortemView({ project, charter, riskLog, statusUpdates, budget, post
       .update({ [key]: revisedText, updated_at: new Date().toISOString() })
       .eq('id', postMortem.id)
       .select()
-      .single()
 
     if (error) {
       setError(error.message)
       return
     }
 
-    onUpdate(data)
+    if (!data || data.length === 0) {
+      setError('Update failed — you may not have permission to edit this post-mortem.')
+      return
+    }
+
+    onUpdate(data[0])
   }
 
   function discardRevision(key) {

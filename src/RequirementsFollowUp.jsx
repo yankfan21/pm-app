@@ -65,12 +65,11 @@ function RequirementsFollowUp({ project, brief, onApplied, onClose }) {
       return
     }
 
-    const { data: updatedRow, error: dbError } = await supabase
+    const { data: updatedRows, error: dbError } = await supabase
       .from('requirements_briefs')
       .update({ ...updates, updated_at: new Date().toISOString() })
       .eq('id', brief.id)
       .select()
-      .single()
 
     if (dbError) {
       setError(dbError.message)
@@ -78,7 +77,13 @@ function RequirementsFollowUp({ project, brief, onApplied, onClose }) {
       return
     }
 
-    onApplied(updatedRow)
+    if (!updatedRows || updatedRows.length === 0) {
+      setError('Update failed — you may not have permission to edit this brief.')
+      setPhase('answering')
+      return
+    }
+
+    onApplied(updatedRows[0])
   }
 
   return (

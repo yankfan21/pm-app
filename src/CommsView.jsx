@@ -70,14 +70,18 @@ function CommsView({ variant, project, charter, brief, riskLog, statusUpdates, d
       .update({ [key]: values[key], updated_at: new Date().toISOString() })
       .eq('id', doc.id)
       .select()
-      .single()
 
     if (error) {
       setError(error.message)
       return
     }
 
-    onUpdate(data)
+    if (!data || data.length === 0) {
+      setError('Update failed — you may not have permission to edit this document.')
+      return
+    }
+
+    onUpdate(data[0])
   }
 
   async function requestNewVersion(fromStatus) {
@@ -137,18 +141,23 @@ function CommsView({ variant, project, charter, brief, riskLog, statusUpdates, d
       .update({ ...proposedVersion.content, updated_at: new Date().toISOString() })
       .eq('id', doc.id)
       .select()
-      .single()
 
     if (error) {
       setError(error.message)
       return
     }
 
-    setValues(Object.fromEntries(sections.map((s) => [s.key, data[s.key] || ''])))
+    if (!data || data.length === 0) {
+      setError('Update failed — you may not have permission to edit this document.')
+      return
+    }
+
+    const updated = data[0]
+    setValues(Object.fromEntries(sections.map((s) => [s.key, updated[s.key] || ''])))
     setRevisions({})
     setProposedVersion(null)
     setVersions(null) // stale - refetch next time History is opened
-    onUpdate(data)
+    onUpdate(updated)
   }
 
   async function loadVersions() {
@@ -226,14 +235,18 @@ function CommsView({ variant, project, charter, brief, riskLog, statusUpdates, d
       .update({ [key]: revisedText, updated_at: new Date().toISOString() })
       .eq('id', doc.id)
       .select()
-      .single()
 
     if (error) {
       setError(error.message)
       return
     }
 
-    onUpdate(data)
+    if (!data || data.length === 0) {
+      setError('Update failed — you may not have permission to edit this document.')
+      return
+    }
+
+    onUpdate(data[0])
   }
 
   function discardRevision(key) {

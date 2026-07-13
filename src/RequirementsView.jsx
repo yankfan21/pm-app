@@ -47,14 +47,18 @@ function RequirementsView({ project, charter, brief, canEdit, onUpdate }) {
       .update({ [key]: values[key], updated_at: new Date().toISOString() })
       .eq('id', brief.id)
       .select()
-      .single()
 
     if (error) {
       setError(error.message)
       return
     }
 
-    onUpdate(data)
+    if (!data || data.length === 0) {
+      setError('Update failed — you may not have permission to edit this brief.')
+      return
+    }
+
+    onUpdate(data[0])
   }
 
   async function handleRegenerate() {
@@ -89,7 +93,6 @@ function RequirementsView({ project, charter, brief, canEdit, onUpdate }) {
       .update({ ...generated, updated_at: new Date().toISOString() })
       .eq('id', brief.id)
       .select()
-      .single()
 
     setRegenerating(false)
 
@@ -98,9 +101,15 @@ function RequirementsView({ project, charter, brief, canEdit, onUpdate }) {
       return
     }
 
-    setValues(Object.fromEntries(SECTIONS.map((s) => [s.key, data[s.key] || ''])))
+    if (!data || data.length === 0) {
+      setError('Update failed — you may not have permission to edit this brief.')
+      return
+    }
+
+    const updated = data[0]
+    setValues(Object.fromEntries(SECTIONS.map((s) => [s.key, updated[s.key] || ''])))
     setRevisions({})
-    onUpdate(data)
+    onUpdate(updated)
   }
 
   async function handleExportPdf() {
@@ -154,14 +163,18 @@ function RequirementsView({ project, charter, brief, canEdit, onUpdate }) {
       .update({ [key]: revisedText, updated_at: new Date().toISOString() })
       .eq('id', brief.id)
       .select()
-      .single()
 
     if (error) {
       setError(error.message)
       return
     }
 
-    onUpdate(data)
+    if (!data || data.length === 0) {
+      setError('Update failed — you may not have permission to edit this brief.')
+      return
+    }
+
+    onUpdate(data[0])
   }
 
   function discardRevision(key) {

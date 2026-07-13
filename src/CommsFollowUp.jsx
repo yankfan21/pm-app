@@ -70,12 +70,11 @@ function CommsFollowUp({ variant, project, doc, onApplied, onClose }) {
       return
     }
 
-    const { data: updatedRow, error: dbError } = await supabase
+    const { data: updatedRows, error: dbError } = await supabase
       .from(table)
       .update({ ...updates, updated_at: new Date().toISOString() })
       .eq('id', doc.id)
       .select()
-      .single()
 
     if (dbError) {
       setError(dbError.message)
@@ -83,7 +82,13 @@ function CommsFollowUp({ variant, project, doc, onApplied, onClose }) {
       return
     }
 
-    onApplied(updatedRow)
+    if (!updatedRows || updatedRows.length === 0) {
+      setError('Update failed — you may not have permission to edit this document.')
+      setPhase('answering')
+      return
+    }
+
+    onApplied(updatedRows[0])
   }
 
   return (

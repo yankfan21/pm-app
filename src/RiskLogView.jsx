@@ -33,14 +33,18 @@ function RiskLogView({ project, charter, brief, riskLog, canEdit, onUpdate }) {
       .update({ risks: nextRows, updated_at: new Date().toISOString() })
       .eq('id', riskLog.id)
       .select()
-      .single()
 
     if (error) {
       setError(error.message)
       return
     }
 
-    onUpdate(data)
+    if (!data || data.length === 0) {
+      setError('Update failed — you may not have permission to edit this risk log.')
+      return
+    }
+
+    onUpdate(data[0])
   }
 
   function updateCell(id, key, value) {

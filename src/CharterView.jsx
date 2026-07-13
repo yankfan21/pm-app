@@ -46,14 +46,18 @@ function CharterView({ project, charter, canEdit, onUpdate }) {
       .update({ [key]: values[key], updated_at: new Date().toISOString() })
       .eq('id', charter.id)
       .select()
-      .single()
 
     if (error) {
       setError(error.message)
       return
     }
 
-    onUpdate(data)
+    if (!data || data.length === 0) {
+      setError('Update failed — you may not have permission to edit this charter.')
+      return
+    }
+
+    onUpdate(data[0])
   }
 
   async function handleRegenerate() {
@@ -87,7 +91,6 @@ function CharterView({ project, charter, canEdit, onUpdate }) {
       .update({ ...generated, updated_at: new Date().toISOString() })
       .eq('id', charter.id)
       .select()
-      .single()
 
     setRegenerating(false)
 
@@ -96,9 +99,15 @@ function CharterView({ project, charter, canEdit, onUpdate }) {
       return
     }
 
-    setValues(Object.fromEntries(SECTIONS.map((s) => [s.key, data[s.key] || ''])))
+    if (!data || data.length === 0) {
+      setError('Update failed — you may not have permission to edit this charter.')
+      return
+    }
+
+    const updated = data[0]
+    setValues(Object.fromEntries(SECTIONS.map((s) => [s.key, updated[s.key] || ''])))
     setRevisions({})
-    onUpdate(data)
+    onUpdate(updated)
   }
 
   async function handleExportPdf() {
@@ -152,14 +161,18 @@ function CharterView({ project, charter, canEdit, onUpdate }) {
       .update({ [key]: revisedText, updated_at: new Date().toISOString() })
       .eq('id', charter.id)
       .select()
-      .single()
 
     if (error) {
       setError(error.message)
       return
     }
 
-    onUpdate(data)
+    if (!data || data.length === 0) {
+      setError('Update failed — you may not have permission to edit this charter.')
+      return
+    }
+
+    onUpdate(data[0])
   }
 
   function discardRevision(key) {

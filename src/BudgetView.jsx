@@ -57,14 +57,18 @@ function BudgetView({ project, charter, brief, tasks, budget, canEdit, onUpdate 
       .update({ line_items: nextRows, updated_at: new Date().toISOString() })
       .eq('id', budget.id)
       .select()
-      .single()
 
     if (error) {
       setError(error.message)
       return
     }
 
-    onUpdate(data)
+    if (!data || data.length === 0) {
+      setError('Update failed — you may not have permission to edit this budget.')
+      return
+    }
+
+    onUpdate(data[0])
   }
 
   function updateCell(id, key, value) {
