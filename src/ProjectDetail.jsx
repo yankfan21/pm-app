@@ -263,14 +263,21 @@ function ProjectDetail({ project, isOwner, canEdit }) {
       .update({ completed: !task.completed })
       .eq('id', task.id)
       .select()
-      .single()
 
     if (error) {
       setError(error.message)
       return
     }
 
-    setTasks((prev) => prev.map((t) => (t.id === task.id ? data : t)))
+    // An RLS-blocked update matches 0 rows and still comes back with
+    // error: null - .single() would throw on that empty result instead of
+    // surfacing a usable error, so check the row count ourselves first.
+    if (!data || data.length === 0) {
+      setError('Update failed — you may not have permission to edit this task.')
+      return
+    }
+
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? data[0] : t)))
   }
 
   async function updateTaskField(task, field, value) {
@@ -279,14 +286,18 @@ function ProjectDetail({ project, isOwner, canEdit }) {
       .update({ [field]: value || null })
       .eq('id', task.id)
       .select()
-      .single()
 
     if (error) {
       setError(error.message)
       return
     }
 
-    setTasks((prev) => prev.map((t) => (t.id === task.id ? data : t)))
+    if (!data || data.length === 0) {
+      setError('Update failed — you may not have permission to edit this task.')
+      return
+    }
+
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? data[0] : t)))
   }
 
   async function deleteTask(task) {

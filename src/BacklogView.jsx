@@ -71,14 +71,18 @@ function BacklogView({ project, tasks, setTasks, sprints, milestones, canEdit, e
       .update(fields)
       .eq('id', task.id)
       .select()
-      .single()
 
     if (error) {
       setError(error.message)
       return
     }
 
-    setTasks((prev) => prev.map((t) => (t.id === task.id ? data : t)))
+    if (!data || data.length === 0) {
+      setError('Update failed — you may not have permission to edit this task.')
+      return
+    }
+
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? data[0] : t)))
   }
 
   async function assignToSprint(task, sprintId) {
@@ -91,7 +95,12 @@ function BacklogView({ project, tasks, setTasks, sprints, milestones, canEdit, e
       return
     }
 
-    setTasks((prev) => prev.map((t) => (t.id === task.id ? data : t)))
+    if (!data || data.length === 0) {
+      setError('Update failed — you may not have permission to edit this task.')
+      return
+    }
+
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? data[0] : t)))
   }
 
   async function moveItem(task, direction) {
@@ -107,8 +116,8 @@ function BacklogView({ project, tasks, setTasks, sprints, milestones, canEdit, e
     setError(null)
 
     const [taskResult, neighborResult] = await Promise.all([
-      supabase.from('tasks').update({ backlog_rank: neighborRank }).eq('id', task.id).select().single(),
-      supabase.from('tasks').update({ backlog_rank: taskRank }).eq('id', neighbor.id).select().single(),
+      supabase.from('tasks').update({ backlog_rank: neighborRank }).eq('id', task.id).select(),
+      supabase.from('tasks').update({ backlog_rank: taskRank }).eq('id', neighbor.id).select(),
     ])
 
     setReorderingId(null)
@@ -118,10 +127,18 @@ function BacklogView({ project, tasks, setTasks, sprints, milestones, canEdit, e
       return
     }
 
+    if (!taskResult.data?.length || !neighborResult.data?.length) {
+      setError('Reorder failed — you may not have permission to edit these tasks.')
+      return
+    }
+
+    const updatedTask = taskResult.data[0]
+    const updatedNeighbor = neighborResult.data[0]
+
     setTasks((prev) =>
       prev.map((t) => {
-        if (t.id === taskResult.data.id) return taskResult.data
-        if (t.id === neighborResult.data.id) return neighborResult.data
+        if (t.id === updatedTask.id) return updatedTask
+        if (t.id === updatedNeighbor.id) return updatedNeighbor
         return t
       })
     )

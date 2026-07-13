@@ -95,14 +95,18 @@ function SprintBoardView({ project, tasks, setTasks, sprints, setSprints, milest
       .update(fields)
       .eq('id', task.id)
       .select()
-      .single()
 
     if (error) {
       setError(error.message)
       return
     }
 
-    setTasks((prev) => prev.map((t) => (t.id === task.id ? data : t)))
+    if (!data || data.length === 0) {
+      setError('Update failed — you may not have permission to edit this task.')
+      return
+    }
+
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? data[0] : t)))
   }
 
   async function handleRemoveFromSprint(task) {
@@ -119,14 +123,18 @@ function SprintBoardView({ project, tasks, setTasks, sprints, setSprints, milest
       .update({ sprint_id: null, board_status: null, backlog_status: 'ready' })
       .eq('id', task.id)
       .select()
-      .single()
 
     if (error) {
       setError(error.message)
       return
     }
 
-    setTasks((prev) => prev.map((t) => (t.id === task.id ? data : t)))
+    if (!data || data.length === 0) {
+      setError('Update failed — you may not have permission to edit this task.')
+      return
+    }
+
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? data[0] : t)))
   }
 
   async function handleAddFromBacklog(taskId) {
@@ -139,7 +147,12 @@ function SprintBoardView({ project, tasks, setTasks, sprints, setSprints, milest
       return
     }
 
-    setTasks((prev) => prev.map((t) => (t.id === taskId ? data : t)))
+    if (!data || data.length === 0) {
+      setError('Update failed — you may not have permission to edit this task.')
+      return
+    }
+
+    setTasks((prev) => prev.map((t) => (t.id === taskId ? data[0] : t)))
   }
 
   // "Pull to sprint" - fresh start in the target sprint: board_status
@@ -158,7 +171,6 @@ function SprintBoardView({ project, tasks, setTasks, sprints, setSprints, milest
       .update({ sprint_id: targetSprintId, board_status: 'todo' })
       .eq('id', task.id)
       .select()
-      .single()
 
     setPullingTaskId(null)
 
@@ -167,7 +179,12 @@ function SprintBoardView({ project, tasks, setTasks, sprints, setSprints, milest
       return
     }
 
-    setTasks((prev) => prev.map((t) => (t.id === task.id ? data : t)))
+    if (!data || data.length === 0) {
+      setError('Update failed — you may not have permission to edit this task.')
+      return
+    }
+
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? data[0] : t)))
     setPullTargets((prev) => {
       const next = { ...prev }
       delete next[task.id]
