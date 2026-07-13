@@ -14,6 +14,7 @@ import PostMortemFlow from './PostMortemFlow'
 import PostMortemView from './PostMortemView'
 import ProjectEvalFlow from './ProjectEvalFlow'
 import ProjectEvalView from './ProjectEvalView'
+import { HEALTH_LABELS, HEALTH_COLOR_CLASS } from './projectEvalHealth'
 
 // Single source of truth for every AI-generated project document type.
 // The Documents checklist, generate flow, and view on the project detail
@@ -154,9 +155,10 @@ export const DOCUMENT_TYPES = [
     badgeFor: (doc) => {
       if (!doc || doc.length === 0) return { label: 'Not started', colorClass: 'pending' }
       const status = doc[0].health_status
-      const label = { on_track: 'On Track', at_risk: 'At Risk', off_track: 'Off Track' }[status] || 'Evaluated'
-      const colorClass = { on_track: 'done', at_risk: 'partial', off_track: 'critical' }[status] || 'pending'
-      return { label, colorClass }
+      return {
+        label: HEALTH_LABELS[status] || 'Evaluated',
+        colorClass: HEALTH_COLOR_CLASS[status] || 'pending',
+      }
     },
     FlowComponent: ProjectEvalFlow,
     ViewComponent: ProjectEvalView,

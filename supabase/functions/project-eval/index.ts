@@ -497,8 +497,15 @@ Deno.serve(async (req) => {
     const bText = budgetStatsText(bStats)
     if (bText) contextParts.push(`Budget Tracker (planned vs. actual, computed exactly - use these figures as-is, do not recompute):\n${bText}`)
 
+    // Captured into named variables (not just inlined into the *Text()
+    // calls below) so the same already-computed numbers can also be
+    // returned as `metrics` further down, without recomputing anything or
+    // changing a single word of what gets fed to Claude.
+    let metrics = null
+
     if (methodology === "agile") {
-      const vText = velocityStatsText(velocityStats(sprints, backlogItems, null))
+      const vStats = velocityStats(sprints, backlogItems, null)
+      const vText = velocityStatsText(vStats)
       contextParts.push(
         vText
           ? `Sprint Velocity, recent sprints, computed exactly (use these figures as-is, do not recompute):\n${vText}`
@@ -510,6 +517,14 @@ Deno.serve(async (req) => {
 
       const rtText = retroThemesText(retros, sprints, null)
       if (rtText) contextParts.push(`Locked Sprint Retro themes, oldest first:\n${rtText}`)
+
+      // Most recent sprint with committed points, same definition
+      // velocityStats/velocityStatsText already use (last entry - the
+      // array is chronological, oldest first).
+      const latest = vStats[vStats.length - 1] || null
+      metrics = {
+        velocity_ratio: latest && latest.committed > 0 ? latest.completed / latest.committed : null,
+      }
     } else {
       const mStats = milestoneStats(milestones, waterfallTasks, backlogItems, todayStr)
       const mText = milestoneStatsText(mStats)
@@ -519,30 +534,61 @@ Deno.serve(async (req) => {
           : "Milestones: none created yet for this project."
       )
 
-      const tText = taskStatsText(taskStats(waterfallTasks, todayStr))
+      const tStats = taskStats(waterfallTasks, todayStr)
+      const tText = taskStatsText(tStats)
       if (tText) contextParts.push(`Tasks, Waterfall side (computed exactly - use these figures as-is, do not recompute):\n${tText}`)
 
       if (methodology === "hybrid") {
-        mStats
-          .filter((s) => s.isActive)
-          .forEach((s) => {
-            const mId = s.milestone.id
-            const vText = velocityStatsText(velocityStats(sprints, backlogItems, mId))
-            const bhText = backlogHealthStatsText(backlogHealthStats(backlogItems, mId))
-            const linkedSprintIds = new Set(
-              backlogItems.filter((t) => t.milestone_id === mId && t.sprint_id).map((t) => t.sprint_id)
-            )
-            const rtText = retroThemesText(retros, sprints, linkedSprintIds)
+        const activeMilestones = mStats.filter((s) => s.isActive)
 
-            const evidenceParts = []
-            if (vText) evidenceParts.push(`Velocity for sprints linked to this milestone:\n${vText}`)
-            if (bhText) evidenceParts.push(`Backlog health for items linked to this milestone:\n${bhText}`)
-            if (rtText) evidenceParts.push(`Locked retro themes for sprints linked to this milestone:\n${rtText}`)
+        activeMilestones.forEach((s) => {
+          const mId = s.milestone.id
+          const vText = velocityStatsText(velocityStats(sprints, backlogItems, mId))
+          const bhText = backlogHealthStatsText(backlogHealthStats(backlogItems, mId))
+          const linkedSprintIds = new Set(
+            backlogItems.filter((t) => t.milestone_id === mId && t.sprint_id).map((t) => t.sprint_id)
+          )
+          const rtText = retroThemesText(retros, sprints, linkedSprintIds)
 
-            if (evidenceParts.length > 0) {
-              contextParts.push(`Supporting evidence for active milestone "${s.milestone.name}":\n${evidenceParts.join("\n\n")}`)
-            }
-          })
+          const evidenceParts = []
+          if (vText) evidenceParts.push(`Velocity for sprints linked to this milestone:\n${vText}`)
+          if (bhText) evidenceParts.push(`Backlog health for items linked to this milestone:\n${bhText}`)
+          if (rtText) evidenceParts.push(`Locked retro themes for sprints linked to this milestone:\n${rtText}`)
+
+          if (evidenceParts.length > 0) {
+            contextParts.push(`Supporting evidence for active milestone "${s.milestone.name}":\n${evidenceParts.join("\n\n")}`)
+          }
+        })
+
+        // Metrics for Hybrid: milestone completion is the primary signal,
+        // computed project-wide across every milestone's linked work (the
+        // same linkedCompleted/linkedTotal milestoneStats() already
+        // computes per milestone, just summed) - not scoped to only the
+        // active ones, since "how much of this project's milestone-linked
+        // work is done" is a whole-project question. Velocity is the
+        // secondary signal, scoped to whichever milestone is the primary
+        // "currently active" one (dateStatus === "active" if one exists,
+        // otherwise the first isActive milestone - overdue or undated
+        // with unfinished work) - if more than one milestone is active
+        // simultaneously, this picks one deterministically rather than
+        // averaging across them, same spirit as Agile's "most recent
+        // sprint" being a single number rather than an average.
+        const totalLinked = mStats.reduce((sum, s) => sum + s.linkedTotal, 0)
+        const totalLinkedCompleted = mStats.reduce((sum, s) => sum + s.linkedCompleted, 0)
+        const milestonePctComplete = totalLinked > 0 ? totalLinkedCompleted / totalLinked : null
+
+        const primaryActive =
+          activeMilestones.find((s) => s.dateStatus === "active") || activeMilestones[0] || null
+        let velocityRatio = null
+        if (primaryActive) {
+          const vStats = velocityStats(sprints, backlogItems, primaryActive.milestone.id)
+          const latest = vStats[vStats.length - 1] || null
+          velocityRatio = latest && latest.committed > 0 ? latest.completed / latest.committed : null
+        }
+
+        metrics = { milestone_pct_complete: milestonePctComplete, velocity_ratio: velocityRatio }
+      } else {
+        metrics = { task_pct_complete: tStats.pctComplete }
       }
     }
 
@@ -585,6 +631,10 @@ Return ONLY this JSON shape:
     if (!Array.isArray(result.recommendations)) {
       result.recommendations = []
     }
+    // Not part of Claude's response - these are the already-computed,
+    // exact numbers from earlier in this function, attached here so the
+    // frontend can persist and display them without any LLM involvement.
+    result.metrics = metrics
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "content-type": "application/json" },

@@ -1,17 +1,6 @@
 import { useState } from 'react'
 import { exportProjectEvalDocx, exportProjectEvalPdf } from './projectEvalExport'
-
-const HEALTH_LABELS = {
-  on_track: 'On Track',
-  at_risk: 'At Risk',
-  off_track: 'Off Track',
-}
-
-const HEALTH_COLOR_CLASS = {
-  on_track: 'done',
-  at_risk: 'partial',
-  off_track: 'critical',
-}
+import { HEALTH_LABELS, HEALTH_COLOR_CLASS, formatEvalMetric } from './projectEvalHealth'
 
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString(undefined, {
@@ -23,12 +12,25 @@ function formatDate(iso) {
 
 function EvalCard({ project, evaluation, exportable }) {
   const colorClass = HEALTH_COLOR_CLASS[evaluation.health_status] || 'pending'
+  const metricText = formatEvalMetric(evaluation.metrics, { longer: true })
 
   return (
     <div className="project-eval-card">
       <div className="project-eval-card-header">
         <span className={`doc-status-badge ${colorClass} project-eval-health-badge`}>
           {HEALTH_LABELS[evaluation.health_status] || evaluation.health_status}
+        </span>
+        {metricText && (
+          <span className={`doc-status-badge ${colorClass} project-eval-metric-badge`}>
+            {metricText}
+          </span>
+        )}
+        <span
+          className="project-eval-legend"
+          title="Badge color reflects overall health: green = On Track, yellow = At Risk, red = Off Track."
+          aria-label="What do these colors mean?"
+        >
+          &#9432;
         </span>
         <span className="project-eval-date">{formatDate(evaluation.created_at)}</span>
       </div>
