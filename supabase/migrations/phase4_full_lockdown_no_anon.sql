@@ -123,6 +123,7 @@ drop policy if exists "anyone can view tasks on unclaimed projects" on tasks;
 drop policy if exists "anyone can create tasks on unclaimed projects" on tasks;
 drop policy if exists "anyone can update tasks on unclaimed projects" on tasks;
 drop policy if exists "anyone can delete tasks on unclaimed projects" on tasks;
+drop policy if exists "authenticated can create tasks on unclaimed projects" on tasks;
 drop policy if exists "project members can view" on tasks;
 drop policy if exists "project editors can insert" on tasks;
 drop policy if exists "project editors can update" on tasks;
