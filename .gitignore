@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Supabase CLI local cache (contains a pooler connection string)
+supabase/.temp/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

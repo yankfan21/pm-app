@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from './AuthContext'
+import ProjistLogo from './ProjistLogo'
 
 // Rendered from three separate call sites (ProjectsShell, ProjectDetailPage,
 // ProjectDetail) with no props, so the account menu lives here rather than
@@ -12,20 +13,10 @@ function AppHeader() {
       <div>
         <h1 className="app-title">
           <Link to="/" className="app-title-link">
-            <span className="app-title-mark" aria-hidden="true">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
-              </svg>
+            <span className="app-title-mark">
+              <ProjistLogo size={24} />
             </span>
-            PM-App
+            Projist
           </Link>
         </h1>
         <p className="app-subtitle">Your Project Management Assistant</p>

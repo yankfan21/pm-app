@@ -35,17 +35,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
   flex-shrink: 0;
-  border-radius: 9px;
-  background: var(--accent);
-  color: white;
-}
-
-.app-title-mark svg {
-  width: 18px;
-  height: 18px;
 }
 
 .app-subtitle {
@@ -1876,6 +1866,46 @@
   color: var(--text-h);
 }
 
+/* Shared demo project (reseedable, open to every signed-in account) -
+   deliberately a distinct accent (violet) from methodology/priority/status
+   badges, which all stay within the blue/amber/red/green semantic palette -
+   this is a "what kind of project is this" flag, not a status. */
+.demo-badge {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--demo-accent-bg);
+  color: var(--demo-accent);
+  border: 1px solid var(--demo-accent-border);
+  white-space: nowrap;
+}
+
+.demo-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 16px 0;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: var(--demo-accent-bg);
+  border: 1px solid var(--demo-accent-border);
+}
+
+.demo-banner-icon {
+  flex-shrink: 0;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--demo-accent);
+}
+
+.demo-banner p {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--text-h);
+}
+
 .qa-suggestion {
   display: flex;
   flex-wrap: wrap;
@@ -2392,64 +2422,127 @@ textarea.risk-cell-input {
   color: var(--text);
 }
 
-.login-card {
-  max-width: 380px;
-  margin: 32px auto 0;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 24px;
-  box-shadow: var(--shadow);
-}
+/* Login/signup screen - a fixed dark brand palette on purpose, not the
+   app's usual light/dark-adaptive --text/--bg variables: this is the one
+   screen meant to read as "Projist" branding regardless of OS theme,
+   matching the approved design spec. */
 
-.login-toggle {
+.login-page {
   display: flex;
-  gap: 4px;
-  margin-bottom: 20px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 3px;
+  min-height: 100vh;
 }
 
-.login-toggle button {
-  flex: 1;
-  border: none;
-  background: none;
-  padding: 8px 0;
-  border-radius: 6px;
-  font: inherit;
-  font-weight: 600;
-  color: var(--text);
-  cursor: pointer;
-}
-
-.login-toggle button.selected {
-  background: var(--accent);
-  color: white;
-}
-
-.login-form label {
-  display: block;
-  margin-bottom: 16px;
-  font-weight: 500;
-  color: var(--text-h);
-}
-
-.login-form input {
-  display: block;
-  width: 100%;
-  margin-top: 6px;
-  padding: 8px 12px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  font: inherit;
-  color: var(--text-h);
-  background: var(--bg);
+.login-panel {
+  flex: 1 1 50%;
+  display: flex;
   box-sizing: border-box;
 }
 
-.login-form .btn-primary {
+.login-panel-form {
+  background: #1a1a24;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 32px;
+}
+
+.login-panel-form-inner {
   width: 100%;
+  max-width: 360px;
+}
+
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 40px;
+}
+
+.login-brand-name {
+  font-size: 20px;
+  font-weight: 500;
+  color: #eeedfe;
+}
+
+.login-heading {
+  margin: 0 0 8px;
+  font-size: 26px;
+  font-weight: 700;
+  color: #eeedfe;
+}
+
+.login-subtext {
+  margin: 0 0 28px;
+  color: #afa9ec;
+  font-size: 15px;
+}
+
+.login-form-v2 label {
+  display: block;
+  margin-bottom: 16px;
+  font-weight: 500;
+  font-size: 13.5px;
+  color: #afa9ec;
+}
+
+.login-form-v2 input {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  font: inherit;
+  color: #eeedfe;
+  background: rgba(255, 255, 255, 0.04);
+  box-sizing: border-box;
+}
+
+.login-form-v2 input:focus {
+  outline: none;
+  border-color: #7f77dd;
+  box-shadow: 0 0 0 1px #7f77dd;
+}
+
+.login-btn-primary {
+  width: 100%;
+  margin-top: 4px;
+  padding: 11px 0;
+  border: none;
+  border-radius: 8px;
+  background: #7f77dd;
+  color: #26215c;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.login-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.login-btn-secondary {
+  width: 100%;
+  padding: 11px 0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  background: none;
+  color: #eeedfe;
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.login-error {
+  margin: 0 0 12px;
+  color: #ff9b9b;
+  font-size: 14px;
+}
+
+.login-info {
+  margin: 0 0 12px;
+  color: #cecbf6;
+  font-size: 14px;
 }
 
 .login-divider {
@@ -2457,7 +2550,7 @@ textarea.risk-cell-input {
   align-items: center;
   gap: 10px;
   margin: 20px 0;
-  color: var(--text);
+  color: #afa9ec;
   font-size: 13px;
 }
 
@@ -2466,11 +2559,105 @@ textarea.risk-cell-input {
   content: '';
   flex: 1;
   height: 1px;
-  background: var(--border);
+  background: rgba(255, 255, 255, 0.15);
 }
 
-.login-google-btn {
-  width: 100%;
+.login-footer-link {
+  margin: 24px 0 0;
+  text-align: center;
+  font-size: 14px;
+  color: #afa9ec;
+}
+
+.login-footer-link button {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: #cecbf6;
+  cursor: pointer;
+}
+
+.login-panel-preview {
+  background: #26215c;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 48px 40px;
+}
+
+.login-preview-steps {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.login-preview-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.login-preview-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.login-preview-dot.filled {
+  background: #7f77dd;
+}
+
+.login-preview-counter {
+  font-size: 13px;
+  color: #afa9ec;
+}
+
+.login-preview-label {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: #cecbf6;
+}
+
+.login-preview-question {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: #eeedfe;
+}
+
+.login-preview-tagline {
+  margin: 0;
+  font-size: 15px;
+  color: #afa9ec;
+}
+
+@media (max-width: 760px) {
+  .login-page {
+    flex-direction: column;
+  }
+
+  .login-panel {
+    flex: none;
+  }
+
+  .login-panel-form {
+    padding: 40px 24px;
+  }
+
+  .login-panel-preview {
+    padding: 32px 24px;
+    gap: 24px;
+  }
+
+  .login-preview-question {
+    font-size: 20px;
+  }
 }
 
 .collaborator-list {

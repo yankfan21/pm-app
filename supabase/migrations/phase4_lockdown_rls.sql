@@ -1,3 +1,16 @@
+-- SUPERSEDED as of 2026-07-15 - DO NOT RUN THIS.
+--
+-- This file was never fully applied (stopped partway through on a
+-- policy-already-exists collision - see finish_unclaimed_project_access.sql)
+-- and the anon/is_project_unclaimed carve-out model it was extended with
+-- afterward (across ~10 migrations dated 2026-07-13) has since been
+-- reversed. Use phase4_backfill_named_project_owners.sql followed by
+-- phase4_full_lockdown_no_anon.sql instead - that pair removes every anon
+-- policy and is_project_unclaimed() carve-out below, and additionally
+-- covers milestones/sprints/sprint_retros, which this file never touched.
+--
+-- Kept for history only. Original description follows.
+--
 -- PHASE 4 of the auth/access-control rollout - THE ACTUAL CUTOVER.
 --
 -- Run this ONLY after:

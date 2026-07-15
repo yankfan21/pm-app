@@ -68,6 +68,7 @@ function ProjectList({ projects, loading, emptyMessage }) {
                 <span className="methodology-badge">
                   {METHODOLOGY_LABELS[project.methodology] ?? project.methodology}
                 </span>
+                {project.is_demo && <span className="demo-badge">✦ Demo</span>}
               </div>
               <div className="project-goal">{project.goal}</div>
               <div className="project-meta">

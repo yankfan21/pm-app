@@ -487,6 +487,18 @@ function ProjectDetail({ project, isOwner, canEdit }) {
         &larr; Back to projects
       </Link>
 
+      {currentProject.is_demo && (
+        <div className="demo-banner">
+          <span className="demo-banner-icon" aria-hidden="true">
+            ✦
+          </span>
+          <p>
+            You&rsquo;re exploring a shared demo project &mdash; it resets nightly so everyone gets a
+            fresh look. Try generating a document or two!
+          </p>
+        </div>
+      )}
+
       <div className="section-header project-detail-header">
         <h2 className="page-title">{currentProject.name}</h2>
         {canEdit && (
