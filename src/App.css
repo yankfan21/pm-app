@@ -41,7 +41,7 @@
 .app-subtitle {
   font-size: 15px;
   font-weight: 400;
-  color: var(--text);
+  color: var(--accent-muted);
   margin: 4px 0 36px 40px;
 }
 
@@ -1373,7 +1373,7 @@
 }
 
 .charter-page {
-  --charter-accent: #1e3a8a;
+  --charter-accent: #26215c;
   margin-top: 24px;
   background: #fdfdfb;
   border-radius: 8px;
