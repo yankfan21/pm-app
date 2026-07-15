@@ -481,7 +481,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
 
   return (
     <div className="app">
-      <AppHeader debugRole={isOwner ? 'owner' : canEdit ? 'editor' : 'viewer'} />
+      <AppHeader />
 
       <Link to="/projects" className="btn-secondary back-link">
         &larr; Back to projects
