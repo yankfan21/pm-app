@@ -4,7 +4,7 @@ import { DAY_MS, computeGanttLayout } from './ganttLayout'
 
 const INFO_HEADERS = ['Task', 'Start Date', 'Due Date', 'Depends On']
 
-const NAVY = [30, 58, 138]
+const BRAND_PURPLE = [38, 33, 92]
 const GREEN = [34, 197, 94]
 const DARK_TEXT = [22, 21, 26]
 const MUTED_TEXT = [120, 120, 120]
@@ -146,7 +146,7 @@ export async function exportGanttExcel(project, tasks) {
     const taskDueMs = toDateOnlyUTC(task.due_date || task.start_date)
     const startCol = firstDateCol + Math.round((taskStartMs - rangeStartMs) / DAY_MS)
     const endCol = firstDateCol + Math.round((taskDueMs - rangeStartMs) / DAY_MS)
-    const fillColor = task.completed ? 'FF22C55E' : 'FF1E3A8A'
+    const fillColor = task.completed ? 'FF22C55E' : 'FF26215C'
 
     for (let c = startCol; c <= endCol; c++) {
       row.getCell(c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fillColor } }
@@ -285,7 +285,7 @@ export async function exportGanttPdf(project, tasks) {
 
     barGeometry[task.id] = { barX0, barX1, centerY }
 
-    doc.setFillColor(...(task.completed ? GREEN : NAVY))
+    doc.setFillColor(...(task.completed ? GREEN : BRAND_PURPLE))
     doc.roundedRect(barX0, barY, barWidth, barHeight, 2.5, 2.5, 'F')
   })
 
@@ -372,11 +372,11 @@ export async function exportGanttPdf(project, tasks) {
     lx += swatchW + 5 + doc.getTextWidth(label) + 16
   }
 
-  doc.setFillColor(...NAVY)
+  doc.setFillColor(...BRAND_PURPLE)
   doc.roundedRect(lx, legendY - swatchH / 2, 18, swatchH, 2, 2, 'F')
   advance(18, 'Task (start–due)')
 
-  doc.setFillColor(...NAVY)
+  doc.setFillColor(...BRAND_PURPLE)
   doc.roundedRect(lx, legendY - swatchH / 2, 6, swatchH, 1.5, 1.5, 'F')
   advance(6, 'Single date only')
 

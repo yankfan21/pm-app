@@ -46,7 +46,7 @@ export function exportRiskLogPdf(project, risks) {
     head: [COLUMNS.map((c) => c.label)],
     body: risks.map((r) => COLUMNS.map((c) => r[c.key] || String.fromCharCode(8212))),
     styles: { fontSize: 9, cellPadding: 6, valign: 'top' },
-    headStyles: { fillColor: [30, 58, 138], textColor: 255 },
+    headStyles: { fillColor: [38, 33, 92], textColor: 255 },
     columnStyles: {
       0: { cellWidth: 130 },
       1: { cellWidth: 60 },
@@ -65,7 +65,7 @@ export async function exportRiskLogDocx(project, risks) {
     children: COLUMNS.map(
       (c) =>
         new TableCell({
-          shading: { fill: '1e3a8a' },
+          shading: { fill: '26215c' },
           children: [
             new Paragraph({
               children: [new TextRun({ text: c.label, bold: true, color: 'FFFFFF' })],

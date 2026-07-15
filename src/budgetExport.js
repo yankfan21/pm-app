@@ -90,7 +90,7 @@ export function exportBudgetPdf(project, lineItems, tasks) {
       `${total.variance >= 0 ? '+' : ''}${formatMoney(total.variance)}`,
     ]],
     styles: { fontSize: 9, cellPadding: 6, valign: 'top' },
-    headStyles: { fillColor: [30, 58, 138], textColor: 255 },
+    headStyles: { fillColor: [38, 33, 92], textColor: 255 },
     footStyles: { fillColor: [235, 235, 235], textColor: 0, fontStyle: 'bold' },
     columnStyles: {
       0: { cellWidth: 90 },
@@ -115,7 +115,7 @@ export async function exportBudgetDocx(project, lineItems, tasks) {
     children: columns.map(
       (label) =>
         new TableCell({
-          shading: { fill: '1e3a8a' },
+          shading: { fill: '26215c' },
           children: [
             new Paragraph({
               children: [new TextRun({ text: label, bold: true, color: 'FFFFFF' })],
