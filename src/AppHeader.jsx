@@ -4,7 +4,12 @@ import { useAuth } from './AuthContext'
 // Rendered from three separate call sites (ProjectsShell, ProjectDetailPage,
 // ProjectDetail) with no props, so the account menu lives here rather than
 // in each caller - it shows up everywhere for free.
-function AppHeader() {
+//
+// debugRole (optional, temporary): 'owner' | 'editor' | 'viewer' for the
+// current project, passed only from ProjectDetail - see the debug label
+// below. Remove this prop along with the label once the iPad session/role
+// investigation is done.
+function AppHeader({ debugRole } = {}) {
   const { user, signOut } = useAuth()
 
   return (
@@ -46,8 +51,9 @@ function AppHeader() {
         </div>
       )}
 
-      {/* Temporary: compare this build id across devices while diagnosing
-          the iPad stale-bundle theory - remove once resolved. */}
+      {/* Temporary: compare build id + auth session/role across devices
+          while diagnosing the iPad stale-doc-status bug - remove both this
+          and the debugRole prop/plumbing once resolved. */}
       <span
         style={{
           position: 'fixed',
@@ -56,9 +62,19 @@ function AppHeader() {
           fontSize: 10,
           opacity: 0.4,
           pointerEvents: 'none',
+          textAlign: 'right',
+          lineHeight: 1.4,
         }}
       >
         build {__BUILD_SHA__}
+        <br />
+        uid: {user?.id ?? 'no session'}
+        {debugRole ? (
+          <>
+            <br />
+            role: {debugRole}
+          </>
+        ) : null}
       </span>
     </div>
   )
