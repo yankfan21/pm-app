@@ -19,7 +19,7 @@ function AppHeader() {
             Projist
           </Link>
         </h1>
-        <p className="app-subtitle">Your Project Management Assistant</p>
+        <p className="app-subtitle">Structure the chaos. One step at a time.</p>
       </div>
 
       {user ? (
