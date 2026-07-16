@@ -83,62 +83,65 @@ function AllProjects() {
   return (
     <div className="all-projects">
       <h2 className="page-title view-title">All Projects</h2>
-      <input
-        type="text"
-        className="search-input"
-        placeholder="Search projects by name or goal..."
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-      />
 
-      <div className="filter-tabs">
-        {METHODOLOGY_FILTERS.map(({ key, label }) => (
-          <button
-            type="button"
-            key={key}
-            className={`filter-tab ${methodology === key ? 'selected' : ''}`}
-            onClick={() => setMethodology(key)}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      <div className="controls-zone">
+        <input
+          type="text"
+          className="search-input"
+          placeholder="Search projects by name or goal..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
 
-      {!isSearching && (
-        <div className="list-controls">
-          <button
-            type="button"
-            className={`status-tab ${tab === 'active' ? 'selected' : ''}`}
-            onClick={() => setTab('active')}
-          >
-            Active
-          </button>
-
-          {tab === 'active' && (
-            <div className="sort-controls">
-              <span className="sort-controls-label">Sort by</span>
-              {SORT_OPTIONS.map(({ key, label }) => (
-                <button
-                  type="button"
-                  key={key}
-                  className={`sort-option ${sort === key ? 'selected' : ''}`}
-                  onClick={() => setSort(key)}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          )}
-
-          <button
-            type="button"
-            className={`status-tab ${tab === 'archived' ? 'selected' : ''}`}
-            onClick={() => setTab('archived')}
-          >
-            Archived
-          </button>
+        <div className="filter-tabs">
+          {METHODOLOGY_FILTERS.map(({ key, label }) => (
+            <button
+              type="button"
+              key={key}
+              className={`filter-tab ${methodology === key ? 'selected' : ''}`}
+              onClick={() => setMethodology(key)}
+            >
+              {label}
+            </button>
+          ))}
         </div>
-      )}
+
+        {!isSearching && (
+          <div className="list-controls">
+            <button
+              type="button"
+              className={`status-tab ${tab === 'active' ? 'selected' : ''}`}
+              onClick={() => setTab('active')}
+            >
+              Active
+            </button>
+
+            {tab === 'active' && (
+              <div className="sort-controls">
+                <span className="sort-controls-label">Sort by</span>
+                {SORT_OPTIONS.map(({ key, label }) => (
+                  <button
+                    type="button"
+                    key={key}
+                    className={`sort-option ${sort === key ? 'selected' : ''}`}
+                    onClick={() => setSort(key)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <button
+              type="button"
+              className={`status-tab ${tab === 'archived' ? 'selected' : ''}`}
+              onClick={() => setTab('archived')}
+            >
+              Archived
+            </button>
+          </div>
+        )}
+      </div>
 
       <ProjectList
         projects={display}

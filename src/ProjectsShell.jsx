@@ -1,13 +1,8 @@
 import { useEffect, useState } from 'react'
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { Outlet, useNavigate } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import AppHeader from './AppHeader'
 import NewProjectFlow from './NewProjectFlow'
-
-const VIEWS = [
-  { to: '/', label: 'Dashboard', end: true },
-  { to: '/projects', label: 'All Projects', end: false },
-]
 
 function ProjectsShell() {
   const navigate = useNavigate()
@@ -35,31 +30,21 @@ function ProjectsShell() {
     <div className="app">
       <AppHeader />
 
-      <div className="app-nav-row">
-        <nav className="app-nav">
-          {VIEWS.map(({ to, label, end }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={end}
-              className={({ isActive }) => (isActive ? 'selected' : '')}
-            >
-              {label}
-            </NavLink>
-          ))}
-        </nav>
-        <button
-          type="button"
-          className="btn-primary"
-          onClick={() => setShowNewProject(true)}
-        >
-          <span aria-hidden="true">+</span> New Project
-        </button>
+      <div className="app-body">
+        <div className="projects-toolbar">
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={() => setShowNewProject(true)}
+          >
+            <span aria-hidden="true">+</span> New Project
+          </button>
+        </div>
+
+        {error && <p className="error">{error}</p>}
+
+        <Outlet context={{ projects, loading }} />
       </div>
-
-      {error && <p className="error">{error}</p>}
-
-      <Outlet context={{ projects, loading }} />
 
       {showNewProject && (
         <NewProjectFlow

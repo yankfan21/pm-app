@@ -412,7 +412,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
           <div className="doc-checklist-row-group">
             <button
               type="button"
-              className={`doc-checklist-row ${isViewOpen || isFlowOpen ? 'selected' : ''}`}
+              className={`doc-checklist-row ${badgeColorClass} ${isViewOpen || isFlowOpen ? 'selected' : ''}`}
               onClick={() => toggleSection(docType.key)}
             >
               <span className="doc-checklist-label">
@@ -436,7 +436,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
         ) : (
           <button
             type="button"
-            className={`doc-checklist-row ${isViewOpen || isFlowOpen ? 'selected' : ''}`}
+            className={`doc-checklist-row ${badgeColorClass} ${isViewOpen || isFlowOpen ? 'selected' : ''}`}
             onClick={() => {
               if (isDone) {
                 toggleSection(docType.key)
@@ -483,6 +483,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
     <div className="app">
       <AppHeader />
 
+      <div className="app-body">
       <Link to="/projects" className="btn-secondary back-link">
         &larr; Back to projects
       </Link>
@@ -849,43 +850,41 @@ function ProjectDetail({ project, isOwner, canEdit }) {
       )}
 
       {!loading && currentProject.methodology !== 'waterfall' && (
-        <BacklogView
-          project={currentProject}
-          tasks={tasks}
-          setTasks={setTasks}
-          sprints={sprints}
-          milestones={milestones}
-          canEdit={canEdit}
-          expanded={expandedSection === 'backlog'}
-          onToggle={() => toggleSection('backlog')}
-        />
-      )}
+        <div className="agile-zone">
+          <BacklogView
+            project={currentProject}
+            tasks={tasks}
+            setTasks={setTasks}
+            sprints={sprints}
+            milestones={milestones}
+            canEdit={canEdit}
+            expanded={expandedSection === 'backlog'}
+            onToggle={() => toggleSection('backlog')}
+          />
 
-      {!loading && currentProject.methodology !== 'waterfall' && (
-        <SprintBoardView
-          project={currentProject}
-          tasks={tasks}
-          setTasks={setTasks}
-          sprints={sprints}
-          setSprints={setSprints}
-          milestones={milestones}
-          canEdit={canEdit}
-          expanded={expandedSection === 'sprint-board'}
-          onToggle={() => toggleSection('sprint-board')}
-        />
-      )}
+          <SprintBoardView
+            project={currentProject}
+            tasks={tasks}
+            setTasks={setTasks}
+            sprints={sprints}
+            setSprints={setSprints}
+            milestones={milestones}
+            canEdit={canEdit}
+            expanded={expandedSection === 'sprint-board'}
+            onToggle={() => toggleSection('sprint-board')}
+          />
 
-      {!loading && currentProject.methodology !== 'waterfall' && (
-        <SprintRetroView
-          project={currentProject}
-          sprints={sprints}
-          retros={retros}
-          setRetros={setRetros}
-          tasks={tasks}
-          canEdit={canEdit}
-          expanded={expandedSection === 'sprint-retro'}
-          onToggle={() => toggleSection('sprint-retro')}
-        />
+          <SprintRetroView
+            project={currentProject}
+            sprints={sprints}
+            retros={retros}
+            setRetros={setRetros}
+            tasks={tasks}
+            canEdit={canEdit}
+            expanded={expandedSection === 'sprint-retro'}
+            onToggle={() => toggleSection('sprint-retro')}
+          />
+        </div>
       )}
 
       <h2 className="tasks-heading">Documents</h2>
@@ -908,7 +907,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
               <li key={row.key} className="doc-checklist-item doc-group">
                 <button
                   type="button"
-                  className="collapsible-toggle doc-group-header toggle-header-with-badge"
+                  className={`collapsible-toggle doc-group-header toggle-header-with-badge ${groupStatus}`}
                   onClick={() => toggleGroup(row.key)}
                   aria-expanded={isGroupOpen}
                 >
@@ -934,6 +933,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
           })}
         </ul>
       )}
+      </div>
     </div>
   )
 }

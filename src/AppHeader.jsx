@@ -1,41 +1,64 @@
-import { Link } from 'react-router-dom'
+import { Link, NavLink } from 'react-router-dom'
 import { useAuth } from './AuthContext'
 import ProjistLogo from './ProjistLogo'
 
+const NAV_VIEWS = [
+  { to: '/', label: 'Dashboard', end: true },
+  { to: '/projects', label: 'All Projects', end: false },
+]
+
 // Rendered from three separate call sites (ProjectsShell, ProjectDetailPage,
-// ProjectDetail) with no props, so the account menu lives here rather than
-// in each caller - it shows up everywhere for free.
+// ProjectDetail) with no props, so the nav + account menu live here rather
+// than in each caller - they show up everywhere for free, and every page
+// shares one consistent header frame.
 function AppHeader() {
   const { user, signOut } = useAuth()
 
   return (
-    <div className="app-header-row">
-      <div>
-        <h1 className="app-title">
-          <Link to="/" className="app-title-link">
-            <span className="app-title-mark">
-              <ProjistLogo size={24} />
+    <header className="app-header">
+      <div className="app-header-inner">
+        <div className="app-header-left">
+          <Link to="/" className="app-header-brand">
+            <span className="app-header-brand-mark">
+              <ProjistLogo size={28} />
             </span>
-            Projist
+            <span className="app-header-brand-text">
+              <span className="app-header-brand-name">Projist</span>
+              <span className="app-header-tagline">Structure the chaos. One step at a time.</span>
+            </span>
           </Link>
-        </h1>
-        <p className="app-subtitle">Structure the chaos. One step at a time.</p>
-      </div>
 
-      {user ? (
-        <div className="account-menu">
-          <span className="account-menu-email">{user.email}</span>
-          <button type="button" className="btn-secondary" onClick={signOut}>
-            Sign out
-          </button>
+          {user && (
+            <nav className="app-nav">
+              {NAV_VIEWS.map(({ to, label, end }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  end={end}
+                  className={({ isActive }) => (isActive ? 'selected' : '')}
+                >
+                  {label}
+                </NavLink>
+              ))}
+            </nav>
+          )}
         </div>
-      ) : (
-        <div className="account-menu">
-          <Link to="/login" className="btn-secondary">
-            Sign In
-          </Link>
-        </div>
-      )}
+
+        {user ? (
+          <div className="account-menu">
+            <span className="account-menu-email">{user.email}</span>
+            <button type="button" className="btn-secondary" onClick={signOut}>
+              Sign out
+            </button>
+          </div>
+        ) : (
+          <div className="account-menu">
+            <Link to="/login" className="btn-secondary">
+              Sign In
+            </Link>
+          </div>
+        )}
+      </div>
 
       <span
         style={{
@@ -49,7 +72,7 @@ function AppHeader() {
       >
         build {__BUILD_SHA__}
       </span>
-    </div>
+    </header>
   )
 }
 

@@ -80,7 +80,9 @@ function ProjectDetailPage() {
     return (
       <div className="app">
         <AppHeader />
-        <p className="charter-status">Loading...</p>
+        <div className="app-body">
+          <p className="charter-status">Loading...</p>
+        </div>
       </div>
     )
   }
@@ -89,10 +91,12 @@ function ProjectDetailPage() {
     return (
       <div className="app">
         <AppHeader />
-        <p className="error">{error || 'Project not found.'}</p>
-        <Link to="/projects" className="btn-secondary back-link">
-          &larr; Back to projects
-        </Link>
+        <div className="app-body">
+          <p className="error">{error || 'Project not found.'}</p>
+          <Link to="/projects" className="btn-secondary back-link">
+            &larr; Back to projects
+          </Link>
+        </div>
       </div>
     )
   }

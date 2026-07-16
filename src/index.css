@@ -39,6 +39,18 @@
   --card-accent-amber: #d97706;
   --card-accent-red: #dc2626;
   --card-accent-muted: var(--border);
+  --card-tint-purple: rgba(38, 33, 92, 0.03);
+  --card-tint-amber: rgba(217, 119, 6, 0.03);
+  --card-tint-red: rgba(220, 38, 38, 0.03);
+
+  /* Header frame and Project Detail row surfaces - both a shade between
+     --bg and --card-bg, and both use the same fixed brand-purple border
+     tint in either theme (like --sort-active) rather than remapping per
+     mode. */
+  --header-bg: #f0eefa;
+  --header-border: rgba(127, 119, 221, 0.2);
+  --row-bg: #fafaf8;
+  --row-border: rgba(127, 119, 221, 0.1);
 
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
@@ -89,6 +101,12 @@
     --card-hover-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
     --card-accent-amber: #f59e0b;
     --card-accent-red: #f87171;
+    --card-tint-purple: rgba(127, 119, 221, 0.05);
+    --card-tint-amber: rgba(217, 119, 6, 0.05);
+    --card-tint-red: rgba(220, 38, 38, 0.05);
+
+    --header-bg: #26212f;
+    --row-bg: #26212f;
   }
 
   #social .button-icon {
@@ -101,7 +119,7 @@ body {
 }
 
 #root {
-  width: 1126px;
+  width: 1400px;
   max-width: 100%;
   margin: 0 auto;
   text-align: center;

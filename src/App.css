@@ -1,56 +1,74 @@
 .app {
   width: 100%;
-  max-width: 560px;
-  margin: 56px auto;
-  padding: 0 20px;
-  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
   text-align: left;
 }
 
-.app-title {
-  margin: 0;
+/* The header frame - full-bleed inside #root's bordered shell, with its
+   own background/border so it reads as a distinct top bar rather than
+   part of the scrolling page content. */
+.app-header {
+  width: 100%;
+  background: var(--header-bg);
+  border-bottom: 1px solid var(--header-border);
 }
 
-.app-title-link {
+.app-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 16px 2rem;
+  box-sizing: border-box;
+}
+
+.app-header-left {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 36px;
+}
+
+.app-header-brand {
   display: flex;
   align-items: center;
   gap: 10px;
-  font: inherit;
-  font-size: 30px;
-  font-weight: 700;
-  letter-spacing: -0.7px;
   color: var(--accent);
   text-decoration: none;
-  border: none;
-  background: none;
-  padding: 0;
-  cursor: pointer;
 }
 
-.app-title-link:hover {
+.app-header-brand:hover {
   opacity: 0.85;
 }
 
-.app-title-mark {
+.app-header-brand-mark {
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 
-.app-subtitle {
-  font-size: 15px;
-  font-weight: 400;
-  color: var(--accent-muted);
-  margin: 4px 0 36px 40px;
+.app-header-brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
 }
 
-.app-header-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
+.app-header-brand-name {
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  color: var(--accent);
+}
+
+.app-header-tagline {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--accent-muted);
 }
 
 .account-menu {
@@ -58,7 +76,6 @@
   align-items: center;
   gap: 10px;
   flex-shrink: 0;
-  padding-top: 6px;
 }
 
 .account-menu-email {
@@ -73,17 +90,30 @@
 }
 
 .view-title {
-  margin-bottom: 24px;
+  margin-bottom: 32px;
 }
 
-.app-nav-row {
+/* Content area below the header - centered and width-capped so text and
+   cards don't stretch edge-to-edge on wide screens. */
+.app-body {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2.5rem 2rem 4rem;
+  box-sizing: border-box;
+  flex: 1;
+}
+
+@media (min-width: 1024px) {
+  .app-body {
+    padding: 3rem 3rem 4rem;
+  }
+}
+
+.projects-toolbar {
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px 20px;
-  margin-bottom: 32px;
-  border-bottom: 1px solid var(--border);
+  justify-content: flex-end;
+  margin-bottom: 24px;
 }
 
 .app-nav {
@@ -92,12 +122,12 @@
 }
 
 .app-nav a {
-  margin-bottom: -1px;
-  padding: 10px 2px;
+  padding: 6px 2px;
   border: none;
   border-bottom: 2px solid transparent;
   background: none;
   font: inherit;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text);
   text-decoration: none;
@@ -119,20 +149,27 @@
 .dashboard-subtitle {
   color: var(--text);
   font-size: 14px;
-  margin: 0 0 20px;
+  margin: 0 0 24px;
+}
+
+/* Search + filter/sort controls read as one cohesive "control zone" above
+   the project grid - the filled search input anchors it, and the larger
+   bottom margin separates it from the cards below. */
+.controls-zone {
+  margin-bottom: 32px;
 }
 
 .search-input {
   display: block;
   width: 100%;
   box-sizing: border-box;
-  padding: 10px 14px;
+  padding: 11px 14px;
   margin-bottom: 20px;
   border: 1px solid var(--border);
   border-radius: 8px;
   font: inherit;
   color: var(--text-h);
-  background: var(--bg);
+  background: var(--card-bg);
 }
 
 .search-input:focus {
@@ -900,7 +937,7 @@
 }
 
 .project-list li {
-  padding: 14px 16px;
+  padding: 16px 18px;
   border: none;
   border-left: 3px solid var(--card-accent-purple);
   border-radius: 0 10px 10px 0;
@@ -911,12 +948,25 @@
     transform 0.05s ease;
 }
 
+/* Each accent tier also gets a faint background tint (its border color at
+   very low opacity, painted over the card surface) so the color reads as
+   an intentional status wash rather than just a stray line. Archived/muted
+   cards are the deliberate exception - no tint, just the gray border. */
+.project-list li.accent-purple {
+  background:
+    linear-gradient(var(--card-tint-purple), var(--card-tint-purple)), var(--card-bg);
+}
+
 .project-list li.accent-amber {
   border-left-color: var(--card-accent-amber);
+  background:
+    linear-gradient(var(--card-tint-amber), var(--card-tint-amber)), var(--card-bg);
 }
 
 .project-list li.accent-red {
   border-left-color: var(--card-accent-red);
+  background:
+    linear-gradient(var(--card-tint-red), var(--card-tint-red)), var(--card-bg);
 }
 
 .project-list li.accent-muted {
@@ -947,7 +997,25 @@
 }
 
 .tasks-heading {
-  margin-top: 40px;
+  margin-top: 48px;
+}
+
+/* Groups Backlog / Sprint Board / Sprint Retro into one visual zone (a
+   faint accent wash) since they're all facets of the same Agile workflow -
+   mirrors the same "related content, shared surface" idea as the doc rows
+   above, one level up. */
+.agile-zone {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 48px;
+  padding: 20px;
+  border-radius: 12px;
+  background: var(--accent-bg);
+}
+
+.agile-zone .tasks-heading {
+  margin-top: 0;
 }
 
 .collapsible-toggle {
@@ -1004,10 +1072,11 @@
   justify-content: space-between;
   gap: 12px;
   width: 100%;
-  padding: 12px 16px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg);
+  padding: 14px 18px;
+  border: 1px solid var(--row-border);
+  border-left: 3px solid var(--card-accent-muted);
+  border-radius: 6px;
+  background: var(--row-bg);
   font: inherit;
   text-align: left;
   cursor: pointer;
@@ -1028,6 +1097,21 @@
 .doc-checklist-row-locked {
   cursor: not-allowed;
   opacity: 0.6;
+}
+
+/* Left-accent by status - declared after :hover/.selected above so it
+   always wins the border-left-color cascade even while hovered/selected
+   (those only touch the other three sides). */
+.doc-checklist-row.done {
+  border-left-color: #22c55e;
+}
+
+.doc-checklist-row.partial {
+  border-left-color: var(--card-accent-amber);
+}
+
+.doc-checklist-row.critical {
+  border-left-color: var(--card-accent-red);
 }
 
 .doc-checklist-label {
@@ -1102,13 +1186,22 @@
 }
 
 .doc-group-header {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg);
+  border: 1px solid var(--row-border);
+  border-left: 3px solid var(--card-accent-muted);
+  border-radius: 6px;
+  background: var(--row-bg);
 }
 
 .doc-group-header:hover {
   border-color: var(--accent-border);
+}
+
+.doc-group-header.done {
+  border-left-color: #22c55e;
+}
+
+.doc-group-header.partial {
+  border-left-color: var(--card-accent-amber);
 }
 
 .doc-group-items {
@@ -1695,10 +1788,6 @@
 
 /* Tablet and up: the mobile layout above is untouched below this width. */
 @media (min-width: 768px) {
-  .app {
-    max-width: 700px;
-  }
-
   .project-list {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -1722,10 +1811,6 @@
 }
 
 @media (min-width: 1024px) {
-  .app {
-    max-width: 960px;
-  }
-
   .project-list {
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 16px;
@@ -2001,7 +2086,7 @@
   font-size: 13px;
   font-weight: 500;
   border: 1px solid var(--border);
-  color: var(--text-h);
+  color: var(--text);
 }
 
 /* Shared demo project (reseedable, open to every signed-in account) -
@@ -2811,10 +2896,10 @@ textarea.risk-cell-input {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 14px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg);
+  padding: 12px 16px;
+  border: 1px solid var(--row-border);
+  border-radius: 6px;
+  background: var(--row-bg);
 }
 
 .collaborator-email {
