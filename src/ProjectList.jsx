@@ -2,7 +2,23 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import { METHODOLOGY_LABELS } from './methodology'
-import { HEALTH_LABELS, HEALTH_COLOR_CLASS, formatEvalMetric } from './projectEvalHealth'
+import { HEALTH_LABELS, HEALTH_COLOR_CLASS } from './projectEvalHealth'
+
+const ELEVATED_PRIORITIES = ['Critical', 'High']
+
+// Left-border accent tier: reflects the project's health evaluation when
+// one exists (the most current signal), falling back to priority for
+// projects that haven't been evaluated yet. Archived projects always read
+// as muted, matching the existing opacity dimming.
+function cardAccentTier(project, evaluation) {
+  if (project.status === 'Archived') return 'muted'
+  if (evaluation) {
+    if (evaluation.health_status === 'off_track') return 'red'
+    if (evaluation.health_status === 'at_risk') return 'amber'
+    return 'purple'
+  }
+  return ELEVATED_PRIORITIES.includes(project.priority) ? 'amber' : 'purple'
+}
 
 function ProjectList({ projects, loading, emptyMessage }) {
   const navigate = useNavigate()
@@ -52,49 +68,38 @@ function ProjectList({ projects, loading, emptyMessage }) {
       {!loading &&
         projects.map((project) => {
           const evaluation = evaluationsByProject[project.id]
-          const colorClass = evaluation ? HEALTH_COLOR_CLASS[evaluation.health_status] || 'pending' : 'pending'
-          const metricText = evaluation ? formatEvalMetric(evaluation.metrics) : null
+          const isArchived = project.status === 'Archived'
+          const accentTier = cardAccentTier(project, evaluation)
+
+          let statusLabel = 'Not evaluated'
+          let statusColorClass = 'pending'
+          if (isArchived) {
+            statusLabel = 'Archived'
+            statusColorClass = 'archived'
+          } else if (evaluation) {
+            statusLabel = HEALTH_LABELS[evaluation.health_status] || evaluation.health_status
+            statusColorClass = HEALTH_COLOR_CLASS[evaluation.health_status] || 'pending'
+          }
 
           return (
             <li
               key={project.id}
-              className={
-                project.status === 'Archived' ? 'clickable archived' : 'clickable'
-              }
+              className={`clickable accent-${accentTier} ${isArchived ? 'archived' : ''}`}
               onClick={() => navigate(`/projects/${project.id}`)}
             >
-              <div className="project-name">
-                {project.name}
-                <span className="methodology-badge">
-                  {METHODOLOGY_LABELS[project.methodology] ?? project.methodology}
-                </span>
-                {project.is_demo && <span className="demo-badge">✦ Demo</span>}
+              <div className="project-card-top">
+                <span className="project-card-title">{project.name}</span>
+                <div className="project-card-badges">
+                  <span className="methodology-badge">
+                    {METHODOLOGY_LABELS[project.methodology] ?? project.methodology}
+                  </span>
+                  {project.is_demo && <span className="demo-badge">✦ Demo</span>}
+                </div>
               </div>
-              <div className="project-goal">{project.goal}</div>
-              <div className="project-meta">
-                <span
-                  className={`priority-badge ${project.priority.toLowerCase()}`}
-                >
-                  {project.priority}
-                </span>
-                {project.status === 'Archived' && (
-                  <span className="status-badge archived">Archived</span>
-                )}
-                <span>{project.deadline ?? 'TBD'}</span>
-              </div>
-              <div className="project-eval-summary">
-                {evaluation ? (
-                  <>
-                    <span className={`doc-status-badge ${colorClass}`}>
-                      {HEALTH_LABELS[evaluation.health_status] || evaluation.health_status}
-                    </span>
-                    {metricText && (
-                      <span className={`doc-status-badge ${colorClass}`}>{metricText}</span>
-                    )}
-                  </>
-                ) : (
-                  <span className="doc-status-badge pending">Not evaluated</span>
-                )}
+              <div className="project-card-desc">{project.goal}</div>
+              <div className="project-card-bottom">
+                <span className={`doc-status-badge ${statusColorClass}`}>{statusLabel}</span>
+                <span className="project-card-deadline">{project.deadline ?? 'TBD'}</span>
               </div>
             </li>
           )

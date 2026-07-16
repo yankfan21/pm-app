@@ -91,12 +91,12 @@ function AllProjects() {
         onChange={(e) => setQuery(e.target.value)}
       />
 
-      <div className="toggle-group methodology-filter">
+      <div className="filter-tabs">
         {METHODOLOGY_FILTERS.map(({ key, label }) => (
           <button
             type="button"
             key={key}
-            className={methodology === key ? 'selected' : ''}
+            className={`filter-tab ${methodology === key ? 'selected' : ''}`}
             onClick={() => setMethodology(key)}
           >
             {label}
@@ -115,13 +115,13 @@ function AllProjects() {
           </button>
 
           {tab === 'active' && (
-            <div className="toggle-group">
-              <span className="toggle-group-label">Sort by</span>
+            <div className="sort-controls">
+              <span className="sort-controls-label">Sort by</span>
               {SORT_OPTIONS.map(({ key, label }) => (
                 <button
                   type="button"
                   key={key}
-                  className={sort === key ? 'selected' : ''}
+                  className={`sort-option ${sort === key ? 'selected' : ''}`}
                   onClick={() => setSort(key)}
                 >
                   {label}

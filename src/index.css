@@ -21,6 +21,25 @@
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
+  /* Filter tabs (pill) vs. sort controls (plain text) - two distinct
+     interaction languages so users don't mistake narrowing the list
+     (filter) for reordering it (sort). */
+  --tab-active-bg: #26215c;
+  --tab-active-text: #eeedfe;
+  --tab-inactive-text: var(--accent-muted);
+  --sort-active: #7f77dd;
+
+  /* Project-card surface, lifted off the page background, plus its
+     left-border accent tiers (priority/health signal - see
+     cardAccentTier in ProjectList.jsx). */
+  --card-bg: #ffffff;
+  --card-shadow: 0 1px 2px rgba(38, 33, 92, 0.06);
+  --card-hover-shadow: 0 4px 12px rgba(38, 33, 92, 0.1);
+  --card-accent-purple: var(--accent);
+  --card-accent-amber: #d97706;
+  --card-accent-red: #dc2626;
+  --card-accent-muted: var(--border);
+
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
@@ -57,6 +76,19 @@
     --social-bg: rgba(47, 48, 58, 0.5);
     --shadow:
       rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+
+    --tab-active-bg: #7f77dd;
+    --tab-active-text: #26215c;
+
+    /* Dark cards differentiate from the page via a lighter surface, not a
+       shadow (shadows don't read against a dark background) - and the
+       amber/red accents are bumped brighter so a 3px border stays legible
+       at low surface contrast. */
+    --card-bg: #26212f;
+    --card-shadow: none;
+    --card-hover-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+    --card-accent-amber: #f59e0b;
+    --card-accent-red: #f87171;
   }
 
   #social .button-icon {
