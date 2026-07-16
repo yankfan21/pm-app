@@ -547,7 +547,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
       </div>
 
       {isOwner && (
-        <>
+        <div className="detail-zone">
           <h2 className="tasks-heading">
             <button
               type="button"
@@ -563,7 +563,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
           </h2>
 
           {expandedSection === 'access' && <ManageAccess project={currentProject} />}
-        </>
+        </div>
       )}
 
       {currentProject.methodology !== 'agile' && (
@@ -618,16 +618,6 @@ function ProjectDetail({ project, isOwner, canEdit }) {
         </button>
       )}
 
-      {docs.charter && canEdit && currentProject.methodology !== 'waterfall' && (
-        <button
-          type="button"
-          className="btn-secondary ai-task-gen-trigger"
-          onClick={() => toggleSection('ai-backlog')}
-        >
-          Generate Backlog from Charter
-        </button>
-      )}
-
       {docs.charter && canEdit && currentProject.methodology === 'hybrid' && (
         <p className="charter-status">
           Milestones, Waterfall tasks, and Backlog items are separate, non-overlapping actions -
@@ -669,21 +659,6 @@ function ProjectDetail({ project, isOwner, canEdit }) {
           onCommitted={(insertedTasks) => setTasks((prev) => [...prev, ...insertedTasks])}
           onDone={() => setExpandedSection('tasks')}
           onCancel={() => setExpandedSection((prev) => (prev === 'import-tasks' ? null : prev))}
-        />
-      )}
-
-      {expandedSection === 'ai-backlog' && canEdit && (
-        <BacklogGenFlow
-          project={currentProject}
-          charter={docs.charter}
-          brief={docs.requirements_brief}
-          riskLog={docs.risk_log}
-          existingBacklogItems={tasks
-            .filter((t) => t.backlog_status != null)
-            .map((t) => ({ id: t.id, title: t.title, story_points: t.story_points, backlog_rank: t.backlog_rank }))}
-          onCommitted={(insertedTasks) => setTasks((prev) => [...prev, ...insertedTasks])}
-          onDone={() => setExpandedSection('backlog')}
-          onCancel={() => setExpandedSection((prev) => (prev === 'ai-backlog' ? null : prev))}
         />
       )}
 
@@ -860,7 +835,24 @@ function ProjectDetail({ project, isOwner, canEdit }) {
             canEdit={canEdit}
             expanded={expandedSection === 'backlog'}
             onToggle={() => toggleSection('backlog')}
+            canGenerateBacklog={!!docs.charter && canEdit}
+            onGenerateBacklog={() => toggleSection('ai-backlog')}
           />
+
+          {expandedSection === 'ai-backlog' && canEdit && (
+            <BacklogGenFlow
+              project={currentProject}
+              charter={docs.charter}
+              brief={docs.requirements_brief}
+              riskLog={docs.risk_log}
+              existingBacklogItems={tasks
+                .filter((t) => t.backlog_status != null)
+                .map((t) => ({ id: t.id, title: t.title, story_points: t.story_points, backlog_rank: t.backlog_rank }))}
+              onCommitted={(insertedTasks) => setTasks((prev) => [...prev, ...insertedTasks])}
+              onDone={() => setExpandedSection('backlog')}
+              onCancel={() => setExpandedSection((prev) => (prev === 'ai-backlog' ? null : prev))}
+            />
+          )}
 
           <SprintBoardView
             project={currentProject}
@@ -887,6 +879,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
         </div>
       )}
 
+      <div className="detail-zone">
       <h2 className="tasks-heading">Documents</h2>
 
       {docsLoading && <p className="charter-status">Loading...</p>}
@@ -933,6 +926,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
           })}
         </ul>
       )}
+      </div>
       </div>
     </div>
   )

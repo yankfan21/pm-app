@@ -52,6 +52,18 @@
   --row-bg: #fafaf8;
   --row-border: rgba(127, 119, 221, 0.1);
 
+  /* Project Detail section containers (Manage Access, Agile zone,
+     Documents) - a lifted surface matching the project-card treatment, so
+     these read as larger siblings of the All Projects cards rather than a
+     separate visual system. --agile-accent/--agile-tint are fixed brand
+     purple in both themes (same convention as --sort-active/--row-border
+     above), since the Agile zone's identity is "this is Agile content," not
+     a light/dark-remapped semantic color. */
+  --surface-1: var(--card-bg);
+  --border-faint: color-mix(in srgb, var(--border) 10%, transparent);
+  --agile-accent: #7f77dd;
+  --agile-tint: rgba(127, 119, 221, 0.06);
+
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;

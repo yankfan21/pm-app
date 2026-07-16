@@ -17,7 +17,18 @@ function byBacklogRank(a, b) {
   return (a.backlog_rank ?? 0) - (b.backlog_rank ?? 0)
 }
 
-function BacklogView({ project, tasks, setTasks, sprints, milestones, canEdit, expanded, onToggle }) {
+function BacklogView({
+  project,
+  tasks,
+  setTasks,
+  sprints,
+  milestones,
+  canEdit,
+  expanded,
+  onToggle,
+  canGenerateBacklog,
+  onGenerateBacklog,
+}) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [storyPoints, setStoryPoints] = useState('')
@@ -146,25 +157,36 @@ function BacklogView({ project, tasks, setTasks, sprints, milestones, canEdit, e
 
   return (
     <div className="backlog">
-      <h2 className="tasks-heading">
-        <button
-          type="button"
-          className="collapsible-toggle toggle-header-with-badge"
-          onClick={onToggle}
-          aria-expanded={expanded}
-        >
-          <span className="toggle-header-main">
-            <span className={`chevron ${expanded ? '' : 'collapsed'}`} aria-hidden="true">
-              ▾
+      <div className="agile-row-heading">
+        <h2 className="tasks-heading">
+          <button
+            type="button"
+            className="collapsible-toggle toggle-header-with-badge"
+            onClick={onToggle}
+            aria-expanded={expanded}
+          >
+            <span className="toggle-header-main">
+              <span className={`chevron ${expanded ? '' : 'collapsed'}`} aria-hidden="true">
+                ▾
+              </span>
+              <span className={`status-dot ${items.length > 0 ? 'done' : 'pending'}`} aria-hidden="true" />
+              Backlog
             </span>
-            <span className={`status-dot ${items.length > 0 ? 'done' : 'pending'}`} aria-hidden="true" />
-            Backlog
-          </span>
-          <span className={`doc-status-badge ${items.length > 0 ? 'done' : 'pending'}`}>
-            {totalPoints} point{totalPoints === 1 ? '' : 's'} in backlog
-          </span>
-        </button>
-      </h2>
+            <span className={`doc-status-badge ${items.length > 0 ? 'done' : 'pending'}`}>
+              {totalPoints} point{totalPoints === 1 ? '' : 's'} in backlog
+            </span>
+          </button>
+        </h2>
+        {canGenerateBacklog && (
+          <button
+            type="button"
+            className="btn-secondary agile-generate-trigger"
+            onClick={onGenerateBacklog}
+          >
+            Generate from Charter
+          </button>
+        )}
+      </div>
 
       {expanded && (
         <>
