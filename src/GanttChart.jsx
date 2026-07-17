@@ -5,7 +5,7 @@ const UNPHASED_KEY = '__unphased'
 
 // Flattens task bars into a list of rows - a header row per phase (sorted
 // by phase_number) followed by that phase's task rows when it isn't
-// collapsed, plus a trailing "No phase" group for any bar whose task.phase_id
+// collapsed, plus a trailing "Tasks Without a Phase" group for any bar whose task.phase_id
 // doesn't match a phase on this project (null, or a stale id). When the
 // project has no phases at all (not yet backfilled, or somehow deleted),
 // this falls back to the flat, ungrouped list Gantt always rendered before
@@ -347,7 +347,7 @@ function GanttChart({ project, tasks, phases, expanded, onToggle }) {
                         <span className={`chevron ${collapsed ? 'collapsed' : ''}`} aria-hidden="true">
                           ▾
                         </span>
-                        {phase ? phase.phase_name : 'No phase'}
+                        {phase ? phase.phase_name : 'Tasks Without a Phase'}
                       </button>
                       <span className="gantt-phase-meta">
                         {count} task{count === 1 ? '' : 's'}
