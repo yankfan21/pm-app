@@ -379,6 +379,8 @@ function GanttChart({ project, tasks, phases, expanded, onToggle }) {
               const leftPct = ((startMs - rangeStart) / totalSpan) * 100
               const widthPct = Math.max(((dueMs - startMs) / totalSpan) * 100, 1.5)
               const singleDate = !(task.start_date && task.due_date)
+              const isMilestone = task.task_type === 'milestone_marker'
+              const isDelayed = task.status === 'delayed'
               return (
                 <Fragment key={task.id}>
                   <div
@@ -389,14 +391,25 @@ function GanttChart({ project, tasks, phases, expanded, onToggle }) {
                     {task.title}
                   </div>
                   <div className="gantt-row-track" style={{ gridRow, gridColumn: 2 }}>
-                    <div
-                      ref={(el) => {
-                        barRefs.current[task.id] = el
-                      }}
-                      className={`gantt-bar ${singleDate ? 'single-date' : ''} ${task.completed ? 'completed' : ''}`}
-                      style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
-                      title={`${task.start_date || 'TBD'} → ${task.due_date || 'TBD'}`}
-                    />
+                    {isMilestone ? (
+                      <div
+                        ref={(el) => {
+                          barRefs.current[task.id] = el
+                        }}
+                        className={`gantt-milestone ${isDelayed ? 'delayed' : ''} ${task.completed ? 'completed' : ''}`}
+                        style={{ left: `${leftPct}%` }}
+                        title={`${task.title} — ${task.due_date || 'TBD'}`}
+                      />
+                    ) : (
+                      <div
+                        ref={(el) => {
+                          barRefs.current[task.id] = el
+                        }}
+                        className={`gantt-bar ${singleDate ? 'single-date' : ''} ${isDelayed ? 'delayed' : ''} ${task.completed ? 'completed' : ''}`}
+                        style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
+                        title={`${task.start_date || 'TBD'} → ${task.due_date || 'TBD'}`}
+                      />
+                    )}
                   </div>
                 </Fragment>
               )
@@ -452,6 +465,14 @@ function GanttChart({ project, tasks, phases, expanded, onToggle }) {
           <span className="gantt-legend-item">
             <span className="gantt-legend-swatch bar single-date" />
             Single date only
+          </span>
+          <span className="gantt-legend-item">
+            <span className="gantt-legend-swatch diamond" />
+            Milestone
+          </span>
+          <span className="gantt-legend-item">
+            <span className="gantt-legend-swatch bar delayed" />
+            Delayed
           </span>
           <span className="gantt-legend-item">
             <span className="gantt-legend-swatch bar completed" />

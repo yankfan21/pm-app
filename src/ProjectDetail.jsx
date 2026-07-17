@@ -36,6 +36,19 @@ const TASKS_SECTION_KEYS = ['tasks', 'ai-milestones', 'ai-tasks', 'import-tasks'
 // (create form/list) on the literal 'backlog' value, same as before.
 const BACKLOG_SECTION_KEYS = ['backlog', 'ai-backlog']
 
+// Waterfall task status - independent of the pre-existing `completed`
+// boolean (still read/written separately by the checkbox below; see the
+// "tasks.completed is a temporary parallel status source" note in
+// CLAUDE.md). colorClass matches the status-dot/task-status-select color
+// scheme used elsewhere (BacklogView's STATUS_OPTIONS, SprintBoardView's
+// BOARD_COLUMNS).
+const TASK_STATUS_OPTIONS = [
+  { key: 'not_started', label: 'Not Started', colorClass: 'pending' },
+  { key: 'in_progress', label: 'In Progress', colorClass: 'partial' },
+  { key: 'completed', label: 'Completed', colorClass: 'done' },
+  { key: 'delayed', label: 'Delayed', colorClass: 'critical' },
+]
+
 // Which "side" (Waterfall: Milestones/Tasks/Gantt, Agile: Backlog/Sprint
 // Board/Sprint Retro) is visible for a given methodology. Hybrid shows
 // both - this is the single source of truth both the section gating below
@@ -105,6 +118,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
   const [title, setTitle] = useState('')
   const [startDate, setStartDate] = useState('')
   const [dueDate, setDueDate] = useState('')
+  const [isMilestone, setIsMilestone] = useState(false)
   const [dependsOn, setDependsOn] = useState('')
   const [milestoneId, setMilestoneId] = useState('')
   const [phaseId, setPhaseId] = useState('')
@@ -271,8 +285,13 @@ function ProjectDetail({ project, isOwner, canEdit }) {
       .insert({
         title: trimmed,
         project_id: currentProject.id,
-        start_date: startDate || null,
+        // A milestone marker is a zero-duration, single-date event - the DB
+        // check constraint rejects a start_date on one, so it's forced to
+        // null here regardless of whatever's still sitting in the Start
+        // field (which is hidden but not necessarily cleared).
+        start_date: isMilestone ? null : startDate || null,
         due_date: dueDate || null,
+        task_type: isMilestone ? 'milestone_marker' : 'task',
         depends_on: dependsOn || null,
         milestone_id: currentProject.methodology !== 'agile' ? milestoneId || null : null,
         phase_id: currentProject.methodology !== 'agile' ? phaseId || null : null,
@@ -289,6 +308,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
     setTitle('')
     setStartDate('')
     setDueDate('')
+    setIsMilestone(false)
     setDependsOn('')
     setMilestoneId('')
     setPhaseId('')
@@ -321,6 +341,33 @@ function ProjectDetail({ project, isOwner, canEdit }) {
     const { data, error } = await supabase
       .from('tasks')
       .update({ [field]: value || null })
+      .eq('id', task.id)
+      .select()
+
+    if (error) {
+      setError(error.message)
+      return
+    }
+
+    if (!data || data.length === 0) {
+      setError('Update failed — you may not have permission to edit this task.')
+      return
+    }
+
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? data[0] : t)))
+  }
+
+  // Separate from updateTaskField because switching a task to a milestone
+  // marker has to null start_date in the same request - the DB check
+  // constraint rejects task_type = 'milestone_marker' with a start_date
+  // still set, and updateTaskField only ever touches one column.
+  async function setTaskMilestone(task, nextIsMilestone) {
+    const { data, error } = await supabase
+      .from('tasks')
+      .update({
+        task_type: nextIsMilestone ? 'milestone_marker' : 'task',
+        ...(nextIsMilestone ? { start_date: null } : {}),
+      })
       .eq('id', task.id)
       .select()
 
@@ -731,14 +778,24 @@ function ProjectDetail({ project, isOwner, canEdit }) {
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Add a task..."
           />
-          <label className="task-date-field">
-            Start
+          <label className="task-milestone-toggle" title="A zero-duration diamond event on the Gantt chart (e.g. Design sign-off, Go-live) — unrelated to the Milestone group field below.">
             <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
+              type="checkbox"
+              checked={isMilestone}
+              onChange={(e) => setIsMilestone(e.target.checked)}
             />
+            Milestone marker
           </label>
+          {!isMilestone && (
+            <label className="task-date-field">
+              Start
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
+            </label>
+          )}
           <label className="task-date-field">
             Due
             <input
@@ -806,6 +863,21 @@ function ProjectDetail({ project, isOwner, canEdit }) {
                     />
                     <span>{task.title}</span>
                   </label>
+                  <select
+                    className={`task-status-select ${
+                      TASK_STATUS_OPTIONS.find((s) => s.key === (task.status ?? 'not_started'))
+                        ?.colorClass || 'pending'
+                    }`}
+                    value={task.status ?? 'not_started'}
+                    disabled={!canEdit}
+                    onChange={(e) => updateTaskField(task, 'status', e.target.value)}
+                  >
+                    {TASK_STATUS_OPTIONS.map((s) => (
+                      <option key={s.key} value={s.key}>
+                        {s.label}
+                      </option>
+                    ))}
+                  </select>
                   {canEdit && (
                     <button
                       type="button"
@@ -817,15 +889,26 @@ function ProjectDetail({ project, isOwner, canEdit }) {
                   )}
                 </div>
                 <div className="task-dates">
-                  <label className="task-date-field">
-                    Start
+                  <label className="task-milestone-toggle" title="A zero-duration diamond event on the Gantt chart (e.g. Design sign-off, Go-live) — unrelated to the Milestone group field below.">
                     <input
-                      type="date"
-                      value={task.start_date || ''}
+                      type="checkbox"
+                      checked={task.task_type === 'milestone_marker'}
                       disabled={!canEdit}
-                      onChange={(e) => updateTaskField(task, 'start_date', e.target.value)}
+                      onChange={(e) => setTaskMilestone(task, e.target.checked)}
                     />
+                    Milestone marker
                   </label>
+                  {task.task_type !== 'milestone_marker' && (
+                    <label className="task-date-field">
+                      Start
+                      <input
+                        type="date"
+                        value={task.start_date || ''}
+                        disabled={!canEdit}
+                        onChange={(e) => updateTaskField(task, 'start_date', e.target.value)}
+                      />
+                    </label>
+                  )}
                   <label className="task-date-field">
                     Due
                     <input

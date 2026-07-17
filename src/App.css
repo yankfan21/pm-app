@@ -390,6 +390,55 @@
   background: var(--bg);
 }
 
+.task-milestone-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text);
+  cursor: default;
+}
+
+.task-milestone-toggle input[type='checkbox'] {
+  cursor: pointer;
+}
+
+.task-status-select {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border: none;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.task-status-select:disabled {
+  cursor: default;
+  opacity: 0.8;
+}
+
+.task-status-select.pending {
+  background: var(--code-bg);
+  color: var(--text);
+}
+
+.task-status-select.partial {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.task-status-select.done {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.task-status-select.critical {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
 .task-list {
   list-style: none;
   margin: 0;
@@ -1586,7 +1635,37 @@
   background: var(--card-accent-amber);
 }
 
+/* Manually-set delayed status - takes priority over the single-date amber
+   (a delayed task is more urgent to flag than its date-shape) but still
+   loses to .completed below, same precedence single-date already had. */
+.gantt-bar.delayed {
+  background: var(--card-accent-red);
+}
+
 .gantt-bar.completed {
+  background: #22c55e;
+}
+
+/* Milestone marker - a zero-duration diamond at due_date, distinct from
+   both range bars and single-date dots. Sized/positioned off the 24px-tall
+   .gantt-row-track the same way .gantt-bar is (top:1px/bottom:1px there;
+   here centered via top:50% since there's no width to anchor against). */
+.gantt-milestone {
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  transform: translate(-50%, -50%) rotate(45deg);
+  border-radius: 2px;
+  background: var(--accent);
+  z-index: 2;
+}
+
+.gantt-milestone.delayed {
+  background: var(--card-accent-red);
+}
+
+.gantt-milestone.completed {
   background: #22c55e;
 }
 
@@ -1687,8 +1766,19 @@
   background: var(--card-accent-amber);
 }
 
+.gantt-legend-swatch.bar.delayed {
+  background: var(--card-accent-red);
+}
+
 .gantt-legend-swatch.bar.completed {
   background: #22c55e;
+}
+
+.gantt-legend-swatch.diamond {
+  width: 11px;
+  height: 11px;
+  transform: rotate(45deg);
+  background: var(--accent);
 }
 
 .gantt-legend-swatch.today-line {
