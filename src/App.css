@@ -1001,17 +1001,22 @@
 }
 
 /* Section containers - Manage Access and Documents. A neutral, structural
-   counterpart to .agile-zone below: same padding/border/radius language,
-   gray left accent instead of purple since neither section is tied to a
-   methodology. Mirrors the All Projects card surface (--surface-1 ==
-   --card-bg) so these read as larger siblings of those cards. */
+   counterpart to .agile-zone below: same padding/border/radius/shadow
+   language, gray left accent instead of purple since neither section is
+   tied to a methodology. Mirrors the All Projects card surface
+   (--surface-1 == --card-bg) so these read as larger siblings of those
+   cards - same flush-left/rounded-right radius, same left-accent-bar +
+   shadow combination that makes a card read as a distinct block, carried
+   through regardless of methodology (Waterfall/Agile/Hybrid all get this
+   for Manage Access/Documents). */
 .detail-zone {
   margin-top: 2rem;
   padding: 1.5rem;
   border: 1px solid var(--border-faint);
-  border-left: 3px solid var(--card-accent-muted);
-  border-radius: 8px;
+  border-left: 3px solid var(--zone-accent-neutral);
+  border-radius: 0 8px 8px 0;
   background: var(--surface-1);
+  box-shadow: var(--card-shadow);
 }
 
 .detail-zone .tasks-heading {
@@ -1022,7 +1027,8 @@
    faint purple wash) since they're all facets of the same Agile workflow -
    mirrors the same "related content, shared surface" idea as .detail-zone
    above, with a fixed purple accent instead of gray to signal "Agile
-   planning docs live here." */
+   planning docs live here." Same card-parity treatment (flush-left radius +
+   shadow) as .detail-zone. */
 .agile-zone {
   display: flex;
   flex-direction: column;
@@ -1031,8 +1037,9 @@
   padding: 1.5rem;
   border: 1px solid var(--border-faint);
   border-left: 3px solid var(--agile-accent);
-  border-radius: 8px;
+  border-radius: 0 8px 8px 0;
   background: var(--agile-tint);
+  box-shadow: var(--card-shadow);
 }
 
 .agile-zone .tasks-heading {

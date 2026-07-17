@@ -63,6 +63,11 @@
   --border-faint: color-mix(in srgb, var(--border) 10%, transparent);
   --agile-accent: #7f77dd;
   --agile-tint: rgba(127, 119, 221, 0.06);
+  /* Structural (non-methodology) zone accent - the same "pending/neutral"
+     slate already used for status-dot/badge grays elsewhere, promoted to a
+     left-accent bar so Manage Access/Documents read as clearly as the
+     purple-accented Agile zone, without borrowing Agile's brand color. */
+  --zone-accent-neutral: #94a3b8;
 
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
