@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { supabase } from './supabaseClient'
 import { exportPostMortemDocx, exportPostMortemPdf } from './postMortemExport'
 import PostMortemFollowUp from './PostMortemFollowUp'
+import LoadingButton from './LoadingButton'
 
 const SECTIONS = [
   { key: 'objectives_met', label: 'Objectives Met' },
@@ -13,9 +14,9 @@ const SECTIONS = [
 ]
 
 const REVISE_ACTIONS = [
-  { instruction: 'shorter', label: 'Make shorter' },
-  { instruction: 'detail', label: 'Add detail' },
-  { instruction: 'rephrase', label: 'Rephrase' },
+  { instruction: 'shorter', label: 'Make shorter', loadingLabel: 'Making shorter...' },
+  { instruction: 'detail', label: 'Add detail', loadingLabel: 'Adding detail...' },
+  { instruction: 'rephrase', label: 'Rephrase', loadingLabel: 'Rephrasing...' },
 ]
 
 function autoResize(el) {
@@ -135,7 +136,7 @@ function PostMortemView({ project, charter, riskLog, statusUpdates, budget, post
 
   async function handleRevise(key, instruction) {
     setError(null)
-    setRevisions((prev) => ({ ...prev, [key]: { loading: true, text: null } }))
+    setRevisions((prev) => ({ ...prev, [key]: { loading: true, instruction, text: null } }))
 
     const { data, error } = await supabase.functions.invoke('post-mortem', {
       body: {
@@ -213,14 +214,14 @@ function PostMortemView({ project, charter, riskLog, statusUpdates, budget, post
               >
                 Ask Follow-up Questions
               </button>
-              <button
-                type="button"
+              <LoadingButton
                 className="btn-secondary"
-                disabled={regenerating}
+                loading={regenerating}
+                loadingLabel="Regenerating..."
                 onClick={handleRegenerate}
               >
-                {regenerating ? 'Regenerating...' : 'Regenerate'}
-              </button>
+                Regenerate
+              </LoadingButton>
             </>
           )}
         </div>
@@ -238,15 +239,16 @@ function PostMortemView({ project, charter, riskLog, statusUpdates, budget, post
               <h4 className="charter-doc-heading">{label}</h4>
               {canEdit && (
                 <div className="section-actions">
-                  {REVISE_ACTIONS.map(({ instruction, label: actionLabel }) => (
-                    <button
-                      type="button"
+                  {REVISE_ACTIONS.map(({ instruction, label: actionLabel, loadingLabel }) => (
+                    <LoadingButton
                       key={instruction}
-                      disabled={revisions[key]?.loading}
+                      loading={revisions[key]?.loading && revisions[key]?.instruction === instruction}
+                      loadingLabel={loadingLabel}
+                      disabled={revisions[key]?.loading && revisions[key]?.instruction !== instruction}
                       onClick={() => handleRevise(key, instruction)}
                     >
                       {actionLabel}
-                    </button>
+                    </LoadingButton>
                   ))}
                 </div>
               )}

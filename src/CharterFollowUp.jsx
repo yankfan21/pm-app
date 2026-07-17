@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
 import QaStepper from './QaStepper'
+import Spinner from './Spinner'
 
 function CharterFollowUp({ project, charter, onApplied, onClose }) {
   const [phase, setPhase] = useState('loading-questions')
@@ -97,7 +98,10 @@ function CharterFollowUp({ project, charter, onApplied, onClose }) {
           <h2>Ask Follow-up Questions</h2>
 
           {phase === 'loading-questions' && (
-            <p className="charter-status">Reviewing the charter...</p>
+            <p className="charter-status">
+              <Spinner />
+              Reviewing the charter...
+            </p>
           )}
 
           {phase === 'no-gaps' && (

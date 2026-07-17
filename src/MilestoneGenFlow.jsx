@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
 import QaStepper from './QaStepper'
+import Spinner from './Spinner'
 
 // AI starter-milestone generation, available once a Charter exists on a
 // Waterfall or Hybrid project - the Milestones counterpart to
@@ -148,7 +149,10 @@ function MilestoneGenFlow({ project, charter, brief, riskLog, existingMilestones
 
       <div className="modal-step">
         {phase === 'loading-questions' && (
-          <p className="charter-status">Checking what's already known...</p>
+          <p className="charter-status">
+            <Spinner />
+            Checking what's already known...
+          </p>
         )}
 
         {phase === 'error' && (
@@ -182,7 +186,10 @@ function MilestoneGenFlow({ project, charter, brief, riskLog, existingMilestones
         )}
 
         {phase === 'generating' && questions.length === 0 && (
-          <p className="charter-status">Thinking through milestones...</p>
+          <p className="charter-status">
+            <Spinner />
+            Thinking through milestones...
+          </p>
         )}
 
         {(phase === 'answering' || phase === 'generating') && questions.length > 0 && (
@@ -297,6 +304,7 @@ function MilestoneGenFlow({ project, charter, brief, riskLog, existingMilestones
             {error && <p className="error">{error}</p>}
             {phase === 'saving' && (
               <p className="charter-status">
+                <Spinner />
                 Adding milestones... ({savedCount} of {selectedCount})
               </p>
             )}

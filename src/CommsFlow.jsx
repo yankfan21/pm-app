@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
 import QaStepper from './QaStepper'
+import Spinner from './Spinner'
 import { COMMS_VARIANTS } from './commsSections'
 
 // Shared Q&A generation flow for both Stakeholder Comms Plan document types
@@ -77,7 +78,10 @@ function CommsFlow({ variant, project, charter, brief, riskLog, onGenerated, onC
 
       <div className="modal-step">
         {phase === 'loading-questions' && (
-          <p className="charter-status">Checking what's already known...</p>
+          <p className="charter-status">
+            <Spinner />
+            Checking what's already known...
+          </p>
         )}
 
         {phase === 'error' && (
@@ -121,6 +125,13 @@ function CommsFlow({ variant, project, charter, brief, riskLog, onGenerated, onC
               </button>
             </div>
           </>
+        )}
+
+        {phase === 'generating' && questions.length === 0 && (
+          <p className="charter-status">
+            <Spinner />
+            Generating...
+          </p>
         )}
 
         {(phase === 'answering' || phase === 'generating') && questions.length > 0 && (

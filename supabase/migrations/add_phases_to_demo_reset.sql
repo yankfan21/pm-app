@@ -8,10 +8,13 @@
 -- Same shadow-table approach as every other table in
 -- demo_projects_nightly_reset.sql: `like phases including defaults`. Note
 -- that "including defaults" does NOT carry over generated columns'
--- generation expressions automatically the way it does for normal
--- defaults, but that's fine here - effective_start_date/effective_end_date
--- recompute themselves from the other columns the moment a row lands in
--- either table, generated or not.
+-- generation expressions - a plain, ordinary column of the same name and
+-- type is created instead (see PG docs on LIKE ... INCLUDING GENERATED,
+-- which is NOT specified here). That's fine for the capture leg (reading a
+-- generated column's computed value and writing it into an ordinary column
+-- is unrestricted), but it means the restore leg below can't blindly
+-- `select *` into `phases` the way every other table does - see that INSERT
+-- for why.
 --
 -- Ordering: phases is a parent of tasks (tasks.phase_id references it), so
 -- on delete it goes out AFTER tasks (children before parents, matching the
@@ -23,6 +26,80 @@ create table if not exists phases_demo_snapshot (like phases including defaults)
 
 alter table phases_demo_snapshot enable row level security;
 
+-- ── fix schema drift on the existing tasks_demo_snapshot table ──────────
+-- tasks_demo_snapshot was created via `like tasks` by
+-- demo_projects_nightly_reset.sql on 2026-07-16 - LIKE only captures the
+-- source table's shape at CREATE TABLE time, it does not track later
+-- ALTERs on tasks. phases_schema.sql added tasks.phase_id on 2026-07-17,
+-- one day later, so tasks_demo_snapshot never picked it up (`create table
+-- if not exists` is a no-op on a table that already exists). Without this,
+-- capture_demo_snapshot()'s `insert into tasks_demo_snapshot select * from
+-- tasks` fails with "INSERT has more expressions than target columns" the
+-- moment it runs - which is exactly what happened the first time this file
+-- was run. Appending the column here (rather than dropping and recreating
+-- the table) keeps it in the same relative "last column" position both
+-- tables ended up with, which matters because `select *` with no explicit
+-- column list matches source to target by ORDINAL POSITION, not by name.
+--
+-- Checked every other _demo_snapshot table's source against every
+-- migration dated after 2026-07-16 (when demo_projects_nightly_reset.sql
+-- was written): milestones and sprints haven't gained any columns since,
+-- and the only other post-07-16 schema change (hide_project_from_list.sql,
+-- not yet run) touches project_collaborators, which the nightly reset
+-- already deliberately never snapshots. tasks.phase_id is the only drift.
+alter table tasks_demo_snapshot add column if not exists phase_id uuid;
+
+-- ── schema-drift preflight ───────────────────────────────────────────────
+-- Turns the next occurrence of this exact class of bug into a clear,
+-- actionable error instead of a cryptic "INSERT has more expressions than
+-- target columns" - checked against every tracked table before either
+-- function does anything destructive. This catches a MISSING column on a
+-- _demo_snapshot table (this bug); it does NOT catch a generated column on
+-- the live side needing special handling on restore (a different, rarer
+-- problem - see the `phases` restore INSERT below, which is hand-written
+-- for exactly that reason). If a future migration adds a generated column
+-- to another tracked table, its restore INSERT needs the same explicit
+-- column-list treatment `phases` gets here.
+create or replace function public.verify_demo_snapshot_schema()
+returns void
+language plpgsql
+as $$
+declare
+  tracked_tables text[] := array[
+    'projects', 'milestones', 'sprints', 'phases', 'tasks', 'sprint_retros',
+    'charters', 'requirements_briefs', 'risk_logs', 'exec_comms_plans',
+    'team_newsletters', 'budget_trackers', 'status_updates',
+    'document_versions', 'post_mortems', 'project_evaluations'
+  ];
+  t text;
+  live_cols text[];
+  snap_cols text[];
+  missing text[];
+begin
+  foreach t in array tracked_tables loop
+    select array_agg(column_name order by column_name) into live_cols
+    from information_schema.columns
+    where table_schema = 'public' and table_name = t;
+
+    select array_agg(column_name order by column_name) into snap_cols
+    from information_schema.columns
+    where table_schema = 'public' and table_name = t || '_demo_snapshot';
+
+    if snap_cols is null then
+      raise exception 'verify_demo_snapshot_schema: % has no matching %_demo_snapshot table', t, t;
+    end if;
+
+    select array_agg(c) into missing from unnest(live_cols) c where c <> all(snap_cols);
+
+    if missing is not null then
+      raise exception
+        'verify_demo_snapshot_schema: %_demo_snapshot is missing column(s) % present on % - add them (matching type, appended at the end) before capture/restore can run',
+        t, missing, t;
+    end if;
+  end loop;
+end;
+$$;
+
 create or replace function public.capture_demo_snapshot()
 returns void
 language plpgsql
@@ -32,6 +109,8 @@ as $$
 declare
   demo_ids uuid[];
 begin
+  perform public.verify_demo_snapshot_schema();
+
   select array_agg(id) into demo_ids from projects where is_demo = true;
 
   if demo_ids is null or array_length(demo_ids, 1) is null then
@@ -82,6 +161,8 @@ as $$
 declare
   demo_ids uuid[];
 begin
+  perform public.verify_demo_snapshot_schema();
+
   select array_agg(id) into demo_ids from projects where is_demo = true;
 
   if demo_ids is null or array_length(demo_ids, 1) is null then
@@ -112,7 +193,29 @@ begin
   -- reinsert: parents before children
   insert into milestones select * from milestones_demo_snapshot;
   insert into sprints select * from sprints_demo_snapshot;
-  insert into phases select * from phases_demo_snapshot;
+
+  -- Can't `select *` here like every other table - phases.effective_start_date/
+  -- effective_end_date are GENERATED ALWAYS ... STORED columns, and Postgres
+  -- rejects an INSERT that supplies an explicit value for a generated column
+  -- (which is what an implicit-column-list `select *` does the moment the
+  -- source and target both have a same-named column there - phases_demo_snapshot's
+  -- copy is an ordinary column, per the LIKE-without-INCLUDING-GENERATED note up
+  -- top, but that doesn't matter on this side: the failure is about the TARGET,
+  -- `phases`, having a generated column, not about the source). Naming every
+  -- other column explicitly and omitting both generated ones is required - they
+  -- recompute themselves from auto_start_date/auto_end_date/custom_start_date/
+  -- custom_end_date/is_custom_mode, all of which ARE restored below, the instant
+  -- the row lands.
+  insert into phases (
+    id, project_id, phase_number, phase_name,
+    auto_start_date, auto_end_date, custom_start_date, custom_end_date,
+    is_custom_mode, created_at
+  )
+  select
+    id, project_id, phase_number, phase_name,
+    auto_start_date, auto_end_date, custom_start_date, custom_end_date,
+    is_custom_mode, created_at
+  from phases_demo_snapshot;
 
   -- See tasks_demo_snapshot's comment in demo_projects_nightly_reset.sql -
   -- a single INSERT ... SELECT loading every task in one statement handles
@@ -158,5 +261,10 @@ select public.capture_demo_snapshot();
 
 -- Verify afterward:
 --
+--   select column_name from information_schema.columns
+--   where table_name = 'tasks_demo_snapshot' and column_name = 'phase_id';
+--   -- expect 1 row
+--
 --   select (select count(*) from phases_demo_snapshot) as phases;
+--
 --   select public.restore_demo_projects(); -- safe to test immediately

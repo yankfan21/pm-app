@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
 import QaStepper from './QaStepper'
+import Spinner from './Spinner'
 import { COMMS_VARIANTS } from './commsSections'
 
 // Shared "ask follow-up questions" revise flow for both Stakeholder Comms
@@ -102,7 +103,10 @@ function CommsFollowUp({ variant, project, doc, onApplied, onClose }) {
           <h2>Ask Follow-up Questions</h2>
 
           {phase === 'loading-questions' && (
-            <p className="charter-status">Reviewing the {title.toLowerCase()}...</p>
+            <p className="charter-status">
+              <Spinner />
+              Reviewing the {title.toLowerCase()}...
+            </p>
           )}
 
           {phase === 'no-gaps' && (

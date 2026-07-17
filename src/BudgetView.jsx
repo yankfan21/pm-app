@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from './supabaseClient'
+import LoadingButton from './LoadingButton'
 
 const VIEWS = [
   { key: 'summary', label: 'Summary' },
@@ -225,14 +226,14 @@ function BudgetView({ project, charter, brief, tasks, budget, canEdit, onUpdate 
             {exporting === 'excel' ? 'Exporting...' : 'Export Excel'}
           </button>
           {canEdit && (
-            <button
-              type="button"
+            <LoadingButton
               className="btn-secondary"
-              disabled={suggestLoading}
+              loading={suggestLoading}
+              loadingLabel="Thinking..."
               onClick={handleSuggest}
             >
-              {suggestLoading ? 'Thinking...' : 'Suggest Additional Line Items'}
-            </button>
+              Suggest Additional Line Items
+            </LoadingButton>
           )}
         </div>
       </div>

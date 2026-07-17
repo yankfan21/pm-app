@@ -921,6 +921,31 @@
   border-color: var(--accent-border);
 }
 
+.btn-spinner {
+  display: inline-block;
+  width: 0.85em;
+  height: 0.85em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  vertical-align: -0.15em;
+  animation: btn-spin 0.6s linear infinite;
+}
+
+.section-actions .btn-spinner {
+  margin-right: 4px;
+}
+
+.charter-status .btn-spinner {
+  margin-right: 8px;
+}
+
+@keyframes btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .btn-primary:disabled,
 .btn-secondary:disabled {
   opacity: 0.5;

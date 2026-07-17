@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from './supabaseClient'
 import { exportRiskLogDocx, exportRiskLogPdf } from './riskLogExport'
+import LoadingButton from './LoadingButton'
 
 const LEVELS = ['Low', 'Medium', 'High']
 
@@ -131,14 +132,14 @@ function RiskLogView({ project, charter, brief, riskLog, canEdit, onUpdate }) {
             Export Word
           </button>
           {canEdit && (
-            <button
-              type="button"
+            <LoadingButton
               className="btn-secondary"
-              disabled={suggestLoading}
+              loading={suggestLoading}
+              loadingLabel="Thinking..."
               onClick={handleSuggest}
             >
-              {suggestLoading ? 'Thinking...' : 'Suggest Additional Risks'}
-            </button>
+              Suggest Additional Risks
+            </LoadingButton>
           )}
         </div>
       </div>

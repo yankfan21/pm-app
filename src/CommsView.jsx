@@ -3,11 +3,12 @@ import { supabase } from './supabaseClient'
 import { exportCommsDocx, exportCommsPdf } from './commsExport'
 import { COMMS_VARIANTS } from './commsSections'
 import CommsFollowUp from './CommsFollowUp'
+import LoadingButton from './LoadingButton'
 
 const REVISE_ACTIONS = [
-  { instruction: 'shorter', label: 'Make shorter' },
-  { instruction: 'detail', label: 'Add detail' },
-  { instruction: 'rephrase', label: 'Rephrase' },
+  { instruction: 'shorter', label: 'Make shorter', loadingLabel: 'Making shorter...' },
+  { instruction: 'detail', label: 'Add detail', loadingLabel: 'Adding detail...' },
+  { instruction: 'rephrase', label: 'Rephrase', loadingLabel: 'Rephrasing...' },
 ]
 
 const DOC_TYPE_BY_VARIANT = {
@@ -201,7 +202,7 @@ function CommsView({ variant, project, charter, brief, riskLog, statusUpdates, d
 
   async function handleRevise(key, instruction) {
     setError(null)
-    setRevisions((prev) => ({ ...prev, [key]: { loading: true, text: null } }))
+    setRevisions((prev) => ({ ...prev, [key]: { loading: true, instruction, text: null } }))
 
     const { data, error } = await supabase.functions.invoke('comms-plan', {
       body: {
@@ -280,25 +281,25 @@ function CommsView({ variant, project, charter, brief, riskLog, statusUpdates, d
               >
                 Ask Follow-up Questions
               </button>
-              <button
-                type="button"
+              <LoadingButton
                 className="btn-secondary"
+                loading={regenerating === 'regenerate'}
+                loadingLabel="Regenerating..."
                 disabled={!!regenerating}
                 onClick={() => requestNewVersion(null)}
               >
-                {regenerating === 'regenerate' ? 'Regenerating...' : 'Regenerate'}
-              </button>
-              <button
-                type="button"
+                Regenerate
+              </LoadingButton>
+              <LoadingButton
                 className="btn-secondary"
+                loading={regenerating === 'status'}
+                loadingLabel="Drafting..."
                 disabled={!!regenerating || !latestStatus}
                 title={!latestStatus ? 'Log a Status Update first' : undefined}
                 onClick={() => requestNewVersion(latestStatus)}
               >
-                {regenerating === 'status'
-                  ? 'Drafting...'
-                  : `Update ${variant === 'exec' ? 'Exec Comms' : 'Newsletter'} from Latest Status`}
-              </button>
+                {`Update ${variant === 'exec' ? 'Exec Comms' : 'Newsletter'} from Latest Status`}
+              </LoadingButton>
             </>
           )}
         </div>
@@ -338,15 +339,16 @@ function CommsView({ variant, project, charter, brief, riskLog, statusUpdates, d
               <h4 className="charter-doc-heading">{label}</h4>
               {canEdit && (
                 <div className="section-actions">
-                  {REVISE_ACTIONS.map(({ instruction, label: actionLabel }) => (
-                    <button
-                      type="button"
+                  {REVISE_ACTIONS.map(({ instruction, label: actionLabel, loadingLabel }) => (
+                    <LoadingButton
                       key={instruction}
-                      disabled={revisions[key]?.loading}
+                      loading={revisions[key]?.loading && revisions[key]?.instruction === instruction}
+                      loadingLabel={loadingLabel}
+                      disabled={revisions[key]?.loading && revisions[key]?.instruction !== instruction}
                       onClick={() => handleRevise(key, instruction)}
                     >
                       {actionLabel}
-                    </button>
+                    </LoadingButton>
                   ))}
                 </div>
               )}

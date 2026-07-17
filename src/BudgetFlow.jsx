@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
 import QaStepper from './QaStepper'
+import Spinner from './Spinner'
 
 // First-time Budget Tracker generation. Follows the same Q&A-then-review
 // pattern as the document Flows, but the review step is a bulk editable
@@ -130,7 +131,10 @@ function BudgetFlow({ project, charter, brief, tasks, onGenerated, onClose }) {
 
       <div className="modal-step">
         {phase === 'loading-questions' && (
-          <p className="charter-status">Checking what's already known...</p>
+          <p className="charter-status">
+            <Spinner />
+            Checking what's already known...
+          </p>
         )}
 
         {phase === 'error' && (
@@ -164,7 +168,10 @@ function BudgetFlow({ project, charter, brief, tasks, onGenerated, onClose }) {
         )}
 
         {phase === 'generating' && questions.length === 0 && (
-          <p className="charter-status">Thinking through a starting budget...</p>
+          <p className="charter-status">
+            <Spinner />
+            Thinking through a starting budget...
+          </p>
         )}
 
         {(phase === 'answering' || phase === 'generating') && questions.length > 0 && (

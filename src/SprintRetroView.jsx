@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { supabase } from './supabaseClient'
 import { formatSprintLabel } from './useSprintSelection'
 import { computeSprintPoints } from './sprintStats'
+import LoadingButton from './LoadingButton'
 
 function byRecentSprintFirst(a, b) {
   if (!a.sprint.start_date && !b.sprint.start_date) return 0
@@ -367,14 +368,14 @@ function SprintRetroView({ project, sprints, retros, setRetros, tasks, canEdit, 
                     <h3 className="charter-heading">Sprint: {selectedSprint.name}</h3>
                     <div className="charter-actions">
                       {effectiveCanEdit && (
-                        <button
-                          type="button"
+                        <LoadingButton
                           className="btn-secondary"
-                          disabled={suggestLoading}
+                          loading={suggestLoading}
+                          loadingLabel="Thinking..."
                           onClick={handleSuggest}
                         >
-                          {suggestLoading ? 'Thinking...' : 'Suggest from Sprint Data'}
-                        </button>
+                          Suggest from Sprint Data
+                        </LoadingButton>
                       )}
                       {canEdit && !retro.is_locked && (
                         <button type="button" className="btn-secondary" onClick={handleLockRetro}>

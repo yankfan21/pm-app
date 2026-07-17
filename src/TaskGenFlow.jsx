@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
 import QaStepper from './QaStepper'
+import Spinner from './Spinner'
 import { addDaysLocal, todayLocalDateString } from './ganttLayout'
 
 // AI starter-task generation, available once a Charter exists. Follows the
@@ -200,7 +201,10 @@ function TaskGenFlow({ project, charter, brief, riskLog, existingTasks, onCommit
 
       <div className="modal-step">
         {phase === 'loading-questions' && (
-          <p className="charter-status">Checking what's already known...</p>
+          <p className="charter-status">
+            <Spinner />
+            Checking what's already known...
+          </p>
         )}
 
         {phase === 'error' && (
@@ -234,7 +238,10 @@ function TaskGenFlow({ project, charter, brief, riskLog, existingTasks, onCommit
         )}
 
         {phase === 'generating' && questions.length === 0 && (
-          <p className="charter-status">Thinking through a task list...</p>
+          <p className="charter-status">
+            <Spinner />
+            Thinking through a task list...
+          </p>
         )}
 
         {(phase === 'answering' || phase === 'generating') && questions.length > 0 && (
@@ -355,6 +362,7 @@ function TaskGenFlow({ project, charter, brief, riskLog, existingTasks, onCommit
             {error && <p className="error">{error}</p>}
             {phase === 'saving' && (
               <p className="charter-status">
+                <Spinner />
                 Adding tasks... ({savedCount} of {selectedCount})
               </p>
             )}

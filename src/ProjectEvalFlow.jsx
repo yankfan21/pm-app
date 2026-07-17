@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from './supabaseClient'
 import { todayLocalDateString } from './ganttLayout'
+import Spinner from './Spinner'
 
 // Evaluate Project has no Q&A intake and no PM editing - it's a read-only
 // diagnostic snapshot, not a co-authored document, so this Flow just runs
@@ -73,6 +74,7 @@ function ProjectEvalFlow({ project, charter, riskLog, budget, tasks, statusUpdat
       <div className="modal-step">
         {phase === 'evaluating' && (
           <p className="charter-status">
+            <Spinner />
             Reviewing the charter, risk log, budget, and status history, plus milestones/tasks or
             sprints/backlog/retros depending on methodology...
           </p>

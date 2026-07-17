@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
 import QaStepper from './QaStepper'
+import Spinner from './Spinner'
 
 // Same Q&A-then-generate flow as CharterFlow, but pulling context from four
 // already-generated sources (Charter, Risk Log, Status Update history,
@@ -76,7 +77,10 @@ function PostMortemFlow({ project, charter, riskLog, statusUpdates, budget, onGe
 
       <div className="modal-step">
         {phase === 'loading-questions' && (
-          <p className="charter-status">Reviewing the project history...</p>
+          <p className="charter-status">
+            <Spinner />
+            Reviewing the project history...
+          </p>
         )}
 
         {phase === 'error' && (
@@ -120,6 +124,13 @@ function PostMortemFlow({ project, charter, riskLog, statusUpdates, budget, onGe
               </button>
             </div>
           </>
+        )}
+
+        {phase === 'generating' && questions.length === 0 && (
+          <p className="charter-status">
+            <Spinner />
+            Generating...
+          </p>
         )}
 
         {(phase === 'answering' || phase === 'generating') && questions.length > 0 && (

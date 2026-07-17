@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from './supabaseClient'
 import QaStepper from './QaStepper'
+import Spinner from './Spinner'
 
 const SECTIONS = [
   { key: 'purpose', label: 'Purpose' },
@@ -174,7 +175,10 @@ function CharterFlow({ project, onGenerated, onClose }) {
         )}
 
         {phase === 'extracting' && (
-          <p className="charter-status">Reading {fileName} and drafting a Charter from it...</p>
+          <p className="charter-status">
+            <Spinner />
+            Reading {fileName} and drafting a Charter from it...
+          </p>
         )}
 
         {phase === 'doc-review' && docSections && (
@@ -221,7 +225,10 @@ function CharterFlow({ project, onGenerated, onClose }) {
         )}
 
         {phase === 'loading-questions' && (
-          <p className="charter-status">Thinking of a few questions...</p>
+          <p className="charter-status">
+            <Spinner />
+            Thinking of a few questions...
+          </p>
         )}
 
         {phase === 'error' && (

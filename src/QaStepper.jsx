@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import QaQuestion from './QaQuestion'
+import LoadingButton from './LoadingButton'
 
 // Shared step-by-step Q&A pattern: one question per screen with a progress
 // indicator and Back/Next nav. Used by every AI document flow (Charter,
@@ -51,14 +52,14 @@ function QaStepper({
         <button type="button" className="btn-secondary" onClick={handleBack}>
           {step === 0 ? 'Cancel' : 'Back'}
         </button>
-        <button
-          type="button"
+        <LoadingButton
           className="btn-primary"
-          disabled={isLast && submitting}
+          loading={isLast && submitting}
+          loadingLabel={loadingLabel}
           onClick={handleNext}
         >
-          {isLast ? (submitting ? loadingLabel : submitLabel) : 'Next'}
-        </button>
+          {isLast ? submitLabel : 'Next'}
+        </LoadingButton>
       </div>
     </div>
   )

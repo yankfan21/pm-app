@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
 import QaStepper from './QaStepper'
+import Spinner from './Spinner'
 
 function RequirementsFlow({ project, charter, onGenerated, onClose }) {
   const [phase, setPhase] = useState('loading-questions')
@@ -71,7 +72,10 @@ function RequirementsFlow({ project, charter, onGenerated, onClose }) {
 
       <div className="modal-step">
         {phase === 'loading-questions' && (
-          <p className="charter-status">Checking what's already known...</p>
+          <p className="charter-status">
+            <Spinner />
+            Checking what's already known...
+          </p>
         )}
 
         {phase === 'error' && (
@@ -116,6 +120,13 @@ function RequirementsFlow({ project, charter, onGenerated, onClose }) {
               </button>
             </div>
           </>
+        )}
+
+        {phase === 'generating' && questions.length === 0 && (
+          <p className="charter-status">
+            <Spinner />
+            Generating...
+          </p>
         )}
 
         {(phase === 'answering' || phase === 'generating') && questions.length > 0 && (

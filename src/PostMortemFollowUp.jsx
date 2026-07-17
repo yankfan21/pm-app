@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
 import QaStepper from './QaStepper'
+import Spinner from './Spinner'
 
 // Same targeted "ask follow-up questions" patch flow as CharterFollowUp.
 function PostMortemFollowUp({ project, doc, onApplied, onClose }) {
@@ -98,7 +99,10 @@ function PostMortemFollowUp({ project, doc, onApplied, onClose }) {
           <h2>Ask Follow-up Questions</h2>
 
           {phase === 'loading-questions' && (
-            <p className="charter-status">Reviewing the post-mortem...</p>
+            <p className="charter-status">
+              <Spinner />
+              Reviewing the post-mortem...
+            </p>
           )}
 
           {phase === 'no-gaps' && (
