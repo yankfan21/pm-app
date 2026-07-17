@@ -9,7 +9,7 @@ function byDeadlineSoonestFirst(a, b) {
 }
 
 function Dashboard() {
-  const { projects, loading } = useOutletContext()
+  const { projects, loading, hideProject } = useOutletContext()
   const active = projects
     .filter((p) => p.status !== 'Archived')
     .sort(byDeadlineSoonestFirst)
@@ -20,7 +20,12 @@ function Dashboard() {
       <p className="dashboard-subtitle">
         Active projects, soonest deadline first.
       </p>
-      <ProjectList projects={active} loading={loading} emptyMessage="No active projects" />
+      <ProjectList
+        projects={active}
+        loading={loading}
+        emptyMessage="No active projects"
+        onHide={hideProject}
+      />
     </div>
   )
 }

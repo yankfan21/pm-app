@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from './supabaseClient'
+import { useAuth } from './AuthContext'
 import { METHODOLOGY_LABELS } from './methodology'
 import { HEALTH_LABELS, HEALTH_COLOR_CLASS } from './projectEvalHealth'
 
@@ -20,8 +21,9 @@ function cardAccentTier(project, evaluation) {
   return ELEVATED_PRIORITIES.includes(project.priority) ? 'amber' : 'purple'
 }
 
-function ProjectList({ projects, loading, emptyMessage }) {
+function ProjectList({ projects, loading, emptyMessage, onHide }) {
   const navigate = useNavigate()
+  const { user } = useAuth()
   // Keyed by project_id -> latest project_evaluations row (health_status,
   // metrics, created_at only - just enough for the card badge). Never a
   // live recomputation, always whatever the most recent Evaluate Project
@@ -87,6 +89,20 @@ function ProjectList({ projects, loading, emptyMessage }) {
               className={`clickable accent-${accentTier} ${isArchived ? 'archived' : ''}`}
               onClick={() => navigate(`/projects/${project.id}`)}
             >
+              {onHide && project.owner_id !== user.id && (
+                <button
+                  type="button"
+                  className="project-card-hide"
+                  title="Hide from my list"
+                  aria-label={`Hide ${project.name} from my list`}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onHide(project.id)
+                  }}
+                >
+                  ✕
+                </button>
+              )}
               <div className="project-card-top">
                 <span className="project-card-title">{project.name}</span>
                 <div className="project-card-badges">

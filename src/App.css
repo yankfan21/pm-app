@@ -937,6 +937,7 @@
 }
 
 .project-list li {
+  position: relative;
   padding: 16px 18px;
   border: none;
   border-left: 3px solid var(--card-accent-purple);
@@ -946,6 +947,39 @@
   transition:
     box-shadow 0.15s ease,
     transform 0.05s ease;
+}
+
+.project-card-hide {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--accent-muted);
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity 0.1s ease,
+    background 0.1s ease,
+    color 0.1s ease;
+}
+
+.project-list li:hover .project-card-hide,
+.project-card-hide:focus-visible {
+  opacity: 1;
+}
+
+.project-card-hide:hover {
+  background: var(--row-border);
+  color: #d1242f;
 }
 
 /* Each accent tier also gets a faint background tint (its border color at
@@ -2998,6 +3032,24 @@ textarea.risk-cell-input {
 .collaborator-email {
   flex: 1;
   color: var(--text-h);
+  text-decoration: none;
+}
+
+.collaborator-email:hover {
+  text-decoration: underline;
+}
+
+.settings-section-title {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.settings-hidden-at {
+  font-size: 12px;
+  color: var(--accent-muted);
+  white-space: nowrap;
 }
 
 .collaborator-invite-form {

@@ -56,7 +56,7 @@ function matchesQuery(project, query) {
 }
 
 function AllProjects() {
-  const { projects, loading } = useOutletContext()
+  const { projects, loading, hideProject } = useOutletContext()
   const [tab, setTab] = useState('active')
   const [sort, setSort] = useState('priority')
   const [query, setQuery] = useState('')
@@ -149,6 +149,7 @@ function AllProjects() {
         emptyMessage={
           isSearching ? 'No projects match your search' : 'No projects match this filter'
         }
+        onHide={hideProject}
       />
     </div>
   )

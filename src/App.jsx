@@ -3,6 +3,7 @@ import ProjectsShell from './ProjectsShell'
 import Dashboard from './Dashboard'
 import AllProjects from './AllProjects'
 import ProjectDetailPage from './ProjectDetailPage'
+import Settings from './Settings'
 import NotFound from './NotFound'
 import Login from './Login'
 import RequireAuth from './RequireAuth'
@@ -24,6 +25,7 @@ function App() {
           <Route path="projects" element={<AllProjects />} />
         </Route>
         <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
+        <Route path="/settings" element={<Settings />} />
 
         <Route path="*" element={<NotFound />} />
       </Route>

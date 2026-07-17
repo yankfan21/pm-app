@@ -5,6 +5,7 @@ import ProjistLogo from './ProjistLogo'
 const NAV_VIEWS = [
   { to: '/', label: 'Dashboard', end: true },
   { to: '/projects', label: 'All Projects', end: false },
+  { to: '/settings', label: 'Settings', end: false },
 ]
 
 // Rendered from three separate call sites (ProjectsShell, ProjectDetailPage,
