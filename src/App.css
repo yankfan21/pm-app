@@ -1669,6 +1669,24 @@
   background: #22c55e;
 }
 
+/* Inline name label beside the diamond - anchored at the same left% as
+   .gantt-milestone and vertically centered the same way (top:50%), then
+   nudged right past the diamond's half-width via translate instead of
+   left/margin so it stays pinned to the marker at any zoom. Kept beside
+   rather than above the diamond so it never encroaches on the row-gap
+   between phase rows. Font size/color match .gantt-tick-label - both are
+   small inline annotations against the timeline track, not row labels. */
+.gantt-milestone-label {
+  position: absolute;
+  top: 50%;
+  transform: translate(10px, -50%);
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--text);
+  z-index: 2;
+  pointer-events: none;
+}
+
 .gantt-gridlines {
   position: relative;
   /* See .gantt-today-col below for why align-self needs overriding here too. */

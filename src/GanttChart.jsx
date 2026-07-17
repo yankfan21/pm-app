@@ -347,7 +347,7 @@ function GanttChart({ project, tasks, phases, expanded, onToggle }) {
                         <span className={`chevron ${collapsed ? 'collapsed' : ''}`} aria-hidden="true">
                           ▾
                         </span>
-                        {phase ? phase.phase_name : 'Tasks Without a Phase'}
+                        {phase ? `${phase.phase_name} Phase` : 'Tasks Without a Phase'}
                       </button>
                       <span className="gantt-phase-meta">
                         {count} task{count === 1 ? '' : 's'}
@@ -392,14 +392,19 @@ function GanttChart({ project, tasks, phases, expanded, onToggle }) {
                   </div>
                   <div className="gantt-row-track" style={{ gridRow, gridColumn: 2 }}>
                     {isMilestone ? (
-                      <div
-                        ref={(el) => {
-                          barRefs.current[task.id] = el
-                        }}
-                        className={`gantt-milestone ${isDelayed ? 'delayed' : ''} ${task.completed ? 'completed' : ''}`}
-                        style={{ left: `${leftPct}%` }}
-                        title={`${task.title} — ${task.due_date || 'TBD'}`}
-                      />
+                      <>
+                        <div
+                          ref={(el) => {
+                            barRefs.current[task.id] = el
+                          }}
+                          className={`gantt-milestone ${isDelayed ? 'delayed' : ''} ${task.completed ? 'completed' : ''}`}
+                          style={{ left: `${leftPct}%` }}
+                          title={`${task.title} — ${task.due_date || 'TBD'}`}
+                        />
+                        <span className="gantt-milestone-label" style={{ left: `${leftPct}%` }}>
+                          {task.title}
+                        </span>
+                      </>
                     ) : (
                       <div
                         ref={(el) => {
