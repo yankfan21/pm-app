@@ -1219,8 +1219,8 @@
 }
 
 .doc-status-badge.pending {
-  background: var(--code-bg);
-  color: var(--text);
+  background: var(--pill-neutral-bg);
+  color: var(--pill-neutral-text);
 }
 
 .doc-status-badge.partial {
@@ -1454,7 +1454,7 @@
   margin: 12px 0 0;
   font-size: 12px;
   font-weight: 600;
-  color: #ef4444;
+  color: var(--alert-red);
 }
 
 .gantt-bar {
@@ -1487,7 +1487,7 @@
   top: 0;
   bottom: 0;
   width: 0;
-  border-left: 2px dashed #ef4444;
+  border-left: 2px dashed var(--alert-red);
 }
 
 .gantt-dep-overlay {
@@ -1550,7 +1550,7 @@
 .gantt-legend-swatch.today-line {
   width: 0;
   height: 12px;
-  border-left: 2px dashed #ef4444;
+  border-left: 2px dashed var(--alert-red);
 }
 
 .gantt-legend-arrow {
@@ -2713,7 +2713,7 @@ textarea.risk-cell-input {
 }
 
 .login-panel-form {
-  background: #1a1a24;
+  background: #151220;
   align-items: center;
   justify-content: center;
   padding: 48px 32px;
@@ -2773,8 +2773,8 @@ textarea.risk-cell-input {
 
 .login-form-v2 input:focus {
   outline: none;
-  border-color: #7f77dd;
-  box-shadow: 0 0 0 1px #7f77dd;
+  border-color: #7c5cfc;
+  box-shadow: 0 0 0 1px #7c5cfc;
 }
 
 .login-btn-primary {
@@ -2783,8 +2783,8 @@ textarea.risk-cell-input {
   padding: 11px 0;
   border: none;
   border-radius: 8px;
-  background: #7f77dd;
-  color: #26215c;
+  background: #7c5cfc;
+  color: white;
   font: inherit;
   font-weight: 600;
   cursor: pointer;
@@ -2854,7 +2854,7 @@ textarea.risk-cell-input {
 }
 
 .login-panel-preview {
-  background: #26215c;
+  background: #1e1a29;
   flex-direction: column;
   justify-content: space-between;
   padding: 48px 40px;
@@ -2880,7 +2880,7 @@ textarea.risk-cell-input {
 }
 
 .login-preview-dot.filled {
-  background: #7f77dd;
+  background: #7c5cfc;
 }
 
 .login-preview-counter {

@@ -27,7 +27,7 @@
   --tab-active-bg: #26215c;
   --tab-active-text: #eeedfe;
   --tab-inactive-text: var(--accent-muted);
-  --sort-active: #7f77dd;
+  --sort-active: #7c5cfc;
 
   /* Project-card surface, lifted off the page background, plus its
      left-border accent tiers (priority/health signal - see
@@ -48,9 +48,9 @@
      tint in either theme (like --sort-active) rather than remapping per
      mode. */
   --header-bg: #f0eefa;
-  --header-border: rgba(127, 119, 221, 0.2);
+  --header-border: rgba(124, 92, 252, 0.2);
   --row-bg: #fafaf8;
-  --row-border: rgba(127, 119, 221, 0.1);
+  --row-border: rgba(124, 92, 252, 0.1);
 
   /* Project Detail section containers (Manage Access, Agile zone,
      Documents) - a lifted surface matching the project-card treatment, so
@@ -61,13 +61,21 @@
      a light/dark-remapped semantic color. */
   --surface-1: var(--card-bg);
   --border-faint: color-mix(in srgb, var(--border) 10%, transparent);
-  --agile-accent: #7f77dd;
-  --agile-tint: rgba(127, 119, 221, 0.06);
+  --agile-accent: #7c5cfc;
+  --agile-tint: rgba(124, 92, 252, 0.06);
   /* Structural (non-methodology) zone accent - the same "pending/neutral"
      slate already used for status-dot/badge grays elsewhere, promoted to a
      left-accent bar so Manage Access/Documents read as clearly as the
      purple-accented Agile zone, without borrowing Agile's brand color. */
   --zone-accent-neutral: #94a3b8;
+
+  /* Neutral status pill ("Not evaluated" etc.) and alert/marker red (Gantt
+     "Today" line, future error states) - fixed across both themes, same
+     convention as the badge pastels below and --sort-active/--agile-accent
+     above, rather than remapped per mode. */
+  --pill-neutral-bg: #ece9f2;
+  --pill-neutral-text: #6b6478;
+  --alert-red: #f2545b;
 
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
@@ -92,12 +100,12 @@
   :root {
     --text: #9ca3af;
     --text-h: #f3f4f6;
-    --bg: #1e1e24;
+    --bg: #151220;
     --border: #2e303a;
     --code-bg: #1f2028;
-    --accent: #7f77dd;
-    --accent-bg: rgba(127, 119, 221, 0.15);
-    --accent-border: rgba(127, 119, 221, 0.5);
+    --accent: #7c5cfc;
+    --accent-bg: rgba(124, 92, 252, 0.15);
+    --accent-border: rgba(124, 92, 252, 0.5);
     --accent-muted: #afa9ec;
     --demo-accent: #5eead4;
     --demo-accent-bg: rgba(94, 234, 212, 0.15);
@@ -106,19 +114,19 @@
     --shadow:
       rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
 
-    --tab-active-bg: #7f77dd;
+    --tab-active-bg: #7c5cfc;
     --tab-active-text: #26215c;
 
     /* Dark cards differentiate from the page via a lighter surface, not a
        shadow (shadows don't read against a dark background) - and the
        amber/red accents are bumped brighter so a 3px border stays legible
        at low surface contrast. */
-    --card-bg: #26212f;
+    --card-bg: #1e1a29;
     --card-shadow: none;
     --card-hover-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
     --card-accent-amber: #f59e0b;
     --card-accent-red: #f87171;
-    --card-tint-purple: rgba(127, 119, 221, 0.05);
+    --card-tint-purple: rgba(124, 92, 252, 0.05);
     --card-tint-amber: rgba(217, 119, 6, 0.05);
     --card-tint-red: rgba(220, 38, 38, 0.05);
 
