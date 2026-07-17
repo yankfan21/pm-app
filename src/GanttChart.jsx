@@ -58,6 +58,19 @@ function formatLongDate(ms) {
   })
 }
 
+// Right-angle (horizontal-vertical-horizontal) connector between a
+// predecessor bar's end and a successor bar's start, instead of a diagonal
+// line straight between the two points. Elbows at the midpoint of the two
+// x-coordinates when there's enough horizontal room; otherwise kicks out a
+// fixed distance so the path still reads as three clean segments even when
+// the successor starts at or before the predecessor's end.
+function buildElbowPath(x1, y1, x2, y2) {
+  const minKick = 14
+  const dx = x2 - x1
+  const midX = dx >= minKick * 2 ? x1 + dx / 2 : x1 + minKick
+  return `M ${x1} ${y1} H ${midX} V ${y2} H ${x2}`
+}
+
 function GanttChart({ project, tasks, expanded, onToggle }) {
   const chartRef = useRef(null)
   const trackRef = useRef(null)
@@ -234,10 +247,25 @@ function GanttChart({ project, tasks, expanded, onToggle }) {
               ))}
             </div>
 
+            <div
+              className="gantt-gridlines"
+              style={{ gridRow: `1 / ${totalRows + 1}`, gridColumn: 2 }}
+              aria-hidden="true"
+            >
+              {dateTicks.map((tickMs) => (
+                <div
+                  key={tickMs}
+                  className="gantt-gridline"
+                  style={{ left: `${((tickMs - rangeStart) / totalSpan) * 100}%` }}
+                />
+              ))}
+            </div>
+
             {bars.map(({ task, startMs, dueMs }, i) => {
               const gridRow = i + 2
               const leftPct = ((startMs - rangeStart) / totalSpan) * 100
               const widthPct = Math.max(((dueMs - startMs) / totalSpan) * 100, 1.5)
+              const singleDate = !(task.start_date && task.due_date)
               return (
                 <Fragment key={task.id}>
                   <div
@@ -252,7 +280,7 @@ function GanttChart({ project, tasks, expanded, onToggle }) {
                       ref={(el) => {
                         barRefs.current[task.id] = el
                       }}
-                      className={`gantt-bar ${task.completed ? 'completed' : ''}`}
+                      className={`gantt-bar ${singleDate ? 'single-date' : ''} ${task.completed ? 'completed' : ''}`}
                       style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
                       title={`${task.start_date || 'TBD'} → ${task.due_date || 'TBD'}`}
                     />
@@ -289,12 +317,9 @@ function GanttChart({ project, tasks, expanded, onToggle }) {
                   </marker>
                 </defs>
                 {depLines.map((line) => (
-                  <line
+                  <path
                     key={line.id}
-                    x1={line.x1}
-                    y1={line.y1}
-                    x2={line.x2}
-                    y2={line.y2}
+                    d={buildElbowPath(line.x1, line.y1, line.x2, line.y2)}
                     className="gantt-dep-line"
                     markerEnd="url(#gantt-dep-arrow)"
                   />
@@ -312,7 +337,7 @@ function GanttChart({ project, tasks, expanded, onToggle }) {
             Task (start–due)
           </span>
           <span className="gantt-legend-item">
-            <span className="gantt-legend-swatch dot" />
+            <span className="gantt-legend-swatch bar single-date" />
             Single date only
           </span>
           <span className="gantt-legend-item">
@@ -320,9 +345,9 @@ function GanttChart({ project, tasks, expanded, onToggle }) {
             Completed
           </span>
           <span className="gantt-legend-item">
-            <svg className="gantt-legend-arrow" viewBox="0 0 20 10" width="20" height="10" aria-hidden="true">
-              <line x1="0" y1="5" x2="14" y2="5" stroke="#94a3b8" strokeWidth="1.5" />
-              <path d="M14,2 L20,5 L14,8 Z" fill="#94a3b8" />
+            <svg className="gantt-legend-arrow" viewBox="0 0 20 12" width="20" height="12" aria-hidden="true">
+              <path d="M0,3 H10 V9 H14" fill="none" stroke="#94a3b8" strokeWidth="1.5" />
+              <path d="M14,6 L20,9 L14,12 Z" fill="#94a3b8" />
             </svg>
             Dependency
           </span>
