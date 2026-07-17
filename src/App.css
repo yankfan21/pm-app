@@ -1017,6 +1017,23 @@
   border-radius: 0 8px 8px 0;
   background: var(--surface-1);
   box-shadow: var(--card-shadow);
+  transition:
+    box-shadow 0.15s ease,
+    transform 0.05s ease,
+    border-color 0.15s ease;
+}
+
+/* Rollover cues mirror the clickable-card hover treatment (same
+   --card-hover-shadow + lift) even though these zones aren't themselves a
+   single click target - it's what makes them read as distinct, "alive"
+   sections rather than static dividers. The all-around border firms up
+   from --border-faint to a solid --border, and the left-accent bar
+   brightens, on top of the shadow/lift. */
+.detail-zone:hover {
+  border-color: var(--border);
+  border-left-color: color-mix(in srgb, var(--zone-accent-neutral) 75%, white 25%);
+  box-shadow: var(--card-hover-shadow);
+  transform: translateY(-1px);
 }
 
 .detail-zone .tasks-heading {
@@ -1040,6 +1057,17 @@
   border-radius: 0 8px 8px 0;
   background: var(--agile-tint);
   box-shadow: var(--card-shadow);
+  transition:
+    box-shadow 0.15s ease,
+    transform 0.05s ease,
+    border-color 0.15s ease;
+}
+
+.agile-zone:hover {
+  border-color: var(--border);
+  border-left-color: color-mix(in srgb, var(--agile-accent) 80%, white 20%);
+  box-shadow: var(--card-hover-shadow);
+  transform: translateY(-1px);
 }
 
 .agile-zone .tasks-heading {
