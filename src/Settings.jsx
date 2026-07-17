@@ -123,7 +123,7 @@ function Settings() {
                   className="btn-secondary"
                   onClick={() => unhideProject(p.projectId)}
                 >
-                  Restore to my list
+                  Unhide
                 </button>
               </li>
             ))}
