@@ -598,6 +598,16 @@ function ProjectDetail({ project, isOwner, canEdit }) {
         </div>
       )}
 
+      {!loading && currentProject.methodology !== 'agile' && (
+        <PhaseDetailView
+          phases={phases}
+          setPhases={setPhases}
+          canEdit={canEdit}
+          expanded={expandedSection === 'phases'}
+          onToggle={() => toggleSection('phases')}
+        />
+      )}
+
       {currentProject.methodology !== 'agile' && (
         <h2 className="tasks-heading">
           <button
@@ -620,7 +630,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
         </h2>
       )}
 
-      {docs.charter && canEdit && currentProject.methodology !== 'agile' && (
+      {expandedSection === 'tasks' && docs.charter && canEdit && currentProject.methodology !== 'agile' && (
         <button
           type="button"
           className="btn-secondary ai-task-gen-trigger"
@@ -630,7 +640,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
         </button>
       )}
 
-      {docs.charter && canEdit && currentProject.methodology !== 'agile' && (
+      {expandedSection === 'tasks' && docs.charter && canEdit && currentProject.methodology !== 'agile' && (
         <button
           type="button"
           className="btn-secondary ai-task-gen-trigger"
@@ -640,7 +650,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
         </button>
       )}
 
-      {canEdit && currentProject.methodology !== 'agile' && (
+      {expandedSection === 'tasks' && canEdit && currentProject.methodology !== 'agile' && (
         <button
           type="button"
           className="btn-secondary ai-task-gen-trigger"
@@ -650,7 +660,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
         </button>
       )}
 
-      {docs.charter && canEdit && currentProject.methodology === 'hybrid' && (
+      {expandedSection === 'tasks' && docs.charter && canEdit && currentProject.methodology === 'hybrid' && (
         <p className="charter-status">
           Milestones, Waterfall tasks, and Backlog items are separate, non-overlapping actions -
           generating one doesn&rsquo;t touch the others, whether or not you&rsquo;ve already run
@@ -874,16 +884,6 @@ function ProjectDetail({ project, isOwner, canEdit }) {
           canEdit={canEdit}
           expanded={expandedSection === 'milestones'}
           onToggle={() => toggleSection('milestones')}
-        />
-      )}
-
-      {!loading && currentProject.methodology !== 'agile' && (
-        <PhaseDetailView
-          phases={phases}
-          setPhases={setPhases}
-          canEdit={canEdit}
-          expanded={expandedSection === 'phases'}
-          onToggle={() => toggleSection('phases')}
         />
       )}
 
