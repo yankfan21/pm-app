@@ -1608,12 +1608,17 @@
   gap: 8px;
 }
 
+/* Deliberate "paper" surface for generated-document previews (Charter,
+   Post-Mortem, ...): a light, warm card that reads as an export/print
+   preview rather than another dark app panel. See design/gap-analysis.md
+   for the decision to keep this pattern instead of dark-theming it. */
 .charter-page {
   --charter-accent: #26215c;
   margin-top: 24px;
-  background: #fdfdfb;
+  background: #f5f3f0;
+  border: 1px solid #e0ddd8;
   border-radius: 8px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.16);
   padding: 56px 64px;
   font-family: Georgia, 'Times New Roman', serif;
 }
