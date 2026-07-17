@@ -1,5 +1,60 @@
 import { Fragment, useLayoutEffect, useRef, useState } from 'react'
-import { DAY_MS, computeGanttLayout } from './ganttLayout'
+import { DAY_MS, computeGanttLayout, parseDay } from './ganttLayout'
+
+const UNPHASED_KEY = '__unphased'
+
+// Flattens task bars into a list of rows - a header row per phase (sorted
+// by phase_number) followed by that phase's task rows when it isn't
+// collapsed, plus a trailing "No phase" group for any bar whose task.phase_id
+// doesn't match a phase on this project (null, or a stale id). When the
+// project has no phases at all (not yet backfilled, or somehow deleted),
+// this falls back to the flat, ungrouped list Gantt always rendered before
+// phases existed - grouping is purely additive.
+function buildPhaseRows(bars, phases, collapsed) {
+  if (!phases || phases.length === 0) {
+    return bars.map((bar) => ({ type: 'task', ...bar }))
+  }
+
+  const byPhaseId = new Map(phases.map((p) => [p.id, []]))
+  const unphased = []
+
+  bars.forEach((bar) => {
+    const group = bar.task.phase_id && byPhaseId.get(bar.task.phase_id)
+    if (group) group.push(bar)
+    else unphased.push(bar)
+  })
+
+  const rows = []
+  ;[...phases]
+    .sort((a, b) => a.phase_number - b.phase_number)
+    .forEach((phase) => {
+      const phaseBars = byPhaseId.get(phase.id)
+      rows.push({ type: 'phase-header', phase, key: phase.id, count: phaseBars.length })
+      if (!collapsed[phase.id]) phaseBars.forEach((bar) => rows.push({ type: 'task', ...bar }))
+    })
+
+  if (unphased.length > 0) {
+    rows.push({ type: 'phase-header', phase: null, key: UNPHASED_KEY, count: unphased.length })
+    if (!collapsed[UNPHASED_KEY]) unphased.forEach((bar) => rows.push({ type: 'task', ...bar }))
+  }
+
+  return rows
+}
+
+// Left/width percentage for a phase's own range band, same math as a task
+// bar - null when the phase has no effective date on either end yet (never
+// scheduled and never given a Custom date).
+function phaseRangePct(phase, rangeStart, totalSpan) {
+  if (!phase || (!phase.effective_start_date && !phase.effective_end_date)) return null
+  const start = phase.effective_start_date || phase.effective_end_date
+  const end = phase.effective_end_date || phase.effective_start_date
+  const startMs = parseDay(start)
+  const dueMs = parseDay(end)
+  return {
+    leftPct: ((startMs - rangeStart) / totalSpan) * 100,
+    widthPct: Math.max(((dueMs - startMs) / totalSpan) * 100, 1.5),
+  }
+}
 
 // Never coarser than weekly, finer for shorter ranges - capped so a long
 // project doesn't end up with an unreadable wall of tick labels either.
@@ -71,7 +126,7 @@ function buildElbowPath(x1, y1, x2, y2) {
   return `M ${x1} ${y1} H ${midX} V ${y2} H ${x2}`
 }
 
-function GanttChart({ project, tasks, expanded, onToggle }) {
+function GanttChart({ project, tasks, phases, expanded, onToggle }) {
   const chartRef = useRef(null)
   const trackRef = useRef(null)
   const barRefs = useRef({})
@@ -82,14 +137,23 @@ function GanttChart({ project, tasks, expanded, onToggle }) {
   const [trackWidth, setTrackWidth] = useState(400)
   const [error, setError] = useState(null)
   const [exportingPdf, setExportingPdf] = useState(false)
+  // Every phase group starts expanded - collapsing is opt-in per phase, so
+  // a fresh page load always shows the full picture first.
+  const [collapsedPhases, setCollapsedPhases] = useState({})
+
+  function togglePhaseCollapse(key) {
+    setCollapsedPhases((prev) => ({ ...prev, [key]: !prev[key] }))
+  }
 
   const { bars, unscheduled, rangeStart, rangeEndRaw, totalSpan, todayInRange, todayMs } =
-    computeGanttLayout(tasks, project)
+    computeGanttLayout(tasks, project, phases)
   const todayPct = todayInRange ? ((todayMs - rangeStart) / totalSpan) * 100 : null
   const dateTicks = bars.length > 0 ? computeDateTicks(rangeStart, rangeEndRaw, trackWidth) : []
+  const rows = bars.length > 0 ? buildPhaseRows(bars, phases, collapsedPhases) : []
 
-  // Grid rows are 1-indexed: row 1 is the date-range header, rows 2..N+1 are bars.
-  const totalRows = bars.length + 1
+  // Grid rows are 1-indexed: row 1 is the date-range header, rows 2..N+1 are
+  // either a phase header or a task bar.
+  const totalRows = rows.length + 1
 
   // Dependency lines are drawn from measured bar positions (not percentages)
   // because rows have gaps between them - a percentage-of-total-height
@@ -137,7 +201,7 @@ function GanttChart({ project, tasks, expanded, onToggle }) {
     window.addEventListener('resize', measure)
     return () => window.removeEventListener('resize', measure)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tasks, expanded])
+  }, [tasks, expanded, collapsedPhases])
 
   async function handleExportExcel() {
     setError(null)
@@ -261,8 +325,57 @@ function GanttChart({ project, tasks, expanded, onToggle }) {
               ))}
             </div>
 
-            {bars.map(({ task, startMs, dueMs }, i) => {
+            {rows.map((row, i) => {
               const gridRow = i + 2
+
+              if (row.type === 'phase-header') {
+                const { phase, key, count } = row
+                const collapsed = !!collapsedPhases[key]
+                const band = phaseRangePct(phase, rangeStart, totalSpan)
+                return (
+                  <Fragment key={key}>
+                    <div
+                      className="gantt-row-label gantt-phase-row-label"
+                      style={{ gridRow, gridColumn: 1 }}
+                    >
+                      <button
+                        type="button"
+                        className="gantt-phase-toggle"
+                        onClick={() => togglePhaseCollapse(key)}
+                        aria-expanded={!collapsed}
+                      >
+                        <span className={`chevron ${collapsed ? 'collapsed' : ''}`} aria-hidden="true">
+                          ▾
+                        </span>
+                        {phase ? phase.phase_name : 'No phase'}
+                      </button>
+                      <span className="gantt-phase-meta">
+                        {count} task{count === 1 ? '' : 's'}
+                        {phase && (
+                          <>
+                            {' · '}
+                            <span className={`gantt-phase-mode-badge ${phase.is_custom_mode ? 'custom' : 'auto'}`}>
+                              {phase.is_custom_mode ? 'Custom' : 'Auto'}
+                            </span>
+                            {' · '}
+                            {phase.effective_start_date || 'TBD'} → {phase.effective_end_date || 'TBD'}
+                          </>
+                        )}
+                      </span>
+                    </div>
+                    <div className="gantt-row-track gantt-phase-track" style={{ gridRow, gridColumn: 2 }}>
+                      {band && (
+                        <div
+                          className="gantt-phase-band"
+                          style={{ left: `${band.leftPct}%`, width: `${band.widthPct}%` }}
+                        />
+                      )}
+                    </div>
+                  </Fragment>
+                )
+              }
+
+              const { task, startMs, dueMs } = row
               const leftPct = ((startMs - rangeStart) / totalSpan) * 100
               const widthPct = Math.max(((dueMs - startMs) / totalSpan) * 100, 1.5)
               const singleDate = !(task.start_date && task.due_date)

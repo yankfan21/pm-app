@@ -45,7 +45,16 @@ export function addDaysLocal(dateStr, n) {
 // Forcing it into an archived project's range would stretch the chart to
 // span the gap between whenever the (already-finished) work happened and
 // today, compressing the actual task bars into an unreadable sliver.
-export function computeGanttLayout(tasks, project) {
+//
+// `phases` is optional - when passed, each phase's effective_start_date/
+// effective_end_date (auto or custom, whichever is active - see
+// phases_schema.sql) widens the visible range the same way task dates do.
+// Without this, a PM's Custom-mode buffer (e.g. Closing extended two weeks
+// past its last task's due date) would render off the edge of the chart
+// instead of showing the buffer they explicitly set. Phase dates never
+// create a chart on their own, though - a project with phases but no dated
+// tasks still shows the "add a date" empty state, same as before.
+export function computeGanttLayout(tasks, project, phases = []) {
   const isArchived = project?.status === 'Archived'
 
   const scheduled = tasks.filter((t) => t.start_date || t.due_date)
@@ -59,8 +68,15 @@ export function computeGanttLayout(tasks, project) {
 
   const todayMs = parseDay(todayLocalDateString())
 
-  const taskRangeStart = bars.length ? Math.min(...bars.map((b) => b.startMs)) : 0
-  const taskRangeEndRaw = bars.length ? Math.max(...bars.map((b) => b.dueMs)) : 0
+  const phaseMs = bars.length
+    ? phases
+        .flatMap((p) => [p.effective_start_date, p.effective_end_date])
+        .filter(Boolean)
+        .map(parseDay)
+    : []
+
+  const taskRangeStart = bars.length ? Math.min(...bars.map((b) => b.startMs), ...phaseMs) : 0
+  const taskRangeEndRaw = bars.length ? Math.max(...bars.map((b) => b.dueMs), ...phaseMs) : 0
 
   // For active projects, the visible range always widens to include today
   // (whenever there's a chart to show at all) so the Today marker is a

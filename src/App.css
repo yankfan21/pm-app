@@ -1475,6 +1475,54 @@
   height: 24px;
 }
 
+.gantt-phase-row-label {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.gantt-phase-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--text-h);
+  cursor: pointer;
+}
+
+.gantt-phase-meta {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text);
+}
+
+.gantt-phase-mode-badge {
+  font-weight: 600;
+}
+
+.gantt-phase-mode-badge.custom {
+  color: var(--card-accent-amber);
+}
+
+.gantt-phase-track {
+  height: 10px;
+  align-self: center;
+  background: color-mix(in srgb, var(--border) 35%, transparent);
+  border-radius: 4px;
+}
+
+.gantt-phase-band {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
 .gantt-range-track {
   height: auto;
   min-height: 16px;
@@ -2214,6 +2262,51 @@
   font-weight: 500;
   border: 1px solid var(--border);
   color: var(--text);
+}
+
+.phase-item {
+  align-items: stretch;
+}
+
+.phase-item .backlog-item-main {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.phase-mode-toggle {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.phase-mode-toggle button {
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--text-h);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.phase-mode-toggle button.selected {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+.phase-mode-toggle button:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.phase-auto-note {
+  margin: 0;
+}
+
+.phase-custom-dates {
+  padding-left: 0;
 }
 
 /* Shared demo project (reseedable, open to every signed-in account) -

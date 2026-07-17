@@ -4,6 +4,7 @@ import { supabase } from './supabaseClient'
 import AppHeader from './AppHeader'
 import GanttChart from './GanttChart'
 import MilestonesView from './MilestonesView'
+import PhaseDetailView from './PhaseDetailView'
 import BacklogView from './BacklogView'
 import SprintBoardView from './SprintBoardView'
 import SprintRetroView from './SprintRetroView'
@@ -14,6 +15,7 @@ import TaskImportFlow from './TaskImportFlow'
 import ManageAccess from './ManageAccess'
 import { DOCUMENT_TYPES, groupDocumentTypes } from './documentTypes'
 import { METHODOLOGIES, METHODOLOGY_LABELS } from './methodology'
+import { DEFAULT_PHASES } from './phases'
 
 // Which "side" (Waterfall: Milestones/Tasks/Gantt, Agile: Backlog/Sprint
 // Board/Sprint Retro) is visible for a given methodology. Hybrid shows
@@ -46,7 +48,7 @@ function buildMethodologySwitchWarning(fromMethodology, toMethodology, counts) {
     }
     if (bits.length > 0) {
       messages.push(
-        `This project has ${bits.join(' and ')}. Switching to ${METHODOLOGY_LABELS[toMethodology]} will hide the Milestones, Waterfall Tasks, and Gantt Chart sections.`
+        `This project has ${bits.join(' and ')}. Switching to ${METHODOLOGY_LABELS[toMethodology]} will hide the Milestones, Phases, Waterfall Tasks, and Gantt Chart sections.`
       )
     }
   }
@@ -80,11 +82,13 @@ function ProjectDetail({ project, isOwner, canEdit }) {
   const [sprints, setSprints] = useState([])
   const [retros, setRetros] = useState([])
   const [milestones, setMilestones] = useState([])
+  const [phases, setPhases] = useState([])
   const [title, setTitle] = useState('')
   const [startDate, setStartDate] = useState('')
   const [dueDate, setDueDate] = useState('')
   const [dependsOn, setDependsOn] = useState('')
   const [milestoneId, setMilestoneId] = useState('')
+  const [phaseId, setPhaseId] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -165,6 +169,17 @@ function ProjectDetail({ project, isOwner, canEdit }) {
       else setMilestones(data)
     }
 
+    async function loadPhases() {
+      const { data, error } = await supabase
+        .from('phases')
+        .select('*')
+        .eq('project_id', currentProject.id)
+        .order('phase_number', { ascending: true })
+
+      if (error) setError(error.message)
+      else setPhases(data)
+    }
+
     async function loadDocs() {
       const results = await Promise.all(
         DOCUMENT_TYPES.map((docType) => {
@@ -195,6 +210,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
     loadTasks()
     loadSprints()
     loadMilestones()
+    loadPhases()
     loadDocs()
   }, [currentProject.id])
 
@@ -240,6 +256,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
         due_date: dueDate || null,
         depends_on: dependsOn || null,
         milestone_id: currentProject.methodology !== 'agile' ? milestoneId || null : null,
+        phase_id: currentProject.methodology !== 'agile' ? phaseId || null : null,
       })
       .select()
       .single()
@@ -255,6 +272,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
     setDueDate('')
     setDependsOn('')
     setMilestoneId('')
+    setPhaseId('')
   }
 
   async function toggleComplete(task) {
@@ -360,6 +378,20 @@ function ProjectDetail({ project, isOwner, canEdit }) {
     }
 
     setCurrentProject(data)
+
+    // A project that started Agile (so was never seeded by the wizard or
+    // the phases_schema.sql backfill) now needs its 4 phases too, the same
+    // best-effort way NewProjectFlow seeds a brand-new project - it's fine
+    // if this fails, same reasoning as there.
+    if (nextMethodology !== 'agile' && phases.length === 0) {
+      const { data: seeded, error: phaseError } = await supabase
+        .from('phases')
+        .insert(DEFAULT_PHASES.map((p) => ({ project_id: currentProject.id, ...p })))
+        .select()
+
+      if (phaseError) console.error('Failed to seed phases on methodology switch:', phaseError.message)
+      else setPhases(seeded)
+    }
   }
 
   function isDocDone(docType, doc) {
@@ -710,6 +742,19 @@ function ProjectDetail({ project, isOwner, canEdit }) {
               </select>
             </label>
           )}
+          {currentProject.methodology !== 'agile' && (
+            <label className="task-select-field">
+              Phase
+              <select value={phaseId} onChange={(e) => setPhaseId(e.target.value)}>
+                <option value="">None</option>
+                {phases.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.phase_number}. {p.phase_name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <button type="submit">Add</button>
         </form>
       )}
@@ -795,6 +840,23 @@ function ProjectDetail({ project, isOwner, canEdit }) {
                       </select>
                     </label>
                   )}
+                  {currentProject.methodology !== 'agile' && (
+                    <label className="task-select-field">
+                      Phase
+                      <select
+                        value={task.phase_id || ''}
+                        disabled={!canEdit}
+                        onChange={(e) => updateTaskField(task, 'phase_id', e.target.value)}
+                      >
+                        <option value="">None</option>
+                        {phases.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.phase_number}. {p.phase_name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
                 </div>
               </li>
             ))}
@@ -816,9 +878,20 @@ function ProjectDetail({ project, isOwner, canEdit }) {
       )}
 
       {!loading && currentProject.methodology !== 'agile' && (
+        <PhaseDetailView
+          phases={phases}
+          setPhases={setPhases}
+          canEdit={canEdit}
+          expanded={expandedSection === 'phases'}
+          onToggle={() => toggleSection('phases')}
+        />
+      )}
+
+      {!loading && currentProject.methodology !== 'agile' && (
         <GanttChart
           project={currentProject}
           tasks={tasks.filter((t) => t.backlog_status == null)}
+          phases={phases}
           expanded={expandedSection === 'gantt'}
           onToggle={() => toggleSection('gantt')}
         />

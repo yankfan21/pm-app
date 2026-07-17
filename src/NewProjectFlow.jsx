@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from './supabaseClient'
 import { useAuth } from './AuthContext'
+import { DEFAULT_PHASES } from './phases'
 
 const PRIORITIES = ['Low', 'Medium', 'High', 'Critical']
 
@@ -42,13 +43,28 @@ function NewProjectFlow({ onCreated, onClose }) {
       .select()
       .single()
 
-    setSubmitting(false)
-
     if (error) {
+      setSubmitting(false)
       setError(error.message)
       return
     }
 
+    // Phases are a fixed Waterfall/Hybrid grouping layer - Agile projects
+    // never get them (same gate the rest of the Waterfall-side UI uses).
+    // Best-effort: the project itself already exists at this point, so a
+    // phase-seeding failure shouldn't block navigating into it - the
+    // backfill in phases_schema.sql (or a manual retry) can fill this in
+    // later, same as any other project that predates this feature.
+    if (methodology !== 'agile') {
+      const { error: phaseError } = await supabase.from('phases').insert(
+        DEFAULT_PHASES.map((p) => ({ project_id: data.id, ...p }))
+      )
+      if (phaseError) {
+        console.error('Failed to seed phases for new project:', phaseError.message)
+      }
+    }
+
+    setSubmitting(false)
     onCreated(data)
   }
 
