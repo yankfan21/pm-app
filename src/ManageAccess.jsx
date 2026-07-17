@@ -130,10 +130,6 @@ function ManageAccess({ project }) {
 
   return (
     <div className="charter">
-      <div className="section-header">
-        <h3 className="charter-heading">Manage Access</h3>
-      </div>
-
       {error && <p className="error">{error}</p>}
 
       {loading && <p className="charter-status">Loading...</p>}
