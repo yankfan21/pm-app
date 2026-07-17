@@ -3,14 +3,12 @@ import { Link } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import AppHeader from './AppHeader'
 import GanttChart from './GanttChart'
-import MilestonesView from './MilestonesView'
 import PhaseDetailView from './PhaseDetailView'
 import BacklogView from './BacklogView'
 import SprintBoardView from './SprintBoardView'
 import SprintRetroView from './SprintRetroView'
 import TaskGenFlow from './TaskGenFlow'
 import BacklogGenFlow from './BacklogGenFlow'
-import MilestoneGenFlow from './MilestoneGenFlow'
 import TaskImportFlow from './TaskImportFlow'
 import ManageAccess from './ManageAccess'
 import { DOCUMENT_TYPES, groupDocumentTypes } from './documentTypes'
@@ -18,14 +16,14 @@ import { METHODOLOGIES, METHODOLOGY_LABELS } from './methodology'
 import { DEFAULT_PHASES } from './phases'
 
 // The Tasks header's own key ('tasks') plus every sub-flow that renders
-// underneath it - all three "Generate.../Import from Excel" buttons swap
+// underneath it - both "Generate.../Import from Excel" buttons swap
 // expandedSection to one of these instead of 'tasks' while their flow is
-// open. Milestones/Phases/Gantt Chart don't have this problem: none of
-// them trigger a sub-flow that changes expandedSection to something other
+// open. Phases/Gantt Chart don't have this problem: neither of them
+// triggers a sub-flow that changes expandedSection to something other
 // than their own key, so their chevrons don't need the same treatment.
 // Used only to decide whether the Tasks header's chevron/aria-expanded
 // should read as open - doesn't change what any button does.
-const TASKS_SECTION_KEYS = ['tasks', 'ai-milestones', 'ai-tasks', 'import-tasks']
+const TASKS_SECTION_KEYS = ['tasks', 'ai-tasks', 'import-tasks']
 
 // Same problem, Agile side: Backlog's "Generate from Charter" button swaps
 // expandedSection to 'ai-backlog' to show BacklogGenFlow underneath it.
@@ -49,11 +47,11 @@ const TASK_STATUS_OPTIONS = [
   { key: 'delayed', label: 'Delayed', colorClass: 'critical' },
 ]
 
-// Which "side" (Waterfall: Milestones/Tasks/Gantt, Agile: Backlog/Sprint
-// Board/Sprint Retro) is visible for a given methodology. Hybrid shows
-// both - this is the single source of truth both the section gating below
-// and the type-switch data warning are built from, so they can't drift
-// out of sync with each other.
+// Which "side" (Waterfall: Phases/Tasks and Milestones/Gantt, Agile:
+// Backlog/Sprint Board/Sprint Retro) is visible for a given methodology.
+// Hybrid shows both - this is the single source of truth both the section
+// gating below and the type-switch data warning are built from, so they
+// can't drift out of sync with each other.
 function visibleSides(methodology) {
   return {
     waterfall: methodology !== 'agile',
@@ -72,15 +70,12 @@ function buildMethodologySwitchWarning(fromMethodology, toMethodology, counts) {
 
   if (before.waterfall && !after.waterfall) {
     const bits = []
-    if (counts.milestoneCount > 0) {
-      bits.push(`${counts.milestoneCount} milestone${counts.milestoneCount === 1 ? '' : 's'}`)
-    }
     if (counts.waterfallTaskCount > 0) {
       bits.push(`${counts.waterfallTaskCount} Waterfall task${counts.waterfallTaskCount === 1 ? '' : 's'}`)
     }
     if (bits.length > 0) {
       messages.push(
-        `This project has ${bits.join(' and ')}. Switching to ${METHODOLOGY_LABELS[toMethodology]} will hide the Milestones, Phases, Waterfall Tasks, and Gantt Chart sections.`
+        `This project has ${bits.join(' and ')}. Switching to ${METHODOLOGY_LABELS[toMethodology]} will hide the Phases, Waterfall Tasks and Milestones, and Gantt Chart sections.`
       )
     }
   }
@@ -120,7 +115,6 @@ function ProjectDetail({ project, isOwner, canEdit }) {
   const [dueDate, setDueDate] = useState('')
   const [isMilestone, setIsMilestone] = useState(false)
   const [dependsOn, setDependsOn] = useState('')
-  const [milestoneId, setMilestoneId] = useState('')
   const [phaseId, setPhaseId] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -280,6 +274,16 @@ function ProjectDetail({ project, isOwner, canEdit }) {
     const trimmed = title.trim()
     if (!trimmed) return
 
+    // A milestone marker with no due_date (and, being a marker, no
+    // start_date either) has no date at all - ganttLayout.js puts a
+    // dateless task in the "Unscheduled" list instead of plotting it, so
+    // it silently never shows up as a diamond. Block the submit instead of
+    // letting that happen quietly.
+    if (isMilestone && !dueDate) {
+      setError('A milestone marker needs a due date.')
+      return
+    }
+
     const { data, error } = await supabase
       .from('tasks')
       .insert({
@@ -293,7 +297,6 @@ function ProjectDetail({ project, isOwner, canEdit }) {
         due_date: dueDate || null,
         task_type: isMilestone ? 'milestone_marker' : 'task',
         depends_on: dependsOn || null,
-        milestone_id: currentProject.methodology !== 'agile' ? milestoneId || null : null,
         phase_id: currentProject.methodology !== 'agile' ? phaseId || null : null,
       })
       .select()
@@ -310,7 +313,6 @@ function ProjectDetail({ project, isOwner, canEdit }) {
     setDueDate('')
     setIsMilestone(false)
     setDependsOn('')
-    setMilestoneId('')
     setPhaseId('')
   }
 
@@ -361,12 +363,27 @@ function ProjectDetail({ project, isOwner, canEdit }) {
   // marker has to null start_date in the same request - the DB check
   // constraint rejects task_type = 'milestone_marker' with a start_date
   // still set, and updateTaskField only ever touches one column.
+  //
+  // A task with only a start_date (no due_date) would otherwise end up
+  // with neither date once start_date is cleared - ganttLayout.js treats a
+  // dateless task as "Unscheduled" rather than plotting it, so it'd never
+  // render as a diamond. Carry the existing start_date over to due_date in
+  // that case instead of losing it; a task with no date at all can't
+  // become a marker until the PM sets one.
   async function setTaskMilestone(task, nextIsMilestone) {
+    if (nextIsMilestone && !task.due_date && !task.start_date) {
+      setError('Set a start or due date on this task before marking it as a milestone marker.')
+      return
+    }
+
+    setError(null)
     const { data, error } = await supabase
       .from('tasks')
       .update({
         task_type: nextIsMilestone ? 'milestone_marker' : 'task',
-        ...(nextIsMilestone ? { start_date: null } : {}),
+        ...(nextIsMilestone
+          ? { start_date: null, ...(task.due_date ? {} : { due_date: task.start_date }) }
+          : {}),
       })
       .eq('id', task.id)
       .select()
@@ -421,7 +438,6 @@ function ProjectDetail({ project, isOwner, canEdit }) {
     if (nextMethodology === currentProject.methodology) return
 
     const warning = buildMethodologySwitchWarning(currentProject.methodology, nextMethodology, {
-      milestoneCount: milestones.length,
       waterfallTaskCount: tasks.filter((t) => t.backlog_status == null).length,
       backlogCount: tasks.filter((t) => t.backlog_status != null).length,
       sprintCount: sprints.length,
@@ -557,7 +573,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
           <ViewComponent
             project={currentProject}
             {...{ [docProp]: doc }}
-            {...docType.context(docs, tasks, { sprints, retros, milestones })}
+            {...docType.context(docs, tasks, { sprints, retros, milestones, phases })}
             canEdit={canEdit}
             onUpdate={(updatedRow) => handleDocUpdated(docType, updatedRow)}
           />
@@ -566,7 +582,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
         {isFlowOpen && canEdit && (
           <FlowComponent
             project={currentProject}
-            {...docType.context(docs, tasks, { sprints, retros, milestones })}
+            {...docType.context(docs, tasks, { sprints, retros, milestones, phases })}
             onGenerated={(result, answerList) =>
               handleDocGenerated(docType, result, answerList)
             }
@@ -687,23 +703,13 @@ function ProjectDetail({ project, isOwner, canEdit }) {
                 ▾
               </span>
               <span className={`status-dot ${tasks.length > 0 ? 'done' : 'pending'}`} aria-hidden="true" />
-              Tasks
+              Tasks and Milestones
             </span>
             <span className={`doc-status-badge ${tasks.length > 0 ? 'done' : 'pending'}`}>
               {tasks.length > 0 ? `${tasks.length} Task${tasks.length === 1 ? '' : 's'}` : 'Not started'}
             </span>
           </button>
         </h2>
-      )}
-
-      {expandedSection === 'tasks' && docs.charter && canEdit && currentProject.methodology !== 'agile' && (
-        <button
-          type="button"
-          className="btn-secondary ai-task-gen-trigger"
-          onClick={() => toggleSection('ai-milestones')}
-        >
-          {milestones.length > 0 ? 'Generate More Milestones from Charter' : 'Generate Milestones from Charter'}
-        </button>
       )}
 
       {expandedSection === 'tasks' && docs.charter && canEdit && currentProject.methodology !== 'agile' && (
@@ -728,23 +734,10 @@ function ProjectDetail({ project, isOwner, canEdit }) {
 
       {expandedSection === 'tasks' && docs.charter && canEdit && currentProject.methodology === 'hybrid' && (
         <p className="charter-status">
-          Milestones, Waterfall tasks, and Backlog items are separate, non-overlapping actions -
-          generating one doesn&rsquo;t touch the others, whether or not you&rsquo;ve already run
-          Task Gen or Backlog Gen.
+          Waterfall tasks and Backlog items are separate, non-overlapping actions - generating
+          one doesn&rsquo;t touch the other, whether or not you&rsquo;ve already run Task Gen or
+          Backlog Gen.
         </p>
-      )}
-
-      {expandedSection === 'ai-milestones' && canEdit && (
-        <MilestoneGenFlow
-          project={currentProject}
-          charter={docs.charter}
-          brief={docs.requirements_brief}
-          riskLog={docs.risk_log}
-          existingMilestones={milestones.map((m) => ({ id: m.id, name: m.name, start_date: m.start_date, end_date: m.end_date }))}
-          onCommitted={(insertedMilestones) => setMilestones((prev) => [...prev, ...insertedMilestones])}
-          onDone={() => setExpandedSection('milestones')}
-          onCancel={() => setExpandedSection((prev) => (prev === 'ai-milestones' ? null : prev))}
-        />
       )}
 
       {expandedSection === 'ai-tasks' && canEdit && (
@@ -778,7 +771,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Add a task..."
           />
-          <label className="task-milestone-toggle" title="A zero-duration diamond event on the Gantt chart (e.g. Design sign-off, Go-live) — unrelated to the Milestone group field below.">
+          <label className="task-milestone-toggle" title="A zero-duration diamond event on the Gantt chart (e.g. Design sign-off, Go-live) — unrelated to Epics, the Backlog's grouping concept.">
             <input
               type="checkbox"
               checked={isMilestone}
@@ -802,6 +795,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
               type="date"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
+              required={isMilestone}
             />
           </label>
           <label className="task-select-field">
@@ -815,19 +809,6 @@ function ProjectDetail({ project, isOwner, canEdit }) {
               ))}
             </select>
           </label>
-          {currentProject.methodology !== 'agile' && (
-            <label className="task-select-field">
-              Milestone
-              <select value={milestoneId} onChange={(e) => setMilestoneId(e.target.value)}>
-                <option value="">None</option>
-                {milestones.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
           {currentProject.methodology !== 'agile' && (
             <label className="task-select-field">
               Phase
@@ -889,7 +870,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
                   )}
                 </div>
                 <div className="task-dates">
-                  <label className="task-milestone-toggle" title="A zero-duration diamond event on the Gantt chart (e.g. Design sign-off, Go-live) — unrelated to the Milestone group field below.">
+                  <label className="task-milestone-toggle" title="A zero-duration diamond event on the Gantt chart (e.g. Design sign-off, Go-live) — unrelated to Epics, the Backlog's grouping concept.">
                     <input
                       type="checkbox"
                       checked={task.task_type === 'milestone_marker'}
@@ -937,23 +918,6 @@ function ProjectDetail({ project, isOwner, canEdit }) {
                   </label>
                   {currentProject.methodology !== 'agile' && (
                     <label className="task-select-field">
-                      Milestone
-                      <select
-                        value={task.milestone_id || ''}
-                        disabled={!canEdit}
-                        onChange={(e) => updateTaskField(task, 'milestone_id', e.target.value)}
-                      >
-                        <option value="">None</option>
-                        {milestones.map((m) => (
-                          <option key={m.id} value={m.id}>
-                            {m.name}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  )}
-                  {currentProject.methodology !== 'agile' && (
-                    <label className="task-select-field">
                       Phase
                       <select
                         value={task.phase_id || ''}
@@ -979,17 +943,6 @@ function ProjectDetail({ project, isOwner, canEdit }) {
       )}
 
       {!loading && currentProject.methodology !== 'agile' && (
-        <MilestonesView
-          project={currentProject}
-          milestones={milestones}
-          setMilestones={setMilestones}
-          canEdit={canEdit}
-          expanded={expandedSection === 'milestones'}
-          onToggle={() => toggleSection('milestones')}
-        />
-      )}
-
-      {!loading && currentProject.methodology !== 'agile' && (
         <GanttChart
           project={currentProject}
           tasks={tasks.filter((t) => t.backlog_status == null)}
@@ -1007,6 +960,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
             setTasks={setTasks}
             sprints={sprints}
             milestones={milestones}
+            setMilestones={setMilestones}
             canEdit={canEdit}
             expanded={expandedSection === 'backlog'}
             headerExpanded={BACKLOG_SECTION_KEYS.includes(expandedSection)}

@@ -30,7 +30,7 @@ function SprintBoardView({ project, tasks, setTasks, sprints, setSprints, milest
 
   function epicLabel(task) {
     if (task.milestone_id) {
-      return milestones.find((m) => m.id === task.milestone_id)?.name ?? 'Unknown milestone'
+      return milestones.find((m) => m.id === task.milestone_id)?.name ?? 'Unknown epic'
     }
     return task.epic_name || null
   }

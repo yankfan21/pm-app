@@ -23,6 +23,7 @@ function BacklogView({
   setTasks,
   sprints,
   milestones,
+  setMilestones,
   canEdit,
   expanded,
   // Defaults to `expanded` so any other caller that hasn't been updated to
@@ -44,6 +45,10 @@ function BacklogView({
   const [error, setError] = useState(null)
   const [reorderingId, setReorderingId] = useState(null)
   const [showImport, setShowImport] = useState(false)
+  const [showEpicForm, setShowEpicForm] = useState(false)
+  const [newEpicName, setNewEpicName] = useState('')
+  const [newEpicDescription, setNewEpicDescription] = useState('')
+  const [creatingEpic, setCreatingEpic] = useState(false)
 
   const isHybrid = project.methodology === 'hybrid'
   const items = tasks.filter((t) => t.backlog_status != null).sort(byBacklogRank)
@@ -81,6 +86,43 @@ function BacklogView({
     setDescription('')
     setStoryPoints('')
     setMilestoneId('')
+  }
+
+  // Epics are dateless grouping containers now (name + description only) -
+  // this is the only remaining way to create one, now that the standalone
+  // Milestones section is gone. Auto-selects the new Epic in the create
+  // form's dropdown above so a PM adding one mid-flow doesn't have to
+  // re-open the dropdown to pick what they just typed.
+  async function handleCreateEpic(e) {
+    e.preventDefault()
+    const trimmed = newEpicName.trim()
+    if (!trimmed) return
+
+    setError(null)
+    setCreatingEpic(true)
+
+    const { data, error } = await supabase
+      .from('milestones')
+      .insert({
+        project_id: project.id,
+        name: trimmed,
+        description: newEpicDescription.trim() || null,
+      })
+      .select()
+      .single()
+
+    setCreatingEpic(false)
+
+    if (error) {
+      setError(error.message)
+      return
+    }
+
+    setMilestones((prev) => [...prev, data])
+    setMilestoneId(data.id)
+    setNewEpicName('')
+    setNewEpicDescription('')
+    setShowEpicForm(false)
   }
 
   async function updateItem(task, fields) {
@@ -236,7 +278,39 @@ function BacklogView({
                   ))}
                 </select>
               )}
+              {isHybrid && (
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => setShowEpicForm((prev) => !prev)}
+                >
+                  + New Epic
+                </button>
+              )}
               <button type="submit">Add</button>
+            </form>
+          )}
+
+          {isHybrid && showEpicForm && canEdit && (
+            <form onSubmit={handleCreateEpic} className="backlog-create-form">
+              <input
+                type="text"
+                value={newEpicName}
+                onChange={(e) => setNewEpicName(e.target.value)}
+                placeholder="Epic name..."
+              />
+              <input
+                type="text"
+                value={newEpicDescription}
+                onChange={(e) => setNewEpicDescription(e.target.value)}
+                placeholder="Description (optional)"
+              />
+              <button type="submit" disabled={creatingEpic}>
+                {creatingEpic ? 'Adding...' : 'Add Epic'}
+              </button>
+              <button type="button" className="btn-secondary" onClick={() => setShowEpicForm(false)}>
+                Cancel
+              </button>
             </form>
           )}
 
@@ -292,11 +366,11 @@ function BacklogView({
                     )}
                     {isHybrid && item.milestone_id && (
                       <span className="epic-tag">
-                        {milestones.find((m) => m.id === item.milestone_id)?.name ?? 'Unknown milestone'}
+                        {milestones.find((m) => m.id === item.milestone_id)?.name ?? 'Unknown epic'}
                       </span>
                     )}
                     {isHybrid && !item.milestone_id && item.epic_name && (
-                      <span className="epic-tag" title="Free-text epic from before Milestones existed - not linked to a milestone yet">
+                      <span className="epic-tag" title="Free-text epic from before Epics were tracked as a structured field - not linked to an epic yet">
                         {item.epic_name} (unmapped)
                       </span>
                     )}
@@ -326,7 +400,7 @@ function BacklogView({
                     onChange={(e) => updateItem(item, { milestone_id: e.target.value || null })}
                   >
                     <option value="">
-                      {item.epic_name && !item.milestone_id ? 'Map to milestone...' : 'No milestone'}
+                      {item.epic_name && !item.milestone_id ? 'Map to epic...' : 'No epic'}
                     </option>
                     {milestones.map((m) => (
                       <option key={m.id} value={m.id}>

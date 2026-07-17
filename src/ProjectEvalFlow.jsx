@@ -10,7 +10,7 @@ import Spinner from './Spinner'
 // GanttChart does - comparing due dates against the viewer's actual local
 // calendar day, not whatever day it happens to be in the edge function's
 // server timezone.
-function ProjectEvalFlow({ project, charter, riskLog, budget, tasks, statusUpdates, sprints, retros, milestones, onGenerated, onClose }) {
+function ProjectEvalFlow({ project, charter, riskLog, budget, tasks, statusUpdates, sprints, retros, milestones, phases, onGenerated, onClose }) {
   const [phase, setPhase] = useState('evaluating')
   const [error, setError] = useState(null)
   // Unlike the other Flow components' mount effect (which only fetches
@@ -43,6 +43,7 @@ function ProjectEvalFlow({ project, charter, riskLog, budget, tasks, statusUpdat
         sprints,
         retros,
         milestones,
+        phases,
         today: todayLocalDateString(),
       },
     })
@@ -75,8 +76,8 @@ function ProjectEvalFlow({ project, charter, riskLog, budget, tasks, statusUpdat
         {phase === 'evaluating' && (
           <p className="charter-status">
             <Spinner />
-            Reviewing the charter, risk log, budget, and status history, plus milestones/tasks or
-            sprints/backlog/retros depending on methodology...
+            Reviewing the charter, risk log, budget, and status history, plus phases/milestones/tasks
+            or sprints/backlog/retros depending on methodology...
           </p>
         )}
 
