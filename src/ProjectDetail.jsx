@@ -27,6 +27,15 @@ import { DEFAULT_PHASES } from './phases'
 // should read as open - doesn't change what any button does.
 const TASKS_SECTION_KEYS = ['tasks', 'ai-milestones', 'ai-tasks', 'import-tasks']
 
+// Same problem, Agile side: Backlog's "Generate from Charter" button swaps
+// expandedSection to 'ai-backlog' to show BacklogGenFlow underneath it.
+// BacklogView's own "Import from Excel" is local state inside that
+// component (showImport), never touches expandedSection, so it isn't a
+// sub-flow key here. Passed to BacklogView as a separate headerExpanded
+// prop, distinct from the `expanded` prop that still gates its content
+// (create form/list) on the literal 'backlog' value, same as before.
+const BACKLOG_SECTION_KEYS = ['backlog', 'ai-backlog']
+
 // Which "side" (Waterfall: Milestones/Tasks/Gantt, Agile: Backlog/Sprint
 // Board/Sprint Retro) is visible for a given methodology. Hybrid shows
 // both - this is the single source of truth both the section gating below
@@ -917,6 +926,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
             milestones={milestones}
             canEdit={canEdit}
             expanded={expandedSection === 'backlog'}
+            headerExpanded={BACKLOG_SECTION_KEYS.includes(expandedSection)}
             onToggle={() => toggleSection('backlog')}
             canGenerateBacklog={!!docs.charter && canEdit}
             onGenerateBacklog={() => toggleSection('ai-backlog')}

@@ -25,6 +25,14 @@ function BacklogView({
   milestones,
   canEdit,
   expanded,
+  // Defaults to `expanded` so any other caller that hasn't been updated to
+  // pass this separately still gets the old behavior. ProjectDetail passes
+  // it explicitly - true for the whole BACKLOG_SECTION_KEYS group ('backlog'
+  // and 'ai-backlog'), not just the literal 'backlog' match `expanded` uses
+  // - so the chevron stays open while BacklogGenFlow is rendering
+  // underneath this header, even though the content below (gated on
+  // `expanded`, unchanged) is hidden the same way it always was.
+  headerExpanded = expanded,
   onToggle,
   canGenerateBacklog,
   onGenerateBacklog,
@@ -163,10 +171,10 @@ function BacklogView({
             type="button"
             className="collapsible-toggle toggle-header-with-badge"
             onClick={onToggle}
-            aria-expanded={expanded}
+            aria-expanded={headerExpanded}
           >
             <span className="toggle-header-main">
-              <span className={`chevron ${expanded ? '' : 'collapsed'}`} aria-hidden="true">
+              <span className={`chevron ${headerExpanded ? '' : 'collapsed'}`} aria-hidden="true">
                 ▾
               </span>
               <span className={`status-dot ${items.length > 0 ? 'done' : 'pending'}`} aria-hidden="true" />
