@@ -172,6 +172,7 @@ export const DOCUMENT_TYPES = [
       retros: extra?.retros || [],
       milestones: extra?.milestones || [],
       phases: extra?.phases || [],
+      taskDependencies: extra?.taskDependencies || [],
     }),
     buildInsert: (result) => result,
   },

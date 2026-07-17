@@ -214,7 +214,7 @@ function budgetStatsText(stats) {
 // Waterfall-side task stats - called only on tasks with backlog_status ==
 // null (see the module comment). Unchanged logic from before this
 // refactor, just scoped to the right subset now.
-function taskStats(tasks, today) {
+function taskStats(tasks, today, firstDependsOnByTaskId) {
   const list = tasks || []
   const incomplete = list.filter((t) => !t.completed)
   const overdue = incomplete
@@ -227,10 +227,11 @@ function taskStats(tasks, today) {
   const byId = new Map(list.map((t) => [t.id, t]))
   const blockedCounts = new Map()
   incomplete.forEach((t) => {
-    if (t.depends_on) {
-      const blocker = byId.get(t.depends_on)
+    const dependsOnId = firstDependsOnByTaskId?.get(t.id)
+    if (dependsOnId) {
+      const blocker = byId.get(dependsOnId)
       if (blocker && !blocker.completed) {
-        blockedCounts.set(t.depends_on, (blockedCounts.get(t.depends_on) || 0) + 1)
+        blockedCounts.set(dependsOnId, (blockedCounts.get(dependsOnId) || 0) + 1)
       }
     }
   })
@@ -503,7 +504,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { action, project, charter, riskLog, budget, tasks, statusUpdates, sprints, retros, milestones, phases, today } = await req.json()
+    const { action, project, charter, riskLog, budget, tasks, taskDependencies, statusUpdates, sprints, retros, milestones, phases, today } = await req.json()
 
     if (action !== "evaluate") {
       return new Response(JSON.stringify({ error: "invalid action" }), {
@@ -518,6 +519,18 @@ Deno.serve(async (req) => {
     const allTasks = tasks || []
     const waterfallTasks = allTasks.filter((t) => t.backlog_status == null)
     const backlogItems = allTasks.filter((t) => t.backlog_status != null)
+
+    // task_dependencies supports multiple predecessors per task, but
+    // blocked-task scoring below is still single-predecessor (same
+    // behavior as the legacy tasks.depends_on scalar column). Caller
+    // orders rows by created_at ascending, so the first row seen per
+    // task_id here is that task's earliest-recorded predecessor. Full
+    // multi-predecessor blocked-task logic is Phase 4 (see CLAUDE.md),
+    // alongside the Gantt multi-line work.
+    const firstDependsOnByTaskId = new Map()
+    ;(taskDependencies || []).forEach((d) => {
+      if (!firstDependsOnByTaskId.has(d.task_id)) firstDependsOnByTaskId.set(d.task_id, d.depends_on_id)
+    })
 
     const rStats = riskStats(riskLog, todayStr)
     const bStats = budgetStats(budget)
@@ -579,7 +592,7 @@ Deno.serve(async (req) => {
           : "Phases: none set up yet for this project."
       )
 
-      const tStats = taskStats(waterfallTasks, todayStr)
+      const tStats = taskStats(waterfallTasks, todayStr, firstDependsOnByTaskId)
       const tText = taskStatsText(tStats)
       if (tText) contextParts.push(`Tasks, Waterfall side (computed exactly - use these figures as-is, do not recompute):\n${tText}`)
 

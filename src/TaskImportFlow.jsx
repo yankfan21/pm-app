@@ -180,6 +180,7 @@ function TaskImportFlow({ project, existingTasks, onCommitted, onDone, onCancel 
     const tempIdToReal = new Map()
     const insertedTempIds = new Set()
     const inserted = []
+    const insertedDeps = []
 
     for (const row of order) {
       let dependsOnRealId = null
@@ -196,14 +197,13 @@ function TaskImportFlow({ project, existingTasks, onCommitted, onDone, onCancel 
           description: row.description.trim() || null,
           start_date: row.start_date || null,
           due_date: row.due_date || null,
-          depends_on: dependsOnRealId,
         })
         .select()
         .single()
 
       if (insertError) {
         if (inserted.length > 0) {
-          onCommitted(inserted)
+          onCommitted(inserted, insertedDeps)
           setProposed((prev) => prev.filter((r) => !insertedTempIds.has(r.temp_id)))
         }
         setError(
@@ -217,9 +217,22 @@ function TaskImportFlow({ project, existingTasks, onCommitted, onDone, onCancel 
       insertedTempIds.add(row.temp_id)
       inserted.push(data)
       setSavedCount(inserted.length)
+
+      if (dependsOnRealId) {
+        const { data: depRow, error: depError } = await supabase
+          .from('task_dependencies')
+          .insert({ task_id: data.id, depends_on_id: dependsOnRealId })
+          .select()
+          .single()
+
+        // A dependency-link failure shouldn't abort the whole commit - the
+        // task itself saved fine and is more valuable to keep than to roll
+        // back over a missing connector line.
+        if (!depError) insertedDeps.push(depRow)
+      }
     }
 
-    onCommitted(inserted)
+    onCommitted(inserted, insertedDeps)
     onDone()
   }
 

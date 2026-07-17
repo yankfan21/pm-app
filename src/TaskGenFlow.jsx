@@ -134,6 +134,7 @@ function TaskGenFlow({ project, charter, brief, riskLog, existingTasks, onCommit
     const tempIdToReal = new Map()
     const realDueDate = new Map()
     const inserted = []
+    const insertedDeps = []
 
     for (const row of order) {
       let dependsOnRealId = null
@@ -161,14 +162,13 @@ function TaskGenFlow({ project, charter, brief, riskLog, existingTasks, onCommit
           title: row.title.trim(),
           start_date: startDate,
           due_date: dueDate,
-          depends_on: dependsOnRealId,
         })
         .select()
         .single()
 
       if (insertError) {
         if (inserted.length > 0) {
-          onCommitted(inserted)
+          onCommitted(inserted, insertedDeps)
           setProposed((prev) => prev.filter((r) => !tempIdToReal.has(r.temp_id)))
         }
         setError(
@@ -182,9 +182,22 @@ function TaskGenFlow({ project, charter, brief, riskLog, existingTasks, onCommit
       realDueDate.set(data.id, data.due_date)
       inserted.push(data)
       setSavedCount(inserted.length)
+
+      if (dependsOnRealId) {
+        const { data: depRow, error: depError } = await supabase
+          .from('task_dependencies')
+          .insert({ task_id: data.id, depends_on_id: dependsOnRealId })
+          .select()
+          .single()
+
+        // A dependency-link failure shouldn't abort the whole commit - the
+        // task itself saved fine and is more valuable to keep than to roll
+        // back over a missing connector line.
+        if (!depError) insertedDeps.push(depRow)
+      }
     }
 
-    onCommitted(inserted)
+    onCommitted(inserted, insertedDeps)
     onDone()
   }
 

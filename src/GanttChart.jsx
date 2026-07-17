@@ -126,7 +126,7 @@ function buildElbowPath(x1, y1, x2, y2) {
   return `M ${x1} ${y1} H ${midX} V ${y2} H ${x2}`
 }
 
-function GanttChart({ project, tasks, phases, expanded, onToggle }) {
+function GanttChart({ project, tasks, taskDependencies, phases, expanded, onToggle }) {
   const chartRef = useRef(null)
   const trackRef = useRef(null)
   const barRefs = useRef({})
@@ -147,6 +147,13 @@ function GanttChart({ project, tasks, phases, expanded, onToggle }) {
 
   const { bars, unscheduled, rangeStart, rangeEndRaw, totalSpan, todayInRange, todayMs } =
     computeGanttLayout(tasks, project, phases)
+
+  // Dependency selection is still single-select (Phase 3 is the multi-select
+  // picker), so there's at most one row per task_id in task_dependencies -
+  // safe to key straight off task_id without worrying about collisions.
+  const dependsOnByTaskId = new Map(
+    (taskDependencies || []).map((d) => [d.task_id, d.depends_on_id])
+  )
   const todayPct = todayInRange ? ((todayMs - rangeStart) / totalSpan) * 100 : null
   const dateTicks = bars.length > 0 ? computeDateTicks(rangeStart, rangeEndRaw, trackWidth) : []
   const rows = bars.length > 0 ? buildPhaseRows(bars, phases, collapsedPhases) : []
@@ -177,8 +184,9 @@ function GanttChart({ project, tasks, phases, expanded, onToggle }) {
       const lines = []
 
       bars.forEach(({ task }) => {
-        if (!task.depends_on) return
-        const fromEl = barRefs.current[task.depends_on]
+        const dependsOnId = dependsOnByTaskId.get(task.id)
+        if (!dependsOnId) return
+        const fromEl = barRefs.current[dependsOnId]
         const toEl = barRefs.current[task.id]
         if (!fromEl || !toEl) return
 
@@ -201,7 +209,7 @@ function GanttChart({ project, tasks, phases, expanded, onToggle }) {
     window.addEventListener('resize', measure)
     return () => window.removeEventListener('resize', measure)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tasks, expanded, collapsedPhases])
+  }, [tasks, taskDependencies, expanded, collapsedPhases])
 
   async function handleExportExcel() {
     setError(null)
@@ -209,7 +217,7 @@ function GanttChart({ project, tasks, phases, expanded, onToggle }) {
       // Lazy-loaded: exceljs is heavy and would otherwise bloat every page
       // load even for users who never export.
       const { exportGanttExcel } = await import('./ganttExport')
-      await exportGanttExcel(project, tasks)
+      await exportGanttExcel(project, tasks, dependsOnByTaskId)
     } catch (err) {
       setError('Failed to export Excel: ' + err.message)
     }
@@ -224,7 +232,7 @@ function GanttChart({ project, tasks, phases, expanded, onToggle }) {
       // screenshotting the DOM, so it isn't at the mercy of the live
       // page's theme/CSS (that's what caused the dark-mode text bug).
       const { exportGanttPdf } = await import('./ganttExport')
-      await exportGanttPdf(project, tasks)
+      await exportGanttPdf(project, tasks, dependsOnByTaskId)
     } catch (err) {
       setError('Failed to export PDF: ' + err.message)
     }

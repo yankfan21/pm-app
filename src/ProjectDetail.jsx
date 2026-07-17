@@ -106,6 +106,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
   const [currentProject, setCurrentProject] = useState(project)
   const [archiving, setArchiving] = useState(false)
   const [tasks, setTasks] = useState([])
+  const [taskDependencies, setTaskDependencies] = useState([])
   const [sprints, setSprints] = useState([])
   const [retros, setRetros] = useState([])
   const [milestones, setMilestones] = useState([])
@@ -152,9 +153,33 @@ function ProjectDetail({ project, isOwner, canEdit }) {
         .eq('project_id', currentProject.id)
         .order('created_at', { ascending: true })
 
-      if (error) setError(error.message)
-      else setTasks(data)
+      if (error) {
+        setError(error.message)
+        setLoading(false)
+        return
+      }
+      setTasks(data)
       setLoading(false)
+
+      // task_dependencies has no project_id column of its own (see
+      // task_dependencies_schema.sql) - scope the query through this
+      // project's task ids instead. Ordered by created_at so consumers that
+      // only want one predecessor (project-eval's blocked-task count, same
+      // single-predecessor behavior as the legacy tasks.depends_on column)
+      // can deterministically take the first row per task_id.
+      const taskIds = data.map((t) => t.id)
+      if (taskIds.length === 0) {
+        setTaskDependencies([])
+        return
+      }
+      const { data: depData, error: depError } = await supabase
+        .from('task_dependencies')
+        .select('*')
+        .in('task_id', taskIds)
+        .order('created_at', { ascending: true })
+
+      if (depError) setError(depError.message)
+      else setTaskDependencies(depData)
     }
 
     async function loadSprints() {
@@ -296,7 +321,6 @@ function ProjectDetail({ project, isOwner, canEdit }) {
         start_date: isMilestone ? null : startDate || null,
         due_date: dueDate || null,
         task_type: isMilestone ? 'milestone_marker' : 'task',
-        depends_on: dependsOn || null,
         phase_id: currentProject.methodology !== 'agile' ? phaseId || null : null,
       })
       .select()
@@ -305,6 +329,17 @@ function ProjectDetail({ project, isOwner, canEdit }) {
     if (error) {
       setError(error.message)
       return
+    }
+
+    if (dependsOn) {
+      const { data: depRow, error: depError } = await supabase
+        .from('task_dependencies')
+        .insert({ task_id: data.id, depends_on_id: dependsOn })
+        .select()
+        .single()
+
+      if (depError) setError(depError.message)
+      else setTaskDependencies((prev) => [...prev, depRow])
     }
 
     setTasks((prev) => [...prev, data])
@@ -357,6 +392,41 @@ function ProjectDetail({ project, isOwner, canEdit }) {
     }
 
     setTasks((prev) => prev.map((t) => (t.id === task.id ? data[0] : t)))
+  }
+
+  // Dependency selection is still single-select (Phase 3 is the multi-select
+  // picker), so "setting a dependency" here means replacing whatever
+  // task_dependencies row(s) already exist for this task_id with at most
+  // one new row - delete-then-insert rather than an update, since a task
+  // going from "no dependency" to "has one" has no existing row to update.
+  async function updateTaskDependency(task, newDependsOnId) {
+    const { error: deleteError } = await supabase
+      .from('task_dependencies')
+      .delete()
+      .eq('task_id', task.id)
+
+    if (deleteError) {
+      setError(deleteError.message)
+      return
+    }
+
+    if (!newDependsOnId) {
+      setTaskDependencies((prev) => prev.filter((d) => d.task_id !== task.id))
+      return
+    }
+
+    const { data, error } = await supabase
+      .from('task_dependencies')
+      .insert({ task_id: task.id, depends_on_id: newDependsOnId })
+      .select()
+      .single()
+
+    if (error) {
+      setError(error.message)
+      return
+    }
+
+    setTaskDependencies((prev) => [...prev.filter((d) => d.task_id !== task.id), data])
   }
 
   // Separate from updateTaskField because switching a task to a milestone
@@ -573,7 +643,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
           <ViewComponent
             project={currentProject}
             {...{ [docProp]: doc }}
-            {...docType.context(docs, tasks, { sprints, retros, milestones, phases })}
+            {...docType.context(docs, tasks, { sprints, retros, milestones, phases, taskDependencies })}
             canEdit={canEdit}
             onUpdate={(updatedRow) => handleDocUpdated(docType, updatedRow)}
           />
@@ -582,7 +652,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
         {isFlowOpen && canEdit && (
           <FlowComponent
             project={currentProject}
-            {...docType.context(docs, tasks, { sprints, retros, milestones, phases })}
+            {...docType.context(docs, tasks, { sprints, retros, milestones, phases, taskDependencies })}
             onGenerated={(result, answerList) =>
               handleDocGenerated(docType, result, answerList)
             }
@@ -747,7 +817,10 @@ function ProjectDetail({ project, isOwner, canEdit }) {
           brief={docs.requirements_brief}
           riskLog={docs.risk_log}
           existingTasks={tasks.map((t) => ({ id: t.id, title: t.title, due_date: t.due_date }))}
-          onCommitted={(insertedTasks) => setTasks((prev) => [...prev, ...insertedTasks])}
+          onCommitted={(insertedTasks, insertedDeps) => {
+            setTasks((prev) => [...prev, ...insertedTasks])
+            if (insertedDeps?.length) setTaskDependencies((prev) => [...prev, ...insertedDeps])
+          }}
           onDone={() => setExpandedSection('tasks')}
           onCancel={() => setExpandedSection((prev) => (prev === 'ai-tasks' ? null : prev))}
         />
@@ -757,7 +830,10 @@ function ProjectDetail({ project, isOwner, canEdit }) {
         <TaskImportFlow
           project={currentProject}
           existingTasks={tasks.map((t) => ({ id: t.id, title: t.title }))}
-          onCommitted={(insertedTasks) => setTasks((prev) => [...prev, ...insertedTasks])}
+          onCommitted={(insertedTasks, insertedDeps) => {
+            setTasks((prev) => [...prev, ...insertedTasks])
+            if (insertedDeps?.length) setTaskDependencies((prev) => [...prev, ...insertedDeps])
+          }}
           onDone={() => setExpandedSection('tasks')}
           onCancel={() => setExpandedSection((prev) => (prev === 'import-tasks' ? null : prev))}
         />
@@ -902,9 +978,9 @@ function ProjectDetail({ project, isOwner, canEdit }) {
                   <label className="task-select-field">
                     Depends on
                     <select
-                      value={task.depends_on || ''}
+                      value={taskDependencies.find((d) => d.task_id === task.id)?.depends_on_id || ''}
                       disabled={!canEdit}
-                      onChange={(e) => updateTaskField(task, 'depends_on', e.target.value)}
+                      onChange={(e) => updateTaskDependency(task, e.target.value || null)}
                     >
                       <option value="">None</option>
                       {tasks
@@ -946,6 +1022,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
         <GanttChart
           project={currentProject}
           tasks={tasks.filter((t) => t.backlog_status == null)}
+          taskDependencies={taskDependencies}
           phases={phases}
           expanded={expandedSection === 'gantt'}
           onToggle={() => toggleSection('gantt')}

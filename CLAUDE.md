@@ -64,3 +64,16 @@ work — just flags for future decisions.
   stats) still reads/writes it. Eventually: migrate all frontend
   reads/writes to `status`, then drop `completed`.
 
+- **`tasks.depends_on` is now dead in application code — column still exists
+  in the DB.** Phase 1 (`task_dependencies_schema.sql`) added the real join
+  table (`task_id`, `depends_on_id`) and backfilled it from every existing
+  `depends_on` value (139 rows, all same-project). Phase 2 migrated every
+  frontend/Edge Function read and write site (`ProjectDetail.jsx`,
+  `TaskGenFlow.jsx`, `TaskImportFlow.jsx`, `GanttChart.jsx`,
+  `ganttExport.js`, `project-eval/index.ts`) off the scalar column onto
+  `task_dependencies` — verified working (task form, AI-gen, import, Gantt
+  connector lines, PDF/Excel export). The `depends_on` column itself was
+  deliberately left in place rather than dropped, so if a future session
+  finds it still sitting on `tasks`, that's expected — it's just inert.
+  Eventually: drop `tasks.depends_on` in a migration.
+

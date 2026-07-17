@@ -51,7 +51,7 @@ async function saveWorkbook(workbook, project) {
 // filled solid across its start-to-due range to form a visual bar -
 // mirroring the in-app chart rather than just listing the same fields as
 // flat text.
-export async function exportGanttExcel(project, tasks) {
+export async function exportGanttExcel(project, tasks, dependsOnByTaskId = new Map()) {
   const titleById = Object.fromEntries(tasks.map((t) => [t.id, t.title]))
   const scheduled = tasks.filter((t) => t.start_date || t.due_date)
 
@@ -59,11 +59,12 @@ export async function exportGanttExcel(project, tasks) {
   const sheet = workbook.addWorksheet('Gantt Chart')
 
   function addTaskRow(task) {
+    const dependsOnId = dependsOnByTaskId.get(task.id)
     const row = sheet.addRow([
       task.title,
       task.start_date || 'TBD',
       task.due_date || 'TBD',
-      task.depends_on ? titleById[task.depends_on] || '' : '',
+      dependsOnId ? titleById[dependsOnId] || '' : '',
     ])
     return row
   }
@@ -182,7 +183,7 @@ function formatTickLabel(ms) {
 // hard to control label placement precisely. Native drawing measures each
 // label against its bar with jsPDF's own text metrics, so "does this fit
 // inside the bar" is exact rather than approximated from a rendered clone.
-export async function exportGanttPdf(project, tasks) {
+export async function exportGanttPdf(project, tasks, dependsOnByTaskId = new Map()) {
   const { bars, unscheduled, rangeStart, rangeEndRaw, totalSpan, todayInRange, todayMs } =
     computeGanttLayout(tasks, project)
 
@@ -312,8 +313,9 @@ export async function exportGanttPdf(project, tasks) {
   doc.setDrawColor(...DEP_LINE)
   doc.setLineWidth(1)
   bars.forEach(({ task }) => {
-    if (!task.depends_on) return
-    const from = barGeometry[task.depends_on]
+    const dependsOnId = dependsOnByTaskId.get(task.id)
+    if (!dependsOnId) return
+    const from = barGeometry[dependsOnId]
     const to = barGeometry[task.id]
     if (!from || !to) return
 
