@@ -17,6 +17,16 @@ import { DOCUMENT_TYPES, groupDocumentTypes } from './documentTypes'
 import { METHODOLOGIES, METHODOLOGY_LABELS } from './methodology'
 import { DEFAULT_PHASES } from './phases'
 
+// The Tasks header's own key ('tasks') plus every sub-flow that renders
+// underneath it - all three "Generate.../Import from Excel" buttons swap
+// expandedSection to one of these instead of 'tasks' while their flow is
+// open. Milestones/Phases/Gantt Chart don't have this problem: none of
+// them trigger a sub-flow that changes expandedSection to something other
+// than their own key, so their chevrons don't need the same treatment.
+// Used only to decide whether the Tasks header's chevron/aria-expanded
+// should read as open - doesn't change what any button does.
+const TASKS_SECTION_KEYS = ['tasks', 'ai-milestones', 'ai-tasks', 'import-tasks']
+
 // Which "side" (Waterfall: Milestones/Tasks/Gantt, Agile: Backlog/Sprint
 // Board/Sprint Retro) is visible for a given methodology. Hybrid shows
 // both - this is the single source of truth both the section gating below
@@ -614,10 +624,10 @@ function ProjectDetail({ project, isOwner, canEdit }) {
             type="button"
             className="collapsible-toggle toggle-header-with-badge"
             onClick={() => toggleSection('tasks')}
-            aria-expanded={expandedSection === 'tasks'}
+            aria-expanded={TASKS_SECTION_KEYS.includes(expandedSection)}
           >
             <span className="toggle-header-main">
-              <span className={`chevron ${expandedSection === 'tasks' ? '' : 'collapsed'}`} aria-hidden="true">
+              <span className={`chevron ${TASKS_SECTION_KEYS.includes(expandedSection) ? '' : 'collapsed'}`} aria-hidden="true">
                 ▾
               </span>
               <span className={`status-dot ${tasks.length > 0 ? 'done' : 'pending'}`} aria-hidden="true" />
