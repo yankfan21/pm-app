@@ -1744,6 +1744,10 @@
   stroke-linejoin: round;
 }
 
+.gantt-dep-line-dashed {
+  stroke-dasharray: 5 3;
+}
+
 .gantt-dep-arrowhead {
   fill: #94a3b8;
 }

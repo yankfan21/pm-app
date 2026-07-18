@@ -59,15 +59,26 @@ export async function exportGanttExcel(project, tasks, dependsOnByTaskId = new M
   const sheet = workbook.addWorksheet('Gantt Chart')
 
   function addTaskRow(task) {
-    const dependsOnId = dependsOnByTaskId.get(task.id)
+    const dependsOnIds = dependsOnByTaskId.get(task.id) || []
+    const dependsOnTitles = dependsOnIds.map((id) => titleById[id]).filter(Boolean)
     const row = sheet.addRow([
       task.title,
       task.start_date || 'TBD',
       task.due_date || 'TBD',
-      dependsOnId ? titleById[dependsOnId] || '' : '',
+      dependsOnTitles.join(', '),
     ])
+    // A real dashed stroke isn't representable in a cell, so multiple
+    // predecessors get a bold "Depends On" cell instead - the closest
+    // equivalent to the dashed lines used on-screen and in the PDF export.
+    if (dependsOnTitles.length > 1) {
+      row.getCell(INFO_HEADERS.length).font = { bold: true }
+    }
     return row
   }
+
+  const hasMultiPredecessors = tasks.some(
+    (t) => (dependsOnByTaskId.get(t.id) || []).length > 1
+  )
 
   // No task has a date at all - nothing to build a day-grid from, so fall
   // back to a plain table.
@@ -79,6 +90,10 @@ export async function exportGanttExcel(project, tasks, dependsOnByTaskId = new M
     sheet.getColumn(3).width = 14
     sheet.getColumn(4).width = 28
     tasks.forEach(addTaskRow)
+    if (hasMultiPredecessors) {
+      const note = sheet.addRow(['Bold "Depends On" = multiple predecessors'])
+      note.getCell(1).font = { italic: true, size: 9, color: { argb: 'FF666666' } }
+    }
     await saveWorkbook(workbook, project)
     return
   }
@@ -153,6 +168,11 @@ export async function exportGanttExcel(project, tasks, dependsOnByTaskId = new M
       row.getCell(c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fillColor } }
     }
   })
+
+  if (hasMultiPredecessors) {
+    const note = sheet.addRow(['Bold "Depends On" = multiple predecessors'])
+    note.getCell(1).font = { italic: true, size: 9, color: { argb: 'FF666666' } }
+  }
 
   await saveWorkbook(workbook, project)
 }
@@ -313,23 +333,33 @@ export async function exportGanttPdf(project, tasks, dependsOnByTaskId = new Map
   doc.setDrawColor(...DEP_LINE)
   doc.setLineWidth(1)
   bars.forEach(({ task }) => {
-    const dependsOnId = dependsOnByTaskId.get(task.id)
-    if (!dependsOnId) return
-    const from = barGeometry[dependsOnId]
+    const dependsOnIds = dependsOnByTaskId.get(task.id) || []
+    if (dependsOnIds.length === 0) return
     const to = barGeometry[task.id]
-    if (!from || !to) return
+    if (!to) return
+    // 2+ predecessors: dash every line for this task, not just the extras,
+    // matching the on-screen chart's convention.
+    const dashed = dependsOnIds.length > 1
+    if (dashed) doc.setLineDashPattern([3, 2], 0)
 
-    doc.line(from.barX1, from.centerY, to.barX0, to.centerY)
-    doc.setFillColor(...DEP_LINE)
-    doc.triangle(
-      to.barX0,
-      to.centerY,
-      to.barX0 - 5,
-      to.centerY - 3,
-      to.barX0 - 5,
-      to.centerY + 3,
-      'F'
-    )
+    dependsOnIds.forEach((dependsOnId) => {
+      const from = barGeometry[dependsOnId]
+      if (!from) return
+
+      doc.line(from.barX1, from.centerY, to.barX0, to.centerY)
+      doc.setFillColor(...DEP_LINE)
+      doc.triangle(
+        to.barX0,
+        to.centerY,
+        to.barX0 - 5,
+        to.centerY - 3,
+        to.barX0 - 5,
+        to.centerY + 3,
+        'F'
+      )
+    })
+
+    if (dashed) doc.setLineDashPattern([], 0)
   })
 
   // Labels last, drawn on top of everything else so they're always fully
@@ -392,6 +422,15 @@ export async function exportGanttPdf(project, tasks, dependsOnByTaskId = new Map
   doc.setFillColor(...DEP_LINE)
   doc.triangle(lx + 18, legendY, lx + 13, legendY - 2.5, lx + 13, legendY + 2.5, 'F')
   advance(18, 'Dependency')
+
+  doc.setDrawColor(...DEP_LINE)
+  doc.setLineWidth(1)
+  doc.setLineDashPattern([3, 2], 0)
+  doc.line(lx, legendY, lx + 13, legendY)
+  doc.setLineDashPattern([], 0)
+  doc.setFillColor(...DEP_LINE)
+  doc.triangle(lx + 18, legendY, lx + 13, legendY - 2.5, lx + 13, legendY + 2.5, 'F')
+  advance(18, 'Multiple predecessors')
 
   doc.setDrawColor(...TODAY_RED)
   doc.setLineDashPattern([2, 1.5], 0)

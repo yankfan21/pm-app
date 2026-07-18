@@ -148,12 +148,14 @@ function GanttChart({ project, tasks, taskDependencies, phases, expanded, onTogg
   const { bars, unscheduled, rangeStart, rangeEndRaw, totalSpan, todayInRange, todayMs } =
     computeGanttLayout(tasks, project, phases)
 
-  // Dependency selection is still single-select (Phase 3 is the multi-select
-  // picker), so there's at most one row per task_id in task_dependencies -
-  // safe to key straight off task_id without worrying about collisions.
-  const dependsOnByTaskId = new Map(
-    (taskDependencies || []).map((d) => [d.task_id, d.depends_on_id])
-  )
+  // Grouped rather than a scalar Map, since Phase 3's multi-select picker
+  // means a task can have 2+ rows in task_dependencies.
+  const dependsOnByTaskId = new Map()
+  for (const d of taskDependencies || []) {
+    const existing = dependsOnByTaskId.get(d.task_id)
+    if (existing) existing.push(d.depends_on_id)
+    else dependsOnByTaskId.set(d.task_id, [d.depends_on_id])
+  }
   const todayPct = todayInRange ? ((todayMs - rangeStart) / totalSpan) * 100 : null
   const dateTicks = bars.length > 0 ? computeDateTicks(rangeStart, rangeEndRaw, trackWidth) : []
   const rows = bars.length > 0 ? buildPhaseRows(bars, phases, collapsedPhases) : []
@@ -184,21 +186,28 @@ function GanttChart({ project, tasks, taskDependencies, phases, expanded, onTogg
       const lines = []
 
       bars.forEach(({ task }) => {
-        const dependsOnId = dependsOnByTaskId.get(task.id)
-        if (!dependsOnId) return
-        const fromEl = barRefs.current[dependsOnId]
+        const dependsOnIds = dependsOnByTaskId.get(task.id)
+        if (!dependsOnIds || dependsOnIds.length === 0) return
         const toEl = barRefs.current[task.id]
-        if (!fromEl || !toEl) return
-
-        const fromRect = fromEl.getBoundingClientRect()
+        if (!toEl) return
         const toRect = toEl.getBoundingClientRect()
+        // 2+ predecessors: dash every line for this task, not just the
+        // extras, so a multi-predecessor task reads as distinct at a glance.
+        const dashed = dependsOnIds.length > 1
 
-        lines.push({
-          id: task.id,
-          x1: fromRect.right - containerRect.left,
-          y1: fromRect.top - containerRect.top + fromRect.height / 2,
-          x2: toRect.left - containerRect.left,
-          y2: toRect.top - containerRect.top + toRect.height / 2,
+        dependsOnIds.forEach((dependsOnId) => {
+          const fromEl = barRefs.current[dependsOnId]
+          if (!fromEl) return
+          const fromRect = fromEl.getBoundingClientRect()
+
+          lines.push({
+            id: `${dependsOnId}-${task.id}`,
+            x1: fromRect.right - containerRect.left,
+            y1: fromRect.top - containerRect.top + fromRect.height / 2,
+            x2: toRect.left - containerRect.left,
+            y2: toRect.top - containerRect.top + toRect.height / 2,
+            dashed,
+          })
         })
       })
 
@@ -459,7 +468,7 @@ function GanttChart({ project, tasks, taskDependencies, phases, expanded, onTogg
                   <path
                     key={line.id}
                     d={buildElbowPath(line.x1, line.y1, line.x2, line.y2)}
-                    className="gantt-dep-line"
+                    className={line.dashed ? 'gantt-dep-line gantt-dep-line-dashed' : 'gantt-dep-line'}
                     markerEnd="url(#gantt-dep-arrow)"
                   />
                 ))}
@@ -497,6 +506,13 @@ function GanttChart({ project, tasks, taskDependencies, phases, expanded, onTogg
               <path d="M14,6 L20,9 L14,12 Z" fill="#94a3b8" />
             </svg>
             Dependency
+          </span>
+          <span className="gantt-legend-item">
+            <svg className="gantt-legend-arrow" viewBox="0 0 20 12" width="20" height="12" aria-hidden="true">
+              <path d="M0,3 H10 V9 H14" fill="none" stroke="#94a3b8" strokeWidth="1.5" strokeDasharray="3 2" />
+              <path d="M14,6 L20,9 L14,12 Z" fill="#94a3b8" />
+            </svg>
+            Multiple predecessors
           </span>
           <span className="gantt-legend-item">
             <span className="gantt-legend-swatch today-line" />
