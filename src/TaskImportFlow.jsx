@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from './supabaseClient'
+import DependencyPicker from './components/DependencyPicker'
 import { guessColumnMapping, parseDateCell, parseSpreadsheetFile } from './spreadsheetImport'
 
 const TASK_FIELDS = [
@@ -65,15 +66,18 @@ function buildProposedRows(rawRows, mapping, existingTasks) {
 
   return draft.map((r) => {
     const { dependsOnRaw, issues, ...rest } = r
-    let depends_on = null
+    // The spreadsheet cell only ever encodes one predecessor title - stored
+    // as a single-entry array so the review table's DependencyPicker can
+    // add more, same as TaskGenFlow's single-AI-proposed depends_on.
+    let depends_on = []
     const rowIssues = [...issues]
 
     if (dependsOnRaw) {
       const key = dependsOnRaw.trim().toLowerCase()
       if (byTitleInBatch.has(key) && byTitleInBatch.get(key) !== r.temp_id) {
-        depends_on = byTitleInBatch.get(key)
+        depends_on = [byTitleInBatch.get(key)]
       } else if (existingByTitle.has(key)) {
-        depends_on = existingByTitle.get(key)
+        depends_on = [existingByTitle.get(key)]
       } else {
         rowIssues.push(`"Depends On" value "${dependsOnRaw}" doesn't match any task title`)
       }
@@ -135,7 +139,7 @@ function TaskImportFlow({ project, existingTasks, onCommitted, onDone, onCancel 
     setProposed((prev) =>
       prev
         .filter((r) => r.temp_id !== tempId)
-        .map((r) => (r.depends_on === tempId ? { ...r, depends_on: null } : r))
+        .map((r) => ({ ...r, depends_on: (r.depends_on || []).filter((id) => id !== tempId) }))
     )
   }
 
@@ -147,6 +151,17 @@ function TaskImportFlow({ project, existingTasks, onCommitted, onDone, onCancel 
   const selectedCount = selectedRows.length
   const hasInvalidSelected = selectedRows.some((r) => !r.title.trim())
 
+  // DependencyPicker's combined id-space for the review table - see
+  // TaskGenFlow's identical computation for why only in-batch edges are
+  // needed for the cycle guard.
+  const pickerTasks = [
+    ...proposed.map((r) => ({ id: r.temp_id, title: r.title || '(untitled)', isVirtual: true })),
+    ...existingTasks,
+  ]
+  const pickerDependencies = proposed.flatMap((r) =>
+    (r.depends_on || []).map((depends_on_id) => ({ task_id: r.temp_id, depends_on_id }))
+  )
+
   async function handleCommit() {
     if (selectedRows.length === 0 || hasInvalidSelected) return
 
@@ -157,24 +172,30 @@ function TaskImportFlow({ project, existingTasks, onCommitted, onDone, onCancel 
     const existingById = new Map(existingTasks.map((t) => [t.id, t]))
     const selectedByTempId = new Map(selectedRows.map((r) => [r.temp_id, r]))
 
+    // Kahn's algorithm: order selected rows so every in-batch dependency is
+    // inserted before its dependent - a row can now have multiple
+    // predecessors. A cycle shouldn't occur from a well-formed import, but
+    // if editing produced one, break it by dropping whatever in-batch edges
+    // are left on the stuck rows rather than hanging.
     const order = []
     const remaining = new Map(selectedRows.map((r) => [r.temp_id, r]))
-    const blocked = new Map(
-      selectedRows.map((r) => [r.temp_id, !!(r.depends_on && selectedByTempId.has(r.depends_on))])
+    const blockedBy = new Map(
+      selectedRows.map((r) => [
+        r.temp_id,
+        new Set((r.depends_on || []).filter((id) => selectedByTempId.has(id))),
+      ])
     )
     while (remaining.size > 0) {
-      const next = [...remaining.values()].find((r) => !blocked.get(r.temp_id))
+      const next = [...remaining.values()].find((r) => blockedBy.get(r.temp_id).size === 0)
       if (!next) {
         remaining.forEach((r) =>
-          order.push({ ...r, depends_on: existingById.has(r.depends_on) ? r.depends_on : null })
+          order.push({ ...r, depends_on: (r.depends_on || []).filter((id) => existingById.has(id)) })
         )
         break
       }
       order.push(next)
       remaining.delete(next.temp_id)
-      remaining.forEach((r) => {
-        if (r.depends_on === next.temp_id) blocked.set(r.temp_id, false)
-      })
+      remaining.forEach((r) => blockedBy.get(r.temp_id).delete(next.temp_id))
     }
 
     const tempIdToReal = new Map()
@@ -183,10 +204,12 @@ function TaskImportFlow({ project, existingTasks, onCommitted, onDone, onCancel 
     const insertedDeps = []
 
     for (const row of order) {
-      let dependsOnRealId = null
-      if (row.depends_on) {
-        if (existingById.has(row.depends_on)) dependsOnRealId = row.depends_on
-        else if (tempIdToReal.has(row.depends_on)) dependsOnRealId = tempIdToReal.get(row.depends_on)
+      const dependsOnRealIds = []
+      for (const depId of row.depends_on || []) {
+        if (existingById.has(depId)) dependsOnRealIds.push(depId)
+        else if (tempIdToReal.has(depId)) dependsOnRealIds.push(tempIdToReal.get(depId))
+        // Otherwise the dependency target was unchecked or deleted - this
+        // edge just gets dropped rather than erroring.
       }
 
       const { data, error: insertError } = await supabase
@@ -218,17 +241,16 @@ function TaskImportFlow({ project, existingTasks, onCommitted, onDone, onCancel 
       inserted.push(data)
       setSavedCount(inserted.length)
 
-      if (dependsOnRealId) {
-        const { data: depRow, error: depError } = await supabase
+      if (dependsOnRealIds.length > 0) {
+        const { data: depRows, error: depError } = await supabase
           .from('task_dependencies')
-          .insert({ task_id: data.id, depends_on_id: dependsOnRealId })
+          .insert(dependsOnRealIds.map((depends_on_id) => ({ task_id: data.id, depends_on_id })))
           .select()
-          .single()
 
         // A dependency-link failure shouldn't abort the whole commit - the
         // task itself saved fine and is more valuable to keep than to roll
         // back over a missing connector line.
-        if (!depError) insertedDeps.push(depRow)
+        if (!depError) insertedDeps.push(...depRows)
       }
     }
 
@@ -376,24 +398,14 @@ function TaskImportFlow({ project, existingTasks, onCommitted, onDone, onCancel 
                         />
                       </td>
                       <td>
-                        <select
-                          value={row.depends_on || ''}
-                          onChange={(e) => updateRow(row.temp_id, 'depends_on', e.target.value || null)}
-                        >
-                          <option value="">None</option>
-                          {proposed
-                            .filter((o) => o.temp_id !== row.temp_id)
-                            .map((o) => (
-                              <option key={o.temp_id} value={o.temp_id}>
-                                {o.title || '(untitled)'}
-                              </option>
-                            ))}
-                          {existingTasks.map((t) => (
-                            <option key={t.id} value={t.id}>
-                              {t.title}
-                            </option>
-                          ))}
-                        </select>
+                        <DependencyPicker
+                          tasks={pickerTasks}
+                          dependencies={pickerDependencies}
+                          currentTaskId={row.temp_id}
+                          selectedIds={row.depends_on || []}
+                          onChange={(nextSelectedIds) => updateRow(row.temp_id, 'depends_on', nextSelectedIds)}
+                          placeholder="Search tasks…"
+                        />
                       </td>
                       <td className="import-issues-cell">
                         {row.issues.map((issue, i) => (

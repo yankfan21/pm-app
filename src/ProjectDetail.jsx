@@ -11,6 +11,7 @@ import TaskGenFlow from './TaskGenFlow'
 import BacklogGenFlow from './BacklogGenFlow'
 import TaskImportFlow from './TaskImportFlow'
 import ManageAccess from './ManageAccess'
+import DependencyPicker from './components/DependencyPicker'
 import { DOCUMENT_TYPES, groupDocumentTypes } from './documentTypes'
 import { METHODOLOGIES, METHODOLOGY_LABELS } from './methodology'
 import { DEFAULT_PHASES } from './phases'
@@ -115,7 +116,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
   const [startDate, setStartDate] = useState('')
   const [dueDate, setDueDate] = useState('')
   const [isMilestone, setIsMilestone] = useState(false)
-  const [dependsOn, setDependsOn] = useState('')
+  const [dependsOn, setDependsOn] = useState([])
   const [phaseId, setPhaseId] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -331,15 +332,14 @@ function ProjectDetail({ project, isOwner, canEdit }) {
       return
     }
 
-    if (dependsOn) {
-      const { data: depRow, error: depError } = await supabase
+    if (dependsOn.length > 0) {
+      const { data: depRows, error: depError } = await supabase
         .from('task_dependencies')
-        .insert({ task_id: data.id, depends_on_id: dependsOn })
+        .insert(dependsOn.map((id) => ({ task_id: data.id, depends_on_id: id })))
         .select()
-        .single()
 
       if (depError) setError(depError.message)
-      else setTaskDependencies((prev) => [...prev, depRow])
+      else setTaskDependencies((prev) => [...prev, ...depRows])
     }
 
     setTasks((prev) => [...prev, data])
@@ -347,7 +347,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
     setStartDate('')
     setDueDate('')
     setIsMilestone(false)
-    setDependsOn('')
+    setDependsOn([])
     setPhaseId('')
   }
 
@@ -394,39 +394,48 @@ function ProjectDetail({ project, isOwner, canEdit }) {
     setTasks((prev) => prev.map((t) => (t.id === task.id ? data[0] : t)))
   }
 
-  // Dependency selection is still single-select (Phase 3 is the multi-select
-  // picker), so "setting a dependency" here means replacing whatever
-  // task_dependencies row(s) already exist for this task_id with at most
-  // one new row - delete-then-insert rather than an update, since a task
-  // going from "no dependency" to "has one" has no existing row to update.
-  async function updateTaskDependency(task, newDependsOnId) {
-    const { error: deleteError } = await supabase
-      .from('task_dependencies')
-      .delete()
-      .eq('task_id', task.id)
+  // DependencyPicker is controlled and hands back the full next selectedIds
+  // set on every change, so "setting dependencies" here means diffing that
+  // set against whatever task_dependencies rows already exist for this
+  // task_id - delete the ones dropped, insert the ones added.
+  async function updateTaskDependencies(task, nextSelectedIds) {
+    const currentIds = taskDependencies
+      .filter((d) => d.task_id === task.id)
+      .map((d) => d.depends_on_id)
+    const toAdd = nextSelectedIds.filter((id) => !currentIds.includes(id))
+    const toRemove = currentIds.filter((id) => !nextSelectedIds.includes(id))
 
-    if (deleteError) {
-      setError(deleteError.message)
-      return
+    if (toRemove.length > 0) {
+      const { error: deleteError } = await supabase
+        .from('task_dependencies')
+        .delete()
+        .eq('task_id', task.id)
+        .in('depends_on_id', toRemove)
+
+      if (deleteError) {
+        setError(deleteError.message)
+        return
+      }
     }
 
-    if (!newDependsOnId) {
-      setTaskDependencies((prev) => prev.filter((d) => d.task_id !== task.id))
-      return
+    let inserted = []
+    if (toAdd.length > 0) {
+      const { data, error } = await supabase
+        .from('task_dependencies')
+        .insert(toAdd.map((id) => ({ task_id: task.id, depends_on_id: id })))
+        .select()
+
+      if (error) {
+        setError(error.message)
+        return
+      }
+      inserted = data
     }
 
-    const { data, error } = await supabase
-      .from('task_dependencies')
-      .insert({ task_id: task.id, depends_on_id: newDependsOnId })
-      .select()
-      .single()
-
-    if (error) {
-      setError(error.message)
-      return
-    }
-
-    setTaskDependencies((prev) => [...prev.filter((d) => d.task_id !== task.id), data])
+    setTaskDependencies((prev) => [
+      ...prev.filter((d) => d.task_id !== task.id || !toRemove.includes(d.depends_on_id)),
+      ...inserted,
+    ])
   }
 
   // Separate from updateTaskField because switching a task to a milestone
@@ -876,14 +885,14 @@ function ProjectDetail({ project, isOwner, canEdit }) {
           </label>
           <label className="task-select-field">
             Depends on
-            <select value={dependsOn} onChange={(e) => setDependsOn(e.target.value)}>
-              <option value="">None</option>
-              {tasks.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.title}
-                </option>
-              ))}
-            </select>
+            <DependencyPicker
+              tasks={tasks}
+              dependencies={taskDependencies}
+              currentTaskId={null}
+              selectedIds={dependsOn}
+              onChange={setDependsOn}
+              placeholder="Search tasks…"
+            />
           </label>
           {currentProject.methodology !== 'agile' && (
             <label className="task-select-field">
@@ -977,20 +986,17 @@ function ProjectDetail({ project, isOwner, canEdit }) {
                   </label>
                   <label className="task-select-field">
                     Depends on
-                    <select
-                      value={taskDependencies.find((d) => d.task_id === task.id)?.depends_on_id || ''}
+                    <DependencyPicker
+                      tasks={tasks}
+                      dependencies={taskDependencies}
+                      currentTaskId={task.id}
+                      selectedIds={taskDependencies
+                        .filter((d) => d.task_id === task.id)
+                        .map((d) => d.depends_on_id)}
+                      onChange={(nextSelectedIds) => updateTaskDependencies(task, nextSelectedIds)}
                       disabled={!canEdit}
-                      onChange={(e) => updateTaskDependency(task, e.target.value || null)}
-                    >
-                      <option value="">None</option>
-                      {tasks
-                        .filter((t) => t.id !== task.id)
-                        .map((t) => (
-                          <option key={t.id} value={t.id}>
-                            {t.title}
-                          </option>
-                        ))}
-                    </select>
+                      placeholder="Search tasks…"
+                    />
                   </label>
                   {currentProject.methodology !== 'agile' && (
                     <label className="task-select-field">

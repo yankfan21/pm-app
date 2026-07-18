@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
 import QaStepper from './QaStepper'
 import Spinner from './Spinner'
+import DependencyPicker from './components/DependencyPicker'
 import { addDaysLocal, todayLocalDateString } from './ganttLayout'
 
 // AI starter-task generation, available once a Charter exists. Follows the
@@ -67,7 +68,10 @@ function TaskGenFlow({ project, charter, brief, riskLog, existingTasks, onCommit
       temp_id: t.temp_id || `t${i}`,
       title: t.title || '',
       duration_days: Math.max(1, Number(t.duration_days) || 1),
-      depends_on: t.depends_on || null,
+      // task-gen only ever proposes a single predecessor per task (see
+      // task-gen/index.ts's prompt) - normalized to an array here so the
+      // review table's DependencyPicker can add more.
+      depends_on: t.depends_on ? [t.depends_on] : [],
       selected: true,
     }))
 
@@ -83,7 +87,7 @@ function TaskGenFlow({ project, charter, brief, riskLog, existingTasks, onCommit
     setProposed((prev) =>
       prev
         .filter((r) => r.temp_id !== tempId)
-        .map((r) => (r.depends_on === tempId ? { ...r, depends_on: null } : r))
+        .map((r) => ({ ...r, depends_on: (r.depends_on || []).filter((id) => id !== tempId) }))
     )
   }
 
@@ -95,6 +99,20 @@ function TaskGenFlow({ project, charter, brief, riskLog, existingTasks, onCommit
   const selectedCount = selectedRows.length
   const hasInvalidSelected = selectedRows.some((r) => !r.title.trim())
 
+  // DependencyPicker's combined id-space for the review table: every
+  // proposed row as a virtual task alongside the project's already-real
+  // tasks, plus the in-batch edges (only those - an existing task can't
+  // depend on a temp_id that didn't exist yet when it was inserted, so
+  // existing-task dependencies can never be part of a cycle through a
+  // virtual row).
+  const pickerTasks = [
+    ...proposed.map((r) => ({ id: r.temp_id, title: r.title || '(untitled)', isVirtual: true })),
+    ...(existingTasks || []),
+  ]
+  const pickerDependencies = proposed.flatMap((r) =>
+    (r.depends_on || []).map((depends_on_id) => ({ task_id: r.temp_id, depends_on_id }))
+  )
+
   async function handleCommit() {
     if (selectedRows.length === 0 || hasInvalidSelected) return
 
@@ -105,30 +123,32 @@ function TaskGenFlow({ project, charter, brief, riskLog, existingTasks, onCommit
     const existingById = new Map((existingTasks || []).map((t) => [t.id, t]))
     const selectedByTempId = new Map(selectedRows.map((r) => [r.temp_id, r]))
 
-    // Order selected rows so any in-batch dependency is inserted before its
-    // dependent (each task depends on at most one other, so this is a
-    // simple readiness queue rather than full Kahn's algorithm bookkeeping).
-    // A cycle shouldn't occur from a well-formed proposal, but if editing
-    // produced one, break it by dropping the offending in-batch edge rather
-    // than hanging.
+    // Order selected rows so every in-batch dependency is inserted before
+    // its dependent - a row can now have multiple predecessors, so this is
+    // Kahn's algorithm proper (blockedBy tracks the set of not-yet-inserted
+    // in-batch predecessor temp_ids remaining for each row). A cycle
+    // shouldn't occur from a well-formed proposal, but if editing produced
+    // one, break it by dropping whatever in-batch edges are left on the
+    // stuck rows rather than hanging.
     const order = []
     const remaining = new Map(selectedRows.map((r) => [r.temp_id, r]))
-    const blocked = new Map(
-      selectedRows.map((r) => [r.temp_id, !!(r.depends_on && selectedByTempId.has(r.depends_on))])
+    const blockedBy = new Map(
+      selectedRows.map((r) => [
+        r.temp_id,
+        new Set((r.depends_on || []).filter((id) => selectedByTempId.has(id))),
+      ])
     )
     while (remaining.size > 0) {
-      const next = [...remaining.values()].find((r) => !blocked.get(r.temp_id))
+      const next = [...remaining.values()].find((r) => blockedBy.get(r.temp_id).size === 0)
       if (!next) {
         remaining.forEach((r) =>
-          order.push({ ...r, depends_on: existingById.has(r.depends_on) ? r.depends_on : null })
+          order.push({ ...r, depends_on: (r.depends_on || []).filter((id) => existingById.has(id)) })
         )
         break
       }
       order.push(next)
       remaining.delete(next.temp_id)
-      remaining.forEach((r) => {
-        if (r.depends_on === next.temp_id) blocked.set(r.temp_id, false)
-      })
+      remaining.forEach((r) => blockedBy.get(r.temp_id).delete(next.temp_id))
     }
 
     const tempIdToReal = new Map()
@@ -137,21 +157,30 @@ function TaskGenFlow({ project, charter, brief, riskLog, existingTasks, onCommit
     const insertedDeps = []
 
     for (const row of order) {
-      let dependsOnRealId = null
+      const dependsOnRealIds = []
       let anchorDueDate = null
 
-      if (row.depends_on) {
-        if (existingById.has(row.depends_on)) {
-          dependsOnRealId = row.depends_on
-          anchorDueDate = existingById.get(row.depends_on).due_date
-        } else if (tempIdToReal.has(row.depends_on)) {
-          dependsOnRealId = tempIdToReal.get(row.depends_on)
-          anchorDueDate = realDueDate.get(dependsOnRealId)
+      for (const depId of row.depends_on || []) {
+        let realId = null
+        let depDueDate = null
+        if (existingById.has(depId)) {
+          realId = depId
+          depDueDate = existingById.get(depId).due_date
+        } else if (tempIdToReal.has(depId)) {
+          realId = tempIdToReal.get(depId)
+          depDueDate = realDueDate.get(realId)
         }
         // Otherwise the dependency target was unchecked or deleted - this
-        // task just becomes unblocked rather than erroring.
+        // edge just gets dropped rather than erroring.
+        if (realId) {
+          dependsOnRealIds.push(realId)
+          if (depDueDate && (!anchorDueDate || depDueDate > anchorDueDate)) anchorDueDate = depDueDate
+        }
       }
 
+      // A task with multiple predecessors can't start until the last of
+      // them finishes, so the anchor is the latest due_date among all
+      // resolved dependencies rather than any single one.
       const startDate = anchorDueDate ? addDaysLocal(anchorDueDate, 1) : todayLocalDateString()
       const dueDate = addDaysLocal(startDate, Math.max(1, row.duration_days) - 1)
 
@@ -183,17 +212,16 @@ function TaskGenFlow({ project, charter, brief, riskLog, existingTasks, onCommit
       inserted.push(data)
       setSavedCount(inserted.length)
 
-      if (dependsOnRealId) {
-        const { data: depRow, error: depError } = await supabase
+      if (dependsOnRealIds.length > 0) {
+        const { data: depRows, error: depError } = await supabase
           .from('task_dependencies')
-          .insert({ task_id: data.id, depends_on_id: dependsOnRealId })
+          .insert(dependsOnRealIds.map((depends_on_id) => ({ task_id: data.id, depends_on_id })))
           .select()
-          .single()
 
         // A dependency-link failure shouldn't abort the whole commit - the
         // task itself saved fine and is more valuable to keep than to roll
         // back over a missing connector line.
-        if (!depError) insertedDeps.push(depRow)
+        if (!depError) insertedDeps.push(...depRows)
       }
     }
 
@@ -327,24 +355,14 @@ function TaskGenFlow({ project, charter, brief, riskLog, existingTasks, onCommit
                         />
                       </td>
                       <td>
-                        <select
-                          value={row.depends_on || ''}
-                          onChange={(e) => updateRow(row.temp_id, 'depends_on', e.target.value || null)}
-                        >
-                          <option value="">None</option>
-                          {proposed
-                            .filter((o) => o.temp_id !== row.temp_id)
-                            .map((o) => (
-                              <option key={o.temp_id} value={o.temp_id}>
-                                {o.title || '(untitled)'}
-                              </option>
-                            ))}
-                          {(existingTasks || []).map((t) => (
-                            <option key={t.id} value={t.id}>
-                              {t.title}
-                            </option>
-                          ))}
-                        </select>
+                        <DependencyPicker
+                          tasks={pickerTasks}
+                          dependencies={pickerDependencies}
+                          currentTaskId={row.temp_id}
+                          selectedIds={row.depends_on || []}
+                          onChange={(nextSelectedIds) => updateRow(row.temp_id, 'depends_on', nextSelectedIds)}
+                          placeholder="Search tasks…"
+                        />
                       </td>
                       <td>
                         <button

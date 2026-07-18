@@ -3295,3 +3295,137 @@ textarea.risk-cell-input {
   color: var(--text-h);
   background: var(--bg);
 }
+
+/* DependencyPicker (Phase 3 multi-predecessor task dependencies) */
+
+.dependency-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 240px;
+}
+
+.dependency-picker-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dependency-picker-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px 4px 10px;
+  border-radius: 999px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text-h);
+  font-size: 13px;
+}
+
+.dependency-picker-chip button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.dependency-picker-chip button:hover {
+  background: var(--border);
+  color: var(--text-h);
+}
+
+.dependency-picker-input-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dependency-picker-search {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: inherit;
+  color: var(--text-h);
+  background: var(--card-bg);
+}
+
+.dependency-picker-show-completed {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text);
+}
+
+.dependency-picker-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  margin: 4px 0 0;
+  padding: 4px;
+  max-height: 220px;
+  overflow-y: auto;
+  list-style: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card-bg);
+  box-shadow: var(--card-hover-shadow);
+}
+
+.dependency-picker-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--text-h);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dependency-picker-option:hover:not(:disabled) {
+  background: var(--bg);
+}
+
+.dependency-picker-option.blocked {
+  color: var(--text);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dependency-picker-virtual-tag {
+  margin-left: auto;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--card-tint-purple);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.dependency-picker-empty {
+  padding: 8px 10px;
+  color: var(--text);
+  font-size: 13px;
+}
