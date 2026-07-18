@@ -97,3 +97,115 @@ export function computeGanttLayout(tasks, project, phases = []) {
 
   return { bars, unscheduled, rangeStart, rangeEnd, rangeEndRaw, totalSpan, todayMs, todayInRange }
 }
+
+// Longest path through the task-dependency DAG, restricted to tasks that
+// actually appear on the chart (computeGanttLayout's `bars` - a task with no
+// date at all has no duration to contribute and never renders a bar, so it
+// can't participate). Node weight is each task's own duration (dueMs -
+// startMs), which is already 0 for milestone markers (due_date only, no
+// start_date - see gantt_milestones_and_delayed_status.sql) and for
+// single-date tasks (the bars computation above already collapses start=due
+// when only one is set) - so both fall out as zero-duration nodes without
+// any special-casing here.
+//
+// Standard DAG longest-path: Kahn's-algorithm topological sort, then a
+// forward DP where each node's longest-path-ending-here is its own duration
+// plus the max over its predecessors' longest-path-ending-there. The
+// overall critical path is the max across all nodes, reconstructed by
+// walking back the argmax predecessor pointers. This is a single path (the
+// classic DAG longest-path result), not full CPM slack/float analysis - a
+// project can have multiple tied-longest chains, and only one is reported.
+//
+// A cycle would leave some nodes permanently at nonzero in-degree - Kahn's
+// algorithm just never dequeues them, so they're silently excluded from the
+// topological order and therefore from the DP, rather than infinite-looping
+// or crashing. Cycles are already prevented at the DB level
+// (task_dependency_cycle_guard.sql); this is a non-crashing fallback, not
+// the primary defense.
+//
+// Returns hasEdges: false when there are no dependency edges among
+// chart-visible tasks at all, rather than degenerating to a trivial 1-node
+// "path" (just the single longest-duration task) - a lone unconnected task
+// isn't a meaningful critical path, so the caller shows a message instead
+// of highlighting an arbitrary bar.
+export function computeCriticalPath(bars, taskDependencies) {
+  const duration = new Map()
+  bars.forEach(({ task, startMs, dueMs }) => duration.set(task.id, dueMs - startMs))
+
+  const preds = new Map()
+  const succs = new Map()
+  duration.forEach((_, id) => {
+    preds.set(id, [])
+    succs.set(id, [])
+  })
+
+  ;(taskDependencies || []).forEach((d) => {
+    if (!duration.has(d.task_id) || !duration.has(d.depends_on_id)) return
+    preds.get(d.task_id).push(d.depends_on_id)
+    succs.get(d.depends_on_id).push(d.task_id)
+  })
+
+  const hasEdges = [...preds.values()].some((p) => p.length > 0)
+  if (!hasEdges) {
+    return { hasEdges: false, taskIds: new Set(), edgeIds: new Set(), totalDays: 0, taskCount: 0 }
+  }
+
+  const inDegree = new Map()
+  duration.forEach((_, id) => inDegree.set(id, preds.get(id).length))
+
+  const queue = [...inDegree.entries()].filter(([, deg]) => deg === 0).map(([id]) => id)
+  const topoOrder = []
+  while (queue.length > 0) {
+    const id = queue.shift()
+    topoOrder.push(id)
+    succs.get(id).forEach((succId) => {
+      const next = inDegree.get(succId) - 1
+      inDegree.set(succId, next)
+      if (next === 0) queue.push(succId)
+    })
+  }
+
+  const dist = new Map()
+  const bestPred = new Map()
+  topoOrder.forEach((id) => {
+    let best = 0
+    let bestId = null
+    preds.get(id).forEach((predId) => {
+      const predDist = dist.get(predId) ?? 0
+      if (predDist > best) {
+        best = predDist
+        bestId = predId
+      }
+    })
+    dist.set(id, duration.get(id) + best)
+    bestPred.set(id, bestId)
+  })
+
+  let endId = null
+  let endDist = -1
+  topoOrder.forEach((id) => {
+    if (dist.get(id) > endDist) {
+      endDist = dist.get(id)
+      endId = id
+    }
+  })
+
+  const pathIds = []
+  for (let cursor = endId; cursor != null; cursor = bestPred.get(cursor)) {
+    pathIds.push(cursor)
+  }
+  pathIds.reverse()
+
+  const edgeIds = new Set()
+  for (let i = 0; i < pathIds.length - 1; i++) {
+    edgeIds.add(`${pathIds[i]}-${pathIds[i + 1]}`)
+  }
+
+  return {
+    hasEdges: true,
+    taskIds: new Set(pathIds),
+    edgeIds,
+    totalDays: Math.round(endDist / DAY_MS),
+    taskCount: pathIds.length,
+  }
+}

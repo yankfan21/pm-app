@@ -1,5 +1,5 @@
 import { Fragment, useLayoutEffect, useRef, useState } from 'react'
-import { DAY_MS, computeGanttLayout, parseDay } from './ganttLayout'
+import { DAY_MS, computeCriticalPath, computeGanttLayout, parseDay } from './ganttLayout'
 
 const UNPHASED_KEY = '__unphased'
 
@@ -137,6 +137,8 @@ function GanttChart({ project, tasks, taskDependencies, phases, expanded, onTogg
   const [trackWidth, setTrackWidth] = useState(400)
   const [error, setError] = useState(null)
   const [exportingPdf, setExportingPdf] = useState(false)
+  // Off by default - an opt-in overlay, same pattern as collapsedPhases.
+  const [showCriticalPath, setShowCriticalPath] = useState(false)
   // Every phase group starts expanded - collapsing is opt-in per phase, so
   // a fresh page load always shows the full picture first.
   const [collapsedPhases, setCollapsedPhases] = useState({})
@@ -147,6 +149,10 @@ function GanttChart({ project, tasks, taskDependencies, phases, expanded, onTogg
 
   const { bars, unscheduled, rangeStart, rangeEndRaw, totalSpan, todayInRange, todayMs } =
     computeGanttLayout(tasks, project, phases)
+
+  // Only computed while the toggle is on - cheap either way at this scale,
+  // but no reason to run it when nothing reads the result.
+  const criticalPath = showCriticalPath ? computeCriticalPath(bars, taskDependencies) : null
 
   // Grouped rather than a scalar Map, since Phase 3's multi-select picker
   // means a task can have 2+ rows in task_dependencies.
@@ -283,6 +289,15 @@ function GanttChart({ project, tasks, taskDependencies, phases, expanded, onTogg
           >
             {exportingPdf ? 'Exporting...' : 'Export PDF'}
           </button>
+          <label className="gantt-critical-toggle">
+            <input
+              type="checkbox"
+              checked={showCriticalPath}
+              disabled={bars.length === 0}
+              onChange={(e) => setShowCriticalPath(e.target.checked)}
+            />
+            Show Critical Path
+          </label>
         </div>
       )}
 
@@ -298,6 +313,18 @@ function GanttChart({ project, tasks, taskDependencies, phases, expanded, onTogg
 
       {expanded && todayInRange && (
         <p className="gantt-today-note">Today — {formatLongDate(todayMs)}</p>
+      )}
+
+      {expanded && criticalPath && !criticalPath.hasEdges && (
+        <p className="charter-status">
+          No task dependencies yet — critical path needs at least one dependency to compute a path.
+        </p>
+      )}
+
+      {expanded && criticalPath && criticalPath.hasEdges && (
+        <p className="gantt-critical-summary">
+          Critical path: {criticalPath.taskCount} task{criticalPath.taskCount === 1 ? '' : 's'} · {criticalPath.totalDays} day{criticalPath.totalDays === 1 ? '' : 's'}
+        </p>
       )}
 
       {expanded && bars.length > 0 && (
@@ -398,6 +425,7 @@ function GanttChart({ project, tasks, taskDependencies, phases, expanded, onTogg
               const singleDate = !(task.start_date && task.due_date)
               const isMilestone = task.task_type === 'milestone_marker'
               const isDelayed = task.status === 'delayed'
+              const isCritical = !!criticalPath?.taskIds.has(task.id)
               return (
                 <Fragment key={task.id}>
                   <div
@@ -414,7 +442,7 @@ function GanttChart({ project, tasks, taskDependencies, phases, expanded, onTogg
                           ref={(el) => {
                             barRefs.current[task.id] = el
                           }}
-                          className={`gantt-milestone ${isDelayed ? 'delayed' : ''} ${task.completed ? 'completed' : ''}`}
+                          className={`gantt-milestone ${isDelayed ? 'delayed' : ''} ${task.completed ? 'completed' : ''} ${isCritical ? 'critical-path' : ''}`}
                           style={{ left: `${leftPct}%` }}
                           title={`${task.title} — ${task.due_date || 'TBD'}`}
                         />
@@ -427,7 +455,7 @@ function GanttChart({ project, tasks, taskDependencies, phases, expanded, onTogg
                         ref={(el) => {
                           barRefs.current[task.id] = el
                         }}
-                        className={`gantt-bar ${singleDate ? 'single-date' : ''} ${isDelayed ? 'delayed' : ''} ${task.completed ? 'completed' : ''}`}
+                        className={`gantt-bar ${singleDate ? 'single-date' : ''} ${isDelayed ? 'delayed' : ''} ${task.completed ? 'completed' : ''} ${isCritical ? 'critical-path' : ''}`}
                         style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
                         title={`${task.start_date || 'TBD'} → ${task.due_date || 'TBD'}`}
                       />
@@ -463,15 +491,34 @@ function GanttChart({ project, tasks, taskDependencies, phases, expanded, onTogg
                   >
                     <path d="M0,0 L6,3 L0,6 Z" className="gantt-dep-arrowhead" />
                   </marker>
+                  <marker
+                    id="gantt-dep-arrow-critical"
+                    markerWidth="8"
+                    markerHeight="8"
+                    refX="6"
+                    refY="3"
+                    orient="auto"
+                  >
+                    <path d="M0,0 L6,3 L0,6 Z" className="gantt-dep-arrowhead-critical" />
+                  </marker>
                 </defs>
-                {depLines.map((line) => (
-                  <path
-                    key={line.id}
-                    d={buildElbowPath(line.x1, line.y1, line.x2, line.y2)}
-                    className={line.dashed ? 'gantt-dep-line gantt-dep-line-dashed' : 'gantt-dep-line'}
-                    markerEnd="url(#gantt-dep-arrow)"
-                  />
-                ))}
+                {depLines.map((line) => {
+                  const isCriticalEdge = !!criticalPath?.edgeIds.has(line.id)
+                  return (
+                    <path
+                      key={line.id}
+                      d={buildElbowPath(line.x1, line.y1, line.x2, line.y2)}
+                      className={[
+                        'gantt-dep-line',
+                        line.dashed ? 'gantt-dep-line-dashed' : '',
+                        isCriticalEdge ? 'gantt-dep-line-critical' : '',
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
+                      markerEnd={isCriticalEdge ? 'url(#gantt-dep-arrow-critical)' : 'url(#gantt-dep-arrow)'}
+                    />
+                  )
+                })}
               </svg>
             )}
           </div>
@@ -501,6 +548,10 @@ function GanttChart({ project, tasks, taskDependencies, phases, expanded, onTogg
             Completed
           </span>
           <span className="gantt-legend-item">
+            <span className="gantt-legend-swatch bar critical-path" />
+            Critical path
+          </span>
+          <span className="gantt-legend-item">
             <svg className="gantt-legend-arrow" viewBox="0 0 20 12" width="20" height="12" aria-hidden="true">
               <path d="M0,3 H10 V9 H14" fill="none" stroke="#94a3b8" strokeWidth="1.5" />
               <path d="M14,6 L20,9 L14,12 Z" fill="#94a3b8" />
@@ -513,6 +564,13 @@ function GanttChart({ project, tasks, taskDependencies, phases, expanded, onTogg
               <path d="M14,6 L20,9 L14,12 Z" fill="#94a3b8" />
             </svg>
             Multiple predecessors
+          </span>
+          <span className="gantt-legend-item">
+            <svg className="gantt-legend-arrow" viewBox="0 0 20 12" width="20" height="12" aria-hidden="true">
+              <path d="M0,3 H10 V9 H14" fill="none" stroke="#f97316" strokeWidth="2.5" />
+              <path d="M14,6 L20,9 L14,12 Z" fill="#f97316" />
+            </svg>
+            Critical path dependency
           </span>
           <span className="gantt-legend-item">
             <span className="gantt-legend-swatch today-line" />

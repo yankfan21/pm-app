@@ -1669,6 +1669,20 @@
   background: #22c55e;
 }
 
+/* Critical-path highlight (opt-in via the "Show Critical Path" toggle) - a
+   ring rather than a background-color swap, so it layers over whichever
+   status color (delayed/completed/single-date) the bar already has instead
+   of replacing it. Bright orange - conventional "critical path" color in
+   Gantt tools, and deliberately distinct from both the muted amber used
+   for single-date and the red used for Delayed/Today, so none of the
+   three read as the same signal. (An earlier violet was too close to
+   --accent's dark-mode value, which made critical bars blend into
+   ordinary ones - orange doesn't have that collision.) */
+.gantt-bar.critical-path,
+.gantt-milestone.critical-path {
+  box-shadow: 0 0 0 2px #f97316;
+}
+
 /* Inline name label beside the diamond - anchored at the same left% as
    .gantt-milestone and vertically centered the same way (top:50%), then
    nudged right past the diamond's half-width via translate instead of
@@ -1752,6 +1766,31 @@
   fill: #94a3b8;
 }
 
+.gantt-dep-line-critical {
+  stroke: #f97316;
+  stroke-width: 2.5;
+}
+
+.gantt-dep-arrowhead-critical {
+  fill: #f97316;
+}
+
+.gantt-critical-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.gantt-critical-summary {
+  margin: 4px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #f97316;
+}
+
 .gantt-legend {
   display: flex;
   flex-wrap: wrap;
@@ -1794,6 +1833,11 @@
 
 .gantt-legend-swatch.bar.completed {
   background: #22c55e;
+}
+
+.gantt-legend-swatch.bar.critical-path {
+  background: var(--accent);
+  box-shadow: 0 0 0 2px #f97316;
 }
 
 .gantt-legend-swatch.diamond {
