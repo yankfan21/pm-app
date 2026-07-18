@@ -1,5 +1,5 @@
 import { Fragment, useLayoutEffect, useRef, useState } from 'react'
-import { DAY_MS, computeCriticalPath, computeGanttLayout, parseDay } from './ganttLayout'
+import { DAY_MS, buildElbowPoints, computeCriticalPath, computeGanttLayout, parseDay } from './ganttLayout'
 
 const UNPHASED_KEY = '__unphased'
 
@@ -113,16 +113,10 @@ function formatLongDate(ms) {
   })
 }
 
-// Right-angle (horizontal-vertical-horizontal) connector between a
-// predecessor bar's end and a successor bar's start, instead of a diagonal
-// line straight between the two points. Elbows at the midpoint of the two
-// x-coordinates when there's enough horizontal room; otherwise kicks out a
-// fixed distance so the path still reads as three clean segments even when
-// the successor starts at or before the predecessor's end.
+// Thin SVG-path wrapper around the shared elbow geometry - see
+// buildElbowPoints in ganttLayout.js (also used by the PDF export).
 function buildElbowPath(x1, y1, x2, y2) {
-  const minKick = 14
-  const dx = x2 - x1
-  const midX = dx >= minKick * 2 ? x1 + dx / 2 : x1 + minKick
+  const midX = buildElbowPoints(x1, y1, x2, y2)[1][0]
   return `M ${x1} ${y1} H ${midX} V ${y2} H ${x2}`
 }
 
@@ -247,7 +241,7 @@ function GanttChart({ project, tasks, taskDependencies, phases, expanded, onTogg
       // screenshotting the DOM, so it isn't at the mercy of the live
       // page's theme/CSS (that's what caused the dark-mode text bug).
       const { exportGanttPdf } = await import('./ganttExport')
-      await exportGanttPdf(project, tasks, dependsOnByTaskId)
+      await exportGanttPdf(project, tasks, dependsOnByTaskId, taskDependencies)
     } catch (err) {
       setError('Failed to export PDF: ' + err.message)
     }

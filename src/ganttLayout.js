@@ -98,6 +98,30 @@ export function computeGanttLayout(tasks, project, phases = []) {
   return { bars, unscheduled, rangeStart, rangeEnd, rangeEndRaw, totalSpan, todayMs, todayInRange }
 }
 
+// Right-angle (horizontal-vertical-horizontal) connector points between a
+// predecessor's end point and a successor's start point, instead of a
+// diagonal line straight between the two. Elbows at the midpoint of the two
+// x-coordinates when there's enough horizontal room; otherwise kicks out a
+// fixed distance so the path still reads as three clean segments even when
+// the successor starts at or before the predecessor's end.
+//
+// Returns the 4 corner points of the resulting 3-segment path rather than a
+// ready-made shape, since the two callers need different representations
+// (an SVG path string on-screen, a sequence of doc.line() calls in the PDF
+// export) - this way the actual elbow geometry only lives in one place
+// instead of drifting between the two again.
+export function buildElbowPoints(x1, y1, x2, y2) {
+  const minKick = 14
+  const dx = x2 - x1
+  const midX = dx >= minKick * 2 ? x1 + dx / 2 : x1 + minKick
+  return [
+    [x1, y1],
+    [midX, y1],
+    [midX, y2],
+    [x2, y2],
+  ]
+}
+
 // Longest path through the task-dependency DAG, restricted to tasks that
 // actually appear on the chart (computeGanttLayout's `bars` - a task with no
 // date at all has no duration to contribute and never renders a bar, so it
