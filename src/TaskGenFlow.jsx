@@ -3,6 +3,7 @@ import { supabase } from './supabaseClient'
 import QaStepper from './QaStepper'
 import Spinner from './Spinner'
 import DependencyPicker from './components/DependencyPicker'
+import AssigneePicker from './components/AssigneePicker'
 import { addDaysLocal, todayLocalDateString } from './ganttLayout'
 
 // AI starter-task generation, available once a Charter exists. Follows the
@@ -16,7 +17,7 @@ import { addDaysLocal, todayLocalDateString } from './ganttLayout'
 // tasks; it never re-surfaces or touches tasks already accepted (existingTasks
 // is passed to the edge function purely as "don't duplicate/here's what's
 // already there" context, never as something the AI edits).
-function TaskGenFlow({ project, charter, brief, riskLog, existingTasks, onCommitted, onDone, onCancel }) {
+function TaskGenFlow({ project, charter, brief, riskLog, existingTasks, collaborators, onCommitted, onDone, onCancel }) {
   const [phase, setPhase] = useState('loading-questions')
   const [questions, setQuestions] = useState([])
   const [answers, setAnswers] = useState({})
@@ -72,6 +73,8 @@ function TaskGenFlow({ project, charter, brief, riskLog, existingTasks, onCommit
       // task-gen/index.ts's prompt) - normalized to an array here so the
       // review table's DependencyPicker can add more.
       depends_on: t.depends_on ? [t.depends_on] : [],
+      assignee_user_id: null,
+      assignee_name: null,
       selected: true,
     }))
 
@@ -191,6 +194,8 @@ function TaskGenFlow({ project, charter, brief, riskLog, existingTasks, onCommit
           title: row.title.trim(),
           start_date: startDate,
           due_date: dueDate,
+          assignee_user_id: row.assignee_user_id,
+          assignee_name: row.assignee_name,
         })
         .select()
         .single()
@@ -321,6 +326,7 @@ function TaskGenFlow({ project, charter, brief, riskLog, existingTasks, onCommit
                     <th>Task</th>
                     <th>Duration (days)</th>
                     <th>Depends on</th>
+                    <th>Assignee</th>
                     <th aria-hidden="true"></th>
                   </tr>
                 </thead>
@@ -365,6 +371,17 @@ function TaskGenFlow({ project, charter, brief, riskLog, existingTasks, onCommit
                         />
                       </td>
                       <td>
+                        <AssigneePicker
+                          collaborators={collaborators}
+                          assigneeUserId={row.assignee_user_id}
+                          assigneeName={row.assignee_name}
+                          onChange={(next) => {
+                            updateRow(row.temp_id, 'assignee_user_id', next.assignee_user_id)
+                            updateRow(row.temp_id, 'assignee_name', next.assignee_name)
+                          }}
+                        />
+                      </td>
+                      <td>
                         <button
                           type="button"
                           className="risk-delete-btn"
@@ -378,7 +395,7 @@ function TaskGenFlow({ project, charter, brief, riskLog, existingTasks, onCommit
                   ))}
                   {proposed.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="empty">
+                      <td colSpan={6} className="empty">
                         No tasks proposed
                       </td>
                     </tr>

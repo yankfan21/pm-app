@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from './supabaseClient'
 import DependencyPicker from './components/DependencyPicker'
+import AssigneePicker from './components/AssigneePicker'
 import { guessColumnMapping, parseDateCell, parseSpreadsheetFile } from './spreadsheetImport'
 
 const TASK_FIELDS = [
@@ -9,6 +10,7 @@ const TASK_FIELDS = [
   { key: 'start_date', label: 'Start Date' },
   { key: 'due_date', label: 'Due Date' },
   { key: 'depends_on', label: 'Depends On' },
+  { key: 'assignee', label: 'Assignee' },
 ]
 
 const FIELD_HEADER_HINTS = {
@@ -17,6 +19,7 @@ const FIELD_HEADER_HINTS = {
   start_date: ['start date', 'start', 'begin'],
   due_date: ['due date', 'due', 'end date', 'deadline'],
   depends_on: ['depends on', 'dependency', 'dependencies', 'predecessor'],
+  assignee: ['assignee', 'owner', 'assigned to'],
 }
 
 function cellAt(raw, mapping, key) {
@@ -31,14 +34,16 @@ function cellAt(raw, mapping, key) {
 // this app's task ids, so title is the only practical join key. Anything
 // that can't be resolved gets flagged rather than silently dropped or
 // failing the whole import.
-function buildProposedRows(rawRows, mapping, existingTasks) {
+function buildProposedRows(rawRows, mapping, existingTasks, collaborators) {
   const existingByTitle = new Map(existingTasks.map((t) => [t.title.trim().toLowerCase(), t.id]))
+  const collaboratorByEmail = new Map(collaborators.map((c) => [c.email.trim().toLowerCase(), c.user_id]))
 
   const draft = rawRows.map((raw, i) => {
     const title = cellAt(raw, mapping, 'title')
     const startRaw = cellAt(raw, mapping, 'start_date')
     const dueRaw = cellAt(raw, mapping, 'due_date')
     const dependsOnRaw = cellAt(raw, mapping, 'depends_on')
+    const assigneeRaw = cellAt(raw, mapping, 'assignee')
 
     const startParsed = parseDateCell(startRaw)
     const dueParsed = parseDateCell(dueRaw)
@@ -48,6 +53,15 @@ function buildProposedRows(rawRows, mapping, existingTasks) {
     if (startRaw && startParsed === undefined) issues.push('Unparseable start date - left blank')
     if (dueRaw && dueParsed === undefined) issues.push('Unparseable due date - left blank')
 
+    // Spreadsheets have no concept of this app's collaborator ids either -
+    // same title-matching problem Depends On has, solved the same way: match
+    // by the one piece of identity a spreadsheet cell can plausibly contain
+    // (here, an exact-ish email) against a real collaborator, otherwise fall
+    // through to a free-text assignee_name rather than flagging an issue -
+    // unlike Depends On, an unresolvable assignee is still a perfectly valid
+    // one-off/contractor name, not an error.
+    const matchedUserId = assigneeRaw ? collaboratorByEmail.get(assigneeRaw.trim().toLowerCase()) : undefined
+
     return {
       temp_id: `r${i}`,
       title,
@@ -55,6 +69,8 @@ function buildProposedRows(rawRows, mapping, existingTasks) {
       start_date: startParsed || '',
       due_date: dueParsed || '',
       dependsOnRaw,
+      assignee_user_id: matchedUserId || null,
+      assignee_name: matchedUserId ? null : assigneeRaw || null,
       issues,
       selected: true,
     }
@@ -93,7 +109,7 @@ function buildProposedRows(rawRows, mapping, existingTasks) {
 // not a silent bulk-insert -> commit. Reuses TaskGenFlow's dependency-
 // ordering insert logic since Depends On here can also reference another
 // row in the same batch.
-function TaskImportFlow({ project, existingTasks, onCommitted, onDone, onCancel }) {
+function TaskImportFlow({ project, existingTasks, collaborators, onCommitted, onDone, onCancel }) {
   const [phase, setPhase] = useState('upload')
   const [error, setError] = useState(null)
   const [headers, setHeaders] = useState([])
@@ -127,7 +143,7 @@ function TaskImportFlow({ project, existingTasks, onCommitted, onDone, onCancel 
   }
 
   function handleContinueToReview() {
-    setProposed(buildProposedRows(rawRows, mapping, existingTasks))
+    setProposed(buildProposedRows(rawRows, mapping, existingTasks, collaborators))
     setPhase('review')
   }
 
@@ -220,6 +236,8 @@ function TaskImportFlow({ project, existingTasks, onCommitted, onDone, onCancel 
           description: row.description.trim() || null,
           start_date: row.start_date || null,
           due_date: row.due_date || null,
+          assignee_user_id: row.assignee_user_id,
+          assignee_name: row.assignee_name,
         })
         .select()
         .single()
@@ -347,6 +365,7 @@ function TaskImportFlow({ project, existingTasks, onCommitted, onDone, onCancel 
                     <th>Start</th>
                     <th>Due</th>
                     <th>Depends on</th>
+                    <th>Assignee</th>
                     <th>Issues</th>
                     <th aria-hidden="true"></th>
                   </tr>
@@ -407,6 +426,17 @@ function TaskImportFlow({ project, existingTasks, onCommitted, onDone, onCancel 
                           placeholder="Search tasks…"
                         />
                       </td>
+                      <td>
+                        <AssigneePicker
+                          collaborators={collaborators}
+                          assigneeUserId={row.assignee_user_id}
+                          assigneeName={row.assignee_name}
+                          onChange={(next) => {
+                            updateRow(row.temp_id, 'assignee_user_id', next.assignee_user_id)
+                            updateRow(row.temp_id, 'assignee_name', next.assignee_name)
+                          }}
+                        />
+                      </td>
                       <td className="import-issues-cell">
                         {row.issues.map((issue, i) => (
                           <span key={i} className="import-issue-tag">
@@ -428,7 +458,7 @@ function TaskImportFlow({ project, existingTasks, onCommitted, onDone, onCancel 
                   ))}
                   {proposed.length === 0 && (
                     <tr>
-                      <td colSpan={8} className="empty">
+                      <td colSpan={9} className="empty">
                         No rows parsed
                       </td>
                     </tr>

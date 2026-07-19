@@ -1,7 +1,42 @@
 import { Fragment, useLayoutEffect, useRef, useState } from 'react'
 import { DAY_MS, buildElbowPoints, computeCriticalPath, computeGanttLayout, parseDay } from './ganttLayout'
+import { resolveAssigneeLabel } from './components/AssigneePicker'
 
 const UNPHASED_KEY = '__unphased'
+
+const TASK_STATUS_FILTER_OPTIONS = [
+  { key: 'not_started', label: 'Not Started' },
+  { key: 'in_progress', label: 'In Progress' },
+  { key: 'completed', label: 'Completed' },
+  { key: 'delayed', label: 'Delayed' },
+]
+
+// Pixels-per-day the track column renders at for each zoom level, widest
+// (Day) to narrowest (Quarter). Replaces the track's normal 1fr sizing
+// (auto-fit to the container) with a fixed pixel width once a zoom level is
+// picked - gantt-wrap's existing overflow-x: auto (see App.css) is what
+// turns that into horizontal scrolling at the finer levels instead of
+// squeezing every bar into the viewport width. 'week' is the default since
+// it's the closest fixed approximation to how the chart already read before
+// zoom existed.
+const ZOOM_LEVELS = [
+  { key: 'day', label: 'Day', pxPerDay: 36 },
+  { key: 'week', label: 'Week', pxPerDay: 12 },
+  { key: 'month', label: 'Month', pxPerDay: 4 },
+  { key: 'quarter', label: 'Quarter', pxPerDay: 1.3 },
+]
+
+// Stable key for a distinct assignee across both kinds (a real collaborator
+// by user_id, or a free-text name) - used both to dedupe the filter's option
+// list and to match tasks against the selected filter value. Two different
+// tasks with the same free-text assignee_name are treated as the same
+// assignee for filtering purposes (spreadsheets/AI-gen have no id to key a
+// one-off name by), same simplification TaskImportFlow's email match makes.
+function assigneeKey(task) {
+  if (task.assignee_user_id) return `user:${task.assignee_user_id}`
+  if (task.assignee_name) return `name:${task.assignee_name}`
+  return null
+}
 
 // Flattens task bars into a list of rows - a header row per phase (sorted
 // by phase_number) followed by that phase's task rows when it isn't
@@ -120,7 +155,7 @@ function buildElbowPath(x1, y1, x2, y2) {
   return `M ${x1} ${y1} H ${midX} V ${y2} H ${x2}`
 }
 
-function GanttChart({ project, tasks, taskDependencies, phases, expanded, onToggle }) {
+function GanttChart({ project, tasks, taskDependencies, phases, milestones = [], collaborators = [], expanded, onToggle }) {
   const chartRef = useRef(null)
   const trackRef = useRef(null)
   const barRefs = useRef({})
@@ -136,13 +171,72 @@ function GanttChart({ project, tasks, taskDependencies, phases, expanded, onTogg
   // Every phase group starts expanded - collapsing is opt-in per phase, so
   // a fresh page load always shows the full picture first.
   const [collapsedPhases, setCollapsedPhases] = useState({})
+  const [zoom, setZoom] = useState('week')
+  // '' means "All" for every filter below - never null/undefined, so a
+  // <select>'s controlled value always matches one of its own options.
+  const [filterAssignee, setFilterAssignee] = useState('')
+  const [filterStatus, setFilterStatus] = useState('')
+  const [filterTaskType, setFilterTaskType] = useState('')
+  const [filterEpic, setFilterEpic] = useState('')
 
   function togglePhaseCollapse(key) {
     setCollapsedPhases((prev) => ({ ...prev, [key]: !prev[key] }))
   }
 
+  // Option lists are built from the full, unfiltered task set (not
+  // filteredTasks below) so picking one filter never prunes another filter's
+  // own choices out from under the PM - e.g. narrowing to "Delayed" doesn't
+  // shrink the Assignee dropdown to only delayed tasks' assignees.
+  const assigneeFilterOptions = []
+  const seenAssigneeKeys = new Set()
+  tasks.forEach((task) => {
+    const key = assigneeKey(task)
+    if (!key || seenAssigneeKeys.has(key)) return
+    seenAssigneeKeys.add(key)
+    assigneeFilterOptions.push({ key, label: resolveAssigneeLabel(task, collaborators) })
+  })
+  assigneeFilterOptions.sort((a, b) => a.label.localeCompare(b.label))
+
+  const hasActiveFilters = !!(filterAssignee || filterStatus || filterTaskType || filterEpic)
+  // Epics (tasks.milestone_id / the milestones table) are a Backlog concept
+  // - Waterfall projects never set milestone_id on a task at all (see
+  // BacklogView.jsx's isHybrid gate on the Epic create/select UI), so the
+  // filter would just be an always-"All" dropdown with nothing to pick.
+  // GanttChart is currently only ever mounted for non-agile projects (see
+  // ProjectDetail.jsx), but this checks the real methodology values rather
+  // than assuming that stays true, so it degrades correctly if that call
+  // site ever changes.
+  const showEpicFilter = project.methodology === 'agile' || project.methodology === 'hybrid'
+
+  function taskMatchesFilters(task) {
+    if (filterStatus && (task.status ?? 'not_started') !== filterStatus) return false
+    if (filterTaskType && task.task_type !== filterTaskType) return false
+
+    if (filterEpic === 'none') {
+      if (task.milestone_id) return false
+    } else if (filterEpic && task.milestone_id !== filterEpic) {
+      return false
+    }
+
+    if (filterAssignee === 'unassigned') {
+      if (assigneeKey(task)) return false
+    } else if (filterAssignee && assigneeKey(task) !== filterAssignee) {
+      return false
+    }
+
+    return true
+  }
+
+  const filteredTasks = hasActiveFilters ? tasks.filter(taskMatchesFilters) : tasks
+
   const { bars, unscheduled, rangeStart, rangeEndRaw, totalSpan, todayInRange, todayMs } =
-    computeGanttLayout(tasks, project, phases)
+    computeGanttLayout(filteredTasks, project, phases)
+
+  const totalDays = Math.max(1, Math.round(totalSpan / DAY_MS))
+  const zoomLevel = ZOOM_LEVELS.find((z) => z.key === zoom) || ZOOM_LEVELS[1]
+  // Floored so a very short/empty range never collapses the track to a
+  // sliver at the narrow zoom levels (e.g. a 2-day project at Quarter zoom).
+  const trackPxWidth = Math.max(Math.round(totalDays * zoomLevel.pxPerDay), 240)
 
   // Only computed while the toggle is on - cheap either way at this scale,
   // but no reason to run it when nothing reads the result.
@@ -218,7 +312,7 @@ function GanttChart({ project, tasks, taskDependencies, phases, expanded, onTogg
     window.addEventListener('resize', measure)
     return () => window.removeEventListener('resize', measure)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tasks, taskDependencies, expanded, collapsedPhases])
+  }, [tasks, taskDependencies, expanded, collapsedPhases, zoom, filterAssignee, filterStatus, filterTaskType, filterEpic])
 
   async function handleExportExcel() {
     setError(null)
@@ -292,6 +386,83 @@ function GanttChart({ project, tasks, taskDependencies, phases, expanded, onTogg
             />
             Show Critical Path
           </label>
+          <div className="gantt-zoom-control" role="group" aria-label="Zoom level">
+            {ZOOM_LEVELS.map((z) => (
+              <button
+                key={z.key}
+                type="button"
+                className={`gantt-zoom-btn ${zoom === z.key ? 'active' : ''}`}
+                aria-pressed={zoom === z.key}
+                onClick={() => setZoom(z.key)}
+              >
+                {z.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {expanded && tasks.length > 0 && (
+        <div className="gantt-filters">
+          <label className="task-select-field">
+            Assignee
+            <select value={filterAssignee} onChange={(e) => setFilterAssignee(e.target.value)}>
+              <option value="">All</option>
+              <option value="unassigned">Unassigned</option>
+              {assigneeFilterOptions.map((opt) => (
+                <option key={opt.key} value={opt.key}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="task-select-field">
+            Status
+            <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+              <option value="">All</option>
+              {TASK_STATUS_FILTER_OPTIONS.map((opt) => (
+                <option key={opt.key} value={opt.key}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="task-select-field">
+            Type
+            <select value={filterTaskType} onChange={(e) => setFilterTaskType(e.target.value)}>
+              <option value="">All</option>
+              <option value="task">Task</option>
+              <option value="milestone_marker">Milestone</option>
+            </select>
+          </label>
+          {showEpicFilter && (
+            <label className="task-select-field">
+              Epic
+              <select value={filterEpic} onChange={(e) => setFilterEpic(e.target.value)}>
+                <option value="">All</option>
+                <option value="none">No Epic</option>
+                {milestones.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          {hasActiveFilters && (
+            <button
+              type="button"
+              className="btn-secondary gantt-filters-clear"
+              onClick={() => {
+                setFilterAssignee('')
+                setFilterStatus('')
+                setFilterTaskType('')
+                setFilterEpic('')
+              }}
+            >
+              Clear filters
+            </button>
+          )}
         </div>
       )}
 
@@ -299,7 +470,11 @@ function GanttChart({ project, tasks, taskDependencies, phases, expanded, onTogg
 
       {expanded && tasks.length === 0 && <p className="charter-status">No tasks yet.</p>}
 
-      {expanded && tasks.length > 0 && bars.length === 0 && (
+      {expanded && tasks.length > 0 && hasActiveFilters && filteredTasks.length === 0 && (
+        <p className="charter-status">No tasks match the current filters.</p>
+      )}
+
+      {expanded && filteredTasks.length > 0 && bars.length === 0 && (
         <p className="charter-status">
           Add a start or due date to a task to see it on the timeline.
         </p>
@@ -326,7 +501,10 @@ function GanttChart({ project, tasks, taskDependencies, phases, expanded, onTogg
           <div
             className="gantt-chart"
             ref={chartRef}
-            style={{ gridTemplateRows: `repeat(${totalRows}, auto)` }}
+            style={{
+              gridTemplateRows: `repeat(${totalRows}, auto)`,
+              gridTemplateColumns: `minmax(140px, 240px) ${trackPxWidth}px`,
+            }}
           >
             <div
               className="gantt-row-label gantt-row-header"
@@ -420,6 +598,8 @@ function GanttChart({ project, tasks, taskDependencies, phases, expanded, onTogg
               const isMilestone = task.task_type === 'milestone_marker'
               const isDelayed = task.status === 'delayed'
               const isCritical = !!criticalPath?.taskIds.has(task.id)
+              const assigneeLabel = resolveAssigneeLabel(task, collaborators)
+              const assigneeSuffix = assigneeLabel ? ` · ${assigneeLabel}` : ''
               return (
                 <Fragment key={task.id}>
                   <div
@@ -428,6 +608,7 @@ function GanttChart({ project, tasks, taskDependencies, phases, expanded, onTogg
                     title={task.title}
                   >
                     {task.title}
+                    {assigneeLabel && <span className="gantt-row-assignee">{assigneeLabel}</span>}
                   </div>
                   <div className="gantt-row-track" style={{ gridRow, gridColumn: 2 }}>
                     {isMilestone ? (
@@ -438,7 +619,7 @@ function GanttChart({ project, tasks, taskDependencies, phases, expanded, onTogg
                           }}
                           className={`gantt-milestone ${isDelayed ? 'delayed' : ''} ${task.completed ? 'completed' : ''} ${isCritical ? 'critical-path' : ''}`}
                           style={{ left: `${leftPct}%` }}
-                          title={`${task.title} — ${task.due_date || 'TBD'}`}
+                          title={`${task.title} — ${task.due_date || 'TBD'}${assigneeSuffix}`}
                         />
                         <span className="gantt-milestone-label" style={{ left: `${leftPct}%` }}>
                           {task.title}
@@ -451,7 +632,7 @@ function GanttChart({ project, tasks, taskDependencies, phases, expanded, onTogg
                         }}
                         className={`gantt-bar ${singleDate ? 'single-date' : ''} ${isDelayed ? 'delayed' : ''} ${task.completed ? 'completed' : ''} ${isCritical ? 'critical-path' : ''}`}
                         style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
-                        title={`${task.start_date || 'TBD'} → ${task.due_date || 'TBD'}`}
+                        title={`${task.start_date || 'TBD'} → ${task.due_date || 'TBD'}${assigneeSuffix}`}
                       />
                     )}
                   </div>

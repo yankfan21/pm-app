@@ -12,6 +12,7 @@ import BacklogGenFlow from './BacklogGenFlow'
 import TaskImportFlow from './TaskImportFlow'
 import ManageAccess from './ManageAccess'
 import DependencyPicker from './components/DependencyPicker'
+import AssigneePicker, { resolveAssigneeLabel } from './components/AssigneePicker'
 import { DOCUMENT_TYPES, groupDocumentTypes } from './documentTypes'
 import { METHODOLOGIES, METHODOLOGY_LABELS } from './methodology'
 import { DEFAULT_PHASES } from './phases'
@@ -112,12 +113,14 @@ function ProjectDetail({ project, isOwner, canEdit }) {
   const [retros, setRetros] = useState([])
   const [milestones, setMilestones] = useState([])
   const [phases, setPhases] = useState([])
+  const [collaborators, setCollaborators] = useState([])
   const [title, setTitle] = useState('')
   const [startDate, setStartDate] = useState('')
   const [dueDate, setDueDate] = useState('')
   const [isMilestone, setIsMilestone] = useState(false)
   const [dependsOn, setDependsOn] = useState([])
   const [phaseId, setPhaseId] = useState('')
+  const [assignee, setAssignee] = useState({ assignee_user_id: null, assignee_name: null })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -233,6 +236,23 @@ function ProjectDetail({ project, isOwner, canEdit }) {
       else setPhases(data)
     }
 
+    // Same project_collaborators table ManageAccess.jsx reads - loaded here
+    // too so the assignee dropdown (task form, task rows, TaskGenFlow,
+    // TaskImportFlow, Gantt filter) has emails to show without every one of
+    // those needing its own query. Not gated on isOwner like the Manage
+    // Access section itself - any editor should be able to see/assign to
+    // the collaborator list, not just the owner.
+    async function loadCollaborators() {
+      const { data, error } = await supabase
+        .from('project_collaborators')
+        .select('*')
+        .eq('project_id', currentProject.id)
+        .order('created_at', { ascending: true })
+
+      if (error) setError(error.message)
+      else setCollaborators(data)
+    }
+
     async function loadDocs() {
       const results = await Promise.all(
         DOCUMENT_TYPES.map((docType) => {
@@ -264,6 +284,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
     loadSprints()
     loadMilestones()
     loadPhases()
+    loadCollaborators()
     loadDocs()
   }, [currentProject.id])
 
@@ -323,6 +344,8 @@ function ProjectDetail({ project, isOwner, canEdit }) {
         due_date: dueDate || null,
         task_type: isMilestone ? 'milestone_marker' : 'task',
         phase_id: currentProject.methodology !== 'agile' ? phaseId || null : null,
+        assignee_user_id: assignee.assignee_user_id,
+        assignee_name: assignee.assignee_name,
       })
       .select()
       .single()
@@ -349,6 +372,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
     setIsMilestone(false)
     setDependsOn([])
     setPhaseId('')
+    setAssignee({ assignee_user_id: null, assignee_name: null })
   }
 
   async function toggleComplete(task) {
@@ -464,6 +488,32 @@ function ProjectDetail({ project, isOwner, canEdit }) {
           ? { start_date: null, ...(task.due_date ? {} : { due_date: task.start_date }) }
           : {}),
       })
+      .eq('id', task.id)
+      .select()
+
+    if (error) {
+      setError(error.message)
+      return
+    }
+
+    if (!data || data.length === 0) {
+      setError('Update failed — you may not have permission to edit this task.')
+      return
+    }
+
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? data[0] : t)))
+  }
+
+  // Separate from updateTaskField for the same reason setTaskMilestone is:
+  // the two assignee columns are mutually exclusive (tasks_assignee_single_
+  // check), so a change has to write both in one request rather than one
+  // field at a time - otherwise an intermediate state (e.g. setting
+  // assignee_name while assignee_user_id from a previous pick is still set)
+  // would violate the constraint.
+  async function updateTaskAssignee(task, next) {
+    const { data, error } = await supabase
+      .from('tasks')
+      .update({ assignee_user_id: next.assignee_user_id, assignee_name: next.assignee_name })
       .eq('id', task.id)
       .select()
 
@@ -826,6 +876,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
           brief={docs.requirements_brief}
           riskLog={docs.risk_log}
           existingTasks={tasks.map((t) => ({ id: t.id, title: t.title, due_date: t.due_date }))}
+          collaborators={collaborators}
           onCommitted={(insertedTasks, insertedDeps) => {
             setTasks((prev) => [...prev, ...insertedTasks])
             if (insertedDeps?.length) setTaskDependencies((prev) => [...prev, ...insertedDeps])
@@ -839,6 +890,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
         <TaskImportFlow
           project={currentProject}
           existingTasks={tasks.map((t) => ({ id: t.id, title: t.title }))}
+          collaborators={collaborators}
           onCommitted={(insertedTasks, insertedDeps) => {
             setTasks((prev) => [...prev, ...insertedTasks])
             if (insertedDeps?.length) setTaskDependencies((prev) => [...prev, ...insertedDeps])
@@ -907,6 +959,15 @@ function ProjectDetail({ project, isOwner, canEdit }) {
               </select>
             </label>
           )}
+          <label className="task-select-field">
+            Assignee
+            <AssigneePicker
+              collaborators={collaborators}
+              assigneeUserId={assignee.assignee_user_id}
+              assigneeName={assignee.assignee_name}
+              onChange={setAssignee}
+            />
+          </label>
           <button type="submit">Add</button>
         </form>
       )}
@@ -929,30 +990,37 @@ function ProjectDetail({ project, isOwner, canEdit }) {
                     />
                     <span>{task.title}</span>
                   </label>
-                  <select
-                    className={`task-status-select ${
-                      TASK_STATUS_OPTIONS.find((s) => s.key === (task.status ?? 'not_started'))
-                        ?.colorClass || 'pending'
-                    }`}
-                    value={task.status ?? 'not_started'}
-                    disabled={!canEdit}
-                    onChange={(e) => updateTaskField(task, 'status', e.target.value)}
-                  >
-                    {TASK_STATUS_OPTIONS.map((s) => (
-                      <option key={s.key} value={s.key}>
-                        {s.label}
-                      </option>
-                    ))}
-                  </select>
-                  {canEdit && (
-                    <button
-                      type="button"
-                      className="delete"
-                      onClick={() => deleteTask(task)}
+                  <div className="task-row-controls">
+                    {resolveAssigneeLabel(task, collaborators) && (
+                      <span className="task-assignee-badge">
+                        {resolveAssigneeLabel(task, collaborators)}
+                      </span>
+                    )}
+                    <select
+                      className={`task-status-select ${
+                        TASK_STATUS_OPTIONS.find((s) => s.key === (task.status ?? 'not_started'))
+                          ?.colorClass || 'pending'
+                      }`}
+                      value={task.status ?? 'not_started'}
+                      disabled={!canEdit}
+                      onChange={(e) => updateTaskField(task, 'status', e.target.value)}
                     >
-                      Delete
-                    </button>
-                  )}
+                      {TASK_STATUS_OPTIONS.map((s) => (
+                        <option key={s.key} value={s.key}>
+                          {s.label}
+                        </option>
+                      ))}
+                    </select>
+                    {canEdit && (
+                      <button
+                        type="button"
+                        className="delete"
+                        onClick={() => deleteTask(task)}
+                      >
+                        Delete
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div className="task-dates">
                   <label className="task-milestone-toggle" title="A zero-duration diamond event on the Gantt chart (e.g. Design sign-off, Go-live) — unrelated to Epics, the Backlog's grouping concept.">
@@ -1015,6 +1083,16 @@ function ProjectDetail({ project, isOwner, canEdit }) {
                       </select>
                     </label>
                   )}
+                  <label className="task-select-field">
+                    Assignee
+                    <AssigneePicker
+                      collaborators={collaborators}
+                      assigneeUserId={task.assignee_user_id}
+                      assigneeName={task.assignee_name}
+                      disabled={!canEdit}
+                      onChange={(next) => updateTaskAssignee(task, next)}
+                    />
+                  </label>
                 </div>
               </li>
             ))}
@@ -1030,6 +1108,8 @@ function ProjectDetail({ project, isOwner, canEdit }) {
           tasks={tasks.filter((t) => t.backlog_status == null)}
           taskDependencies={taskDependencies}
           phases={phases}
+          milestones={milestones}
+          collaborators={collaborators}
           expanded={expandedSection === 'gantt'}
           onToggle={() => toggleSection('gantt')}
         />

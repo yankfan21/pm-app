@@ -390,6 +390,34 @@
   background: var(--bg);
 }
 
+.assignee-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.assignee-picker-select {
+  max-width: 160px;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--text-h);
+  background: var(--bg);
+}
+
+.assignee-picker-name-input {
+  width: 130px;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--text-h);
+  background: var(--bg);
+}
+
 .task-milestone-toggle {
   display: flex;
   align-items: center;
@@ -462,6 +490,23 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+.task-row-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.task-assignee-badge {
+  padding: 3px 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 11px;
+  color: var(--text);
+  background: var(--card-bg);
+  white-space: nowrap;
 }
 
 .task-list li label {
@@ -1782,6 +1827,68 @@
   font-size: 15px;
   color: var(--text);
   cursor: pointer;
+}
+
+.gantt-zoom-control {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-left: auto;
+}
+
+.gantt-zoom-btn {
+  padding: 6px 12px;
+  border: none;
+  border-left: 1px solid var(--border);
+  background: var(--card-bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.gantt-zoom-btn:first-child {
+  border-left: none;
+}
+
+.gantt-zoom-btn.active {
+  background: var(--accent);
+  color: white;
+}
+
+.gantt-zoom-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.gantt-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin-top: 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card-bg);
+}
+
+.gantt-filters-clear {
+  margin-left: auto;
+}
+
+.gantt-row-assignee {
+  flex-shrink: 0;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--text);
+  background: var(--bg);
+  white-space: nowrap;
 }
 
 .gantt-critical-summary {
