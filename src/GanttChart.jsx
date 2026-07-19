@@ -343,7 +343,7 @@ function GanttChart({ project, tasks, taskDependencies, phases, milestones = [],
   }
 
   return (
-    <div className="gantt">
+    <div className="gantt detail-zone">
       <h2 className="tasks-heading">
         <button
           type="button"

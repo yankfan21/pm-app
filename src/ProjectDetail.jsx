@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import AppHeader from './AppHeader'
 import GanttChart from './GanttChart'
+import KeyMetricsDashboard from './KeyMetricsDashboard'
 import PhaseDetailView from './PhaseDetailView'
 import BacklogView from './BacklogView'
 import SprintBoardView from './SprintBoardView'
@@ -820,6 +821,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
       )}
 
       {currentProject.methodology !== 'agile' && (
+        <div className="detail-zone">
         <h2 className="tasks-heading">
           <button
             type="button"
@@ -839,7 +841,6 @@ function ProjectDetail({ project, isOwner, canEdit }) {
             </span>
           </button>
         </h2>
-      )}
 
       {expandedSection === 'tasks' && docs.charter && canEdit && currentProject.methodology !== 'agile' && (
         <button
@@ -1101,6 +1102,19 @@ function ProjectDetail({ project, isOwner, canEdit }) {
           )}
         </ul>
       )}
+        </div>
+      )}
+
+      {!loading && currentProject.methodology !== 'agile' && (
+        <KeyMetricsDashboard
+          project={currentProject}
+          tasks={tasks}
+          phases={phases}
+          riskLog={docs.risk_log}
+          expanded={expandedSection === 'key-metrics'}
+          onToggle={() => toggleSection('key-metrics')}
+        />
+      )}
 
       {!loading && currentProject.methodology !== 'agile' && (
         <GanttChart
@@ -1112,6 +1126,17 @@ function ProjectDetail({ project, isOwner, canEdit }) {
           collaborators={collaborators}
           expanded={expandedSection === 'gantt'}
           onToggle={() => toggleSection('gantt')}
+        />
+      )}
+
+      {!loading && currentProject.methodology === 'agile' && (
+        <KeyMetricsDashboard
+          project={currentProject}
+          tasks={tasks}
+          phases={phases}
+          riskLog={docs.risk_log}
+          expanded={expandedSection === 'key-metrics'}
+          onToggle={() => toggleSection('key-metrics')}
         />
       )}
 

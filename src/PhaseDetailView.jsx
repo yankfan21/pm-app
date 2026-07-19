@@ -37,7 +37,7 @@ function PhaseDetailView({ phases, setPhases, canEdit, expanded, onToggle }) {
   }
 
   return (
-    <div className="phases">
+    <div className="phases detail-zone">
       <h2 className="tasks-heading">
         <button
           type="button"
