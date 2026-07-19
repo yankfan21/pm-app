@@ -147,29 +147,16 @@ function CriticalIssuesCard({ issues }) {
 // the latest Evaluate Project run (see ProjectStatusCard); Critical Issues
 // is a live recomputation from already-loaded tasks/phases/riskLog props,
 // not tied to that snapshot at all.
-function KeyMetricsDashboard({ project, tasks, phases, riskLog, expanded, onToggle }) {
+function KeyMetricsDashboard({ project, tasks, phases, riskLog, expanded }) {
   const issues = useCriticalIssues(project, tasks, phases, riskLog)
 
   return (
     <div className="detail-zone key-metrics-dashboard">
-      <h2 className="tasks-heading">
-        <button
-          type="button"
-          className="collapsible-toggle toggle-header-with-badge"
-          onClick={onToggle}
-          aria-expanded={expanded}
-        >
-          <span className="toggle-header-main">
-            <span className={`chevron ${expanded ? '' : 'collapsed'}`} aria-hidden="true">
-              ▾
-            </span>
-            <span className={`status-dot ${issues.length > 0 ? 'critical' : 'done'}`} aria-hidden="true" />
-            Key Metrics Dashboard
-          </span>
-          <span className={`doc-status-badge ${issues.length > 0 ? 'critical' : 'done'}`}>
-            {issues.length > 0 ? `${issues.length} Critical Issue${issues.length === 1 ? '' : 's'}` : 'All Clear'}
-          </span>
-        </button>
+      <h2 className="tasks-heading section-heading-static">
+        <span className="toggle-header-main">Key Metrics Dashboard</span>
+        <span className={`doc-status-badge ${issues.length > 0 ? 'critical' : 'done'}`}>
+          {issues.length > 0 ? `${issues.length} Critical Issue${issues.length === 1 ? '' : 's'}` : 'All Clear'}
+        </span>
       </h2>
 
       {expanded && (

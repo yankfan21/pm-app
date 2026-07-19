@@ -7,7 +7,7 @@ import { supabase } from './supabaseClient'
 // it (Auto, from the tasks assigned to it, vs. Custom, a PM-set override),
 // and a toggle to switch between the two - the tool computes a suggestion,
 // the PM decides whether to keep it.
-function PhaseDetailView({ phases, setPhases, canEdit, expanded, onToggle }) {
+function PhaseDetailView({ phases, setPhases, canEdit, expanded }) {
   const sorted = [...phases].sort((a, b) => a.phase_number - b.phase_number)
 
   async function setMode(phase, isCustom) {
@@ -38,24 +38,11 @@ function PhaseDetailView({ phases, setPhases, canEdit, expanded, onToggle }) {
 
   return (
     <div className="phases detail-zone">
-      <h2 className="tasks-heading">
-        <button
-          type="button"
-          className="collapsible-toggle toggle-header-with-badge"
-          onClick={onToggle}
-          aria-expanded={expanded}
-        >
-          <span className="toggle-header-main">
-            <span className={`chevron ${expanded ? '' : 'collapsed'}`} aria-hidden="true">
-              ▾
-            </span>
-            <span className={`status-dot ${sorted.length > 0 ? 'done' : 'pending'}`} aria-hidden="true" />
-            Phases
-          </span>
-          <span className={`doc-status-badge ${sorted.length > 0 ? 'done' : 'pending'}`}>
-            {sorted.length > 0 ? `${sorted.length} Phase${sorted.length === 1 ? '' : 's'}` : 'Not seeded'}
-          </span>
-        </button>
+      <h2 className="tasks-heading section-heading-static">
+        <span className="toggle-header-main">Phases</span>
+        <span className={`doc-status-badge ${sorted.length > 0 ? 'done' : 'pending'}`}>
+          {sorted.length > 0 ? `${sorted.length} Phase${sorted.length === 1 ? '' : 's'}` : 'Not seeded'}
+        </span>
       </h2>
 
       {expanded && (

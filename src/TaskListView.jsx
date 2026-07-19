@@ -35,7 +35,7 @@ function statusFor(task, variant) {
 // (already scoped to one side - Waterfall or Agile - by ProjectDetail.jsx,
 // same convention GanttChart/BacklogView use). Title is deliberately not
 // sortable; only Due Date/Status/Assignee were asked for.
-function TaskListView({ title, tasks, collaborators, variant, expanded, onToggle }) {
+function TaskListView({ title, tasks, collaborators, variant, expanded }) {
   const [sortKey, setSortKey] = useState('due_date')
   const [sortDir, setSortDir] = useState('asc')
 
@@ -86,24 +86,11 @@ function TaskListView({ title, tasks, collaborators, variant, expanded, onToggle
 
   return (
     <div className="detail-zone">
-      <h2 className="tasks-heading">
-        <button
-          type="button"
-          className="collapsible-toggle toggle-header-with-badge"
-          onClick={onToggle}
-          aria-expanded={expanded}
-        >
-          <span className="toggle-header-main">
-            <span className={`chevron ${expanded ? '' : 'collapsed'}`} aria-hidden="true">
-              ▾
-            </span>
-            <span className={`status-dot ${tasks.length > 0 ? 'done' : 'pending'}`} aria-hidden="true" />
-            {title}
-          </span>
-          <span className={`doc-status-badge ${tasks.length > 0 ? 'done' : 'pending'}`}>
-            {tasks.length > 0 ? `${tasks.length} Item${tasks.length === 1 ? '' : 's'}` : 'No items'}
-          </span>
-        </button>
+      <h2 className="tasks-heading section-heading-static">
+        <span className="toggle-header-main">{title}</span>
+        <span className={`doc-status-badge ${tasks.length > 0 ? 'done' : 'pending'}`}>
+          {tasks.length > 0 ? `${tasks.length} Item${tasks.length === 1 ? '' : 's'}` : 'No items'}
+        </span>
       </h2>
 
       {expanded && (

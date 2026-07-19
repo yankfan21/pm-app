@@ -331,7 +331,19 @@
   margin: 24px 0;
 }
 
-.task-form input[type='text'] {
+/* Direct-child combinator, not a bare descendant selector - this is meant
+   to style only the task-form's own title input. As a descendant selector
+   it also matched .dependency-picker-search (type="text", nested several
+   levels down inside the Depends-on field's DependencyPicker), handing it
+   flex: 1 1 200px meant for a row-direction flex container. But
+   .dependency-picker-search's actual flex parent is
+   .dependency-picker-input-wrap, which is flex-direction: column - so that
+   flex-basis: 200px was read as a *height*, not a width, rendering the
+   search box as a ~200px-tall empty rectangle instead of a normal text
+   input. Only the new-task form (this component) hit it; the same
+   DependencyPicker on each existing task row sits under .task-dates, which
+   this selector never matched. */
+.task-form > input[type='text'] {
   flex: 1 1 200px;
   padding: 8px 12px;
   border: 1px solid var(--border);
@@ -632,9 +644,18 @@
   cursor: default;
 }
 
+/* flex: 1's implicit flex-basis: 0% told the wrap algorithm this item
+   claims no space up front, so every sibling with flex-shrink: 0
+   (.backlog-status-select, .backlog-assign-select) or a fixed inner width
+   (AssigneePicker) kept its full natural width no matter how tight the row
+   got, and 100% of the squeeze landed on the title text - one word per
+   line in a sliver-width column. A real flex-basis plus a min-width floor
+   gives the wrap algorithm an honest number to work with, so once the row
+   can't fit everyone at a reasonable size, the fixed-width controls wrap to
+   their own line instead of crushing the title. */
 .backlog-item-main {
-  flex: 1;
-  min-width: 0;
+  flex: 1 1 240px;
+  min-width: 200px;
 }
 
 .backlog-item-title-row {
@@ -1154,15 +1175,19 @@
   margin-top: 48px;
 }
 
-/* Section containers - Manage Access and Documents. A neutral, structural
-   counterpart to .agile-zone below: same padding/border/radius/shadow
-   language, gray left accent instead of purple since neither section is
-   tied to a methodology. Mirrors the All Projects card surface
-   (--surface-1 == --card-bg) so these read as larger siblings of those
-   cards - same flush-left/rounded-right radius, same left-accent-bar +
-   shadow combination that makes a card read as a distinct block, carried
-   through regardless of methodology (Waterfall/Agile/Hybrid all get this
-   for Manage Access/Documents). */
+/* Shared card container for every routed project-detail section (Overview's
+   Key Metrics, Phases, Tasks and Milestones, Backlog, Gantt Chart, Sprint
+   Board, Sprint Retro, List, Team, Documents, plus Manage Access) - the one
+   place page-level container styling (padding/border/radius/shadow/hover)
+   lives, so no section drifts from another. Neutral gray left accent for
+   all of them; there used to be a separate purple-accented .agile-zone
+   variant for Backlog/Sprint Board/Sprint Retro when those three were
+   grouped together on one page, but now that each is its own routed page
+   there's no grouping left to signal - removed in favor of this one shared
+   class. Mirrors the All Projects card surface (--surface-1 == --card-bg)
+   so these read as larger siblings of those cards - same flush-left/
+   rounded-right radius, same left-accent-bar + shadow combination that
+   makes a card read as a distinct block. */
 .detail-zone {
   margin-top: 2rem;
   padding: 1.5rem;
@@ -1191,40 +1216,6 @@
 }
 
 .detail-zone .tasks-heading {
-  margin-top: 0;
-}
-
-/* Groups Backlog / Sprint Board / Sprint Retro into one visual zone (a
-   faint purple wash) since they're all facets of the same Agile workflow -
-   mirrors the same "related content, shared surface" idea as .detail-zone
-   above, with a fixed purple accent instead of gray to signal "Agile
-   planning docs live here." Same card-parity treatment (flush-left radius +
-   shadow) as .detail-zone. */
-.agile-zone {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  margin-top: 2rem;
-  padding: 1.5rem;
-  border: 1px solid var(--border-faint);
-  border-left: 3px solid var(--agile-accent);
-  border-radius: 0 8px 8px 0;
-  background: var(--agile-tint);
-  box-shadow: var(--card-shadow);
-  transition:
-    box-shadow 0.15s ease,
-    transform 0.05s ease,
-    border-color 0.15s ease;
-}
-
-.agile-zone:hover {
-  border-color: var(--border);
-  border-left-color: color-mix(in srgb, var(--agile-accent) 80%, white 20%);
-  box-shadow: var(--card-hover-shadow);
-  transform: translateY(-1px);
-}
-
-.agile-zone .tasks-heading {
   margin-top: 0;
 }
 
@@ -1397,6 +1388,20 @@
 
 .toggle-header-with-badge {
   justify-content: space-between;
+}
+
+/* Section header for a routed page (Phases, Gantt Chart, Key Metrics
+   Dashboard, Backlog, Sprint Board, Sprint Retro, List, Team) - same
+   left-title/right-badge layout .toggle-header-with-badge gave the old
+   collapsible <button>, without the chevron/status-dot/toggle affordance.
+   These sections are no longer panels in a page-wide accordion (the
+   secondary nav already tells the user which one they're on), so there's
+   nothing left to expand or collapse - just a plain heading. */
+.section-heading-static {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
 
 .toggle-header-main {
@@ -1828,6 +1833,36 @@
   fill: #f97316;
 }
 
+.gantt-header-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gantt-fullscreen-toggle {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  font-size: 13px;
+}
+
+/* Local-state fullscreen (GanttChart.jsx's isFullscreen), not a route
+   change - a position: fixed overlay pinned to the full viewport is enough
+   to cover the app header, project header, and nav sidebar/secondary panel
+   without needing to reach up and coordinate hiding them from
+   ProjectDetailLayout.jsx. z-index comfortably clears every other
+   stacking context in the app (highest existing use is 10, for dropdowns/
+   the dependency picker's results list). */
+.gantt-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  margin: 0;
+  border-radius: 0;
+  border-left-width: 3px;
+  overflow: auto;
+  background: var(--bg);
+}
+
 .gantt-critical-toggle {
   display: inline-flex;
   align-items: center;
@@ -2011,8 +2046,21 @@
   margin-top: 16px;
 }
 
+/* This h3 had no explicit font-weight/color/letter-spacing, so it fell back
+   to the browser's bold default plus the body's muted --text color instead
+   of matching h2/.tasks-heading's explicit 500-weight, --text-h (high-
+   contrast), -0.24px-tracked styling - the exact typography reference
+   standard the rest of the app was audited against. Same shared class
+   across every document view (Charter, Requirements Brief, Risk Log,
+   Comms, Budget Tracker, Post-Mortem) plus Sprint Retro's "Sprint: X"
+   heading, so this one fix realigns all of them at once. */
 .charter-heading {
+  font-family: var(--heading);
   font-size: 24px;
+  font-weight: 500;
+  line-height: 118%;
+  letter-spacing: -0.24px;
+  color: var(--text-h);
   margin: 0;
 }
 
@@ -2438,11 +2486,51 @@
   font-size: 15px;
 }
 
-.project-meta {
+/* Single-line project header (ProjectDetailLayout.jsx) - name + methodology
+   + priority + date + truncated description + archive button, all inline.
+   Replaces the old 3-row title/description/badges block, which only ever
+   rendered once on the old single-scroll page; now that this layout
+   persists across every section route, a multi-row block would repeat its
+   full height on every page switch. */
+.project-header-bar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 12px;
+  flex-wrap: wrap;
+  gap: 10px 12px;
+  margin-top: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.project-header-name {
+  flex-shrink: 0;
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: -0.3px;
+}
+
+.project-header-date {
+  flex-shrink: 0;
+  font-size: 14px;
+  color: var(--text);
+}
+
+/* The one flexible item in the row - claims whatever space is left after
+   every fixed-size sibling (name/badges/date/archive button) takes what it
+   needs, then truncates its own text with an ellipsis instead of wrapping
+   the row taller. Full text still available via the title attribute. */
+.project-header-goal {
+  flex: 1 1 100px;
+  min-width: 60px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.project-header-archive {
+  flex-shrink: 0;
 }
 
 .priority-badge {
@@ -2486,10 +2574,6 @@
 
 .project-list li.archived {
   opacity: 0.6;
-}
-
-.project-detail-header {
-  margin-top: 24px;
 }
 
 .modal-overlay {
@@ -2837,6 +2921,49 @@
   padding: 24px 12px;
 }
 
+/* Risk Log's own table, not the shared .risk-log-table base (also used by
+   List/Team/Budget/Sprint Retro's candidate table, each with different
+   columns - a column-width rule here would misapply to all of them).
+   Same root cause as the earlier Backlog title bug: plain table-layout:auto
+   let Likelihood/Impact/Owner's short <select>/<input> content claim more
+   width than they need, leaving Risk/Mitigation's <textarea> columns
+   squeezed - narrow enough that even with the auto-resize fix in
+   RiskLogView.jsx, long entries had nowhere to wrap into. table-layout:
+   fixed + explicit percentages give Risk/Mitigation the majority share. */
+.risk-log-main-table {
+  table-layout: fixed;
+}
+
+.risk-log-main-table th:nth-child(1),
+.risk-log-main-table td:nth-child(1) {
+  width: 30%;
+}
+
+.risk-log-main-table th:nth-child(2),
+.risk-log-main-table td:nth-child(2) {
+  width: 10%;
+}
+
+.risk-log-main-table th:nth-child(3),
+.risk-log-main-table td:nth-child(3) {
+  width: 10%;
+}
+
+.risk-log-main-table th:nth-child(4),
+.risk-log-main-table td:nth-child(4) {
+  width: 30%;
+}
+
+.risk-log-main-table th:nth-child(5),
+.risk-log-main-table td:nth-child(5) {
+  width: 15%;
+}
+
+.risk-log-main-table th:nth-child(6),
+.risk-log-main-table td:nth-child(6) {
+  width: 5%;
+}
+
 .risk-cell-input {
   display: block;
   width: 100%;
@@ -2896,35 +3023,6 @@ textarea.risk-cell-input {
 
 .team-view-body {
   margin-top: 16px;
-}
-
-.team-group-list {
-  list-style: none;
-  margin: 16px 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.team-group {
-  padding: 12px 16px;
-  border: 1px solid var(--row-border);
-  border-radius: 6px;
-  background: var(--row-bg);
-}
-
-.team-group-header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-}
-
-.team-group-name {
-  font-weight: 500;
-  color: var(--text-h);
-  margin-right: auto;
 }
 
 .risk-level-select {
@@ -3714,4 +3812,124 @@ textarea.risk-cell-input {
   padding: 8px 10px;
   color: var(--text);
   font-size: 13px;
+}
+
+/* Two-tier project detail nav (ProjectDetailLayout.jsx/ProjectNav.jsx) -
+   primary category strip + secondary section list, sitting beside whichever
+   section route is currently matched. Same active-state language as
+   .app-nav a.selected (var(--accent) text/border) so the project-level nav
+   reads as the same system as the top-level one, just denser. */
+.project-nav-shell {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  margin-top: 2rem;
+}
+
+.project-nav {
+  display: flex;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.project-nav-primary {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 140px;
+  flex-shrink: 0;
+}
+
+.project-nav-primary-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 14px;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.project-nav-primary-item:hover {
+  background: var(--code-bg);
+  color: var(--text-h);
+}
+
+.project-nav-primary-item.selected {
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.project-nav-primary-icon {
+  flex-shrink: 0;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.project-nav-secondary {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 190px;
+  flex-shrink: 0;
+  padding-left: 16px;
+  border-left: 1px solid var(--border);
+}
+
+.project-nav-secondary-item {
+  display: block;
+  padding: 8px 12px;
+  border-radius: 6px;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 14px;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.project-nav-secondary-item:hover {
+  background: var(--code-bg);
+  color: var(--text-h);
+}
+
+.project-nav-secondary-item.selected {
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.project-nav-content {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 720px) {
+  .project-nav-shell {
+    flex-direction: column;
+  }
+
+  .project-nav {
+    width: 100%;
+    gap: 12px;
+  }
+
+  .project-nav-primary {
+    flex-direction: row;
+    width: auto;
+    overflow-x: auto;
+  }
+
+  .project-nav-secondary {
+    flex-direction: row;
+    width: auto;
+    padding-left: 12px;
+    overflow-x: auto;
+  }
 }

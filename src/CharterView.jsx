@@ -190,7 +190,6 @@ function CharterView({ project, charter, canEdit, onUpdate }) {
   return (
     <div className="charter">
       <div className="section-header">
-        <h3 className="charter-heading">Charter</h3>
         <div className="charter-actions">
           <button type="button" className="btn-secondary" onClick={handleExportPdf}>
             Export PDF

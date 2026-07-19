@@ -192,7 +192,6 @@ function RequirementsView({ project, charter, brief, canEdit, onUpdate }) {
   return (
     <div className="charter">
       <div className="section-header">
-        <h3 className="charter-heading">Requirements Brief</h3>
         <div className="charter-actions">
           <button type="button" className="btn-secondary" onClick={handleExportPdf}>
             Export PDF

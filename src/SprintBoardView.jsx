@@ -21,7 +21,6 @@ function SprintBoardView({
   collaborators,
   canEdit,
   expanded,
-  onToggle,
   selectedSprintId,
   setSelectedSprintId,
 }) {
@@ -252,25 +251,12 @@ function SprintBoardView({
   }
 
   return (
-    <div className="sprint-board">
-      <h2 className="tasks-heading">
-        <button
-          type="button"
-          className="collapsible-toggle toggle-header-with-badge"
-          onClick={onToggle}
-          aria-expanded={expanded}
-        >
-          <span className="toggle-header-main">
-            <span className={`chevron ${expanded ? '' : 'collapsed'}`} aria-hidden="true">
-              ▾
-            </span>
-            <span className={`status-dot ${sprints.length > 0 ? 'done' : 'pending'}`} aria-hidden="true" />
-            Sprint Board
-          </span>
-          <span className={`doc-status-badge ${sprints.length > 0 ? 'done' : 'pending'}`}>
-            {sprints.length > 0 ? `${sprints.length} Sprint${sprints.length === 1 ? '' : 's'}` : 'Not started'}
-          </span>
-        </button>
+    <div className="sprint-board detail-zone">
+      <h2 className="tasks-heading section-heading-static">
+        <span className="toggle-header-main">Sprint Board</span>
+        <span className={`doc-status-badge ${sprints.length > 0 ? 'done' : 'pending'}`}>
+          {sprints.length > 0 ? `${sprints.length} Sprint${sprints.length === 1 ? '' : 's'}` : 'Not started'}
+        </span>
       </h2>
 
       {expanded && (

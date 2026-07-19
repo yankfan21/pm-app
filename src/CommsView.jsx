@@ -42,7 +42,7 @@ function formatDate(iso) {
 // generic `document_versions` table before overwriting it, which backs the
 // "History" panel below.
 function CommsView({ variant, project, charter, brief, riskLog, statusUpdates, doc, canEdit, onUpdate }) {
-  const { table, title, pageSubtitle, sections } = COMMS_VARIANTS[variant]
+  const { table, pageSubtitle, sections } = COMMS_VARIANTS[variant]
   const docTypeKey = DOC_TYPE_BY_VARIANT[variant]
   const [values, setValues] = useState(() =>
     Object.fromEntries(sections.map((s) => [s.key, doc[s.key] || '']))
@@ -264,7 +264,6 @@ function CommsView({ variant, project, charter, brief, riskLog, statusUpdates, d
   return (
     <div className="charter">
       <div className="section-header">
-        <h3 className="charter-heading">{title}</h3>
         <div className="charter-actions">
           <button type="button" className="btn-secondary" onClick={handleExportPdf}>
             Export PDF

@@ -46,7 +46,7 @@ function computeAgileStats(groupTasks) {
 // Waterfall/Hybrid doesn't) and which stats apply, per the spec this was
 // built from. Read-only, no editing here (that lives on the Backlog/Sprint
 // Board/Task list rows themselves).
-function TeamView({ title, variant, tasks, collaborators, sprints, selectedSprintId, expanded, onToggle }) {
+function TeamView({ title, variant, tasks, collaborators, sprints, selectedSprintId, expanded }) {
   const activeSprint = variant === 'agile' ? sprints?.find((s) => s.id === selectedSprintId) || null : null
 
   const groups = useMemo(() => {
@@ -89,26 +89,13 @@ function TeamView({ title, variant, tasks, collaborators, sprints, selectedSprin
 
   return (
     <div className="detail-zone">
-      <h2 className="tasks-heading">
-        <button
-          type="button"
-          className="collapsible-toggle toggle-header-with-badge"
-          onClick={onToggle}
-          aria-expanded={expanded}
-        >
-          <span className="toggle-header-main">
-            <span className={`chevron ${expanded ? '' : 'collapsed'}`} aria-hidden="true">
-              ▾
-            </span>
-            <span className={`status-dot ${sortedGroups.length > 0 ? 'done' : 'pending'}`} aria-hidden="true" />
-            {title}
-          </span>
-          <span className={`doc-status-badge ${sortedGroups.length > 0 ? 'done' : 'pending'}`}>
-            {sortedGroups.length > 0
-              ? `${sortedGroups.length} Assignee${sortedGroups.length === 1 ? '' : 's'}`
-              : 'No items'}
-          </span>
-        </button>
+      <h2 className="tasks-heading section-heading-static">
+        <span className="toggle-header-main">{title}</span>
+        <span className={`doc-status-badge ${sortedGroups.length > 0 ? 'done' : 'pending'}`}>
+          {sortedGroups.length > 0
+            ? `${sortedGroups.length} Assignee${sortedGroups.length === 1 ? '' : 's'}`
+            : 'No items'}
+        </span>
       </h2>
 
       {expanded && (
@@ -121,32 +108,59 @@ function TeamView({ title, variant, tasks, collaborators, sprints, selectedSprin
             </p>
           )}
 
-          <ul className="team-group-list">
-            {sortedGroups.map((g) => (
-              <li key={g.key} className="team-group">
-                <div className="team-group-header">
-                  <span className="team-group-name">{g.label}</span>
-                  <span className="doc-status-badge pending">
-                    {g.stats.taskCount} {itemNoun}
-                    {g.stats.taskCount === 1 ? '' : 's'}
-                  </span>
+          <div className="risk-table-wrap">
+            <table className="risk-log-table team-view-table">
+              <thead>
+                <tr>
+                  <th>Assignee</th>
+                  <th>{variant === 'agile' ? 'Backlog Items' : 'Tasks'}</th>
                   {variant === 'agile' ? (
-                    <span className="story-points-badge">{g.stats.totalPoints} pts</span>
+                    <th>Story Points</th>
                   ) : (
                     <>
-                      <span className={`doc-status-badge ${g.stats.overdueOrDelayedCount > 0 ? 'critical' : 'done'}`}>
-                        {g.stats.overdueOrDelayedCount} overdue/delayed
-                      </span>
-                      <span className={`doc-status-badge ${g.stats.overlapCount > 0 ? 'critical' : 'done'}`}>
-                        {g.stats.overlapCount} overlapping
-                      </span>
+                      <th>Overdue/Delayed</th>
+                      <th>Overlapping</th>
                     </>
                   )}
-                </div>
-              </li>
-            ))}
-            {sortedGroups.length === 0 && <li className="empty">No {itemNoun}s assigned yet</li>}
-          </ul>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedGroups.map((g) => (
+                  <tr key={g.key}>
+                    <td>{g.label}</td>
+                    <td>{g.stats.taskCount}</td>
+                    {variant === 'agile' ? (
+                      <td>{g.stats.totalPoints} pts</td>
+                    ) : (
+                      <>
+                        <td>
+                          <span
+                            className={`status-dot ${g.stats.overdueOrDelayedCount > 0 ? 'critical' : 'done'}`}
+                            aria-hidden="true"
+                          />{' '}
+                          {g.stats.overdueOrDelayedCount}
+                        </td>
+                        <td>
+                          <span
+                            className={`status-dot ${g.stats.overlapCount > 0 ? 'critical' : 'done'}`}
+                            aria-hidden="true"
+                          />{' '}
+                          {g.stats.overlapCount}
+                        </td>
+                      </>
+                    )}
+                  </tr>
+                ))}
+                {sortedGroups.length === 0 && (
+                  <tr>
+                    <td colSpan={variant === 'agile' ? 3 : 4} className="empty">
+                      No {itemNoun}s assigned yet
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

@@ -1,4 +1,4 @@
-import { Fragment, useLayoutEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { DAY_MS, buildElbowPoints, computeCriticalPath, computeGanttLayout, parseDay } from './ganttLayout'
 import { resolveAssigneeLabel } from './components/AssigneePicker'
 
@@ -155,7 +155,7 @@ function buildElbowPath(x1, y1, x2, y2) {
   return `M ${x1} ${y1} H ${midX} V ${y2} H ${x2}`
 }
 
-function GanttChart({ project, tasks, taskDependencies, phases, milestones = [], collaborators = [], expanded, onToggle }) {
+function GanttChart({ project, tasks, taskDependencies, phases, milestones = [], collaborators = [], expanded }) {
   const chartRef = useRef(null)
   const trackRef = useRef(null)
   const barRefs = useRef({})
@@ -178,6 +178,20 @@ function GanttChart({ project, tasks, taskDependencies, phases, milestones = [],
   const [filterStatus, setFilterStatus] = useState('')
   const [filterTaskType, setFilterTaskType] = useState('')
   const [filterEpic, setFilterEpic] = useState('')
+  // Local UI state, not a route change - CSS-only (.gantt-fullscreen below
+  // makes this .detail-zone a position: fixed, inset: 0 overlay), so it
+  // covers the app header, project header, and nav sidebar/secondary panel
+  // without needing to reach up and coordinate with ProjectDetailLayout.jsx.
+  const [isFullscreen, setIsFullscreen] = useState(false)
+
+  useEffect(() => {
+    if (!isFullscreen) return
+    function onKeyDown(e) {
+      if (e.key === 'Escape') setIsFullscreen(false)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [isFullscreen])
 
   function togglePhaseCollapse(key) {
     setCollapsedPhases((prev) => ({ ...prev, [key]: !prev[key] }))
@@ -343,25 +357,21 @@ function GanttChart({ project, tasks, taskDependencies, phases, milestones = [],
   }
 
   return (
-    <div className="gantt detail-zone">
-      <h2 className="tasks-heading">
-        <button
-          type="button"
-          className="collapsible-toggle toggle-header-with-badge"
-          onClick={onToggle}
-          aria-expanded={expanded}
-        >
-          <span className="toggle-header-main">
-            <span className={`chevron ${expanded ? '' : 'collapsed'}`} aria-hidden="true">
-              ▾
-            </span>
-            <span className={`status-dot ${bars.length > 0 ? 'done' : 'pending'}`} aria-hidden="true" />
-            Gantt Chart
-          </span>
+    <div className={`gantt detail-zone ${isFullscreen ? 'gantt-fullscreen' : ''}`}>
+      <h2 className="tasks-heading section-heading-static">
+        <span className="toggle-header-main">Gantt Chart</span>
+        <span className="gantt-header-controls">
           <span className={`doc-status-badge ${bars.length > 0 ? 'done' : 'pending'}`}>
             {bars.length > 0 ? 'Generated' : 'Not started'}
           </span>
-        </button>
+          <button
+            type="button"
+            className="btn-secondary gantt-fullscreen-toggle"
+            onClick={() => setIsFullscreen((prev) => !prev)}
+          >
+            {isFullscreen ? '✕ Exit Fullscreen' : '⛶ Fullscreen'}
+          </button>
+        </span>
       </h2>
 
       {expanded && (

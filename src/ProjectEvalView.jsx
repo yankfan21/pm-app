@@ -87,10 +87,6 @@ function ProjectEvalView({ project, evaluations }) {
 
   return (
     <div className="charter">
-      <div className="section-header">
-        <h3 className="charter-heading">Project Evaluation</h3>
-      </div>
-
       <EvalCard project={project} evaluation={latest} exportable />
 
       {older.length > 0 && (

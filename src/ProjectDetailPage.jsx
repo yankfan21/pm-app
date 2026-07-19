@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import { useAuth } from './AuthContext'
 import AppHeader from './AppHeader'
-import ProjectDetail from './ProjectDetail'
+import ProjectDetailLayout from './ProjectDetailLayout'
 
 function ProjectDetailPage() {
   const { projectId } = useParams()
@@ -104,7 +104,7 @@ function ProjectDetailPage() {
   const isOwner = role === 'owner'
   const canEdit = role === 'owner' || role === 'editor'
 
-  return <ProjectDetail project={project} isOwner={isOwner} canEdit={canEdit} />
+  return <ProjectDetailLayout project={project} isOwner={isOwner} canEdit={canEdit} />
 }
 
 export default ProjectDetailPage

@@ -85,7 +85,7 @@ function RetroListSection({ label, entries, canEdit, newValue, onNewValueChange,
 // need PM judgment. Same bulk accept/edit/reject review table as Task
 // Gen/Backlog Gen (not silent insert), just with a Category column
 // instead of duration/points.
-function SprintRetroView({ project, sprints, retros, setRetros, tasks, canEdit, expanded, onToggle }) {
+function SprintRetroView({ project, sprints, retros, setRetros, tasks, canEdit, expanded }) {
   // null = browsing the list of existing retros; a sprint id = viewing/
   // editing that sprint's retro. No auto-select-current-sprint here (unlike
   // Sprint Board) - the list is the primary landing view now, not a single
@@ -278,25 +278,12 @@ function SprintRetroView({ project, sprints, retros, setRetros, tasks, canEdit, 
   }
 
   return (
-    <div className="sprint-retro">
-      <h2 className="tasks-heading">
-        <button
-          type="button"
-          className="collapsible-toggle toggle-header-with-badge"
-          onClick={onToggle}
-          aria-expanded={expanded}
-        >
-          <span className="toggle-header-main">
-            <span className={`chevron ${expanded ? '' : 'collapsed'}`} aria-hidden="true">
-              ▾
-            </span>
-            <span className={`status-dot ${retros.length > 0 ? 'done' : 'pending'}`} aria-hidden="true" />
-            Sprint Retro
-          </span>
-          <span className={`doc-status-badge ${retros.length > 0 ? 'done' : 'pending'}`}>
-            {retros.length > 0 ? `${retros.length} Retro${retros.length === 1 ? '' : 's'}` : 'Not started'}
-          </span>
-        </button>
+    <div className="sprint-retro detail-zone">
+      <h2 className="tasks-heading section-heading-static">
+        <span className="toggle-header-main">Sprint Retro</span>
+        <span className={`doc-status-badge ${retros.length > 0 ? 'done' : 'pending'}`}>
+          {retros.length > 0 ? `${retros.length} Retro${retros.length === 1 ? '' : 's'}` : 'Not started'}
+        </span>
       </h2>
 
       {expanded && (

@@ -28,15 +28,6 @@ function BacklogView({
   collaborators,
   canEdit,
   expanded,
-  // Defaults to `expanded` so any other caller that hasn't been updated to
-  // pass this separately still gets the old behavior. ProjectDetail passes
-  // it explicitly - true for the whole BACKLOG_SECTION_KEYS group ('backlog'
-  // and 'ai-backlog'), not just the literal 'backlog' match `expanded` uses
-  // - so the chevron stays open while BacklogGenFlow is rendering
-  // underneath this header, even though the content below (gated on
-  // `expanded`, unchanged) is hidden the same way it always was.
-  headerExpanded = expanded,
-  onToggle,
   canGenerateBacklog,
   onGenerateBacklog,
 }) {
@@ -208,26 +199,13 @@ function BacklogView({
   }
 
   return (
-    <div className="backlog">
+    <div className="backlog detail-zone">
       <div className="agile-row-heading">
-        <h2 className="tasks-heading">
-          <button
-            type="button"
-            className="collapsible-toggle toggle-header-with-badge"
-            onClick={onToggle}
-            aria-expanded={headerExpanded}
-          >
-            <span className="toggle-header-main">
-              <span className={`chevron ${headerExpanded ? '' : 'collapsed'}`} aria-hidden="true">
-                ▾
-              </span>
-              <span className={`status-dot ${items.length > 0 ? 'done' : 'pending'}`} aria-hidden="true" />
-              Backlog
-            </span>
-            <span className={`doc-status-badge ${items.length > 0 ? 'done' : 'pending'}`}>
-              {totalPoints} point{totalPoints === 1 ? '' : 's'} in backlog
-            </span>
-          </button>
+        <h2 className="tasks-heading section-heading-static">
+          <span className="toggle-header-main">Backlog</span>
+          <span className={`doc-status-badge ${items.length > 0 ? 'done' : 'pending'}`}>
+            {totalPoints} point{totalPoints === 1 ? '' : 's'} in backlog
+          </span>
         </h2>
         {canGenerateBacklog && (
           <button

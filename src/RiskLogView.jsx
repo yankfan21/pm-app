@@ -1,7 +1,19 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from './supabaseClient'
 import { exportRiskLogDocx, exportRiskLogPdf } from './riskLogExport'
 import LoadingButton from './LoadingButton'
+
+// Same manual-height-tracking approach as CharterView.jsx's autoResize -
+// a plain <textarea rows={2}> clips or scrolls anything past its fixed
+// 2-row height instead of growing, which combined with a too-narrow column
+// (see .risk-log-main-table below) was the "Risk/Mitigation cut off with no
+// way to see full text" bug: even a wide-enough column doesn't help if a
+// long entry still needs more than 2 rows to display.
+function autoResize(el) {
+  if (!el) return
+  el.style.height = 'auto'
+  el.style.height = `${el.scrollHeight}px`
+}
 
 const LEVELS = ['Low', 'Medium', 'High']
 
@@ -25,6 +37,17 @@ function RiskLogView({ project, charter, brief, riskLog, canEdit, onUpdate }) {
   const [error, setError] = useState(null)
   const [suggestions, setSuggestions] = useState(null)
   const [suggestLoading, setSuggestLoading] = useState(false)
+  const textareaRefs = useRef({})
+
+  // Covers both the initial mount (so an existing long entry isn't clipped
+  // before its first keystroke) and any row added/removed/reordered - the
+  // per-keystroke case is handled directly in each textarea's onChange.
+  useEffect(() => {
+    rows.forEach((r) => {
+      autoResize(textareaRefs.current[`${r.id}-risk`])
+      autoResize(textareaRefs.current[`${r.id}-mitigation`])
+    })
+  }, [rows])
 
   async function persist(nextRows) {
     setError(null)
@@ -123,7 +146,6 @@ function RiskLogView({ project, charter, brief, riskLog, canEdit, onUpdate }) {
   return (
     <div className="charter">
       <div className="section-header">
-        <h3 className="charter-heading">Risk Log</h3>
         <div className="charter-actions">
           <button type="button" className="btn-secondary" onClick={handleExportPdf}>
             Export PDF
@@ -147,7 +169,7 @@ function RiskLogView({ project, charter, brief, riskLog, canEdit, onUpdate }) {
       {error && <p className="error">{error}</p>}
 
       <div className="risk-table-wrap">
-        <table className="risk-log-table">
+        <table className="risk-log-table risk-log-main-table">
           <thead>
             <tr>
               <th>Risk</th>
@@ -163,11 +185,15 @@ function RiskLogView({ project, charter, brief, riskLog, canEdit, onUpdate }) {
               <tr key={row.id}>
                 <td>
                   <textarea
+                    ref={(el) => (textareaRefs.current[`${row.id}-risk`] = el)}
                     className="risk-cell-input"
                     value={row.risk}
                     rows={2}
                     readOnly={!canEdit}
-                    onChange={(e) => updateCell(row.id, 'risk', e.target.value)}
+                    onChange={(e) => {
+                      updateCell(row.id, 'risk', e.target.value)
+                      autoResize(e.target)
+                    }}
                     onBlur={handleTextBlur}
                   />
                 </td>
@@ -201,11 +227,15 @@ function RiskLogView({ project, charter, brief, riskLog, canEdit, onUpdate }) {
                 </td>
                 <td>
                   <textarea
+                    ref={(el) => (textareaRefs.current[`${row.id}-mitigation`] = el)}
                     className="risk-cell-input"
                     value={row.mitigation}
                     rows={2}
                     readOnly={!canEdit}
-                    onChange={(e) => updateCell(row.id, 'mitigation', e.target.value)}
+                    onChange={(e) => {
+                      updateCell(row.id, 'mitigation', e.target.value)
+                      autoResize(e.target)
+                    }}
                     onBlur={handleTextBlur}
                   />
                 </td>
