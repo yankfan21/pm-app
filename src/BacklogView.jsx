@@ -3,6 +3,7 @@ import { supabase } from './supabaseClient'
 import { assignTaskToSprint } from './sprintAssignment'
 import { STORY_POINT_OPTIONS } from './storyPoints'
 import BacklogImportFlow from './BacklogImportFlow'
+import AssigneePicker from './components/AssigneePicker'
 
 const STATUS_OPTIONS = [
   { key: 'backlog', label: 'Backlog', colorClass: 'pending' },
@@ -24,6 +25,7 @@ function BacklogView({
   sprints,
   milestones,
   setMilestones,
+  collaborators,
   canEdit,
   expanded,
   // Defaults to `expanded` so any other caller that hasn't been updated to
@@ -424,6 +426,14 @@ function BacklogView({
                     ))}
                   </select>
                 )}
+
+                <AssigneePicker
+                  collaborators={collaborators}
+                  assigneeUserId={item.assignee_user_id}
+                  assigneeName={item.assignee_name}
+                  disabled={!canEdit}
+                  onChange={(next) => updateItem(item, next)}
+                />
               </li>
             ))}
             {items.length === 0 && <li className="empty">No backlog items yet</li>}

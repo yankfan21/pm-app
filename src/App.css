@@ -596,6 +596,7 @@
 
 .backlog-item {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   gap: 12px;
   padding: 10px 12px;
@@ -1357,6 +1358,13 @@
 
 .status-dot.critical {
   background: #dc2626;
+}
+
+/* Matches .backlog-status-select.ready's blue - reused here so List View's
+   status dot for a backlog item's "Ready" state reads the same as the
+   Backlog section's own status select uses for it. */
+.status-dot.ready {
+  background: #1d4ed8;
 }
 
 .doc-status-badge {
@@ -2869,6 +2877,54 @@ textarea.risk-cell-input {
   outline: none;
   border-color: var(--accent-border);
   background: var(--bg);
+}
+
+.list-sort-header {
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  cursor: pointer;
+}
+
+.list-sort-header:hover {
+  text-decoration: underline;
+}
+
+.team-view-body {
+  margin-top: 16px;
+}
+
+.team-group-list {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.team-group {
+  padding: 12px 16px;
+  border: 1px solid var(--row-border);
+  border-radius: 6px;
+  background: var(--row-bg);
+}
+
+.team-group-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.team-group-name {
+  font-weight: 500;
+  color: var(--text-h);
+  margin-right: auto;
 }
 
 .risk-level-select {

@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { supabase } from './supabaseClient'
 import { assignTaskToSprint } from './sprintAssignment'
-import { formatSprintLabel, useSprintSelection } from './useSprintSelection'
+import { formatSprintLabel } from './useSprintSelection'
 import { computeSprintPoints } from './sprintStats'
+import AssigneePicker from './components/AssigneePicker'
 
 const BOARD_COLUMNS = [
   { key: 'todo', label: 'To Do', colorClass: 'pending' },
@@ -10,8 +11,20 @@ const BOARD_COLUMNS = [
   { key: 'done', label: 'Done', colorClass: 'done' },
 ]
 
-function SprintBoardView({ project, tasks, setTasks, sprints, setSprints, milestones, canEdit, expanded, onToggle }) {
-  const [selectedSprintId, setSelectedSprintId] = useSprintSelection(sprints)
+function SprintBoardView({
+  project,
+  tasks,
+  setTasks,
+  sprints,
+  setSprints,
+  milestones,
+  collaborators,
+  canEdit,
+  expanded,
+  onToggle,
+  selectedSprintId,
+  setSelectedSprintId,
+}) {
 
   const [name, setName] = useState('')
   const [startDate, setStartDate] = useState('')
@@ -79,6 +92,27 @@ function SprintBoardView({ project, tasks, setTasks, sprints, setSprints, milest
     setStartDate('')
     setEndDate('')
     setGoal('')
+  }
+
+  async function updateAssignee(task, fields) {
+    setError(null)
+    const { data, error } = await supabase
+      .from('tasks')
+      .update(fields)
+      .eq('id', task.id)
+      .select()
+
+    if (error) {
+      setError(error.message)
+      return
+    }
+
+    if (!data || data.length === 0) {
+      setError('Update failed — you may not have permission to edit this task.')
+      return
+    }
+
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? data[0] : t)))
   }
 
   async function updateBoardStatus(task, boardStatus) {
@@ -462,6 +496,14 @@ function SprintBoardView({ project, tasks, setTasks, sprints, setSprints, milest
                                       </option>
                                     ))}
                                   </select>
+
+                                  <AssigneePicker
+                                    collaborators={collaborators}
+                                    assigneeUserId={task.assignee_user_id}
+                                    assigneeName={task.assignee_name}
+                                    disabled={!canEdit}
+                                    onChange={(next) => updateAssignee(task, next)}
+                                  />
 
                                   {canEdit && (
                                     <button

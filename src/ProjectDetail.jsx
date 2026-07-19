@@ -17,6 +17,9 @@ import AssigneePicker, { resolveAssigneeLabel } from './components/AssigneePicke
 import { DOCUMENT_TYPES, groupDocumentTypes } from './documentTypes'
 import { METHODOLOGIES, METHODOLOGY_LABELS } from './methodology'
 import { DEFAULT_PHASES } from './phases'
+import { useSprintSelection } from './useSprintSelection'
+import TaskListView from './TaskListView'
+import TeamView from './TeamView'
 
 // The Tasks header's own key ('tasks') plus every sub-flow that renders
 // underneath it - both "Generate.../Import from Excel" buttons swap
@@ -141,6 +144,11 @@ function ProjectDetail({ project, isOwner, canEdit }) {
   // for the same reason those two are separate: expanding a group shouldn't
   // collapse whichever doc's view/flow happens to be open inside it.
   const [expandedGroup, setExpandedGroup] = useState(null)
+  // Lifted out of SprintBoardView (was local state there via
+  // useSprintSelection) so Team View can read the same "current sprint"
+  // value - same auto-detect-on-load-then-manual-override behavior as
+  // before, just shared instead of private to one component.
+  const [selectedSprintId, setSelectedSprintId] = useSprintSelection(sprints)
 
   function toggleSection(key) {
     setExpandedSection((prev) => (prev === key ? null : key))
@@ -1129,6 +1137,28 @@ function ProjectDetail({ project, isOwner, canEdit }) {
         />
       )}
 
+      {!loading && currentProject.methodology !== 'agile' && (
+        <TaskListView
+          title="List"
+          variant="waterfall"
+          tasks={tasks.filter((t) => t.backlog_status == null)}
+          collaborators={collaborators}
+          expanded={expandedSection === 'list-wf'}
+          onToggle={() => toggleSection('list-wf')}
+        />
+      )}
+
+      {!loading && currentProject.methodology !== 'agile' && (
+        <TeamView
+          title="Team"
+          variant="waterfall"
+          tasks={tasks.filter((t) => t.backlog_status == null)}
+          collaborators={collaborators}
+          expanded={expandedSection === 'team-wf'}
+          onToggle={() => toggleSection('team-wf')}
+        />
+      )}
+
       {!loading && currentProject.methodology === 'agile' && (
         <KeyMetricsDashboard
           project={currentProject}
@@ -1149,6 +1179,7 @@ function ProjectDetail({ project, isOwner, canEdit }) {
             sprints={sprints}
             milestones={milestones}
             setMilestones={setMilestones}
+            collaborators={collaborators}
             canEdit={canEdit}
             expanded={expandedSection === 'backlog'}
             headerExpanded={BACKLOG_SECTION_KEYS.includes(expandedSection)}
@@ -1179,9 +1210,12 @@ function ProjectDetail({ project, isOwner, canEdit }) {
             sprints={sprints}
             setSprints={setSprints}
             milestones={milestones}
+            collaborators={collaborators}
             canEdit={canEdit}
             expanded={expandedSection === 'sprint-board'}
             onToggle={() => toggleSection('sprint-board')}
+            selectedSprintId={selectedSprintId}
+            setSelectedSprintId={setSelectedSprintId}
           />
 
           <SprintRetroView
@@ -1195,6 +1229,30 @@ function ProjectDetail({ project, isOwner, canEdit }) {
             onToggle={() => toggleSection('sprint-retro')}
           />
         </div>
+      )}
+
+      {!loading && currentProject.methodology !== 'waterfall' && (
+        <TaskListView
+          title="List"
+          variant="agile"
+          tasks={tasks.filter((t) => t.backlog_status != null)}
+          collaborators={collaborators}
+          expanded={expandedSection === 'list-agile'}
+          onToggle={() => toggleSection('list-agile')}
+        />
+      )}
+
+      {!loading && currentProject.methodology !== 'waterfall' && (
+        <TeamView
+          title="Team"
+          variant="agile"
+          tasks={tasks.filter((t) => t.backlog_status != null)}
+          collaborators={collaborators}
+          sprints={sprints}
+          selectedSprintId={selectedSprintId}
+          expanded={expandedSection === 'team-agile'}
+          onToggle={() => toggleSection('team-agile')}
+        />
       )}
 
       <div className="detail-zone">
