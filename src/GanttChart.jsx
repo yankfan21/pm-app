@@ -4,6 +4,14 @@ import { resolveAssigneeLabel } from './components/AssigneePicker'
 
 const UNPHASED_KEY = '__unphased'
 
+// Label column sizing - shared between the grid-template-columns string and
+// the explicit .gantt-chart width calculation below, so the two can't drift
+// apart. LABEL_COL_MAX_PX is what matters for that width calc: see the
+// comment on the .gantt-chart style object for why.
+const LABEL_COL_MIN_PX = 140
+const LABEL_COL_MAX_PX = 240
+const COLUMN_GAP_PX = 12
+
 const TASK_STATUS_FILTER_OPTIONS = [
   { key: 'not_started', label: 'Not Started' },
   { key: 'in_progress', label: 'In Progress' },
@@ -19,11 +27,41 @@ const TASK_STATUS_FILTER_OPTIONS = [
 // squeezing every bar into the viewport width. 'week' is the default since
 // it's the closest fixed approximation to how the chart already read before
 // zoom existed.
+//
+// Each level also carries its own minPx (the floor on the track's total
+// pixel width, i.e. totalDays * pxPerDay) instead of sharing one constant
+// across all four. A single shared floor (360, tried previously) collapses
+// Month and Quarter into the exact same rendered width - and therefore
+// identical spacing - for any project shorter than ~51 days (360/7) at
+// Month and ~144 days (360/2.5) at Quarter, which covers most real
+// projects. Giving every level its own floor, strictly decreasing
+// alongside pxPerDay, guarantees Day > Week > Month > Quarter in rendered
+// width regardless of project length: either the natural totalDays *
+// pxPerDay value already differs, or - once short enough that a level
+// hits its floor - the floors themselves still differ.
+//
+// maxPxPerDay is the mirror image, for stretching (see availableTrackWidth
+// below): when the container has more room than a level's natural width
+// needs, pxPerDay grows to fill it - up to this ceiling.
+//
+// Getting the ceilings right is stricter than just "decreasing alongside
+// pxPerDay": each level's effective pxPerDay is independently clamped to
+// [pxPerDay, maxPxPerDay] against the SAME shared availableTrackWidth /
+// totalDays ratio, so two adjacent levels converge on the exact same
+// value (reintroducing the Month/Quarter collapse minPx was added to fix,
+// just from the "too much room" side) whenever that ratio falls inside
+// BOTH of their [pxPerDay, maxPxPerDay] ranges - i.e. whenever those two
+// ranges overlap at all. A ceiling that's merely "less than the next
+// level's ceiling" doesn't prevent that; it has to be at or below the
+// NEXT level's own base pxPerDay, so the two ranges never overlap in the
+// first place and neither can ever equal the other, for any container
+// width. That's why each maxPxPerDay here is set just under the next
+// wider level's base pxPerDay rather than some multiple of its own.
 const ZOOM_LEVELS = [
-  { key: 'day', label: 'Day', pxPerDay: 36 },
-  { key: 'week', label: 'Week', pxPerDay: 12 },
-  { key: 'month', label: 'Month', pxPerDay: 4 },
-  { key: 'quarter', label: 'Quarter', pxPerDay: 1.3 },
+  { key: 'day', label: 'Day', pxPerDay: 36, minPx: 480, maxPxPerDay: 60 },
+  { key: 'week', label: 'Week', pxPerDay: 12, minPx: 320, maxPxPerDay: 30 },
+  { key: 'month', label: 'Month', pxPerDay: 7, minPx: 220, maxPxPerDay: 11 },
+  { key: 'quarter', label: 'Quarter', pxPerDay: 2.5, minPx: 140, maxPxPerDay: 6 },
 ]
 
 // Stable key for a distinct assignee across both kinds (a real collaborator
@@ -158,12 +196,20 @@ function buildElbowPath(x1, y1, x2, y2) {
 function GanttChart({ project, tasks, taskDependencies, phases, milestones = [], collaborators = [], expanded }) {
   const chartRef = useRef(null)
   const trackRef = useRef(null)
+  const wrapRef = useRef(null)
+  const labelHeaderRef = useRef(null)
   const barRefs = useRef({})
   const [depLines, setDepLines] = useState([])
   // Conservative fallback for the first paint, before the real track width
   // is measured - deliberately on the narrow side so an early render never
   // shows crowded ticks (see the layout effect below).
   const [trackWidth, setTrackWidth] = useState(400)
+  // How much horizontal room .gantt-wrap actually has for the track column
+  // (its own width minus the label column and column-gap) - 0 until the
+  // ResizeObserver below reports a real measurement, which is a safe
+  // default: Math.max(natural, 0) below just falls back to the unstretched
+  // natural width for that first paint.
+  const [availableTrackWidth, setAvailableTrackWidth] = useState(0)
   const [error, setError] = useState(null)
   const [exportingPdf, setExportingPdf] = useState(false)
   // Off by default - an opt-in overlay, same pattern as collapsedPhases.
@@ -248,9 +294,47 @@ function GanttChart({ project, tasks, taskDependencies, phases, milestones = [],
 
   const totalDays = Math.max(1, Math.round(totalSpan / DAY_MS))
   const zoomLevel = ZOOM_LEVELS.find((z) => z.key === zoom) || ZOOM_LEVELS[1]
-  // Floored so a very short/empty range never collapses the track to a
-  // sliver at the narrow zoom levels (e.g. a 2-day project at Quarter zoom).
-  const trackPxWidth = Math.max(Math.round(totalDays * zoomLevel.pxPerDay), 240)
+  // If there's more room in the viewport than this level's base pxPerDay
+  // needs (availableTrackWidth, measured below), stretch pxPerDay up to
+  // fill it - most noticeable at Month/Quarter, whose natural width is
+  // often much narrower than a fullscreen viewport - capped at
+  // maxPxPerDay so it never grows past the point of converging with a
+  // finer level (see the comment on ZOOM_LEVELS above). When the
+  // container is narrower than the base width already needs, this is a
+  // no-op: Math.max keeps pxPerDay at its base value and the existing
+  // horizontal-scroll behavior is unchanged.
+  const effectivePxPerDay = Math.min(
+    Math.max(zoomLevel.pxPerDay, availableTrackWidth / totalDays),
+    zoomLevel.maxPxPerDay,
+  )
+  // Floored (per zoom level - see ZOOM_LEVELS above) so a very short/empty
+  // range never collapses the track to a sliver, nor two adjacent zoom
+  // levels collapse to the same width, at the coarser zoom levels.
+  const trackPxWidth = Math.max(Math.round(totalDays * effectivePxPerDay), zoomLevel.minPx)
+
+  // Tracks how much horizontal room .gantt-wrap actually has, feeding
+  // availableTrackWidth above. A ResizeObserver, not a window 'resize'
+  // listener, is what's needed here: toggling fullscreen changes the
+  // wrap's size via a CSS class (position: fixed at a different width),
+  // not a window resize, so only an observer on the element itself sees
+  // it. Re-attached whenever the wrap conditionally (un)mounts (bars.length
+  // and expanded gate the JSX that renders it) since the ref goes stale
+  // across that.
+  useLayoutEffect(() => {
+    const wrap = wrapRef.current
+    if (!wrap || typeof ResizeObserver === 'undefined') return
+
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0]
+      if (!entry) return
+      const labelWidth = labelHeaderRef.current?.getBoundingClientRect().width ?? 0
+      // 12 matches .gantt-chart's column-gap in App.css.
+      const available = Math.max(0, Math.round(entry.contentRect.width - labelWidth - 12))
+      setAvailableTrackWidth(available)
+    })
+    observer.observe(wrap)
+    return () => observer.disconnect()
+  }, [expanded, bars.length])
 
   // Only computed while the toggle is on - cheap either way at this scale,
   // but no reason to run it when nothing reads the result.
@@ -275,12 +359,23 @@ function GanttChart({ project, tasks, taskDependencies, phases, milestones = [],
   // Dependency lines are drawn from measured bar positions (not percentages)
   // because rows have gaps between them - a percentage-of-total-height
   // formula doesn't linearly map to "row center" once gaps are involved.
-  // Re-measure whenever the bars change, the window resizes, or the section
+  // Re-measure whenever the bars change, the window resizes, the section
   // expands (refs are null while collapsed, since the chart isn't mounted;
   // expanding needs a fresh measurement rather than relying on stale state
-  // from before it was hidden). The chart's own horizontal scroll doesn't
-  // need a re-measure: the SVG overlay scrolls together with the bars, so
-  // their relative offsets stay constant.
+  // from before it was hidden), or fullscreen is toggled. That last one
+  // matters because .gantt-fullscreen switches the container to
+  // position: fixed at a completely different screen location/width - the
+  // dependency lines are drawn from getBoundingClientRect() snapshots taken
+  // at the OLD position, so without re-measuring here they'd stay pinned to
+  // stale coordinates and render as a scattered tangle over the (correctly
+  // laid out) bars once the container jumps. trackPxWidth is included for
+  // the same kind of reason: when availableTrackWidth (see the
+  // ResizeObserver above) stretches the track wider, bar positions shift
+  // with it, and a stale measurement here would leave the connector lines
+  // pointing at where the bars used to be rather than where the stretch
+  // just moved them to. The chart's own horizontal scroll doesn't need a
+  // re-measure: the SVG overlay scrolls together with the bars, so their
+  // relative offsets stay constant.
   useLayoutEffect(() => {
     function measure() {
       const container = chartRef.current
@@ -326,7 +421,7 @@ function GanttChart({ project, tasks, taskDependencies, phases, milestones = [],
     window.addEventListener('resize', measure)
     return () => window.removeEventListener('resize', measure)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tasks, taskDependencies, expanded, collapsedPhases, zoom, filterAssignee, filterStatus, filterTaskType, filterEpic])
+  }, [tasks, taskDependencies, expanded, collapsedPhases, zoom, filterAssignee, filterStatus, filterTaskType, filterEpic, isFullscreen, trackPxWidth])
 
   async function handleExportExcel() {
     setError(null)
@@ -507,16 +602,61 @@ function GanttChart({ project, tasks, taskDependencies, phases, milestones = [],
       )}
 
       {expanded && bars.length > 0 && (
-        <div className="gantt-wrap">
+        <div className="gantt-wrap" ref={wrapRef}>
           <div
             className="gantt-chart"
             ref={chartRef}
             style={{
               gridTemplateRows: `repeat(${totalRows}, auto)`,
-              gridTemplateColumns: `minmax(140px, 240px) ${trackPxWidth}px`,
+              gridTemplateColumns: `minmax(${LABEL_COL_MIN_PX}px, ${LABEL_COL_MAX_PX}px) ${trackPxWidth}px`,
+              // .gantt-chart otherwise has no explicit width, so its own
+              // border box resolves to "auto" - which for a normal
+              // in-flow block means it fills .gantt-wrap's available
+              // width, full stop, regardless of how much wider its grid
+              // tracks actually need to be (the tracks still lay out at
+              // their full defined sizes and visually overflow that box,
+              // which is what made scrolling work at all - .gantt-wrap's
+              // own overflow-x: auto reacts to that descendant overflow
+              // even though .gantt-chart's own box doesn't reflect it).
+              // That divergence - grid content extending well past the
+              // container's own reported box - is harmless for plain
+              // rendering, but position: sticky's "how far can I stick
+              // before I run out of containing block" math gets confused
+              // by it: far enough into a scroll, the frozen column
+              // cells detached from the left edge entirely instead of
+              // staying pinned. Giving .gantt-chart an explicit width
+              // matching what its own tracks need keeps its box and its
+              // content in agreement, which is what sticky needs to
+              // track the scroll correctly all the way through.
+              // LABEL_COL_MAX_PX (not whatever the label column actually
+              // resolves to, which can be less under real space pressure)
+              // is always safe to use here: on a wide-enough
+              // container the label naturally sits at its max already, so
+              // this matches exactly; on a cramped one, total content
+              // already exceeds the available width regardless of which
+              // of the two label bounds is used, so the only effect is a
+              // few extra pixels of already-necessary scroll range, not
+              // new dead space in the unscrolled view.
+              width: LABEL_COL_MAX_PX + COLUMN_GAP_PX + trackPxWidth,
             }}
           >
+            {/* Frozen-column backing plate - spans every row in one
+                continuous piece, unlike the individual .gantt-row-label
+                cells below (each of which only paints its own row's grid
+                area, leaving .gantt-chart's row-gap - and the column-gap
+                before column 2 starts - as uncovered seams the scrolled-
+                under bars/gridlines/dependency lines/today-marker could
+                show through once sticky positioning pins column 1 in
+                place). Sits right behind the label cells (same z-index -
+                see App.css) so it's invisible in the common case and only
+                matters as the gap-filler it's there for. */}
             <div
+              className="gantt-sticky-backing"
+              style={{ gridRow: `1 / ${totalRows + 1}`, gridColumn: 1 }}
+              aria-hidden="true"
+            />
+            <div
+              ref={labelHeaderRef}
               className="gantt-row-label gantt-row-header"
               style={{ gridRow: 1, gridColumn: 1 }}
               aria-hidden="true"
@@ -617,7 +757,7 @@ function GanttChart({ project, tasks, taskDependencies, phases, milestones = [],
                     style={{ gridRow, gridColumn: 1 }}
                     title={task.title}
                   >
-                    {task.title}
+                    <span className="gantt-row-title">{task.title}</span>
                     {assigneeLabel && <span className="gantt-row-assignee">{assigneeLabel}</span>}
                   </div>
                   <div className="gantt-row-track" style={{ gridRow, gridColumn: 2 }}>

@@ -1580,11 +1580,70 @@
   align-items: center;
   column-gap: 12px;
   row-gap: 14px;
-  min-width: 700px;
+  /* Backs the frozen label column below (.gantt-row-label's position:
+     sticky) so scrolled-under bars/gridlines/dependency lines don't show
+     through it - matches .detail-zone's own background so the frozen
+     column reads as part of the same surface rather than a mismatched
+     patch. Re-pointed at --bg under .gantt-fullscreen below, since that's
+     what the container's background switches to in fullscreen (a custom
+     property so it inherits at the point of use rather than needing a
+     `background: inherit` chain through every intermediate element). */
+  --gantt-sticky-bg: var(--surface-1);
+}
+
+.gantt-fullscreen .gantt-chart {
+  --gantt-sticky-bg: var(--bg);
+}
+
+/* One continuous frozen backing for the whole label column, rather than
+   relying on each individual .gantt-row-label cell's own background - a
+   cell only paints its own row's grid area, leaving .gantt-chart's
+   row-gap (14px between every row) as an uncovered seam once column 1 is
+   pinned in place: scrolled-under bars, gridlines, the dependency-line
+   overlay, and the today-marker all showed through those seams. Spanning
+   every row in one box (see the gridRow style in GanttChart.jsx) removes
+   the seams entirely. margin-right stretches it across the column-gap
+   too - the dependency-line SVG isn't confined to column 2, it's
+   absolutely positioned across the whole chart, so a line's elbow can
+   legitimately fall in that gap. Same z-index as .gantt-row-label (not
+   higher) since the two are meant to be visually indistinguishable - the
+   label cells' own text still needs to render, just with nothing behind
+   it showing through.
+   align-self: stretch is not optional here - same fix .gantt-today-col
+   and .gantt-gridlines already needed for the same reason: .gantt-chart
+   sets align-items: center for single-row items like bars, so a
+   multi-row-spanning item with no content of its own (this is a bare,
+   empty div) collapses to a 0-height box centered in its row span instead
+   of stretching across it, unless overridden here.
+   left/margin-left extend the same coverage 24px further left, matching
+   .gantt-wrap's own left padding (see its comment there): that padding is
+   a deliberate gutter for anything centered on the 0% edge of the track
+   (tick labels, and - the one that actually surfaced this bug - a
+   milestone diamond at day 0, whose rotate(45deg) bounding box is wider
+   than its unrotated 12px, so translate(-50%,-50%) centers it a few px
+   into that gutter). A plain `left: 0` sticks this element flush with the
+   padding edge rather than the wrap's true (border-edge) clip boundary -
+   that gutter is inside the wrap's visible/unclipped area but outside the
+   backing's coverage, exactly where the diamond peeked through. Note that
+   margin-left alone doesn't move the stuck edge - a grid item's
+   "stretch" alignment turns a negative margin into extra width instead
+   (verified: it grew the box's right edge, not its left), so the sticky
+   inset itself has to move too; margin-left is what makes that extra
+   width land on the correct (left) side once the inset does the moving. */
+.gantt-sticky-backing {
+  position: sticky;
+  left: -24px;
+  z-index: 5;
+  align-self: stretch;
+  margin-left: -24px;
+  margin-right: -12px;
+  background: var(--gantt-sticky-bg);
+  pointer-events: none;
 }
 
 .gantt-row-label {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   min-height: 26px;
   overflow: visible;
@@ -1594,6 +1653,34 @@
   line-height: 1.45;
   padding: 4px 0;
   color: var(--text-h);
+  /* Frozen column: stays pinned to the left edge of .gantt-wrap's
+     horizontal scroll instead of scrolling away with the timeline, so the
+     row a bar belongs to is still identifiable after scrolling right -
+     most relevant now that Month/Quarter can stretch wider than the
+     viewport. z-index clears every other layer in the chart (gridlines 0,
+     bars/milestones 2, today marker 3, dependency-line overlay 4) so
+     scrolled-under content doesn't show through the opaque background. */
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  background: var(--gantt-sticky-bg);
+}
+
+/* Same failure mode as .backlog-item-main (see comment there): the title
+   used to be a bare text node, an anonymous flex item with an implicit
+   flex-basis of 0%. Combined with word-break: break-word above (which
+   makes the title's min-content width shrink to a single character
+   instead of a whole word), a long assignee label with no natural break
+   point - a full email like the one resolveAssigneeLabel falls back to
+   for a real collaborator (AssigneePicker.jsx) - could claim its entire
+   flex-shrink: 0 width and squeeze the title into a one-letter-per-line
+   sliver. A real flex-basis plus a min-width floor gives the wrap
+   algorithm an honest number, so once a row can't fit both on one line,
+   flex-wrap above drops the assignee badge to its own line instead of
+   crushing the title. */
+.gantt-row-title {
+  flex: 1 1 90px;
+  min-width: 90px;
 }
 
 .gantt-row-header {
