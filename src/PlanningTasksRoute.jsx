@@ -48,6 +48,21 @@ function PlanningTasksRoute() {
   const [showAiGen, setShowAiGen] = useState(false)
   const [showImport, setShowImport] = useState(false)
 
+  // Per-group collapse state, keyed by group id ('none' or `phase:<id>`) -
+  // an override map rather than a Set of collapsed ids so a group whose
+  // default (see taskGroups below) is "collapsed" can still be explicitly
+  // re-expanded, and vice versa, without needing to know every group id up
+  // front (phases can still be loading on first render).
+  const [collapseOverrides, setCollapseOverrides] = useState({})
+
+  function isGroupCollapsed(key, defaultCollapsed) {
+    return collapseOverrides[key] ?? defaultCollapsed
+  }
+
+  function toggleGroup(key, currentlyCollapsed) {
+    setCollapseOverrides((prev) => ({ ...prev, [key]: !currentlyCollapsed }))
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
     const trimmed = title.trim()
@@ -240,6 +255,156 @@ function PlanningTasksRoute() {
     setTasks((prev) => prev.filter((t) => t.id !== task.id))
   }
 
+  const sortedPhases = [...phases].sort((a, b) => a.phase_number - b.phase_number)
+  const taskGroups = [
+    {
+      key: 'none',
+      label: 'No Phase',
+      items: tasks.filter((t) => !t.phase_id),
+      defaultCollapsed: false,
+    },
+    ...sortedPhases.map((phase) => ({
+      key: `phase:${phase.id}`,
+      label: `${phase.phase_number}. ${phase.phase_name}`,
+      items: tasks.filter((t) => t.phase_id === phase.id),
+      defaultCollapsed: true,
+    })),
+  ]
+
+  function statusFor(task) {
+    return (
+      TASK_STATUS_OPTIONS.find((s) => s.key === (task.status ?? 'not_started')) || TASK_STATUS_OPTIONS[0]
+    )
+  }
+
+  function renderCompactTaskRow(task) {
+    const status = statusFor(task)
+    return (
+      <li key={task.id} className="group-compact-row">
+        <span className="group-compact-title">{task.title}</span>
+        <span className="group-compact-meta">{resolveAssigneeLabel(task, collaborators) || 'Unassigned'}</span>
+        <span className="group-compact-meta">{task.due_date || '—'}</span>
+        <span className={`doc-status-badge ${status.colorClass}`}>{status.label}</span>
+      </li>
+    )
+  }
+
+  function renderFullTaskRow(task) {
+    return (
+      <li key={task.id} className={task.completed ? 'completed' : ''}>
+        <div className="task-row-main">
+          <label>
+            <input
+              type="checkbox"
+              checked={task.completed}
+              disabled={!canEdit}
+              onChange={() => toggleComplete(task)}
+            />
+            <span>{task.title}</span>
+          </label>
+          <div className="task-row-controls">
+            {resolveAssigneeLabel(task, collaborators) && (
+              <span className="task-assignee-badge">
+                {resolveAssigneeLabel(task, collaborators)}
+              </span>
+            )}
+            <select
+              className={`task-status-select ${statusFor(task).colorClass}`}
+              value={task.status ?? 'not_started'}
+              disabled={!canEdit}
+              onChange={(e) => updateTaskField(task, 'status', e.target.value)}
+            >
+              {TASK_STATUS_OPTIONS.map((s) => (
+                <option key={s.key} value={s.key}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+            {canEdit && (
+              <button
+                type="button"
+                className="delete"
+                onClick={() => deleteTask(task)}
+              >
+                Delete
+              </button>
+            )}
+          </div>
+        </div>
+        <div className="task-dates">
+          <label className="task-milestone-toggle" title="A zero-duration diamond event on the Gantt chart (e.g. Design sign-off, Go-live) — unrelated to Epics, the Backlog's grouping concept.">
+            <input
+              type="checkbox"
+              checked={task.task_type === 'milestone_marker'}
+              disabled={!canEdit}
+              onChange={(e) => setTaskMilestone(task, e.target.checked)}
+            />
+            Milestone marker
+          </label>
+          {task.task_type !== 'milestone_marker' && (
+            <label className="task-date-field">
+              Start
+              <input
+                type="date"
+                value={task.start_date || ''}
+                disabled={!canEdit}
+                onChange={(e) => updateTaskField(task, 'start_date', e.target.value)}
+              />
+            </label>
+          )}
+          <label className="task-date-field">
+            Due
+            <input
+              type="date"
+              value={task.due_date || ''}
+              disabled={!canEdit}
+              onChange={(e) => updateTaskField(task, 'due_date', e.target.value)}
+            />
+          </label>
+          <label className="task-select-field">
+            Depends on
+            <DependencyPicker
+              tasks={tasks}
+              dependencies={taskDependencies}
+              currentTaskId={task.id}
+              selectedIds={taskDependencies
+                .filter((d) => d.task_id === task.id)
+                .map((d) => d.depends_on_id)}
+              onChange={(nextSelectedIds) => updateTaskDependencies(task, nextSelectedIds)}
+              disabled={!canEdit}
+              placeholder="Search tasks…"
+            />
+          </label>
+          <label className="task-select-field">
+            Phase
+            <select
+              value={task.phase_id || ''}
+              disabled={!canEdit}
+              onChange={(e) => updateTaskField(task, 'phase_id', e.target.value)}
+            >
+              <option value="">None</option>
+              {phases.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.phase_number}. {p.phase_name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="task-select-field">
+            Assignee
+            <AssigneePicker
+              collaborators={collaborators}
+              assigneeUserId={task.assignee_user_id}
+              assigneeName={task.assignee_name}
+              disabled={!canEdit}
+              onChange={(next) => updateTaskAssignee(task, next)}
+            />
+          </label>
+        </div>
+      </li>
+    )
+  }
+
   return (
     <MethodologySection side="waterfall">
       <div className="detail-zone">
@@ -371,125 +536,42 @@ function PlanningTasksRoute() {
           </form>
         )}
 
-        <ul className="task-list">
-          {tasks.map((task) => (
-            <li key={task.id} className={task.completed ? 'completed' : ''}>
-              <div className="task-row-main">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={task.completed}
-                    disabled={!canEdit}
-                    onChange={() => toggleComplete(task)}
-                  />
-                  <span>{task.title}</span>
-                </label>
-                <div className="task-row-controls">
-                  {resolveAssigneeLabel(task, collaborators) && (
-                    <span className="task-assignee-badge">
-                      {resolveAssigneeLabel(task, collaborators)}
-                    </span>
-                  )}
-                  <select
-                    className={`task-status-select ${
-                      TASK_STATUS_OPTIONS.find((s) => s.key === (task.status ?? 'not_started'))
-                        ?.colorClass || 'pending'
-                    }`}
-                    value={task.status ?? 'not_started'}
-                    disabled={!canEdit}
-                    onChange={(e) => updateTaskField(task, 'status', e.target.value)}
-                  >
-                    {TASK_STATUS_OPTIONS.map((s) => (
-                      <option key={s.key} value={s.key}>
-                        {s.label}
-                      </option>
-                    ))}
-                  </select>
-                  {canEdit && (
-                    <button
-                      type="button"
-                      className="delete"
-                      onClick={() => deleteTask(task)}
-                    >
-                      Delete
-                    </button>
-                  )}
-                </div>
-              </div>
-              <div className="task-dates">
-                <label className="task-milestone-toggle" title="A zero-duration diamond event on the Gantt chart (e.g. Design sign-off, Go-live) — unrelated to Epics, the Backlog's grouping concept.">
-                  <input
-                    type="checkbox"
-                    checked={task.task_type === 'milestone_marker'}
-                    disabled={!canEdit}
-                    onChange={(e) => setTaskMilestone(task, e.target.checked)}
-                  />
-                  Milestone marker
-                </label>
-                {task.task_type !== 'milestone_marker' && (
-                  <label className="task-date-field">
-                    Start
-                    <input
-                      type="date"
-                      value={task.start_date || ''}
-                      disabled={!canEdit}
-                      onChange={(e) => updateTaskField(task, 'start_date', e.target.value)}
-                    />
-                  </label>
+        {tasks.length === 0 && <p className="empty">No tasks yet</p>}
+
+        {tasks.length > 0 &&
+          taskGroups.map((group) => {
+            const collapsed = isGroupCollapsed(group.key, group.defaultCollapsed)
+            return (
+              <div className="task-group" key={group.key}>
+                <button
+                  type="button"
+                  className="collapsible-toggle group-header-row"
+                  aria-expanded={!collapsed}
+                  onClick={() => toggleGroup(group.key, collapsed)}
+                >
+                  <span className={`chevron ${collapsed ? 'collapsed' : ''}`} aria-hidden="true">
+                    ▾
+                  </span>
+                  <span className="group-header-label">{group.label}</span>
+                  <span className="doc-status-badge pending group-header-count">
+                    {group.items.length} Task{group.items.length === 1 ? '' : 's'}
+                  </span>
+                </button>
+
+                {collapsed ? (
+                  <ul className="task-list group-compact-list">
+                    {group.items.map((task) => renderCompactTaskRow(task))}
+                    {group.items.length === 0 && <li className="empty">No tasks in this group</li>}
+                  </ul>
+                ) : (
+                  <ul className="task-list">
+                    {group.items.map((task) => renderFullTaskRow(task))}
+                    {group.items.length === 0 && <li className="empty">No tasks in this group</li>}
+                  </ul>
                 )}
-                <label className="task-date-field">
-                  Due
-                  <input
-                    type="date"
-                    value={task.due_date || ''}
-                    disabled={!canEdit}
-                    onChange={(e) => updateTaskField(task, 'due_date', e.target.value)}
-                  />
-                </label>
-                <label className="task-select-field">
-                  Depends on
-                  <DependencyPicker
-                    tasks={tasks}
-                    dependencies={taskDependencies}
-                    currentTaskId={task.id}
-                    selectedIds={taskDependencies
-                      .filter((d) => d.task_id === task.id)
-                      .map((d) => d.depends_on_id)}
-                    onChange={(nextSelectedIds) => updateTaskDependencies(task, nextSelectedIds)}
-                    disabled={!canEdit}
-                    placeholder="Search tasks…"
-                  />
-                </label>
-                <label className="task-select-field">
-                  Phase
-                  <select
-                    value={task.phase_id || ''}
-                    disabled={!canEdit}
-                    onChange={(e) => updateTaskField(task, 'phase_id', e.target.value)}
-                  >
-                    <option value="">None</option>
-                    {phases.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.phase_number}. {p.phase_name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="task-select-field">
-                  Assignee
-                  <AssigneePicker
-                    collaborators={collaborators}
-                    assigneeUserId={task.assignee_user_id}
-                    assigneeName={task.assignee_name}
-                    disabled={!canEdit}
-                    onChange={(next) => updateTaskAssignee(task, next)}
-                  />
-                </label>
               </div>
-            </li>
-          ))}
-          {tasks.length === 0 && <li className="empty">No tasks yet</li>}
-        </ul>
+            )
+          })}
       </div>
     </MethodologySection>
   )

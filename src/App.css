@@ -1268,6 +1268,60 @@
   transform: rotate(-90deg);
 }
 
+/* Phase/Sprint grouping for Tasks and Milestones (PlanningTasksRoute.jsx)
+   and Backlog (BacklogView.jsx) - unlike DocumentsRoute's expandedGroup,
+   collapsing a group here doesn't hide its rows, it swaps them for a
+   one-liner (.group-compact-row) instead of the full edit form, so PMs can
+   still scan status/assignee/due-date at a glance without expanding. */
+.task-group {
+  margin-top: 20px;
+}
+
+.task-group:first-child {
+  margin-top: 12px;
+}
+
+.group-header-row {
+  margin-bottom: 8px;
+}
+
+.group-header-label {
+  font-weight: 500;
+  color: var(--text-h);
+}
+
+.group-header-count {
+  margin-left: auto;
+}
+
+.group-compact-list {
+  gap: 4px;
+}
+
+.group-compact-row {
+  display: flex;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px !important;
+}
+
+.group-compact-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-h);
+}
+
+.group-compact-meta {
+  flex-shrink: 0;
+  min-width: 90px;
+  color: var(--text);
+  font-size: 13px;
+}
+
 .doc-checklist {
   list-style: none;
   margin: 0;

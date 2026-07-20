@@ -3,7 +3,7 @@ import { supabase } from './supabaseClient'
 import { assignTaskToSprint } from './sprintAssignment'
 import { STORY_POINT_OPTIONS } from './storyPoints'
 import BacklogImportFlow from './BacklogImportFlow'
-import AssigneePicker from './components/AssigneePicker'
+import AssigneePicker, { resolveAssigneeLabel } from './components/AssigneePicker'
 
 const STATUS_OPTIONS = [
   { key: 'backlog', label: 'Backlog', colorClass: 'pending' },
@@ -43,9 +43,36 @@ function BacklogView({
   const [newEpicDescription, setNewEpicDescription] = useState('')
   const [creatingEpic, setCreatingEpic] = useState(false)
 
+  const [collapseOverrides, setCollapseOverrides] = useState({})
+
+  function isGroupCollapsed(key, defaultCollapsed) {
+    return collapseOverrides[key] ?? defaultCollapsed
+  }
+
+  function toggleGroup(key, currentlyCollapsed) {
+    setCollapseOverrides((prev) => ({ ...prev, [key]: !currentlyCollapsed }))
+  }
+
   const isHybrid = project.methodology === 'hybrid'
   const items = tasks.filter((t) => t.backlog_status != null).sort(byBacklogRank)
   const totalPoints = items.reduce((sum, t) => sum + (t.story_points ?? 0), 0)
+
+  // sprints already comes ordered by start_date (see ProjectDetailLayout's
+  // load query) - reused here as-is, no re-sort needed.
+  const backlogGroups = [
+    {
+      key: 'pool',
+      label: 'Backlog Pool',
+      items: items.filter((t) => t.sprint_id == null),
+      defaultCollapsed: false,
+    },
+    ...sprints.map((sprint) => ({
+      key: `sprint:${sprint.id}`,
+      label: sprint.name,
+      items: items.filter((t) => t.sprint_id === sprint.id),
+      defaultCollapsed: true,
+    })),
+  ]
 
   async function handleCreate(e) {
     e.preventDefault()
@@ -314,108 +341,155 @@ function BacklogView({
             />
           )}
 
-          <ul className="backlog-list">
-            {items.map((item, index) => (
-              <li key={item.id} className="backlog-item">
-                {canEdit && (
-                  <div className="backlog-rank-controls">
-                    <button
-                      type="button"
-                      disabled={index === 0 || reorderingId != null}
-                      onClick={() => moveItem(item, -1)}
-                      aria-label="Move up"
-                    >
-                      ▲
-                    </button>
-                    <button
-                      type="button"
-                      disabled={index === items.length - 1 || reorderingId != null}
-                      onClick={() => moveItem(item, 1)}
-                      aria-label="Move down"
-                    >
-                      ▼
-                    </button>
-                  </div>
-                )}
+          {items.length === 0 && <p className="empty">No backlog items yet</p>}
 
-                <div className="backlog-item-main">
-                  <div className="backlog-item-title-row">
-                    <span className="backlog-item-title">{item.title}</span>
-                    {item.story_points != null && (
-                      <span className="story-points-badge">{item.story_points} pts</span>
-                    )}
-                    {isHybrid && item.milestone_id && (
-                      <span className="epic-tag">
-                        {milestones.find((m) => m.id === item.milestone_id)?.name ?? 'Unknown epic'}
-                      </span>
-                    )}
-                    {isHybrid && !item.milestone_id && item.epic_name && (
-                      <span className="epic-tag" title="Free-text epic from before Epics were tracked as a structured field - not linked to an epic yet">
-                        {item.epic_name} (unmapped)
-                      </span>
-                    )}
-                  </div>
-                  {item.description && (
-                    <p className="backlog-item-description">{item.description}</p>
+          {items.length > 0 &&
+            backlogGroups.map((group) => {
+              const collapsed = isGroupCollapsed(group.key, group.defaultCollapsed)
+              return (
+                <div className="task-group" key={group.key}>
+                  <button
+                    type="button"
+                    className="collapsible-toggle group-header-row"
+                    aria-expanded={!collapsed}
+                    onClick={() => toggleGroup(group.key, collapsed)}
+                  >
+                    <span className={`chevron ${collapsed ? 'collapsed' : ''}`} aria-hidden="true">
+                      ▾
+                    </span>
+                    <span className="group-header-label">{group.label}</span>
+                    <span className="doc-status-badge pending group-header-count">
+                      {group.items.length} Item{group.items.length === 1 ? '' : 's'}
+                    </span>
+                  </button>
+
+                  {collapsed ? (
+                    <ul className="backlog-list group-compact-list">
+                      {group.items.map((item) => (
+                        <li key={item.id} className="group-compact-row">
+                          <span className="group-compact-title">{item.title}</span>
+                          <span className="group-compact-meta">
+                            {resolveAssigneeLabel(item, collaborators) || 'Unassigned'}
+                          </span>
+                          <span className="group-compact-meta">{item.due_date || '—'}</span>
+                          <span className={`doc-status-badge ${STATUS_COLOR[item.backlog_status] || 'pending'}`}>
+                            {STATUS_OPTIONS.find((s) => s.key === item.backlog_status)?.label ||
+                              item.backlog_status}
+                          </span>
+                        </li>
+                      ))}
+                      {group.items.length === 0 && <li className="empty">No items in this group</li>}
+                    </ul>
+                  ) : (
+                    <ul className="backlog-list">
+                      {group.items.map((item) => {
+                        const index = items.indexOf(item)
+                        return (
+                          <li key={item.id} className="backlog-item">
+                            {canEdit && (
+                              <div className="backlog-rank-controls">
+                                <button
+                                  type="button"
+                                  disabled={index === 0 || reorderingId != null}
+                                  onClick={() => moveItem(item, -1)}
+                                  aria-label="Move up"
+                                >
+                                  ▲
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={index === items.length - 1 || reorderingId != null}
+                                  onClick={() => moveItem(item, 1)}
+                                  aria-label="Move down"
+                                >
+                                  ▼
+                                </button>
+                              </div>
+                            )}
+
+                            <div className="backlog-item-main">
+                              <div className="backlog-item-title-row">
+                                <span className="backlog-item-title">{item.title}</span>
+                                {item.story_points != null && (
+                                  <span className="story-points-badge">{item.story_points} pts</span>
+                                )}
+                                {isHybrid && item.milestone_id && (
+                                  <span className="epic-tag">
+                                    {milestones.find((m) => m.id === item.milestone_id)?.name ?? 'Unknown epic'}
+                                  </span>
+                                )}
+                                {isHybrid && !item.milestone_id && item.epic_name && (
+                                  <span className="epic-tag" title="Free-text epic from before Epics were tracked as a structured field - not linked to an epic yet">
+                                    {item.epic_name} (unmapped)
+                                  </span>
+                                )}
+                              </div>
+                              {item.description && (
+                                <p className="backlog-item-description">{item.description}</p>
+                              )}
+                            </div>
+
+                            <select
+                              className={`backlog-status-select ${STATUS_COLOR[item.backlog_status] || 'pending'}`}
+                              value={item.backlog_status}
+                              disabled={!canEdit}
+                              onChange={(e) => updateItem(item, { backlog_status: e.target.value })}
+                            >
+                              {STATUS_OPTIONS.map((s) => (
+                                <option key={s.key} value={s.key}>
+                                  {s.label}
+                                </option>
+                              ))}
+                            </select>
+
+                            {canEdit && isHybrid && (
+                              <select
+                                className="backlog-assign-select"
+                                value={item.milestone_id || ''}
+                                onChange={(e) => updateItem(item, { milestone_id: e.target.value || null })}
+                              >
+                                <option value="">
+                                  {item.epic_name && !item.milestone_id ? 'Map to epic...' : 'No epic'}
+                                </option>
+                                {milestones.map((m) => (
+                                  <option key={m.id} value={m.id}>
+                                    {m.name}
+                                  </option>
+                                ))}
+                              </select>
+                            )}
+
+                            {canEdit && item.backlog_status === 'ready' && sprints.length > 0 && (
+                              <select
+                                className="backlog-assign-select"
+                                value=""
+                                onChange={(e) => assignToSprint(item, e.target.value)}
+                              >
+                                <option value="">Assign to sprint...</option>
+                                {sprints.map((s) => (
+                                  <option key={s.id} value={s.id}>
+                                    {s.name}
+                                  </option>
+                                ))}
+                              </select>
+                            )}
+
+                            <AssigneePicker
+                              collaborators={collaborators}
+                              assigneeUserId={item.assignee_user_id}
+                              assigneeName={item.assignee_name}
+                              disabled={!canEdit}
+                              onChange={(next) => updateItem(item, next)}
+                            />
+                          </li>
+                        )
+                      })}
+                      {group.items.length === 0 && <li className="empty">No items in this group</li>}
+                    </ul>
                   )}
                 </div>
-
-                <select
-                  className={`backlog-status-select ${STATUS_COLOR[item.backlog_status] || 'pending'}`}
-                  value={item.backlog_status}
-                  disabled={!canEdit}
-                  onChange={(e) => updateItem(item, { backlog_status: e.target.value })}
-                >
-                  {STATUS_OPTIONS.map((s) => (
-                    <option key={s.key} value={s.key}>
-                      {s.label}
-                    </option>
-                  ))}
-                </select>
-
-                {canEdit && isHybrid && (
-                  <select
-                    className="backlog-assign-select"
-                    value={item.milestone_id || ''}
-                    onChange={(e) => updateItem(item, { milestone_id: e.target.value || null })}
-                  >
-                    <option value="">
-                      {item.epic_name && !item.milestone_id ? 'Map to epic...' : 'No epic'}
-                    </option>
-                    {milestones.map((m) => (
-                      <option key={m.id} value={m.id}>
-                        {m.name}
-                      </option>
-                    ))}
-                  </select>
-                )}
-
-                {canEdit && item.backlog_status === 'ready' && sprints.length > 0 && (
-                  <select
-                    className="backlog-assign-select"
-                    value=""
-                    onChange={(e) => assignToSprint(item, e.target.value)}
-                  >
-                    <option value="">Assign to sprint...</option>
-                    {sprints.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </select>
-                )}
-
-                <AssigneePicker
-                  collaborators={collaborators}
-                  assigneeUserId={item.assignee_user_id}
-                  assigneeName={item.assignee_name}
-                  disabled={!canEdit}
-                  onChange={(next) => updateItem(item, next)}
-                />
-              </li>
-            ))}
-            {items.length === 0 && <li className="empty">No backlog items yet</li>}
-          </ul>
+              )
+            })}
         </>
       )}
     </div>
