@@ -12,6 +12,13 @@ import { DOCUMENT_TYPES, groupDocumentTypes } from './documentTypes'
 // still-useful per-doc-type/per-group collapse, not the page-level "which
 // section am I looking at" toggle that got removed elsewhere; the outer
 // "Documents" heading itself was never a collapsible button to begin with.
+//
+// Rendered as a tight-row <table> (matching TaskListView's density) rather
+// than a card-style <ul>/<li> checklist - SprintRetroView's own checklist
+// still uses that card style/.doc-checklist* classes, so those stay in
+// App.css untouched; this file only ever used its own .doc-table* classes.
+// Each doc/group contributes one or more <tr>s via renderDocRow, flattened
+// into a single <tbody> with .flatMap().
 
 function isDocDone(docType, doc) {
   return docType.repeatable ? (doc?.length ?? 0) > 0 : doc != null
@@ -72,37 +79,46 @@ function DocumentsRoute() {
     setDocs((prev) => ({ ...prev, [docType.key]: updatedRow }))
   }
 
-  // Each row's status-dot (green/gray/amber/red) used to sit in front of
-  // docType.label, duplicating the exact same badgeColorClass the
-  // doc-status-badge on the right already carries - same visual language as
-  // the vestigial chevron/dot chrome removed from Phases/Gantt/etc, even
-  // though this dot's color was genuinely meaningful. Since the badge
-  // already fully carries that same color-coded status on its own, the dot
-  // was pure duplication - removed rather than restyled, since there's
-  // nothing left for a restyled dot to add that the badge doesn't already
-  // show.
-  function renderDocRow(docType) {
+  // Ignores keydown events that bubble up from a nested interactive child
+  // (e.g. the repeatable-type "+ Log..." button in the Actions cell) so
+  // pressing Enter/Space on that button doesn't also toggle the row.
+  function rowKeyGuard(e, activate) {
+    if (e.target !== e.currentTarget) return
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      activate()
+    }
+  }
+
+  // Returns an array of <tr>s for one doc type: the row itself, plus an
+  // expand row underneath when its View and/or Flow is open. `indented`
+  // marks a row rendered as a group's child (Communications' three items).
+  function renderDocRow(docType, { indented = false } = {}) {
     const doc = docs[docType.key]
     const isRepeatable = !!docType.repeatable
     const isDone = isDocDone(docType, doc)
     const isLocked = !!docType.available && !docType.available(project) && !isDone
+    const nameCellClass = `doc-table-name-cell ${indented ? 'doc-table-name-cell--indented' : ''}`
 
     if (isLocked) {
-      return (
-        <li key={docType.key} className="doc-checklist-item">
-          <div
-            className="doc-checklist-row doc-checklist-row-locked"
-            title="Available once the project is archived"
-          >
-            <span className="doc-checklist-label">{docType.label}</span>
-            <span className="doc-status-badge pending">Locked</span>
-          </div>
-        </li>
-      )
+      return [
+        <tr
+          key={docType.key}
+          className="doc-table-row doc-table-row-locked"
+          title="Available once the project is archived"
+        >
+          <td className={nameCellClass}>{docType.label}</td>
+          <td>
+            <span className="status-dot pending" aria-hidden="true" /> Locked
+          </td>
+          <td className="doc-table-action-cell" />
+        </tr>,
+      ]
     }
 
     const isViewOpen = expandedSection === docType.key
     const isFlowOpen = activeFlowKey === docType.key
+    const isExpanded = isViewOpen || isFlowOpen
     const { ViewComponent, FlowComponent, docProp } = docType
     const customBadge = docType.badgeFor ? docType.badgeFor(doc) : null
     const badgeColorClass = customBadge ? customBadge.colorClass : isDone ? 'done' : 'pending'
@@ -114,71 +130,77 @@ function DocumentsRoute() {
           ? 'Generated'
           : 'Not started'
 
-    return (
-      <li key={docType.key} className="doc-checklist-item">
-        {isRepeatable ? (
-          <div className="doc-checklist-row-group">
+    function activateRow() {
+      if (isRepeatable || isDone) {
+        toggleSection(docType.key)
+      } else if (canEdit) {
+        setActiveFlowKey((prev) => (prev === docType.key ? null : docType.key))
+      }
+    }
+
+    const rows = [
+      <tr
+        key={docType.key}
+        className={`doc-table-row ${isExpanded ? 'selected' : ''}`}
+        onClick={activateRow}
+        onKeyDown={(e) => rowKeyGuard(e, activateRow)}
+        role="button"
+        tabIndex={0}
+        aria-expanded={isExpanded}
+      >
+        <td className={nameCellClass}>
+          <span className={`chevron doc-table-chevron ${isExpanded ? '' : 'collapsed'}`} aria-hidden="true">
+            ▾
+          </span>
+          {docType.label}
+        </td>
+        <td>
+          <span className={`status-dot ${badgeColorClass}`} aria-hidden="true" /> {badgeLabel}
+        </td>
+        <td className="doc-table-action-cell">
+          {isRepeatable && canEdit && (
             <button
               type="button"
-              className={`doc-checklist-row ${badgeColorClass} ${isViewOpen || isFlowOpen ? 'selected' : ''}`}
-              onClick={() => toggleSection(docType.key)}
-            >
-              <span className="doc-checklist-label">{docType.label}</span>
-              <span className={`doc-status-badge ${badgeColorClass}`}>
-                {badgeLabel}
-              </span>
-            </button>
-            {canEdit && (
-              <button
-                type="button"
-                className="btn-secondary status-update-log-trigger"
-                onClick={() => setActiveFlowKey((prev) => (prev === docType.key ? null : docType.key))}
-              >
-                + {docType.actionLabel}
-              </button>
-            )}
-          </div>
-        ) : (
-          <button
-            type="button"
-            className={`doc-checklist-row ${badgeColorClass} ${isViewOpen || isFlowOpen ? 'selected' : ''}`}
-            onClick={() => {
-              if (isDone) {
-                toggleSection(docType.key)
-              } else if (canEdit) {
+              className="btn-secondary status-update-log-trigger"
+              onClick={(e) => {
+                e.stopPropagation()
                 setActiveFlowKey((prev) => (prev === docType.key ? null : docType.key))
-              }
-            }}
-          >
-            <span className="doc-checklist-label">{docType.label}</span>
-            <span className={`doc-status-badge ${badgeColorClass}`}>
-              {badgeLabel}
-            </span>
-          </button>
-        )}
+              }}
+            >
+              + {docType.actionLabel}
+            </button>
+          )}
+        </td>
+      </tr>,
+    ]
 
-        {isViewOpen && doc && (
-          <ViewComponent
-            project={project}
-            {...{ [docProp]: doc }}
-            {...docType.context(docs, tasks, { sprints, retros, milestones, phases, taskDependencies })}
-            canEdit={canEdit}
-            onUpdate={(updatedRow) => handleDocUpdated(docType, updatedRow)}
-          />
-        )}
+    if (isViewOpen || isFlowOpen) {
+      rows.push(
+        <tr key={`${docType.key}-expand`} className="doc-table-expand-row">
+          <td colSpan={3} className="doc-table-expand-cell">
+            {isViewOpen && doc && (
+              <ViewComponent
+                project={project}
+                {...{ [docProp]: doc }}
+                {...docType.context(docs, tasks, { sprints, retros, milestones, phases, taskDependencies })}
+                canEdit={canEdit}
+                onUpdate={(updatedRow) => handleDocUpdated(docType, updatedRow)}
+              />
+            )}
+            {isFlowOpen && canEdit && (
+              <FlowComponent
+                project={project}
+                {...docType.context(docs, tasks, { sprints, retros, milestones, phases, taskDependencies })}
+                onGenerated={(result, answerList) => handleDocGenerated(docType, result, answerList)}
+                onClose={() => setActiveFlowKey(null)}
+              />
+            )}
+          </td>
+        </tr>
+      )
+    }
 
-        {isFlowOpen && canEdit && (
-          <FlowComponent
-            project={project}
-            {...docType.context(docs, tasks, { sprints, retros, milestones, phases, taskDependencies })}
-            onGenerated={(result, answerList) =>
-              handleDocGenerated(docType, result, answerList)
-            }
-            onClose={() => setActiveFlowKey(null)}
-          />
-        )}
-      </li>
-    )
+    return rows
   }
 
   return (
@@ -188,43 +210,61 @@ function DocumentsRoute() {
       {docsLoading && <p className="charter-status">Loading...</p>}
 
       {!docsLoading && (
-        <ul className="doc-checklist">
-          {groupDocumentTypes(DOCUMENT_TYPES).map((row) => {
-            if (row.type === 'doc') return renderDocRow(row.docType)
+        <div className="risk-table-wrap">
+          <table className="risk-log-table doc-table">
+            <thead>
+              <tr>
+                <th>Doc Name</th>
+                <th>Status</th>
+                <th className="doc-table-action-col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {groupDocumentTypes(DOCUMENT_TYPES).flatMap((row) => {
+                if (row.type === 'doc') return renderDocRow(row.docType)
 
-            const isGroupOpen = expandedGroup === row.key
-            const doneCount = row.items.filter((docType) => isDocDone(docType, docs[docType.key])).length
-            const groupStatus =
-              doneCount === 0 ? 'pending' : doneCount === row.items.length ? 'done' : 'partial'
-            const groupStatusLabel =
-              groupStatus === 'done' ? 'Generated' : groupStatus === 'partial' ? 'In Progress' : 'Not started'
+                const isGroupOpen = expandedGroup === row.key
+                const doneCount = row.items.filter((docType) => isDocDone(docType, docs[docType.key])).length
+                const groupStatus =
+                  doneCount === 0 ? 'pending' : doneCount === row.items.length ? 'done' : 'partial'
+                const groupStatusLabel =
+                  groupStatus === 'done' ? 'Generated' : groupStatus === 'partial' ? 'In Progress' : 'Not started'
 
-            return (
-              <li key={row.key} className="doc-checklist-item doc-group">
-                <button
-                  type="button"
-                  className={`collapsible-toggle doc-group-header toggle-header-with-badge ${groupStatus}`}
-                  onClick={() => toggleGroup(row.key)}
-                  aria-expanded={isGroupOpen}
-                >
-                  <span className="toggle-header-main">
-                    <span className={`chevron ${isGroupOpen ? '' : 'collapsed'}`} aria-hidden="true">
-                      ▾
-                    </span>
-                    <span className="doc-checklist-label">{row.label}</span>
-                  </span>
-                  <span className={`doc-status-badge ${groupStatus}`}>{groupStatusLabel}</span>
-                </button>
+                const groupRow = (
+                  <tr
+                    key={row.key}
+                    className="doc-table-row doc-table-group-row"
+                    onClick={() => toggleGroup(row.key)}
+                    onKeyDown={(e) => rowKeyGuard(e, () => toggleGroup(row.key))}
+                    role="button"
+                    tabIndex={0}
+                    aria-expanded={isGroupOpen}
+                  >
+                    <td className="doc-table-name-cell">
+                      <span
+                        className={`chevron doc-table-chevron ${isGroupOpen ? '' : 'collapsed'}`}
+                        aria-hidden="true"
+                      >
+                        ▾
+                      </span>
+                      {row.label}
+                    </td>
+                    <td>
+                      <span className={`status-dot ${groupStatus}`} aria-hidden="true" /> {groupStatusLabel}
+                    </td>
+                    <td className="doc-table-action-cell" />
+                  </tr>
+                )
 
-                {isGroupOpen && (
-                  <ul className="doc-checklist doc-group-items">
-                    {row.items.map((docType) => renderDocRow(docType))}
-                  </ul>
-                )}
-              </li>
-            )
-          })}
-        </ul>
+                const childRows = isGroupOpen
+                  ? row.items.flatMap((docType) => renderDocRow(docType, { indented: true }))
+                  : []
+
+                return [groupRow, ...childRows]
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   )

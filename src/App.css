@@ -1436,6 +1436,72 @@
   flex: 1;
 }
 
+/* Documents table (DocumentsRoute.jsx) - tight-row conversion of what used
+   to share the card-style .doc-checklist rules above. SprintRetroView still
+   renders its own checklist with those, so they stay as-is; this section is
+   additive, not a replacement. */
+.doc-table th:nth-child(2),
+.doc-table td:nth-child(2) {
+  width: 160px;
+}
+
+.doc-table-action-col,
+.doc-table-action-cell {
+  width: 210px;
+  text-align: right;
+}
+
+.doc-table-row {
+  cursor: pointer;
+}
+
+.doc-table-row:hover td {
+  background: var(--code-bg);
+}
+
+.doc-table-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.doc-table-row.selected td:first-child {
+  border-left: 3px solid var(--accent);
+}
+
+.doc-table-row-locked {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.doc-table-row-locked:hover td {
+  background: none;
+}
+
+.doc-table-group-row td {
+  background: var(--code-bg);
+}
+
+.doc-table-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.doc-table-name-cell--indented {
+  padding-left: 32px;
+  font-weight: 400;
+}
+
+.doc-table-chevron {
+  font-size: 14px;
+}
+
+.doc-table-expand-cell {
+  padding: 20px 16px;
+  background: var(--bg);
+}
+
 .status-update-log-trigger {
   flex-shrink: 0;
 }
