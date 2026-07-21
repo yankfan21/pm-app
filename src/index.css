@@ -116,7 +116,11 @@
 
   font: 18px/145% var(--sans);
   letter-spacing: 0.18px;
-  color-scheme: light dark;
+  /* Scoped to the resolved theme (not "light dark") - native controls
+     (select, checkbox, scrollbar) must match data-theme, not raw OS
+     preference, or a select can render with the OS's native dark chrome
+     while its text still comes from our light-mode CSS var: dark-on-dark. */
+  color-scheme: light;
   color: var(--text);
   background: var(--bg);
   font-synthesis: none;
@@ -130,6 +134,7 @@
 }
 
 :root[data-theme='dark'] {
+  color-scheme: dark;
   --text: #e2e8f0;
   --text-h: #f1f5f9;
   --text-muted: #94a3b8;

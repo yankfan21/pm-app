@@ -2940,6 +2940,15 @@
   color: var(--text);
 }
 
+/* The editable variant is a real <select>, which otherwise defers its
+   closed-state background/arrow to native UA chrome - explicit background
+   and appearance keep it on our own theme instead. */
+.methodology-badge-select {
+  appearance: none;
+  background: var(--card-bg);
+  cursor: pointer;
+}
+
 .phase-item {
   align-items: stretch;
 }
