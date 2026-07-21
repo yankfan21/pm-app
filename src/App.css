@@ -11,6 +11,7 @@
 .app-header {
   width: 100%;
   background: var(--header-bg);
+  backdrop-filter: var(--card-backdrop-filter);
   border-bottom: 1px solid var(--header-border);
 }
 
@@ -170,6 +171,7 @@
   font: inherit;
   color: var(--text-h);
   background: var(--card-bg);
+  backdrop-filter: var(--card-backdrop-filter);
 }
 
 .search-input:focus {
@@ -465,18 +467,18 @@
 }
 
 .task-status-select.partial {
-  background: #fef3c7;
-  color: #b45309;
+  background: var(--badge-warning-bg);
+  color: var(--badge-warning-text);
 }
 
 .task-status-select.done {
-  background: #dcfce7;
-  color: #166534;
+  background: var(--badge-success-bg);
+  color: var(--badge-success-text);
 }
 
 .task-status-select.critical {
-  background: #fee2e2;
-  color: #b91c1c;
+  background: var(--badge-danger-bg);
+  color: var(--badge-danger-text);
 }
 
 .task-list {
@@ -518,6 +520,7 @@
   font-size: 11px;
   color: var(--text);
   background: var(--card-bg);
+  backdrop-filter: var(--card-backdrop-filter);
   white-space: nowrap;
 }
 
@@ -723,13 +726,13 @@
 }
 
 .backlog-status-select.partial {
-  background: #fef3c7;
-  color: #b45309;
+  background: var(--badge-warning-bg);
+  color: var(--badge-warning-text);
 }
 
 .backlog-status-select.done {
-  background: #dcfce7;
-  color: #166534;
+  background: var(--badge-success-bg);
+  color: var(--badge-success-text);
 }
 
 .backlog-assign-select {
@@ -882,13 +885,13 @@
 }
 
 .board-status-select.partial {
-  background: #fef3c7;
-  color: #b45309;
+  background: var(--badge-warning-bg);
+  color: var(--badge-warning-text);
 }
 
 .board-status-select.done {
-  background: #dcfce7;
-  color: #166534;
+  background: var(--badge-success-bg);
+  color: var(--badge-success-text);
 }
 
 .kanban-card-actions {
@@ -998,19 +1001,20 @@
   gap: 6px;
   flex-shrink: 0;
   padding: 10px 18px;
-  border: none;
+  border: 1px solid var(--btn-primary-border);
   border-radius: 8px;
-  color: white;
-  background: var(--accent);
+  color: var(--btn-primary-text);
+  background: var(--btn-primary-bg);
+  backdrop-filter: var(--btn-primary-backdrop-filter);
   font: inherit;
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;
-  transition: filter 0.15s ease;
+  transition: background 0.15s ease;
 }
 
 .btn-primary:hover {
-  filter: brightness(0.92);
+  background: var(--btn-primary-hover-bg);
 }
 
 .btn-secondary {
@@ -1019,10 +1023,10 @@
   gap: 6px;
   flex-shrink: 0;
   padding: 10px 18px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--btn-secondary-border);
   border-radius: 8px;
-  color: var(--text-h);
-  background: var(--bg);
+  color: var(--btn-secondary-text);
+  background: var(--btn-secondary-bg);
   font: inherit;
   font-weight: 500;
   text-decoration: none;
@@ -1033,7 +1037,7 @@
 }
 
 .btn-secondary:hover {
-  background: var(--code-bg);
+  background: var(--accent-bg);
   border-color: var(--accent-border);
 }
 
@@ -1084,6 +1088,7 @@
   border-left: 3px solid var(--card-accent-purple);
   border-radius: 0 10px 10px 0;
   background: var(--card-bg);
+  backdrop-filter: var(--card-backdrop-filter);
   box-shadow: var(--card-shadow);
   transition:
     box-shadow 0.15s ease,
@@ -1130,18 +1135,21 @@
 .project-list li.accent-purple {
   background:
     linear-gradient(var(--card-tint-purple), var(--card-tint-purple)), var(--card-bg);
+  backdrop-filter: var(--card-backdrop-filter);
 }
 
 .project-list li.accent-amber {
   border-left-color: var(--card-accent-amber);
   background:
     linear-gradient(var(--card-tint-amber), var(--card-tint-amber)), var(--card-bg);
+  backdrop-filter: var(--card-backdrop-filter);
 }
 
 .project-list li.accent-red {
   border-left-color: var(--card-accent-red);
   background:
     linear-gradient(var(--card-tint-red), var(--card-tint-red)), var(--card-bg);
+  backdrop-filter: var(--card-backdrop-filter);
 }
 
 .project-list li.accent-muted {
@@ -1350,6 +1358,7 @@
   border: 1px solid var(--row-border);
   border-radius: 6px;
   background: var(--row-bg);
+  backdrop-filter: var(--card-backdrop-filter);
   font: inherit;
   text-align: left;
   cursor: pointer;
@@ -1421,8 +1430,8 @@
 }
 
 .doc-status-badge.done {
-  background: #dcfce7;
-  color: #166534;
+  background: var(--badge-success-bg);
+  color: var(--badge-success-text);
 }
 
 .doc-status-badge.pending {
@@ -1431,13 +1440,13 @@
 }
 
 .doc-status-badge.partial {
-  background: #fef3c7;
-  color: #b45309;
+  background: var(--badge-warning-bg);
+  color: var(--badge-warning-text);
 }
 
 .doc-status-badge.critical {
-  background: #fee2e2;
-  color: #b91c1c;
+  background: var(--badge-danger-bg);
+  color: var(--badge-danger-text);
 }
 
 .toggle-header-with-badge {
@@ -1470,6 +1479,7 @@
   border: 1px solid var(--row-border);
   border-radius: 6px;
   background: var(--row-bg);
+  backdrop-filter: var(--card-backdrop-filter);
 }
 
 .doc-group-header:hover {
@@ -2092,6 +2102,7 @@
   border: none;
   border-left: 1px solid var(--border);
   background: var(--card-bg);
+  backdrop-filter: var(--card-backdrop-filter);
   color: var(--text);
   font: inherit;
   font-size: 13px;
@@ -2122,6 +2133,7 @@
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--card-bg);
+  backdrop-filter: var(--card-backdrop-filter);
 }
 
 .gantt-filters-clear {
@@ -2166,6 +2178,7 @@
   border: 1px solid var(--border);
   border-radius: 999px;
   background: var(--card-bg);
+  backdrop-filter: var(--card-backdrop-filter);
 }
 
 .gantt-legend-swatch {
@@ -2547,6 +2560,7 @@
   border: 1px solid var(--row-border);
   border-radius: 6px;
   background: var(--row-bg);
+  backdrop-filter: var(--card-backdrop-filter);
 }
 
 .critical-issue-label {
@@ -2563,18 +2577,18 @@
 }
 
 .issue-tag-task {
-  background: #fee2e2;
-  color: #b91c1c;
+  background: var(--badge-danger-bg);
+  color: var(--badge-danger-text);
 }
 
 .issue-tag-risk {
-  background: #fef3c7;
-  color: #b45309;
+  background: var(--badge-warning-bg);
+  color: var(--badge-warning-text);
 }
 
 .issue-tag-phase {
-  background: #fee2e2;
-  color: #b91c1c;
+  background: var(--badge-danger-bg);
+  color: var(--badge-danger-text);
 }
 
 @media (max-width: 480px) {
@@ -2758,13 +2772,13 @@
 }
 
 .priority-badge.high {
-  background: #fef3c7;
-  color: #b45309;
+  background: var(--badge-warning-bg);
+  color: var(--badge-warning-text);
 }
 
 .priority-badge.critical {
-  background: #fee2e2;
-  color: #b91c1c;
+  background: var(--badge-danger-bg);
+  color: var(--badge-danger-text);
 }
 
 .status-badge {
@@ -3243,18 +3257,18 @@ textarea.risk-cell-input {
 }
 
 .risk-level-low {
-  background: #dcfce7;
-  color: #166534;
+  background: var(--badge-success-bg);
+  color: var(--badge-success-text);
 }
 
 .risk-level-medium {
-  background: #fef3c7;
-  color: #b45309;
+  background: var(--badge-warning-bg);
+  color: var(--badge-warning-text);
 }
 
 .risk-level-high {
-  background: #fee2e2;
-  color: #b91c1c;
+  background: var(--badge-danger-bg);
+  color: var(--badge-danger-text);
 }
 
 .risk-delete-btn {
@@ -3437,7 +3451,7 @@ textarea.risk-cell-input {
 .import-issue-tag {
   font-size: 12px;
   font-weight: 500;
-  color: #b45309;
+  color: var(--badge-warning-text);
 }
 
 .risk-suggestions {
@@ -3548,18 +3562,18 @@ textarea.risk-cell-input {
 }
 
 .budget-health-under {
-  background: #dcfce7;
-  color: #166534;
+  background: var(--badge-success-bg);
+  color: var(--badge-success-text);
 }
 
 .budget-health-near {
-  background: #fef3c7;
-  color: #b45309;
+  background: var(--badge-warning-bg);
+  color: var(--badge-warning-text);
 }
 
 .budget-health-over {
-  background: #fee2e2;
-  color: #b91c1c;
+  background: var(--badge-danger-bg);
+  color: var(--badge-danger-text);
 }
 
 .budget-rollup-table td {
@@ -3573,11 +3587,11 @@ textarea.risk-cell-input {
 }
 
 .budget-variance-over {
-  color: #b91c1c;
+  color: var(--badge-danger-text);
 }
 
 .budget-variance-under {
-  color: #166534;
+  color: var(--badge-success-text);
 }
 
 .budget-line-items-heading {
@@ -3606,7 +3620,7 @@ textarea.risk-cell-input {
 }
 
 .login-panel-form {
-  background: #151220;
+  background: #1a2130;
   align-items: center;
   justify-content: center;
   padding: 48px 32px;
@@ -3627,19 +3641,19 @@ textarea.risk-cell-input {
 .login-brand-name {
   font-size: 20px;
   font-weight: 500;
-  color: #eeedfe;
+  color: #e2e8f0;
 }
 
 .login-heading {
   margin: 0 0 8px;
   font-size: 26px;
   font-weight: 700;
-  color: #eeedfe;
+  color: #e2e8f0;
 }
 
 .login-subtext {
   margin: 0 0 28px;
-  color: #afa9ec;
+  color: #94a3b8;
   font-size: 15px;
 }
 
@@ -3648,7 +3662,7 @@ textarea.risk-cell-input {
   margin-bottom: 16px;
   font-weight: 500;
   font-size: 13.5px;
-  color: #afa9ec;
+  color: #94a3b8;
 }
 
 .login-form-v2 input {
@@ -3659,15 +3673,15 @@ textarea.risk-cell-input {
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 8px;
   font: inherit;
-  color: #eeedfe;
+  color: #e2e8f0;
   background: rgba(255, 255, 255, 0.04);
   box-sizing: border-box;
 }
 
 .login-form-v2 input:focus {
   outline: none;
-  border-color: #7c5cfc;
-  box-shadow: 0 0 0 1px #7c5cfc;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 1px #3b82f6;
 }
 
 .login-btn-primary {
@@ -3676,7 +3690,7 @@ textarea.risk-cell-input {
   padding: 11px 0;
   border: none;
   border-radius: 8px;
-  background: #7c5cfc;
+  background: #3b82f6;
   color: white;
   font: inherit;
   font-weight: 600;
@@ -3694,7 +3708,7 @@ textarea.risk-cell-input {
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 8px;
   background: none;
-  color: #eeedfe;
+  color: #e2e8f0;
   font: inherit;
   font-weight: 500;
   cursor: pointer;
@@ -3702,13 +3716,13 @@ textarea.risk-cell-input {
 
 .login-error {
   margin: 0 0 12px;
-  color: #ff9b9b;
+  color: #fca5a5;
   font-size: 14px;
 }
 
 .login-info {
   margin: 0 0 12px;
-  color: #cecbf6;
+  color: #93c5fd;
   font-size: 14px;
 }
 
@@ -3717,7 +3731,7 @@ textarea.risk-cell-input {
   align-items: center;
   gap: 10px;
   margin: 20px 0;
-  color: #afa9ec;
+  color: #94a3b8;
   font-size: 13px;
 }
 
@@ -3733,7 +3747,7 @@ textarea.risk-cell-input {
   margin: 24px 0 0;
   text-align: center;
   font-size: 14px;
-  color: #afa9ec;
+  color: #94a3b8;
 }
 
 .login-footer-link button {
@@ -3742,12 +3756,12 @@ textarea.risk-cell-input {
   padding: 0;
   font: inherit;
   font-weight: 600;
-  color: #cecbf6;
+  color: #93c5fd;
   cursor: pointer;
 }
 
 .login-panel-preview {
-  background: #1e1a29;
+  background: #161c27;
   flex-direction: column;
   justify-content: space-between;
   padding: 48px 40px;
@@ -3773,12 +3787,12 @@ textarea.risk-cell-input {
 }
 
 .login-preview-dot.filled {
-  background: #7c5cfc;
+  background: #3b82f6;
 }
 
 .login-preview-counter {
   font-size: 13px;
-  color: #afa9ec;
+  color: #94a3b8;
 }
 
 .login-preview-label {
@@ -3787,7 +3801,7 @@ textarea.risk-cell-input {
   font-weight: 600;
   letter-spacing: 0.6px;
   text-transform: uppercase;
-  color: #cecbf6;
+  color: #93c5fd;
 }
 
 .login-preview-question {
@@ -3795,13 +3809,13 @@ textarea.risk-cell-input {
   font-size: 24px;
   font-weight: 500;
   line-height: 1.4;
-  color: #eeedfe;
+  color: #e2e8f0;
 }
 
 .login-preview-tagline {
   margin: 0;
   font-size: 15px;
-  color: #afa9ec;
+  color: #94a3b8;
 }
 
 @media (max-width: 760px) {
@@ -3844,6 +3858,7 @@ textarea.risk-cell-input {
   border: 1px solid var(--row-border);
   border-radius: 6px;
   background: var(--row-bg);
+  backdrop-filter: var(--card-backdrop-filter);
 }
 
 .collaborator-email {
@@ -3857,16 +3872,40 @@ textarea.risk-cell-input {
 }
 
 .settings-section-title {
-  margin: 0 0 4px;
+  margin: 32px 0 4px;
   font-size: 15px;
   font-weight: 600;
   color: var(--text-h);
+}
+
+.settings-section-title:first-of-type {
+  margin-top: 0;
 }
 
 .settings-hidden-at {
   font-size: 12px;
   color: var(--accent-muted);
   white-space: nowrap;
+}
+
+.theme-option-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 24px;
+  margin: 12px 0 4px;
+}
+
+.theme-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.theme-option input[type='radio'] {
+  accent-color: var(--accent);
 }
 
 .collaborator-invite-form {
@@ -3952,6 +3991,7 @@ textarea.risk-cell-input {
   font: inherit;
   color: var(--text-h);
   background: var(--card-bg);
+  backdrop-filter: var(--card-backdrop-filter);
 }
 
 .dependency-picker-show-completed {
@@ -3976,6 +4016,7 @@ textarea.risk-cell-input {
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--card-bg);
+  backdrop-filter: var(--card-backdrop-filter);
   box-shadow: var(--card-hover-shadow);
 }
 

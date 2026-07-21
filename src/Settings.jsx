@@ -3,6 +3,13 @@ import { Link } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import { useAuth } from './AuthContext'
 import AppHeader from './AppHeader'
+import { useTheme } from './hooks/useTheme'
+
+const THEME_OPTIONS = [
+  { value: 'system', label: 'System Default' },
+  { value: 'light', label: 'Light' },
+  { value: 'dark', label: 'Dark' },
+]
 
 function formatHiddenAt(hiddenAt) {
   if (!hiddenAt) return ''
@@ -18,6 +25,7 @@ function formatHiddenAt(hiddenAt) {
 // toolbar, just its own AppHeader + page body.
 function Settings() {
   const { user } = useAuth()
+  const { theme, setTheme } = useTheme()
   const [hiddenProjects, setHiddenProjects] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -97,6 +105,24 @@ function Settings() {
 
       <div className="app-body">
         <h2 className="page-title view-title">Settings</h2>
+
+        <h3 className="settings-section-title">Appearance</h3>
+        <p className="dashboard-subtitle">Choose how Projist looks on this device.</p>
+
+        <div className="theme-option-group" role="radiogroup" aria-label="Appearance">
+          {THEME_OPTIONS.map((option) => (
+            <label key={option.value} className="theme-option">
+              <input
+                type="radio"
+                name="theme"
+                value={option.value}
+                checked={theme === option.value}
+                onChange={() => setTheme(option.value)}
+              />
+              {option.label}
+            </label>
+          ))}
+        </div>
 
         <h3 className="settings-section-title">Hidden Projects</h3>
         <p className="dashboard-subtitle">

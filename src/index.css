@@ -1,81 +1,114 @@
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #f5f4fa;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  /* Projist brand accent - #26215C (deep indigo) on light backgrounds for
-     the same contrast role #1e3a8a used to play; #7F77DD only reaches
-     readable contrast on the dark theme's background, see below. */
-  --accent: #26215c;
-  --accent-bg: rgba(38, 33, 92, 0.08);
-  --accent-border: rgba(38, 33, 92, 0.35);
-  --accent-muted: #6e63b6;
-  /* Demo-project badge/banner accent - deliberately NOT purple now that
-     purple is the brand's own primary accent (would defeat the "stands
-     out at a glance, distinct from normal UI" purpose it was added for). */
+/* Theme tokens - light is the default/fallback (:root with no
+   data-theme), and :root[data-theme="light|dark"] cover the explicit,
+   user-selectable modes. data-theme is set on <html> before paint by the
+   inline snippet in index.html and kept in sync by useTheme.js - this file
+   never reads prefers-color-scheme directly, since "system" is resolved to
+   an explicit light/dark value upstream instead. */
+:root,
+:root[data-theme='light'] {
+  --text: #1e293b;
+  --text-h: #1e293b;
+  --text-muted: #64748b;
+  --bg: #f8fafc;
+  --border: #cbd5e1;
+  --code-bg: #f1f5f9;
+  --accent: #2563eb;
+  --accent-bg: rgba(37, 99, 235, 0.08);
+  --accent-border: rgba(37, 99, 235, 0.35);
+  --accent-muted: #3b82f6;
+  /* Demo-project badge/banner accent - deliberately NOT the primary accent
+     hue (would defeat the "stands out at a glance, distinct from normal
+     UI" purpose it was added for). */
   --demo-accent: #0d9488;
   --demo-accent-bg: rgba(13, 148, 136, 0.08);
   --demo-accent-border: rgba(13, 148, 136, 0.35);
-  --social-bg: rgba(244, 243, 236, 0.5);
+  --social-bg: rgba(241, 245, 249, 0.5);
   --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+    rgba(15, 23, 42, 0.1) 0 10px 15px -3px,
+    rgba(15, 23, 42, 0.05) 0 4px 6px -2px;
 
   /* Filter tabs (pill) vs. sort controls (plain text) - two distinct
      interaction languages so users don't mistake narrowing the list
      (filter) for reordering it (sort). */
-  --tab-active-bg: #26215c;
-  --tab-active-text: #eeedfe;
-  --tab-inactive-text: var(--accent-muted);
-  --sort-active: #7c5cfc;
+  --tab-active-bg: #2563eb;
+  --tab-active-text: #ffffff;
+  --tab-inactive-text: var(--text-muted);
+  --sort-active: #2563eb;
 
   /* Project-card surface, lifted off the page background, plus its
      left-border accent tiers (priority/health signal - see
      cardAccentTier in ProjectList.jsx). */
   --card-bg: #ffffff;
-  --card-shadow: 0 1px 2px rgba(38, 33, 92, 0.06);
-  --card-hover-shadow: 0 4px 12px rgba(38, 33, 92, 0.1);
+  --card-backdrop-filter: none;
+  --card-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --card-hover-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
   --card-accent-purple: var(--accent);
   --card-accent-amber: #d97706;
   --card-accent-red: #dc2626;
   --card-accent-muted: var(--border);
-  --card-tint-purple: rgba(38, 33, 92, 0.03);
+  --card-tint-purple: rgba(37, 99, 235, 0.03);
   --card-tint-amber: rgba(217, 119, 6, 0.03);
   --card-tint-red: rgba(220, 38, 38, 0.03);
 
-  /* Header frame and Project Detail row surfaces - both a shade between
-     --bg and --card-bg, and both use the same fixed brand-purple border
-     tint in either theme (like --sort-active) rather than remapping per
-     mode. */
-  --header-bg: #f0eefa;
-  --header-border: rgba(124, 92, 252, 0.2);
-  --row-bg: #fafaf8;
-  --row-border: rgba(124, 92, 252, 0.1);
+  /* Header frame and Project Detail row surfaces - a shade between --bg
+     and --card-bg. */
+  --header-bg: #f1f5f9;
+  --header-border: rgba(37, 99, 235, 0.15);
+  --row-bg: #f8fafc;
+  --row-border: rgba(37, 99, 235, 0.08);
 
   /* Project Detail section containers (Manage Access, Agile zone,
-     Documents) - a lifted surface matching the project-card treatment, so
-     these read as larger siblings of the All Projects cards rather than a
-     separate visual system. --agile-accent/--agile-tint are fixed brand
-     purple in both themes (same convention as --sort-active/--row-border
-     above), since the Agile zone's identity is "this is Agile content," not
-     a light/dark-remapped semantic color. */
+     Documents) - a lifted surface matching the project-card treatment.
+     --agile-accent/--agile-tint are a fixed indigo in both themes (like
+     --sort-active/--row-border), since the Agile zone's identity is "this
+     is Agile content," not a light/dark-remapped semantic color. */
   --surface-1: var(--card-bg);
   --border-faint: color-mix(in srgb, var(--border) 10%, transparent);
-  --agile-accent: #7c5cfc;
-  --agile-tint: rgba(124, 92, 252, 0.06);
+  --agile-accent: #4f46e5;
+  --agile-tint: rgba(79, 70, 229, 0.06);
   /* Structural (non-methodology) zone accent - the same "pending/neutral"
      slate already used for status-dot/badge grays elsewhere, promoted to a
      left-accent bar so Manage Access/Documents read as clearly as the
-     purple-accented Agile zone, without borrowing Agile's brand color. */
+     indigo-accented Agile zone, without borrowing Agile's color. */
   --zone-accent-neutral: #94a3b8;
 
   /* Neutral status pill ("Not evaluated" etc.) and alert/marker red (Gantt
      "Today" line, future error states) - fixed across both themes, same
-     convention as the badge pastels below and --sort-active/--agile-accent
-     above, rather than remapped per mode. */
-  --pill-neutral-bg: #ece9f2;
-  --pill-neutral-text: #6b6478;
-  --alert-red: #f2545b;
+     convention as --sort-active/--agile-accent above, rather than
+     remapped per mode. */
+  --pill-neutral-bg: #f1f5f9;
+  --pill-neutral-text: #64748b;
+  --alert-red: #ef4444;
+
+  /* Status badge tiers (on-track/at-risk/off-track health, priority,
+     doc-status, etc. all share these three). */
+  --badge-success-bg: rgba(16, 185, 129, 0.12);
+  --badge-success-text: #047857;
+  --badge-success-border: rgba(5, 150, 105, 0.5);
+  --badge-warning-bg: #fef3c7;
+  --badge-warning-text: #b45309;
+  --badge-warning-border: rgba(180, 83, 9, 0.4);
+  --badge-danger-bg: rgba(239, 68, 68, 0.12);
+  --badge-danger-text: #b91c1c;
+  --badge-danger-border: rgba(220, 38, 38, 0.5);
+
+  --btn-primary-bg: #2563eb;
+  --btn-primary-hover-bg: #1d4ed8;
+  --btn-primary-border: #2563eb;
+  --btn-primary-text: #ffffff;
+  --btn-primary-backdrop-filter: none;
+  --btn-secondary-bg: transparent;
+  --btn-secondary-border: #cbd5e1;
+  --btn-secondary-text: #1e293b;
+
+  --input-bg: #ffffff;
+  --input-border: #cbd5e1;
+  --input-text: #1e293b;
+  --link: #2563eb;
+
+  --disabled-bg: #e2e8f0;
+  --disabled-text: #94a3b8;
+  --disabled-border: #cbd5e1;
 
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
@@ -96,47 +129,83 @@
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #151220;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #7c5cfc;
-    --accent-bg: rgba(124, 92, 252, 0.15);
-    --accent-border: rgba(124, 92, 252, 0.5);
-    --accent-muted: #afa9ec;
-    --demo-accent: #5eead4;
-    --demo-accent-bg: rgba(94, 234, 212, 0.15);
-    --demo-accent-border: rgba(94, 234, 212, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+:root[data-theme='dark'] {
+  --text: #e2e8f0;
+  --text-h: #f1f5f9;
+  --text-muted: #94a3b8;
+  --bg: #212836;
+  --border: rgba(255, 255, 255, 0.08);
+  --code-bg: rgba(15, 23, 42, 0.5);
+  --accent: #93c5fd;
+  --accent-bg: rgba(59, 130, 246, 0.15);
+  --accent-border: rgba(59, 130, 246, 0.4);
+  --accent-muted: #60a5fa;
+  --demo-accent: #5eead4;
+  --demo-accent-bg: rgba(94, 234, 212, 0.15);
+  --demo-accent-border: rgba(94, 234, 212, 0.5);
+  --social-bg: rgba(15, 23, 42, 0.5);
+  --shadow:
+    rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
 
-    --tab-active-bg: #7c5cfc;
-    --tab-active-text: #26215c;
+  --tab-active-bg: rgba(59, 130, 246, 0.25);
+  --tab-active-text: #93c5fd;
 
-    /* Dark cards differentiate from the page via a lighter surface, not a
-       shadow (shadows don't read against a dark background) - and the
-       amber/red accents are bumped brighter so a 3px border stays legible
-       at low surface contrast. */
-    --card-bg: #1e1a29;
-    --card-shadow: none;
-    --card-hover-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
-    --card-accent-amber: #f59e0b;
-    --card-accent-red: #f87171;
-    --card-tint-purple: rgba(124, 92, 252, 0.05);
-    --card-tint-amber: rgba(217, 119, 6, 0.05);
-    --card-tint-red: rgba(220, 38, 38, 0.05);
+  /* Dark cards are a frosted glass surface over the page background
+     rather than a solid lift - see --card-backdrop-filter. */
+  --card-bg: rgba(15, 23, 42, 0.35);
+  --card-backdrop-filter: blur(12px);
+  --card-shadow: none;
+  --card-hover-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  --card-accent-amber: #f59e0b;
+  --card-accent-red: #f87171;
+  --card-tint-purple: rgba(59, 130, 246, 0.06);
+  --card-tint-amber: rgba(217, 119, 6, 0.05);
+  --card-tint-red: rgba(220, 38, 38, 0.05);
 
-    --header-bg: #26212f;
-    --row-bg: #26212f;
-  }
+  --header-bg: rgba(15, 23, 42, 0.35);
+  --header-border: rgba(255, 255, 255, 0.08);
+  --row-bg: rgba(15, 23, 42, 0.25);
+  --row-border: rgba(255, 255, 255, 0.06);
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+  --agile-accent: #818cf8;
+  --agile-tint: rgba(129, 140, 248, 0.08);
+  --zone-accent-neutral: #94a3b8;
+
+  --pill-neutral-bg: rgba(255, 255, 255, 0.06);
+  --pill-neutral-text: #94a3b8;
+  --alert-red: #f87171;
+
+  --badge-success-bg: rgba(16, 185, 129, 0.1);
+  --badge-success-text: #a7f3d0;
+  --badge-success-border: rgba(52, 211, 153, 0.3);
+  --badge-warning-bg: rgba(245, 158, 11, 0.1);
+  --badge-warning-text: #fde68a;
+  --badge-warning-border: rgba(251, 191, 36, 0.3);
+  --badge-danger-bg: rgba(239, 68, 68, 0.1);
+  --badge-danger-text: #fecaca;
+  --badge-danger-border: rgba(248, 113, 113, 0.3);
+
+  --btn-primary-bg: rgba(59, 130, 246, 0.25);
+  --btn-primary-hover-bg: rgba(59, 130, 246, 0.35);
+  --btn-primary-border: rgba(59, 130, 246, 0.4);
+  --btn-primary-text: #93c5fd;
+  --btn-primary-backdrop-filter: blur(8px);
+  --btn-secondary-bg: transparent;
+  --btn-secondary-border: rgba(255, 255, 255, 0.15);
+  --btn-secondary-text: #e2e8f0;
+
+  --input-bg: rgba(15, 23, 42, 0.35);
+  --input-border: rgba(255, 255, 255, 0.15);
+  --input-text: #e2e8f0;
+  --link: #93c5fd;
+
+  --disabled-bg: rgba(255, 255, 255, 0.05);
+  --disabled-text: rgba(226, 232, 240, 0.4);
+  --disabled-border: rgba(255, 255, 255, 0.08);
+}
+
+:root[data-theme='dark'] #social .button-icon {
+  filter: invert(1) brightness(2);
 }
 
 body {

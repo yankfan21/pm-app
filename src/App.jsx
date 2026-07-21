@@ -23,6 +23,7 @@ import Settings from './Settings'
 import NotFound from './NotFound'
 import Login from './Login'
 import RequireAuth from './RequireAuth'
+import { useTheme } from './hooks/useTheme'
 import './App.css'
 
 // Phase 4 cutover: every route other than /login requires a signed-in
@@ -40,6 +41,10 @@ import './App.css'
 // methodology-gated section route redirects to Overview itself in that
 // case; see MethodologySection in ProjectSectionRoutes.jsx).
 function App() {
+  // Mounted here (not just in Settings) so the 'system' preference listener
+  // stays live across the whole app, not only while Settings is on screen.
+  useTheme()
+
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
