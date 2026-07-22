@@ -218,6 +218,11 @@ function GanttChart({ project, tasks, taskDependencies, phases, milestones = [],
   // a fresh page load always shows the full picture first.
   const [collapsedPhases, setCollapsedPhases] = useState({})
   const [zoom, setZoom] = useState('week')
+  // '' means "not set" - a custom range only takes effect once both are
+  // filled (see the override below); plain component state, not persisted,
+  // so it resets to the default computed range on every reload same as zoom.
+  const [customRangeStart, setCustomRangeStart] = useState('')
+  const [customRangeEnd, setCustomRangeEnd] = useState('')
   // '' means "All" for every filter below - never null/undefined, so a
   // <select>'s controlled value always matches one of its own options.
   const [filterAssignee, setFilterAssignee] = useState('')
@@ -289,8 +294,25 @@ function GanttChart({ project, tasks, taskDependencies, phases, milestones = [],
 
   const filteredTasks = hasActiveFilters ? tasks.filter(taskMatchesFilters) : tasks
 
-  const { bars, unscheduled, rangeStart, rangeEndRaw, totalSpan, todayInRange, todayMs } =
+  let { bars, unscheduled, rangeStart, rangeEndRaw, totalSpan, todayInRange, todayMs } =
     computeGanttLayout(filteredTasks, project, phases)
+
+  // A custom range only overrides the axis window (start/end/span used for
+  // tick and bar positioning below) - it never touches which tasks are in
+  // `bars`, so a task extending past the custom window still renders, just
+  // clipped by .gantt-wrap's existing horizontal scroll/frozen label column,
+  // same as scrolling would clip it today.
+  if (customRangeStart && customRangeEnd) {
+    const customStart = parseDay(customRangeStart)
+    const customEndRaw = parseDay(customRangeEnd)
+    if (customEndRaw >= customStart) {
+      rangeStart = customStart
+      rangeEndRaw = customEndRaw
+      const guardedEnd = rangeEndRaw > rangeStart ? rangeEndRaw : rangeStart + DAY_MS
+      totalSpan = guardedEnd - rangeStart
+      todayInRange = bars.length > 0 && todayMs >= rangeStart && todayMs <= guardedEnd
+    }
+  }
 
   const totalDays = Math.max(1, Math.round(totalSpan / DAY_MS))
   const zoomLevel = ZOOM_LEVELS.find((z) => z.key === zoom) || ZOOM_LEVELS[1]
@@ -491,6 +513,39 @@ function GanttChart({ project, tasks, taskDependencies, phases, milestones = [],
             />
             Show Critical Path
           </label>
+          <div className="gantt-date-range">
+            <label className="task-date-field">
+              From
+              <input
+                type="date"
+                value={customRangeStart}
+                disabled={bars.length === 0}
+                onChange={(e) => setCustomRangeStart(e.target.value)}
+              />
+            </label>
+            <label className="task-date-field">
+              To
+              <input
+                type="date"
+                value={customRangeEnd}
+                disabled={bars.length === 0}
+                onChange={(e) => setCustomRangeEnd(e.target.value)}
+              />
+            </label>
+            {(customRangeStart || customRangeEnd) && (
+              <button
+                type="button"
+                className="gantt-range-reset"
+                title="Reset to default range"
+                onClick={() => {
+                  setCustomRangeStart('')
+                  setCustomRangeEnd('')
+                }}
+              >
+                ✕
+              </button>
+            )}
+          </div>
           <div className="gantt-zoom-control" role="group" aria-label="Zoom level">
             {ZOOM_LEVELS.map((z) => (
               <button

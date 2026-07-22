@@ -2172,6 +2172,31 @@
   cursor: pointer;
 }
 
+.gantt-date-range {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gantt-range-reset {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card-bg);
+  color: var(--text);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.gantt-range-reset:hover {
+  background: var(--border);
+}
+
 .gantt-zoom-control {
   display: inline-flex;
   border: 1px solid var(--border);
