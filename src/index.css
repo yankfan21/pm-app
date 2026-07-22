@@ -9,8 +9,8 @@
   --text: #1e293b;
   --text-h: #1e293b;
   --text-muted: #64748b;
-  --bg: #f8fafc;
-  --border: #cbd5e1;
+  --bg: #e2e5e9;
+  --border: #b8bec7;
   --code-bg: #f1f5f9;
   --accent: #2563eb;
   --accent-bg: rgba(37, 99, 235, 0.08);
@@ -38,7 +38,7 @@
   /* Project-card surface, lifted off the page background, plus its
      left-border accent tiers (priority/health signal - see
      cardAccentTier in ProjectList.jsx). */
-  --card-bg: #ffffff;
+  --card-bg: #f5f6f8;
   --card-backdrop-filter: none;
   --card-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
   --card-hover-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
@@ -52,9 +52,9 @@
 
   /* Header frame and Project Detail row surfaces - a shade between --bg
      and --card-bg. */
-  --header-bg: #f1f5f9;
+  --header-bg: #eceef0;
   --header-border: rgba(37, 99, 235, 0.15);
-  --row-bg: #f8fafc;
+  --row-bg: #eef0f2;
   --row-border: rgba(37, 99, 235, 0.08);
 
   /* Project Detail section containers (Manage Access, Agile zone,
@@ -138,7 +138,7 @@
   --text: #e2e8f0;
   --text-h: #f1f5f9;
   --text-muted: #94a3b8;
-  --bg: #212836;
+  --bg: #3d4759;
   --border: rgba(255, 255, 255, 0.08);
   --code-bg: rgba(15, 23, 42, 0.5);
   --accent: #93c5fd;
