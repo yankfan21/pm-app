@@ -430,6 +430,17 @@
   text-overflow: ellipsis;
 }
 
+/* Opaque, theme-matched pair for native <option> rows - the select's own
+   color/background above only affects its closed box, not the popup list,
+   and without this the popup falls back to browser/OS default rendering
+   (washed-out in dark mode - same fix as .board-status-option, reusing its
+   neutral --option-pending-* tokens since these options have no per-status
+   meaning to color-code). */
+.assignee-picker-select option {
+  background: var(--option-pending-bg);
+  color: var(--option-pending-text);
+}
+
 .assignee-picker-name-input {
   width: 130px;
   padding: 5px 8px;
@@ -457,9 +468,9 @@
 
 .assignee-picker--other .assignee-picker-select {
   flex: 0 0 auto;
-  width: auto;
+  width: 150px;
   min-width: 0;
-  max-width: 90px;
+  max-width: none;
   border: none;
   border-right: 1px solid var(--border);
   border-radius: 0;
