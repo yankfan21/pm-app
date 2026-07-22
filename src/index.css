@@ -9,8 +9,8 @@
   --text: #1e293b;
   --text-h: #1e293b;
   --text-muted: #64748b;
-  --bg: #e2e5e9;
-  --border: #b8bec7;
+  --bg: #e0e4ec;
+  --border: #cbd1db;
   --code-bg: #f1f5f9;
   --accent: #2563eb;
   --accent-bg: rgba(37, 99, 235, 0.08);
@@ -38,7 +38,7 @@
   /* Project-card surface, lifted off the page background, plus its
      left-border accent tiers (priority/health signal - see
      cardAccentTier in ProjectList.jsx). */
-  --card-bg: #f5f6f8;
+  --card-bg: #f2f4f8;
   --card-backdrop-filter: none;
   --card-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
   --card-hover-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
@@ -138,7 +138,7 @@
   --text: #e2e8f0;
   --text-h: #f1f5f9;
   --text-muted: #94a3b8;
-  --bg: #3d4759;
+  --bg: #1a2130;
   --border: rgba(255, 255, 255, 0.08);
   --code-bg: rgba(15, 23, 42, 0.5);
   --accent: #93c5fd;
@@ -157,7 +157,7 @@
 
   /* Dark cards are a frosted glass surface over the page background
      rather than a solid lift - see --card-backdrop-filter. */
-  --card-bg: rgba(15, 23, 42, 0.35);
+  --card-bg: rgba(22, 28, 39, 0.35);
   --card-backdrop-filter: blur(12px);
   --card-shadow: none;
   --card-hover-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
