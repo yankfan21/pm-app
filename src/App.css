@@ -410,7 +410,13 @@
   gap: 6px;
 }
 
+.kanban-card-actions .assignee-picker {
+  flex: 1 1 auto;
+  min-width: 90px;
+}
+
 .assignee-picker-select {
+  min-width: 90px;
   max-width: 160px;
   padding: 5px 8px;
   border: 1px solid var(--border);
@@ -419,6 +425,9 @@
   font-size: 13px;
   color: var(--text-h);
   background: var(--bg);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .assignee-picker-name-input {
@@ -865,6 +874,7 @@
 
 .board-status-select {
   align-self: flex-start;
+  flex-shrink: 0;
   padding: 4px 10px;
   border: none;
   border-radius: 999px;
