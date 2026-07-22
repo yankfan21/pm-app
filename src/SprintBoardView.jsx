@@ -477,7 +477,11 @@ function SprintBoardView({
                                     onChange={(e) => updateBoardStatus(task, e.target.value)}
                                   >
                                     {BOARD_COLUMNS.map((c) => (
-                                      <option key={c.key} value={c.key}>
+                                      <option
+                                        key={c.key}
+                                        value={c.key}
+                                        className={`board-status-option ${c.colorClass}`}
+                                      >
                                         {c.label}
                                       </option>
                                     ))}

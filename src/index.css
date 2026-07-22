@@ -92,6 +92,17 @@
   --badge-danger-text: #b91c1c;
   --badge-danger-border: rgba(220, 38, 38, 0.5);
 
+  /* Solid, opaque pairs for native <option> rows (Sprint Board status
+     dropdown) - the translucent --badge-*-bg tints above are card-surface
+     overlays and read washed-out when the browser paints them as an opaque
+     native popup row, especially in dark mode. */
+  --option-pending-bg: #f1f5f9;
+  --option-pending-text: #1e293b;
+  --option-partial-bg: #fef3c7;
+  --option-partial-text: #b45309;
+  --option-done-bg: #d1fae5;
+  --option-done-text: #047857;
+
   --btn-primary-bg: #2563eb;
   --btn-primary-hover-bg: #1d4ed8;
   --btn-primary-border: #2563eb;
@@ -189,6 +200,13 @@
   --badge-danger-bg: rgba(239, 68, 68, 0.1);
   --badge-danger-text: #fecaca;
   --badge-danger-border: rgba(248, 113, 113, 0.3);
+
+  --option-pending-bg: #1e2839;
+  --option-pending-text: #e2e8f0;
+  --option-partial-bg: #78350f;
+  --option-partial-text: #fde68a;
+  --option-done-bg: #065f46;
+  --option-done-text: #a7f3d0;
 
   --btn-primary-bg: rgba(59, 130, 246, 0.25);
   --btn-primary-hover-bg: rgba(59, 130, 246, 0.35);

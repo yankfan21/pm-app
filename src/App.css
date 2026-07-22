@@ -894,6 +894,27 @@
   color: var(--badge-success-text);
 }
 
+/* Per-option colors for the popup list - opaque tokens, not the
+   translucent .board-status-select.* tint above (see index.css
+   --option-*). Each <option> carries its OWN status color class, not
+   the select's current-value class, so non-selected rows in the popup
+   are correctly colored instead of inheriting whichever status the
+   card currently has. */
+.board-status-option.pending {
+  background: var(--option-pending-bg);
+  color: var(--option-pending-text);
+}
+
+.board-status-option.partial {
+  background: var(--option-partial-bg);
+  color: var(--option-partial-text);
+}
+
+.board-status-option.done {
+  background: var(--option-done-bg);
+  color: var(--option-done-text);
+}
+
 .kanban-card-actions {
   display: flex;
   align-items: center;
