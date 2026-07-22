@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useAuth } from '../AuthContext'
 
 // Assignee = either a real project collaborator (assignee_user_id, FK to
 // auth.users - see tasks_assignee.sql) or a one-off free-text name
@@ -23,11 +24,24 @@ export default function AssigneePicker({
   collaborators,
   assigneeUserId,
   assigneeName,
+  ownerUserId,
   onChange,
   disabled = false,
 }) {
+  const { user } = useAuth()
   const [mode, setMode] = useState(() => (assigneeUserId ? 'collaborator' : assigneeName ? 'other' : 'none'))
   const [nameDraft, setNameDraft] = useState(assigneeName || '')
+
+  // project_collaborators never includes the owner (ManageAccess.jsx blocks
+  // inviting yourself), so the owner is otherwise invisible to this picker.
+  // Synthesizing a self-entry only when the viewer IS the owner - there's no
+  // stored owner email/name readable by other viewers to label an entry for
+  // them, so this only solves owner self-assignment, not other collaborators
+  // assigning tasks to the owner.
+  const isOwnerViewing = Boolean(user && ownerUserId && user.id === ownerUserId)
+  const options = isOwnerViewing
+    ? [...collaborators, { user_id: ownerUserId, email: `${user.email} (Owner)` }]
+    : collaborators
 
   function handleSelectChange(e) {
     const val = e.target.value
@@ -52,7 +66,7 @@ export default function AssigneePicker({
   const selectValue = mode === 'collaborator' ? assigneeUserId || '' : mode === 'other' ? OTHER_VALUE : ''
 
   return (
-    <span className="assignee-picker">
+    <span className={`assignee-picker${mode === 'other' ? ' assignee-picker--other' : ''}`}>
       <select
         className="assignee-picker-select"
         value={selectValue}
@@ -60,7 +74,7 @@ export default function AssigneePicker({
         onChange={handleSelectChange}
       >
         <option value="">Unassigned</option>
-        {collaborators.map((c) => (
+        {options.map((c) => (
           <option key={c.user_id} value={c.user_id}>
             {c.email}
           </option>

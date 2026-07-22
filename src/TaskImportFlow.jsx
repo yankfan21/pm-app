@@ -431,6 +431,7 @@ function TaskImportFlow({ project, existingTasks, collaborators, onCommitted, on
                           collaborators={collaborators}
                           assigneeUserId={row.assignee_user_id}
                           assigneeName={row.assignee_name}
+                          ownerUserId={project.owner_id}
                           onChange={(next) => {
                             updateRow(row.temp_id, 'assignee_user_id', next.assignee_user_id)
                             updateRow(row.temp_id, 'assignee_name', next.assignee_name)

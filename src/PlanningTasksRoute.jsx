@@ -396,6 +396,7 @@ function PlanningTasksRoute() {
               collaborators={collaborators}
               assigneeUserId={task.assignee_user_id}
               assigneeName={task.assignee_name}
+              ownerUserId={project.owner_id}
               disabled={!canEdit}
               onChange={(next) => updateTaskAssignee(task, next)}
             />
@@ -529,6 +530,7 @@ function PlanningTasksRoute() {
                 collaborators={collaborators}
                 assigneeUserId={assignee.assignee_user_id}
                 assigneeName={assignee.assignee_name}
+                ownerUserId={project.owner_id}
                 onChange={setAssignee}
               />
             </label>

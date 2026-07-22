@@ -441,6 +441,40 @@
   background: var(--bg);
 }
 
+/* Free-text ("Other") state: select + input read as one unified field
+   instead of two competing boxes - the border/background move to this
+   wrapper, both children go borderless/transparent, and the input (the
+   actually-meaningful part - the typed name) gets the space, while the
+   select shrinks to a small leading affordance for switching back to a
+   real collaborator. */
+.assignee-picker--other {
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+.assignee-picker--other .assignee-picker-select {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 0;
+  max-width: 90px;
+  border: none;
+  border-right: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+}
+
+.assignee-picker--other .assignee-picker-name-input {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 60px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
 .task-milestone-toggle {
   display: flex;
   align-items: center;

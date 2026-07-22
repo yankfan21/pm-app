@@ -478,6 +478,7 @@ function BacklogView({
                               collaborators={collaborators}
                               assigneeUserId={item.assignee_user_id}
                               assigneeName={item.assignee_name}
+                              ownerUserId={project.owner_id}
                               disabled={!canEdit}
                               onChange={(next) => updateItem(item, next)}
                             />
