@@ -1800,8 +1800,12 @@
      patch. Re-pointed at --bg under .gantt-fullscreen below, since that's
      what the container's background switches to in fullscreen (a custom
      property so it inherits at the point of use rather than needing a
-     `background: inherit` chain through every intermediate element). */
-  --gantt-sticky-bg: var(--surface-1);
+     `background: inherit` chain through every intermediate element).
+     Deliberately --surface-1-solid, not --surface-1 - the latter aliases
+     to --card-bg, which is a translucent/blurred glass surface in dark
+     mode. This element's whole job is opacity, so it can't follow that
+     alias regardless of what the surrounding card styling does. */
+  --gantt-sticky-bg: var(--surface-1-solid);
 }
 
 .gantt-fullscreen .gantt-chart {

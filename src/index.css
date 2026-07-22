@@ -63,6 +63,12 @@
      --sort-active/--row-border), since the Agile zone's identity is "this
      is Agile content," not a light/dark-remapped semantic color. */
   --surface-1: var(--card-bg);
+  /* Solid, opaque counterpart to --surface-1 - for spots (Gantt's frozen
+     label column) that need to hide scrolled-under content and can't
+     tolerate --card-bg's dark-mode translucency/blur, same reasoning as
+     --option-pending-bg below. Light's --card-bg is already solid, so this
+     just matches it exactly. */
+  --surface-1-solid: #f2f4f8;
   --border-faint: color-mix(in srgb, var(--border) 10%, transparent);
   --agile-accent: #4f46e5;
   --agile-tint: rgba(79, 70, 229, 0.06);
@@ -170,6 +176,10 @@
      rather than a solid lift - see --card-backdrop-filter. */
   --card-bg: rgba(22, 28, 39, 0.35);
   --card-backdrop-filter: blur(12px);
+  /* See --surface-1-solid in the light block above - a solid approximation
+     of this glass card's color (dark charcoal at low alpha over --bg),
+     so the Gantt frozen column stays opaque instead of inheriting the blur. */
+  --surface-1-solid: #1b2233;
   --card-shadow: none;
   --card-hover-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
   --card-accent-amber: #f59e0b;
