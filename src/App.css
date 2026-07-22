@@ -412,7 +412,7 @@
 
 .kanban-card-actions .assignee-picker {
   flex: 1 1 auto;
-  min-width: 90px;
+  min-width: 140px;
 }
 
 .assignee-picker-select {
@@ -450,6 +450,9 @@
   font-size: 13px;
   color: var(--text-h);
   background: var(--bg);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 /* Free-text ("Other") state: select + input read as one unified field
@@ -467,10 +470,14 @@
 }
 
 .assignee-picker--other .assignee-picker-select {
-  flex: 0 0 auto;
-  width: 150px;
-  min-width: 0;
-  max-width: none;
+  /* Fixed, non-shrinking - "Other" is short enough to always fit, so this
+     never needs to give up width under pressure (that's what caused the
+     truncation-to-"Other (..." bug when this held the old, much longer
+     "Other (type name)..." label). */
+  flex: 0 0 80px;
+  width: 80px;
+  min-width: 80px;
+  max-width: 80px;
   border: none;
   border-right: 1px solid var(--border);
   border-radius: 0;

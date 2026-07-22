@@ -79,7 +79,9 @@ export default function AssigneePicker({
             {c.email}
           </option>
         ))}
-        <option value={OTHER_VALUE}>Other (type name)…</option>
+        <option value={OTHER_VALUE} title="Type a free-text name (e.g. a contractor)">
+          Other
+        </option>
       </select>
       {mode === 'other' && (
         <input
