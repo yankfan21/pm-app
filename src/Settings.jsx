@@ -107,7 +107,7 @@ function Settings() {
         <h2 className="page-title view-title">Settings</h2>
 
         <h3 className="settings-section-title">Appearance</h3>
-        <p className="dashboard-subtitle">Choose how Projist looks on this device.</p>
+        <p className="dashboard-subtitle">Choose how ConfidantPM looks on this device.</p>
 
         <div className="theme-option-group" role="radiogroup" aria-label="Appearance">
           {THEME_OPTIONS.map((option) => (

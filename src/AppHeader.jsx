@@ -1,6 +1,6 @@
 import { Link, NavLink } from 'react-router-dom'
 import { useAuth } from './AuthContext'
-import ProjistLogo from './ProjistLogo'
+import ConfidantLogo from './ConfidantLogo'
 
 const NAV_VIEWS = [
   { to: '/', label: 'Dashboard', end: true },
@@ -21,10 +21,10 @@ function AppHeader() {
         <div className="app-header-left">
           <Link to="/" className="app-header-brand">
             <span className="app-header-brand-mark">
-              <ProjistLogo size={28} />
+              <ConfidantLogo size={28} />
             </span>
             <span className="app-header-brand-text">
-              <span className="app-header-brand-name">Projist</span>
+              <span className="app-header-brand-name">ConfidantPM</span>
               <span className="app-header-tagline">Structure the chaos. One step at a time.</span>
             </span>
           </Link>

@@ -1,4 +1,4 @@
-# Projist — orientation
+# ConfidantPM — orientation
 
 Full-stack AI-assisted project management tool (formerly called "PM-App").
 Core design principle: AI guides PMs through structured Q&A (one question per

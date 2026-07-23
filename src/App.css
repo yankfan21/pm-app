@@ -3726,7 +3726,7 @@ textarea.risk-cell-input {
 
 /* Login/signup screen - a fixed dark brand palette on purpose, not the
    app's usual light/dark-adaptive --text/--bg variables: this is the one
-   screen meant to read as "Projist" branding regardless of OS theme,
+   screen meant to read as "ConfidantPM" branding regardless of OS theme,
    matching the approved design spec. */
 
 .login-page {

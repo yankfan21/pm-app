@@ -3,7 +3,7 @@
 // around a shared center) - used at small size in AppHeader and larger on
 // the Login screen, so it lives here once rather than being duplicated
 // inline in both places.
-function ProjistLogo({ size = 32 }) {
+function ConfidantLogo({ size = 32 }) {
   return (
     <svg
       width={size}
@@ -21,4 +21,4 @@ function ProjistLogo({ size = 32 }) {
   )
 }
 
-export default ProjistLogo
+export default ConfidantLogo

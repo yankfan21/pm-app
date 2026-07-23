@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from './supabaseClient'
-import ProjistLogo from './ProjistLogo'
+import ConfidantLogo from './ConfidantLogo'
 
 const PREVIEW_STEP = 3
 const PREVIEW_TOTAL = 12
@@ -87,8 +87,8 @@ function Login() {
       <div className="login-panel login-panel-form">
         <div className="login-panel-form-inner">
           <div className="login-brand">
-            <ProjistLogo size={40} />
-            <span className="login-brand-name">Projist</span>
+            <ConfidantLogo size={40} />
+            <span className="login-brand-name">ConfidantPM</span>
           </div>
 
           <h1 className="login-heading">{mode === 'sign-in' ? 'Welcome back' : 'Create your account'}</h1>
@@ -161,7 +161,7 @@ function Login() {
           <p className="login-footer-link">
             {mode === 'sign-in' ? (
               <>
-                New to Projist?{' '}
+                New to ConfidantPM?{' '}
                 <button type="button" onClick={() => switchMode('sign-up')}>
                   Create an account
                 </button>
