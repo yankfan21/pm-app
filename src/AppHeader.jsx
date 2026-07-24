@@ -60,19 +60,6 @@ function AppHeader() {
           </div>
         )}
       </div>
-
-      <span
-        style={{
-          position: 'fixed',
-          bottom: 4,
-          right: 6,
-          fontSize: 10,
-          opacity: 0.4,
-          pointerEvents: 'none',
-        }}
-      >
-        build {__BUILD_SHA__}
-      </span>
     </header>
   )
 }
