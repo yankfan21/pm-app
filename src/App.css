@@ -1550,6 +1550,12 @@
   gap: 10px;
 }
 
+@media (max-width: 720px) {
+  .section-heading-static {
+    flex-wrap: wrap;
+  }
+}
+
 .toggle-header-main {
   display: inline-flex;
   align-items: center;
@@ -2144,6 +2150,12 @@
   gap: 10px;
 }
 
+@media (max-width: 720px) {
+  .gantt-header-controls {
+    flex-wrap: wrap;
+  }
+}
+
 .gantt-fullscreen-toggle {
   flex-shrink: 0;
   padding: 4px 10px;
@@ -2378,6 +2390,7 @@
 
 .charter {
   margin-top: 16px;
+  overflow-wrap: break-word;
 }
 
 /* This h3 had no explicit font-weight/color/letter-spacing, so it fell back
@@ -2416,7 +2429,14 @@
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.16);
   padding: 56px 64px;
+  box-sizing: border-box;
   font-family: Georgia, 'Times New Roman', serif;
+}
+
+@media (max-width: 720px) {
+  .charter-page {
+    padding: 24px 20px;
+  }
 }
 
 .charter-page-title {
