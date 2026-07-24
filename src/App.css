@@ -1775,6 +1775,7 @@
   margin-top: 26px;
   overflow-x: auto;
   overflow-y: visible;
+  overscroll-behavior: contain;
   border: 1px solid var(--border);
   border-radius: 8px;
   /* Extra left/right padding vs. other sections: the first/last date-tick
@@ -2164,6 +2165,7 @@
   border-radius: 0;
   border-left-width: 3px;
   overflow: auto;
+  overscroll-behavior: contain;
   background: var(--bg);
 }
 
@@ -2924,6 +2926,9 @@
   position: relative;
   width: 100%;
   max-width: 420px;
+  max-height: 90svh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -3223,6 +3228,7 @@
 .risk-table-wrap {
   margin-top: 24px;
   overflow-x: auto;
+  overscroll-behavior: contain;
   border: 1px solid var(--border);
   border-radius: 8px;
 }
@@ -4133,6 +4139,7 @@ textarea.risk-cell-input {
   padding: 4px;
   max-height: 220px;
   overflow-y: auto;
+  overscroll-behavior: contain;
   list-style: none;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -4293,6 +4300,7 @@ textarea.risk-cell-input {
     flex-direction: row;
     width: auto;
     overflow-x: auto;
+    overscroll-behavior: contain;
   }
 
   .project-nav-secondary {
@@ -4300,5 +4308,6 @@ textarea.risk-cell-input {
     width: auto;
     padding-left: 12px;
     overflow-x: auto;
+    overscroll-behavior: contain;
   }
 }
