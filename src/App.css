@@ -639,6 +639,7 @@
   .backlog-create-form button {
     flex: none;
     width: 100%;
+    box-sizing: border-box;
   }
 }
 
@@ -2953,6 +2954,15 @@
   color: var(--text);
 }
 
+@media (max-width: 720px) {
+  .project-header-goal {
+    flex-basis: 100%;
+    white-space: normal;
+    overflow-wrap: break-word;
+    text-overflow: clip;
+  }
+}
+
 .project-header-archive {
   flex-shrink: 0;
 }
@@ -4410,6 +4420,7 @@ textarea.risk-cell-input {
     flex-wrap: wrap;
     width: 100%;
     padding-left: 12px;
+    box-sizing: border-box;
   }
 
   .project-nav-secondary-item {
