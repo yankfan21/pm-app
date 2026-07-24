@@ -241,12 +241,15 @@
   filter: invert(1) brightness(2);
 }
 
+html {
+  overscroll-behavior-y: none;
+}
+
 html,
 body {
   margin: 0;
   overflow-x: hidden;
   overflow-y: auto;
-  overscroll-behavior-y: none;
 }
 
 #root {
