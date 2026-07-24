@@ -628,6 +628,20 @@
   margin: 24px 0;
 }
 
+@media (max-width: 720px) {
+  .backlog-create-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .backlog-create-form input[type='text'],
+  .backlog-create-form select,
+  .backlog-create-form button {
+    flex: none;
+    width: 100%;
+  }
+}
+
 .backlog-create-form input[type='text'] {
   flex: 1 1 200px;
   padding: 8px 12px;
@@ -816,6 +830,24 @@
   margin: 24px 0;
 }
 
+@media (max-width: 720px) {
+  .sprint-create-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sprint-create-form input[type='text'],
+  .sprint-create-form button {
+    flex: none;
+    width: 100%;
+  }
+
+  .sprint-create-form .task-date-field {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
 .sprint-create-form input[type='text'] {
   flex: 1 1 160px;
   padding: 8px 12px;
@@ -857,6 +889,19 @@
   min-width: 260px;
 }
 
+@media (max-width: 720px) {
+  .sprint-select-field {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+  }
+
+  .sprint-select-field select {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
 .sprint-summary {
   display: flex;
   gap: 16px;
@@ -864,6 +909,12 @@
   font-size: 14px;
   font-weight: 500;
   color: var(--text-h);
+}
+
+@media (max-width: 720px) {
+  .sprint-summary {
+    flex-wrap: wrap;
+  }
 }
 
 .kanban-board {
@@ -1076,6 +1127,12 @@
   padding-bottom: 20px;
   margin-bottom: 24px;
   border-bottom: 1px solid var(--border);
+}
+
+@media (max-width: 720px) {
+  .section-header {
+    flex-wrap: wrap;
+  }
 }
 
 .btn-primary {
@@ -1314,6 +1371,12 @@
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+@media (max-width: 720px) {
+  .agile-row-heading {
+    flex-wrap: wrap;
+  }
 }
 
 .agile-row-heading .tasks-heading {
@@ -2523,6 +2586,8 @@
   background: transparent;
   resize: none;
   overflow: hidden;
+  overflow-wrap: break-word;
+  word-break: break-word;
   font-family: inherit;
   font-size: 16px;
   line-height: 1.7;
@@ -2571,6 +2636,8 @@
   line-height: 1.7;
   color: var(--text-h);
   white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
   margin: 0 0 12px;
 }
 
