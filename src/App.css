@@ -4298,16 +4298,24 @@ textarea.risk-cell-input {
 
   .project-nav-primary {
     flex-direction: row;
-    width: auto;
-    overflow-x: auto;
-    overscroll-behavior: contain;
+    width: 100%;
+  }
+
+  .project-nav-primary-item {
+    flex: 1;
+    justify-content: center;
+    text-align: center;
   }
 
   .project-nav-secondary {
     flex-direction: row;
-    width: auto;
+    flex-wrap: wrap;
+    width: 100%;
     padding-left: 12px;
-    overflow-x: auto;
-    overscroll-behavior: contain;
+  }
+
+  .project-nav-secondary-item {
+    flex: 1 1 120px;
+    text-align: center;
   }
 }
