@@ -245,6 +245,7 @@ html,
 body {
   margin: 0;
   overflow-x: hidden;
+  overflow-y: auto;
   overscroll-behavior-y: none;
   touch-action: manipulation;
 }

@@ -1339,6 +1339,7 @@
 .detail-zone {
   margin-top: 2rem;
   padding: 1.5rem;
+  box-sizing: border-box;
   border: 1px solid var(--border-faint);
   border-left: 3px solid var(--zone-accent-neutral);
   border-radius: 0 8px 8px 0;
@@ -1716,6 +1717,7 @@
 .doc-table-expand-cell {
   padding: 20px 16px;
   background: var(--bg);
+  max-width: 0;
 }
 
 .status-update-log-trigger {
