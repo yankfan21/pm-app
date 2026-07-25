@@ -475,6 +475,38 @@
   border: 1px solid var(--border, #e2e2e2);
 }
 
+/* Flag a Risk form (MobileProjectRisks) --------------------------------- */
+
+.mobile-select-field textarea {
+  font: inherit;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.mobile-risk-form {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+}
+
+.mobile-risk-form button[type='submit'] {
+  align-self: flex-start;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.mobile-risk-form button[type='submit']:disabled {
+  opacity: 0.5;
+}
+
 .mobile-sprint-summary {
   display: flex;
   gap: 16px;
