@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Outlet, useParams, Link } from 'react-router-dom'
+import { Outlet, useParams } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { useAuth } from '../AuthContext'
 import { METHODOLOGY_LABELS } from '../methodology'
@@ -101,14 +101,6 @@ function MobileProjectLayout() {
   return (
     <div className="mobile-app">
       <div className="mobile-topbar">
-        <Link
-          to="/m/dashboard"
-          className="mobile-topbar-home"
-          aria-label="Go to Projects Dashboard"
-        >
-          <span className="mobile-topbar-home-icon" aria-hidden="true">⌂</span>
-          <span className="mobile-topbar-home-label">Projects Dashboard</span>
-        </Link>
         <div className="mobile-topbar-title">
           <span className="mobile-topbar-name">
             <span className="mobile-topbar-name-text">{project.name}</span>

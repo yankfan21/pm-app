@@ -12,6 +12,7 @@ function MobileProjectMore() {
     { to: `${base}/more/risks`, label: 'Flag a Risk' },
     { to: `${base}/more/status-update`, label: 'Status Update' },
     { to: `${base}/more/comms`, label: 'Exec Comms / Newsletter' },
+    { to: '/m/dashboard', label: 'Projects Dashboard' },
   ]
 
   return (
