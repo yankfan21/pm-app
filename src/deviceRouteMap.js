@@ -46,7 +46,8 @@ const MOBILE_TO_DESKTOP = table([
   [`^/m/projects/${ID}/more/documents$`, (id) => `/projects/${id}/documents`],
   [`^/m/projects/${ID}/more/risks$`, (id) => `/projects/${id}/documents`],
   [`^/m/projects/${ID}/more/status-update$`, (id) => `/projects/${id}/documents`],
-  [`^/m/projects/${ID}/more/comms$`, (id) => `/projects/${id}/documents`],
+  [`^/m/projects/${ID}/more/exec-comms$`, (id) => `/projects/${id}/documents`],
+  [`^/m/projects/${ID}/more/newsletter$`, (id) => `/projects/${id}/documents`],
   [`^/m/projects/${ID}/more$`, (id) => `/projects/${id}/overview`],
   [`^/m/projects/${ID}$`, (id) => `/projects/${id}/overview`],
 ])

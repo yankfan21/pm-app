@@ -2,7 +2,8 @@ import { Link, useParams } from 'react-router-dom'
 
 // Project-scoped overflow (/m/projects/:projectId/more) - houses the
 // sections that don't fit the 5-slot tab bar: read-only Documents, quick
-// risk flag, Status Update Q&A, and Exec Comms/Newsletter triggers.
+// risk flag, Status Update Q&A, and read-only Exec Comms/Newsletter views
+// (separate entries - generation stays desktop-only).
 function MobileProjectMore() {
   const { projectId } = useParams()
   const base = `/m/projects/${projectId}`
@@ -11,7 +12,8 @@ function MobileProjectMore() {
     { to: `${base}/more/documents`, label: 'Documents' },
     { to: `${base}/more/risks`, label: 'Flag a Risk' },
     { to: `${base}/more/status-update`, label: 'Status Update' },
-    { to: `${base}/more/comms`, label: 'Exec Comms / Newsletter' },
+    { to: `${base}/more/exec-comms`, label: 'Exec Comms' },
+    { to: `${base}/more/newsletter`, label: 'Newsletter' },
     { to: '/m/dashboard', label: 'Projects Dashboard' },
   ]
 

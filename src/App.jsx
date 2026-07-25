@@ -40,7 +40,8 @@ import MobileProjectMore from './mobile/MobileProjectMore'
 import MobileProjectDocuments from './mobile/MobileProjectDocuments'
 import MobileProjectRisks from './mobile/MobileProjectRisks'
 import MobileProjectStatusUpdate from './mobile/MobileProjectStatusUpdate'
-import MobileProjectComms from './mobile/MobileProjectComms'
+import MobileProjectExecComms from './mobile/MobileProjectExecComms'
+import MobileProjectNewsletter from './mobile/MobileProjectNewsletter'
 import './App.css'
 
 // Phase 4 cutover: every route other than /login requires a signed-in
@@ -135,7 +136,8 @@ function App() {
             <Route path="more/documents" element={<MobileProjectDocuments />} />
             <Route path="more/risks" element={<MobileProjectRisks />} />
             <Route path="more/status-update" element={<MobileProjectStatusUpdate />} />
-            <Route path="more/comms" element={<MobileProjectComms />} />
+            <Route path="more/exec-comms" element={<MobileProjectExecComms />} />
+            <Route path="more/newsletter" element={<MobileProjectNewsletter />} />
             <Route path="*" element={<Navigate to="." replace />} />
           </Route>
 
