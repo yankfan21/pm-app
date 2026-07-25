@@ -110,7 +110,10 @@ function MobileProjectLayout() {
           &larr;
         </button>
         <div className="mobile-topbar-title">
-          <span className="mobile-topbar-name">{project.name}</span>
+          <span className="mobile-topbar-name">
+            <span className="mobile-topbar-name-text">{project.name}</span>
+            {project.is_demo && <span className="mobile-demo-badge">✦ Demo</span>}
+          </span>
           <span className="mobile-topbar-meta">{METHODOLOGY_LABELS[project.methodology] ?? project.methodology}</span>
         </div>
       </div>

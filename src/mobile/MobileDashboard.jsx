@@ -109,7 +109,10 @@ function MobileDashboard() {
           {display.map((project) => (
             <li key={project.id}>
               <Link to={`/m/projects/${project.id}`} className="mobile-project-list-item">
-                <span className="mobile-project-list-name">{project.name}</span>
+                <span className="mobile-project-list-name">
+                  {project.name}
+                  {project.is_demo && <span className="mobile-demo-badge">✦ Demo</span>}
+                </span>
                 <span className="mobile-project-list-meta">
                   {METHODOLOGY_LABELS[project.methodology] ?? project.methodology}
                 </span>
