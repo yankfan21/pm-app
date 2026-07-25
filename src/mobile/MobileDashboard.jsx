@@ -8,11 +8,13 @@ import { METHODOLOGY_LABELS } from '../methodology'
 // "active project" in phone mode is just whichever project is in the URL
 // (/m/projects/:projectId/...), so switching projects is tapping a
 // different one here rather than a separate persisted-selection mechanism.
-// Own minimal fetch (RLS already scopes the result to projects this user
-// owns or collaborates on, same query ProjectsShell.jsx uses on desktop) -
-// not reusing ProjectsShell/AllProjects since those eager-load the full
-// desktop projects-list chrome (New Project flow, hide-project, etc.) that
-// phone mode doesn't need for this screen.
+// Own minimal fetch (RLS scopes the result to projects this user owns or
+// collaborates on) - not reusing ProjectsShell/AllProjects since those
+// eager-load the full desktop projects-list chrome (New Project flow,
+// hide-project, etc.) that phone mode doesn't need for this screen.
+// Hidden-project filtering is app-level, not RLS-enforced (hidden lives on
+// project_collaborators, per-user) - same second query ProjectsShell.jsx
+// runs on desktop, duplicated here.
 function MobileDashboard() {
   const { user } = useAuth()
   const [projects, setProjects] = useState([])
@@ -39,7 +41,23 @@ function MobileDashboard() {
         return
       }
 
-      setProjects(data)
+      const { data: hiddenRows, error: hiddenError } = await supabase
+        .from('project_collaborators')
+        .select('project_id')
+        .eq('user_id', user.id)
+        .eq('hidden', true)
+
+      if (cancelled) return
+
+      if (hiddenError) {
+        setError(hiddenError.message)
+        setProjects(data)
+        setLoading(false)
+        return
+      }
+
+      const hiddenIds = new Set((hiddenRows || []).map((r) => r.project_id))
+      setProjects(data.filter((p) => !hiddenIds.has(p.id)))
       setLoading(false)
     }
 
