@@ -24,6 +24,20 @@ import NotFound from './NotFound'
 import Login from './Login'
 import RequireAuth from './RequireAuth'
 import { useTheme } from './hooks/useTheme'
+import MobileShell from './mobile/MobileShell'
+import MobileDashboard from './mobile/MobileDashboard'
+import MobileNotifications from './mobile/MobileNotifications'
+import MobileMore from './mobile/MobileMore'
+import MobileProjectLayout from './mobile/MobileProjectLayout'
+import MobileProjectOverview from './mobile/MobileProjectOverview'
+import MobileProjectTasks from './mobile/MobileProjectTasks'
+import MobileProjectSprintBoard from './mobile/MobileProjectSprintBoard'
+import MobileProjectMetrics from './mobile/MobileProjectMetrics'
+import MobileProjectMore from './mobile/MobileProjectMore'
+import MobileProjectDocuments from './mobile/MobileProjectDocuments'
+import MobileProjectRisks from './mobile/MobileProjectRisks'
+import MobileProjectStatusUpdate from './mobile/MobileProjectStatusUpdate'
+import MobileProjectComms from './mobile/MobileProjectComms'
 import './App.css'
 
 // Phase 4 cutover: every route other than /login requires a signed-in
@@ -82,6 +96,31 @@ function App() {
         </Route>
 
         <Route path="/settings" element={<Settings />} />
+
+        {/* Phone mode - purpose-built components under src/mobile/, own
+            route tree entirely separate from the desktop /projects/:id
+            subtree above. See CLAUDE.md Phone-Mode architecture note: this
+            exists so desktop layout/CSS changes can never silently regress
+            phone mode, and vice versa. */}
+        <Route path="/m" element={<Navigate to="/m/dashboard" replace />} />
+        <Route element={<MobileShell />}>
+          <Route path="/m/dashboard" element={<MobileDashboard />} />
+          <Route path="/m/notifications" element={<MobileNotifications />} />
+          <Route path="/m/more" element={<MobileMore />} />
+        </Route>
+
+        <Route path="/m/projects/:projectId" element={<MobileProjectLayout />}>
+          <Route index element={<MobileProjectOverview />} />
+          <Route path="tasks" element={<MobileProjectTasks />} />
+          <Route path="sprint-board" element={<MobileProjectSprintBoard />} />
+          <Route path="metrics" element={<MobileProjectMetrics />} />
+          <Route path="more" element={<MobileProjectMore />} />
+          <Route path="more/documents" element={<MobileProjectDocuments />} />
+          <Route path="more/risks" element={<MobileProjectRisks />} />
+          <Route path="more/status-update" element={<MobileProjectStatusUpdate />} />
+          <Route path="more/comms" element={<MobileProjectComms />} />
+          <Route path="*" element={<Navigate to="." replace />} />
+        </Route>
 
         <Route path="*" element={<NotFound />} />
       </Route>
