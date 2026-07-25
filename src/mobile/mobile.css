@@ -617,3 +617,168 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* Documents (MobileProjectDocuments) ------------------------------------ */
+
+.mobile-doc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mobile-doc-card {
+  border-radius: 10px;
+  border: 1px solid var(--border, #e2e2e2);
+  background: var(--card-bg, #fff);
+  backdrop-filter: var(--card-backdrop-filter);
+  overflow: hidden;
+}
+
+.mobile-doc-card--indented {
+  margin: 0 0 0 14px;
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+}
+
+.mobile-doc-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px 16px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mobile-doc-row-locked {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.mobile-doc-row-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mobile-doc-row-label {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.mobile-doc-row-meta {
+  font-size: 11px;
+  color: var(--text-muted, #666);
+}
+
+.mobile-doc-badge {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--surface-1-solid, #eee);
+}
+
+.mobile-doc-badge.pending { background: #e5e7eb; color: #374151; }
+.mobile-doc-badge.done { background: #d1fae5; color: #065f46; }
+.mobile-doc-badge.partial { background: #fef3c7; color: #92400e; }
+.mobile-doc-badge.critical { background: #fee2e2; color: #991b1b; }
+
+.mobile-doc-chevron {
+  flex-shrink: 0;
+  font-size: 12px;
+  transition: transform 0.15s ease;
+}
+
+.mobile-doc-chevron.collapsed {
+  transform: rotate(-90deg);
+}
+
+.mobile-doc-detail {
+  padding: 0 16px 16px;
+  border-top: 1px solid var(--border, #e2e2e2);
+}
+
+.mobile-doc-detail > *:first-child {
+  margin-top: 12px;
+}
+
+.mobile-doc-section {
+  margin-bottom: 12px;
+}
+
+.mobile-doc-section-heading {
+  font-size: 12px;
+  font-weight: 600;
+  margin: 0 0 4px;
+  color: var(--text-muted, #666);
+}
+
+.mobile-doc-section-body {
+  font-size: 13px;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.mobile-doc-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mobile-doc-risk-card {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border, #e2e2e2);
+  background: var(--surface-1-solid, #f9f9f9);
+}
+
+.mobile-doc-risk-meta {
+  font-size: 11px;
+  color: var(--text-muted, #666);
+  margin: 4px 0;
+}
+
+.mobile-doc-budget-summary {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.mobile-doc-budget-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mobile-doc-budget-stat-label {
+  font-size: 11px;
+  color: var(--text-muted, #666);
+}
+
+.mobile-doc-budget-stat-value {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.mobile-doc-status-entry {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border, #e2e2e2);
+  background: var(--surface-1-solid, #f9f9f9);
+}
+
+.mobile-doc-recs-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+}
