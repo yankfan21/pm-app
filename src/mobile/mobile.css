@@ -29,7 +29,7 @@
   padding: 10px 12px;
   padding-top: calc(10px + env(safe-area-inset-top));
   border-bottom: 1px solid var(--border, #e2e2e2);
-  background: var(--surface, #fff);
+  background: var(--surface-1-solid, #fff);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -80,7 +80,7 @@
   right: 0;
   display: flex;
   border-top: 1px solid var(--border, #e2e2e2);
-  background: var(--surface, #fff);
+  background: var(--surface-1-solid, #fff);
   padding-bottom: env(safe-area-inset-bottom);
   z-index: 20;
 }
@@ -131,7 +131,8 @@
   padding: 14px 16px;
   border-radius: 10px;
   border: 1px solid var(--border, #e2e2e2);
-  background: var(--surface, #fff);
+  background: var(--card-bg, #fff);
+  backdrop-filter: var(--card-backdrop-filter);
   color: inherit;
   text-decoration: none;
   font-size: 14px;
@@ -192,7 +193,8 @@
   padding: 6px 12px;
   border-radius: 999px;
   border: 1px solid var(--border, #e2e2e2);
-  background: var(--surface, #fff);
+  background: var(--card-bg, #fff);
+  backdrop-filter: var(--card-backdrop-filter);
   color: inherit;
   font-size: 12px;
   cursor: pointer;
@@ -220,7 +222,8 @@
   padding: 12px;
   border-radius: 10px;
   border: 1px solid var(--border, #e2e2e2);
-  background: var(--surface, #fff);
+  background: var(--card-bg, #fff);
+  backdrop-filter: var(--card-backdrop-filter);
 }
 
 .mobile-task-mark-done {
@@ -318,7 +321,8 @@
   padding: 8px 12px;
   border-radius: 8px;
   border: 1px solid var(--border, #e2e2e2);
-  background: var(--surface, #fff);
+  background: var(--card-bg, #fff);
+  backdrop-filter: var(--card-backdrop-filter);
   color: inherit;
   font-size: 12px;
   cursor: pointer;
@@ -348,7 +352,8 @@
   padding: 10px 12px;
   border-radius: 10px;
   border: 1px solid var(--border, #e2e2e2);
-  background: var(--surface, #fff);
+  background: var(--card-bg, #fff);
+  backdrop-filter: var(--card-backdrop-filter);
 }
 
 .mobile-comment-meta {
@@ -380,7 +385,8 @@
   padding: 4px 10px;
   border-radius: 6px;
   border: 1px solid var(--border, #e2e2e2);
-  background: var(--surface, #fff);
+  background: var(--card-bg, #fff);
+  backdrop-filter: var(--card-backdrop-filter);
   color: inherit;
   cursor: pointer;
 }
@@ -481,7 +487,8 @@
   padding: 10px 12px;
   border-radius: 10px;
   border: 1px solid var(--border, #e2e2e2);
-  background: var(--surface, #fff);
+  background: var(--card-bg, #fff);
+  backdrop-filter: var(--card-backdrop-filter);
 }
 
 .mobile-board-card-title-row {
@@ -508,7 +515,8 @@
   padding: 5px 10px;
   border-radius: 6px;
   border: 1px solid var(--border, #e2e2e2);
-  background: var(--surface, #fff);
+  background: var(--card-bg, #fff);
+  backdrop-filter: var(--card-backdrop-filter);
   color: inherit;
   cursor: pointer;
 }
