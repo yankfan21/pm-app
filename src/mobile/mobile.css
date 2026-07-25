@@ -356,10 +356,32 @@
   cursor: pointer;
 }
 
-.mobile-status-option.selected.status-not_started { background: #e5e7eb; border-color: #e5e7eb; }
-.mobile-status-option.selected.status-in_progress { background: #fef3c7; border-color: #fef3c7; }
-.mobile-status-option.selected.status-completed { background: #d1fae5; border-color: #d1fae5; }
-.mobile-status-option.selected.status-delayed { background: #fee2e2; border-color: #fee2e2; }
+/* Same bg/text token pairs as desktop's .task-status-select
+   (pending/partial/done/critical, App.css) - not_started/in_progress/
+   completed/delayed map onto them 1:1. Previously hardcoded light-pastel
+   hex with no paired text color (relied on inherited --text), which is
+   dark in light mode (readable) but light in dark mode (unreadable on
+   the same light pastel bg). */
+.mobile-status-option.selected.status-not_started {
+  background: var(--code-bg);
+  color: var(--text);
+  border-color: var(--code-bg);
+}
+.mobile-status-option.selected.status-in_progress {
+  background: var(--badge-warning-bg);
+  color: var(--badge-warning-text);
+  border-color: var(--badge-warning-bg);
+}
+.mobile-status-option.selected.status-completed {
+  background: var(--badge-success-bg);
+  color: var(--badge-success-text);
+  border-color: var(--badge-success-bg);
+}
+.mobile-status-option.selected.status-delayed {
+  background: var(--badge-danger-bg);
+  color: var(--badge-danger-text);
+  border-color: var(--badge-danger-bg);
+}
 
 .mobile-section-title {
   font-size: 15px;
@@ -590,6 +612,19 @@
   background: var(--card-bg, #fff);
   backdrop-filter: var(--card-backdrop-filter);
   margin-bottom: 12px;
+}
+
+/* Dark mode only: desktop gets this card's contrast for free (it nests
+   var(--bg) inside a var(--surface-1)/--card-bg zone - two distinct dark
+   tones). Mobile's page background IS --bg directly, so --card-bg's
+   translucent dark fill (rgba(22,28,39,0.35)) composites to almost the
+   exact same pixel as the page behind it - no existing token pairing
+   separates them. Solid, deliberately lighter fill + a visible slate
+   border (matching --zone-accent-neutral's hue, used for the same "this
+   is a distinct zone" job on desktop's .detail-zone) instead. */
+:root[data-theme='dark'] .mobile-metrics-card {
+  background: #232c40;
+  border-color: rgba(148, 163, 184, 0.3);
 }
 
 .mobile-metrics-card .mobile-section-title {
