@@ -4457,13 +4457,37 @@ textarea.risk-cell-input {
   min-width: 0;
 }
 
-/* Archive Project footer, set apart from the nav links above it (divider +
-   spacing, muted styling) rather than looking like another nav item. */
-.project-nav-footer {
+/* Admin box - set apart from the nav links above it (divider + spacing)
+   rather than looking like another nav item. Wider than the 140px primary
+   nav column since it hosts ManageAccess's collaborator rows/invite form,
+   not just nav-item-width buttons; project-sidebar is flex-shrink:0 so this
+   just pushes project-nav-content over, it doesn't overflow. Built as a
+   list so future admin items (transfer ownership, delete project, etc.)
+   are just another .project-nav-admin-item, no rebuild needed. */
+.project-nav-admin {
   margin-top: 20px;
   padding-top: 16px;
   border-top: 1px solid var(--border);
-  width: 140px;
+  width: 220px;
+}
+
+.project-nav-admin-heading {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-dim, var(--text));
+  opacity: 0.75;
+}
+
+.project-nav-admin-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .project-nav-archive {
@@ -4476,6 +4500,23 @@ textarea.risk-cell-input {
 
 .project-nav-archive:hover {
   opacity: 1;
+}
+
+/* ManageAccess's collaborator rows/invite form assume a full-width page
+   column (see .collaborator-invite-form's 220px flex-basis email input) -
+   narrow those down so they fit the 220px admin box instead of overflowing
+   it or forcing the sidebar wider than intended. */
+.project-nav-admin .collaborator-row {
+  flex-wrap: wrap;
+}
+
+.project-nav-admin .collaborator-invite-form {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.project-nav-admin .collaborator-invite-form input[type='email'] {
+  flex-basis: auto;
 }
 
 @media (max-width: 720px) {

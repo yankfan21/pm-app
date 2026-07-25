@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, Outlet } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import AppHeader from './AppHeader'
-import ManageAccess from './ManageAccess'
+import ProjectAdmin from './ProjectAdmin'
 import ProjectNav from './ProjectNav'
 import { DOCUMENT_TYPES } from './documentTypes'
 import { METHODOLOGIES, METHODOLOGY_LABELS } from './methodology'
@@ -59,9 +59,9 @@ function buildMethodologySwitchWarning(fromMethodology, toMethodology, counts) {
 // loading/state that used to live in the old monolithic ProjectDetail.jsx
 // (tasks, dependencies, sprints, retros, milestones, phases, collaborators,
 // docs) plus the top-of-page chrome (back link, demo banner, title/
-// methodology/priority/archive row, Manage Access), and hands all of it to
-// whichever section route is currently matched via <Outlet context={...}/>
-// - same layout+Outlet pattern ProjectsShell.jsx already uses for
+// methodology/priority/archive row), and hands all of it to whichever
+// section route is currently matched via <Outlet context={...}/> - same
+// layout+Outlet pattern ProjectsShell.jsx already uses for
 // Dashboard/AllProjects. Nothing here re-fetches or resets when navigating
 // between sections, since the state lives above the Outlet, not inside it.
 //
@@ -69,14 +69,12 @@ function buildMethodologySwitchWarning(fromMethodology, toMethodology, counts) {
 // used to live here too (as the single page-wide `expandedSection`
 // accordion, back when this was the monolithic ProjectDetail.jsx) - both
 // are now local to their own routes instead (PlanningTasksRoute.jsx,
-// DocumentsRoute.jsx), since nothing else needs them. Manage Access still
-// toggles independently via its own local `accessExpanded` state below,
-// since it's no longer sharing that global accordion var with anything
-// else.
+// DocumentsRoute.jsx), since nothing else needs them. Manage Access's
+// expand toggle is local state inside ProjectAdmin.jsx now, for the same
+// reason.
 function ProjectDetailLayout({ project, isOwner, canEdit }) {
   const [currentProject, setCurrentProject] = useState(project)
   const [archiving, setArchiving] = useState(false)
-  const [accessExpanded, setAccessExpanded] = useState(false)
   const [tasks, setTasks] = useState([])
   const [taskDependencies, setTaskDependencies] = useState([])
   const [sprints, setSprints] = useState([])
@@ -334,8 +332,9 @@ function ProjectDetailLayout({ project, isOwner, canEdit }) {
             persists across every section route, that same block was
             repeating on every page switch, eating vertical space each time.
             Compressed to one row; goal wraps (full text, no truncation) if
-            it doesn't fit alongside the other badges. Archive Project lives
-            in the sidebar now (project-nav-footer below), not here. */}
+            it doesn't fit alongside the other badges. Archive Project and
+            Manage Access live in the sidebar now (project-nav-admin below),
+            not here. */}
         <div className="project-header-bar">
           <h2 className="project-header-name">{currentProject.name}</h2>
 
@@ -370,26 +369,6 @@ function ProjectDetailLayout({ project, isOwner, canEdit }) {
           )}
         </div>
 
-        {isOwner && (
-          <div className="detail-zone">
-            <h2 className="tasks-heading">
-              <button
-                type="button"
-                className="collapsible-toggle"
-                onClick={() => setAccessExpanded((prev) => !prev)}
-                aria-expanded={accessExpanded}
-              >
-                <span className={`chevron ${accessExpanded ? '' : 'collapsed'}`} aria-hidden="true">
-                  ▾
-                </span>
-                Manage Access
-              </button>
-            </h2>
-
-            {accessExpanded && <ManageAccess project={currentProject} />}
-          </div>
-        )}
-
         {error && <p className="error">{error}</p>}
 
         {loading ? (
@@ -400,20 +379,12 @@ function ProjectDetailLayout({ project, isOwner, canEdit }) {
               <ProjectNav project={currentProject} />
 
               {canEdit && (
-                <div className="project-nav-footer">
-                  <button
-                    type="button"
-                    className="btn-secondary project-nav-archive"
-                    disabled={archiving}
-                    onClick={toggleArchived}
-                  >
-                    {archiving
-                      ? 'Saving...'
-                      : currentProject.status === 'Archived'
-                        ? 'Unarchive Project'
-                        : 'Archive Project'}
-                  </button>
-                </div>
+                <ProjectAdmin
+                  project={currentProject}
+                  isOwner={isOwner}
+                  archiving={archiving}
+                  onToggleArchive={toggleArchived}
+                />
               )}
             </div>
             <div className="project-nav-content">
