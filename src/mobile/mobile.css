@@ -190,13 +190,18 @@
 
 .mobile-filter-chip {
   flex-shrink: 0;
-  padding: 6px 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 5px 7px;
   border-radius: 999px;
   border: 1px solid var(--border, #e2e2e2);
   background: var(--card-bg, #fff);
   backdrop-filter: var(--card-backdrop-filter);
   color: inherit;
-  font-size: 12px;
+  font-size: 11px;
+  white-space: nowrap;
   cursor: pointer;
 }
 
