@@ -11,10 +11,12 @@
 // no desktop equivalent - they fall back to the project's Overview (or "/"
 // outside a project).
 //
-// /settings is a genuinely shared, non-prefixed route (same component both
-// modes) - exempt from redirection entirely.
+// /settings <-> /m/settings is a mapped pair like any other (see
+// MobileProjectSettings.jsx) - no longer a SHARED_PATHS bypass now that a
+// purpose-built mobile component exists (was previously a shared,
+// non-prefixed route rendering Settings.jsx's desktop chrome at any width).
 
-const SHARED_PATHS = new Set(['/settings'])
+const SHARED_PATHS = new Set()
 
 const ID = '([^/]+)'
 
@@ -25,6 +27,7 @@ function table(pairs) {
 const DESKTOP_TO_MOBILE = table([
   ['^/$', () => '/m/dashboard'],
   ['^/projects$', () => '/m/dashboard'],
+  ['^/settings$', () => '/m/settings'],
   [`^/projects/${ID}/overview$`, (id) => `/m/projects/${id}`],
   [`^/projects/${ID}/planning/tasks$`, (id) => `/m/projects/${id}/tasks`],
   [`^/projects/${ID}/execution/sprint-board$`, (id) => `/m/projects/${id}/sprint-board`],
@@ -39,6 +42,7 @@ const MOBILE_TO_DESKTOP = table([
   ['^/m/dashboard$', () => '/'],
   ['^/m/notifications$', () => '/'],
   ['^/m/more$', () => '/'],
+  ['^/m/settings$', () => '/settings'],
   [`^/m/projects/${ID}/tasks$`, (id) => `/projects/${id}/planning/tasks`],
   [`^/m/projects/${ID}/tasks/[^/]+$`, (id) => `/projects/${id}/overview`],
   [`^/m/projects/${ID}/sprint-board$`, (id) => `/projects/${id}/execution/sprint-board`],

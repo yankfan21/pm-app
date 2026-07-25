@@ -13,7 +13,7 @@ function MobileMore() {
       <h1 className="mobile-screen-title">More</h1>
       <div className="mobile-more-list">
         <span className="mobile-screen-stub">{user?.email}</span>
-        <Link to="/settings" className="mobile-more-list-item">
+        <Link to="/m/settings" className="mobile-more-list-item">
           Settings
         </Link>
         <button type="button" className="mobile-more-list-item" onClick={signOut}>

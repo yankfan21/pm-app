@@ -15,6 +15,7 @@ function MobileProjectMore() {
     { to: `${base}/more/exec-comms`, label: 'Exec Comms' },
     { to: `${base}/more/newsletter`, label: 'Newsletter' },
     { to: '/m/dashboard', label: 'Projects Dashboard' },
+    { to: '/m/settings', label: 'Settings' },
   ]
 
   return (
