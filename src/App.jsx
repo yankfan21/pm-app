@@ -23,7 +23,9 @@ import Settings from './Settings'
 import NotFound from './NotFound'
 import Login from './Login'
 import RequireAuth from './RequireAuth'
+import DeviceModeGate from './DeviceModeGate'
 import { useTheme } from './hooks/useTheme'
+import { useDeviceMode } from './hooks/useDeviceMode'
 import MobileShell from './mobile/MobileShell'
 import MobileDashboard from './mobile/MobileDashboard'
 import MobileNotifications from './mobile/MobileNotifications'
@@ -59,72 +61,83 @@ function App() {
   // Mounted here (not just in Settings) so the 'system' preference listener
   // stays live across the whole app, not only while Settings is on screen.
   useTheme()
+  // Same reasoning as useTheme() above - DeviceModeGate below also calls
+  // this hook itself (it's the one that acts on it), so this call is
+  // belt-and-suspenders rather than load-bearing on its own.
+  useDeviceMode()
 
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
 
       <Route element={<RequireAuth />}>
-        <Route element={<ProjectsShell />}>
-          <Route index element={<Dashboard />} />
-          <Route path="projects" element={<AllProjects />} />
-        </Route>
-
-        <Route path="/projects/:projectId" element={<ProjectDetailPage />}>
-          <Route index element={<Navigate to="overview" replace />} />
-          <Route path="overview" element={<ProjectOverviewRoute />} />
-
-          <Route path="planning">
-            <Route index element={<PlanningIndexRoute />} />
-            <Route path="phases" element={<PlanningPhasesRoute />} />
-            <Route path="tasks" element={<PlanningTasksRoute />} />
-            <Route path="backlog" element={<PlanningBacklogRoute />} />
+        {/* Viewport-width auto-detection (<768px -> mobile) plus the
+            session-only manual override - see DeviceModeGate.jsx and
+            deviceRouteMap.js. Wraps every authenticated route so it can
+            redirect either direction (desktop <-> mobile) regardless of
+            which subtree below actually renders. */}
+        <Route element={<DeviceModeGate />}>
+          <Route element={<ProjectsShell />}>
+            <Route index element={<Dashboard />} />
+            <Route path="projects" element={<AllProjects />} />
           </Route>
 
-          <Route path="execution">
-            <Route index element={<ExecutionIndexRoute />} />
-            <Route path="gantt" element={<ExecutionGanttRoute />} />
-            <Route path="list-waterfall" element={<ExecutionListWaterfallRoute />} />
-            <Route path="team-waterfall" element={<ExecutionTeamWaterfallRoute />} />
-            <Route path="sprint-board" element={<ExecutionSprintBoardRoute />} />
-            <Route path="sprint-retro" element={<ExecutionSprintRetroRoute />} />
-            <Route path="list-agile" element={<ExecutionListAgileRoute />} />
-            <Route path="team-agile" element={<ExecutionTeamAgileRoute />} />
+          <Route path="/projects/:projectId" element={<ProjectDetailPage />}>
+            <Route index element={<Navigate to="overview" replace />} />
+            <Route path="overview" element={<ProjectOverviewRoute />} />
+
+            <Route path="planning">
+              <Route index element={<PlanningIndexRoute />} />
+              <Route path="phases" element={<PlanningPhasesRoute />} />
+              <Route path="tasks" element={<PlanningTasksRoute />} />
+              <Route path="backlog" element={<PlanningBacklogRoute />} />
+            </Route>
+
+            <Route path="execution">
+              <Route index element={<ExecutionIndexRoute />} />
+              <Route path="gantt" element={<ExecutionGanttRoute />} />
+              <Route path="list-waterfall" element={<ExecutionListWaterfallRoute />} />
+              <Route path="team-waterfall" element={<ExecutionTeamWaterfallRoute />} />
+              <Route path="sprint-board" element={<ExecutionSprintBoardRoute />} />
+              <Route path="sprint-retro" element={<ExecutionSprintRetroRoute />} />
+              <Route path="list-agile" element={<ExecutionListAgileRoute />} />
+              <Route path="team-agile" element={<ExecutionTeamAgileRoute />} />
+            </Route>
+
+            <Route path="documents" element={<DocumentsRoute />} />
+            <Route path="*" element={<Navigate to="overview" replace />} />
           </Route>
 
-          <Route path="documents" element={<DocumentsRoute />} />
-          <Route path="*" element={<Navigate to="overview" replace />} />
+          <Route path="/settings" element={<Settings />} />
+
+          {/* Phone mode - purpose-built components under src/mobile/, own
+              route tree entirely separate from the desktop /projects/:id
+              subtree above. See CLAUDE.md Phone-Mode architecture note: this
+              exists so desktop layout/CSS changes can never silently regress
+              phone mode, and vice versa. */}
+          <Route path="/m" element={<Navigate to="/m/dashboard" replace />} />
+          <Route element={<MobileShell />}>
+            <Route path="/m/dashboard" element={<MobileDashboard />} />
+            <Route path="/m/notifications" element={<MobileNotifications />} />
+            <Route path="/m/more" element={<MobileMore />} />
+          </Route>
+
+          <Route path="/m/projects/:projectId" element={<MobileProjectLayout />}>
+            <Route index element={<MobileProjectOverview />} />
+            <Route path="tasks" element={<MobileProjectTasks />} />
+            <Route path="tasks/:taskId" element={<MobileTaskDetail />} />
+            <Route path="sprint-board" element={<MobileProjectSprintBoard />} />
+            <Route path="metrics" element={<MobileProjectMetrics />} />
+            <Route path="more" element={<MobileProjectMore />} />
+            <Route path="more/documents" element={<MobileProjectDocuments />} />
+            <Route path="more/risks" element={<MobileProjectRisks />} />
+            <Route path="more/status-update" element={<MobileProjectStatusUpdate />} />
+            <Route path="more/comms" element={<MobileProjectComms />} />
+            <Route path="*" element={<Navigate to="." replace />} />
+          </Route>
+
+          <Route path="*" element={<NotFound />} />
         </Route>
-
-        <Route path="/settings" element={<Settings />} />
-
-        {/* Phone mode - purpose-built components under src/mobile/, own
-            route tree entirely separate from the desktop /projects/:id
-            subtree above. See CLAUDE.md Phone-Mode architecture note: this
-            exists so desktop layout/CSS changes can never silently regress
-            phone mode, and vice versa. */}
-        <Route path="/m" element={<Navigate to="/m/dashboard" replace />} />
-        <Route element={<MobileShell />}>
-          <Route path="/m/dashboard" element={<MobileDashboard />} />
-          <Route path="/m/notifications" element={<MobileNotifications />} />
-          <Route path="/m/more" element={<MobileMore />} />
-        </Route>
-
-        <Route path="/m/projects/:projectId" element={<MobileProjectLayout />}>
-          <Route index element={<MobileProjectOverview />} />
-          <Route path="tasks" element={<MobileProjectTasks />} />
-          <Route path="tasks/:taskId" element={<MobileTaskDetail />} />
-          <Route path="sprint-board" element={<MobileProjectSprintBoard />} />
-          <Route path="metrics" element={<MobileProjectMetrics />} />
-          <Route path="more" element={<MobileProjectMore />} />
-          <Route path="more/documents" element={<MobileProjectDocuments />} />
-          <Route path="more/risks" element={<MobileProjectRisks />} />
-          <Route path="more/status-update" element={<MobileProjectStatusUpdate />} />
-          <Route path="more/comms" element={<MobileProjectComms />} />
-          <Route path="*" element={<Navigate to="." replace />} />
-        </Route>
-
-        <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>
   )

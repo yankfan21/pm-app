@@ -1,14 +1,21 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import { useAuth } from './AuthContext'
 import AppHeader from './AppHeader'
 import { useTheme } from './hooks/useTheme'
+import { useDeviceMode } from './hooks/useDeviceMode'
+import { resolveDeviceModeTarget, MOBILE_HOME, DESKTOP_HOME } from './deviceRouteMap'
 
 const THEME_OPTIONS = [
   { value: 'system', label: 'System Default' },
   { value: 'light', label: 'Light' },
   { value: 'dark', label: 'Dark' },
+]
+
+const DEVICE_MODE_OPTIONS = [
+  { value: 'mobile', label: 'Mobile' },
+  { value: 'desktop', label: 'Desktop' },
 ]
 
 function formatHiddenAt(hiddenAt) {
@@ -26,6 +33,9 @@ function formatHiddenAt(hiddenAt) {
 function Settings() {
   const { user } = useAuth()
   const { theme, setTheme } = useTheme()
+  const { mode, setOverride } = useDeviceMode()
+  const location = useLocation()
+  const navigate = useNavigate()
   const [hiddenProjects, setHiddenProjects] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -99,6 +109,17 @@ function Settings() {
     setHiddenProjects((prev) => prev.filter((p) => p.projectId !== projectId))
   }
 
+  // Same session-only override as the mobile footer link
+  // (MobileDesktopLink.jsx) - navigates to the mapped equivalent for
+  // wherever this page falls back to (/settings is a shared path, so this
+  // always lands on the chosen mode's home) rather than just flipping the
+  // radio and leaving the desktop-styled Settings page on screen.
+  function handleDeviceModeChange(next) {
+    setOverride(next)
+    const fallback = next === 'mobile' ? MOBILE_HOME : DESKTOP_HOME
+    navigate(resolveDeviceModeTarget(next, location.pathname) || fallback)
+  }
+
   return (
     <div className="app">
       <AppHeader />
@@ -118,6 +139,27 @@ function Settings() {
                 value={option.value}
                 checked={theme === option.value}
                 onChange={() => setTheme(option.value)}
+              />
+              {option.label}
+            </label>
+          ))}
+        </div>
+
+        <h3 className="settings-section-title">View Mode</h3>
+        <p className="dashboard-subtitle">
+          Choose Mobile or Desktop for this session only - resets to automatic
+          detection based on your screen size next time you open ConfidantPM.
+        </p>
+
+        <div className="theme-option-group" role="radiogroup" aria-label="View Mode">
+          {DEVICE_MODE_OPTIONS.map((option) => (
+            <label key={option.value} className="theme-option">
+              <input
+                type="radio"
+                name="deviceMode"
+                value={option.value}
+                checked={mode === option.value}
+                onChange={() => handleDeviceModeChange(option.value)}
               />
               {option.label}
             </label>

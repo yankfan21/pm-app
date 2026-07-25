@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router-dom'
 import MobileGlobalTabBar from './MobileGlobalTabBar'
+import MobileDesktopLink from './MobileDesktopLink'
 import './mobile.css'
 
 // Root layout for every /m/* route outside a project (dashboard,
@@ -11,6 +12,7 @@ function MobileShell() {
     <div className="mobile-app">
       <div className="mobile-app-body">
         <Outlet />
+        <MobileDesktopLink />
       </div>
       <MobileGlobalTabBar />
     </div>

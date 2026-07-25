@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient'
 import { useAuth } from '../AuthContext'
 import { METHODOLOGY_LABELS } from '../methodology'
 import MobileProjectTabBar from './MobileProjectTabBar'
+import MobileDesktopLink from './MobileDesktopLink'
 import './mobile.css'
 
 // Persistent layout for every /m/projects/:projectId/* route. Deliberately
@@ -120,6 +121,7 @@ function MobileProjectLayout() {
 
       <div className="mobile-app-body">
         <Outlet context={{ project, isOwner, canEdit }} />
+        <MobileDesktopLink />
       </div>
 
       <MobileProjectTabBar projectId={projectId} methodology={project.methodology} />

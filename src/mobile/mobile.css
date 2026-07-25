@@ -19,6 +19,23 @@
   padding: 12px 16px calc(64px + env(safe-area-inset-bottom));
 }
 
+/* Manual device-mode override (MobileDesktopLink) - deliberately
+   low-prominence, sits at the bottom of scrollable content rather than
+   living in the topbar or tab bar so it never competes with primary nav. */
+.mobile-desktop-link {
+  display: block;
+  width: 100%;
+  margin-top: 24px;
+  padding: 10px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted, #666);
+  font-size: 12px;
+  text-decoration: underline;
+  text-align: center;
+  cursor: pointer;
+}
+
 /* Top app bar - only rendered inside a project (MobileProjectLayout). The
    root shell (MobileShell) has no top bar; global tabs are the only chrome
    there. */
