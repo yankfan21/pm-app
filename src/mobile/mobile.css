@@ -525,3 +525,95 @@
   color: inherit;
   cursor: pointer;
 }
+
+/* Key Metrics Dashboard (MobileProjectMetrics) -------------------------- */
+
+.mobile-metrics-card {
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border, #e2e2e2);
+  background: var(--card-bg, #fff);
+  backdrop-filter: var(--card-backdrop-filter);
+  margin-bottom: 12px;
+}
+
+.mobile-metrics-card .mobile-section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mobile-health-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--surface-1-solid, #eee);
+}
+
+.mobile-health-badge.mobile-health-on_track { background: #d1fae5; color: #065f46; }
+.mobile-health-badge.mobile-health-at_risk { background: #fef3c7; color: #92400e; }
+.mobile-health-badge.mobile-health-off_track { background: #fee2e2; color: #991b1b; }
+
+.mobile-metrics-progress {
+  font-size: 13px;
+  margin: 10px 0 0;
+}
+
+.mobile-metrics-asof {
+  font-size: 11px;
+  color: var(--text-muted, #666);
+  margin: 6px 0 0;
+}
+
+.mobile-issues-count {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.mobile-issues-count.has-issues {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.mobile-issue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.mobile-issue-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.mobile-issue-tag {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--surface-1-solid, #eee);
+  white-space: nowrap;
+}
+
+.mobile-issue-tag.mobile-issue-tag-task { background: #fee2e2; color: #991b1b; }
+.mobile-issue-tag.mobile-issue-tag-risk { background: #fde68a; color: #78350f; }
+.mobile-issue-tag.mobile-issue-tag-phase { background: #e0e7ff; color: #3730a3; }
+
+.mobile-issue-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
