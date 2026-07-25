@@ -24,6 +24,10 @@ const CHART_TOOLTIP_STYLE = {
   fontSize: 12,
 }
 const CHART_TOOLTIP_LABEL_STYLE = { color: 'var(--text-h)' }
+// Recharts' default itemStyle is a muted gray baked into its own stylesheet
+// - unreadable against our dark card surface. contentStyle/labelStyle alone
+// don't touch it, so it needs setting explicitly, same text token as the label.
+const CHART_TOOLTIP_ITEM_STYLE = { color: 'var(--text)' }
 const CHART_AXIS_TICK = { fill: 'var(--text-muted)', fontSize: 12 }
 
 function formatDateTime(iso) {
@@ -296,7 +300,12 @@ function RiskSeverityCard({ riskLog }) {
         <CartesianGrid horizontal={false} stroke="var(--border-faint)" />
         <XAxis type="number" allowDecimals={false} tick={CHART_AXIS_TICK} axisLine={{ stroke: 'var(--border-faint)' }} tickLine={false} />
         <YAxis type="category" dataKey="level" tick={{ fill: 'var(--text)', fontSize: 12 }} axisLine={false} tickLine={false} width={56} />
-        <Tooltip cursor={{ fill: 'var(--code-bg)' }} contentStyle={CHART_TOOLTIP_STYLE} labelStyle={CHART_TOOLTIP_LABEL_STYLE} />
+        <Tooltip
+          cursor={{ fill: 'var(--code-bg)' }}
+          contentStyle={CHART_TOOLTIP_STYLE}
+          labelStyle={CHART_TOOLTIP_LABEL_STYLE}
+          itemStyle={CHART_TOOLTIP_ITEM_STYLE}
+        />
         <Bar dataKey="count" radius={[0, 4, 4, 0]} maxBarSize={20} isAnimationActive={false}>
           {data.map((d) => (
             <Cell key={d.level} fill={SEVERITY_COLOR[d.level]} />
@@ -398,7 +407,12 @@ function SprintVelocityCard({ project }) {
         <CartesianGrid vertical={false} stroke="var(--border-faint)" />
         <XAxis dataKey="name" tick={CHART_AXIS_TICK} axisLine={{ stroke: 'var(--border-faint)' }} tickLine={false} />
         <YAxis allowDecimals={false} tick={CHART_AXIS_TICK} axisLine={false} tickLine={false} />
-        <Tooltip cursor={{ fill: 'var(--code-bg)' }} contentStyle={CHART_TOOLTIP_STYLE} labelStyle={CHART_TOOLTIP_LABEL_STYLE} />
+        <Tooltip
+          cursor={{ fill: 'var(--code-bg)' }}
+          contentStyle={CHART_TOOLTIP_STYLE}
+          labelStyle={CHART_TOOLTIP_LABEL_STYLE}
+          itemStyle={CHART_TOOLTIP_ITEM_STYLE}
+        />
         <Legend wrapperStyle={{ fontSize: 12, color: 'var(--text-muted)' }} />
         <Bar dataKey="committed" name="Committed" fill="var(--zone-accent-neutral)" radius={[4, 4, 0, 0]} maxBarSize={28} isAnimationActive={false} />
         <Bar dataKey="completed" name="Completed" fill="var(--accent)" radius={[4, 4, 0, 0]} maxBarSize={28} isAnimationActive={false} />
