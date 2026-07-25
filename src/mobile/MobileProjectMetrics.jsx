@@ -61,10 +61,11 @@ const HEALTH_BADGE_CLASS = {
   off_track: 'mobile-health-off_track',
 }
 
-// Key Metrics Dashboard, read-only (/m/projects/:projectId/metrics). Own
-// fetch (project_evaluations, tasks, phases, risk_logs) rather than reusing
-// desktop's KeyMetricsDashboard.jsx per the mobile purpose-built pattern -
-// see MobileProjectLayout.jsx.
+// Overview - project goal plus Key Metrics Dashboard content, read-only
+// (/m/projects/:projectId, the single Overview destination - no separate
+// /metrics route). Own fetch (project_evaluations, tasks, phases,
+// risk_logs) rather than reusing desktop's KeyMetricsDashboard.jsx per the
+// mobile purpose-built pattern - see MobileProjectLayout.jsx.
 function MobileProjectMetrics() {
   const { project } = useOutletContext()
   const { projectId } = useParams()
@@ -124,7 +125,7 @@ function MobileProjectMetrics() {
   if (loading) {
     return (
       <div>
-        <h1 className="mobile-screen-title">Metrics</h1>
+        <h1 className="mobile-screen-title">Overview</h1>
         <p className="mobile-screen-stub">Loading metrics...</p>
       </div>
     )
@@ -133,7 +134,7 @@ function MobileProjectMetrics() {
   if (error) {
     return (
       <div>
-        <h1 className="mobile-screen-title">Metrics</h1>
+        <h1 className="mobile-screen-title">Overview</h1>
         <p className="mobile-error">{error}</p>
       </div>
     )
@@ -143,7 +144,14 @@ function MobileProjectMetrics() {
 
   return (
     <div>
-      <h1 className="mobile-screen-title">Metrics</h1>
+      <h1 className="mobile-screen-title">Overview</h1>
+
+      {project.goal && (
+        <div className="mobile-metrics-card mobile-goal-card">
+          <h2 className="mobile-section-title">Project Goal</h2>
+          <p className="mobile-goal-text">{project.goal}</p>
+        </div>
+      )}
 
       <div className="mobile-metrics-card">
         <h2 className="mobile-section-title">Project Status</h2>

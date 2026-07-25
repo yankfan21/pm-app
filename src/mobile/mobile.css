@@ -52,22 +52,6 @@
   z-index: 10;
 }
 
-.mobile-topbar-back {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  border: none;
-  background: transparent;
-  font-size: 20px;
-  line-height: 1;
-  color: inherit;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
 .mobile-topbar-title {
   display: flex;
   flex-direction: column;
@@ -649,6 +633,13 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+}
+
+.mobile-goal-text {
+  margin: 4px 0 0;
+  font-size: 14px;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
 }
 
 .mobile-health-badge {

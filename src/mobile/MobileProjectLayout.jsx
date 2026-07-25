@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Outlet, useNavigate, useParams } from 'react-router-dom'
+import { Outlet, useParams } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { useAuth } from '../AuthContext'
 import { METHODOLOGY_LABELS } from '../methodology'
@@ -17,7 +17,6 @@ import './mobile.css'
 function MobileProjectLayout() {
   const { projectId } = useParams()
   const { user } = useAuth()
-  const navigate = useNavigate()
   const [project, setProject] = useState(null)
   const [isOwner, setIsOwner] = useState(false)
   const [canEdit, setCanEdit] = useState(false)
@@ -102,14 +101,6 @@ function MobileProjectLayout() {
   return (
     <div className="mobile-app">
       <div className="mobile-topbar">
-        <button
-          type="button"
-          className="mobile-topbar-back"
-          onClick={() => navigate('/m/dashboard')}
-          aria-label="Back to home"
-        >
-          &larr;
-        </button>
         <div className="mobile-topbar-title">
           <span className="mobile-topbar-name">
             <span className="mobile-topbar-name-text">{project.name}</span>

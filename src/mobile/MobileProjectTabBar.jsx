@@ -14,7 +14,6 @@ function MobileProjectTabBar({ projectId, methodology }) {
     { to: base, label: 'Overview', icon: '◈', end: true },
     { to: `${base}/tasks`, label: 'Tasks', icon: '☑' },
     showBoard && { to: `${base}/sprint-board`, label: 'Board', icon: '▤' },
-    { to: `${base}/metrics`, label: 'Metrics', icon: '▶' },
     { to: `${base}/more`, label: 'More', icon: '≡' },
   ].filter(Boolean)
 

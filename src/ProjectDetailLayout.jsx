@@ -333,9 +333,9 @@ function ProjectDetailLayout({ project, isOwner, canEdit }) {
             once on the old single-scroll page. Now that ProjectDetailLayout
             persists across every section route, that same block was
             repeating on every page switch, eating vertical space each time.
-            Compressed to one row; the description is truncated with an
-            ellipsis (full text on hover via the native title attribute)
-            rather than wrapping to its own line. */}
+            Compressed to one row; goal wraps (full text, no truncation) if
+            it doesn't fit alongside the other badges. Archive Project lives
+            in the sidebar now (project-nav-footer below), not here. */}
         <div className="project-header-bar">
           <h2 className="project-header-name">{currentProject.name}</h2>
 
@@ -366,24 +366,7 @@ function ProjectDetailLayout({ project, isOwner, canEdit }) {
           <span className="project-header-date">{currentProject.deadline ?? 'TBD'}</span>
 
           {currentProject.goal && (
-            <span className="project-header-goal" title={currentProject.goal}>
-              {currentProject.goal}
-            </span>
-          )}
-
-          {canEdit && (
-            <button
-              type="button"
-              className="btn-secondary project-header-archive"
-              disabled={archiving}
-              onClick={toggleArchived}
-            >
-              {archiving
-                ? 'Saving...'
-                : currentProject.status === 'Archived'
-                  ? 'Unarchive Project'
-                  : 'Archive Project'}
-            </button>
+            <span className="project-header-goal">{currentProject.goal}</span>
           )}
         </div>
 
@@ -413,7 +396,26 @@ function ProjectDetailLayout({ project, isOwner, canEdit }) {
           <p className="charter-status">Loading...</p>
         ) : (
           <div className="project-nav-shell">
-            <ProjectNav project={currentProject} />
+            <div className="project-sidebar">
+              <ProjectNav project={currentProject} />
+
+              {canEdit && (
+                <div className="project-nav-footer">
+                  <button
+                    type="button"
+                    className="btn-secondary project-nav-archive"
+                    disabled={archiving}
+                    onClick={toggleArchived}
+                  >
+                    {archiving
+                      ? 'Saving...'
+                      : currentProject.status === 'Archived'
+                        ? 'Unarchive Project'
+                        : 'Archive Project'}
+                  </button>
+                </div>
+              )}
+            </div>
             <div className="project-nav-content">
               <Outlet context={outletContext} />
             </div>

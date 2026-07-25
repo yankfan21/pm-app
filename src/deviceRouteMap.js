@@ -25,7 +25,7 @@ function table(pairs) {
 const DESKTOP_TO_MOBILE = table([
   ['^/$', () => '/m/dashboard'],
   ['^/projects$', () => '/m/dashboard'],
-  [`^/projects/${ID}/overview$`, (id) => `/m/projects/${id}/metrics`],
+  [`^/projects/${ID}/overview$`, (id) => `/m/projects/${id}`],
   [`^/projects/${ID}/planning/tasks$`, (id) => `/m/projects/${id}/tasks`],
   [`^/projects/${ID}/execution/sprint-board$`, (id) => `/m/projects/${id}/sprint-board`],
   [`^/projects/${ID}/documents$`, (id) => `/m/projects/${id}/more/documents`],

@@ -2941,30 +2941,38 @@
 }
 
 /* The one flexible item in the row - claims whatever space is left after
-   every fixed-size sibling (name/badges/date/archive button) takes what it
-   needs, then truncates its own text with an ellipsis instead of wrapping
-   the row taller. Full text still available via the title attribute. */
+   every fixed-size sibling (name/badges/date) takes what it needs, and
+   wraps its full text rather than truncating (Archive Project moved to
+   the sidebar, so this no longer needs to compete with it for width). */
 .project-header-goal {
   flex: 1 1 100px;
   min-width: 60px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow-wrap: break-word;
   font-size: 14px;
   color: var(--text);
 }
 
-@media (max-width: 720px) {
-  .project-header-goal {
-    flex-basis: 100%;
-    white-space: normal;
-    overflow-wrap: break-word;
-    text-overflow: clip;
-  }
+/* Goal/purpose block on the Overview page itself (ProjectOverviewRoute.jsx),
+   above Key Metrics Dashboard - full untruncated text, its own block rather
+   than sharing the header row's tight single line. */
+.project-goal-block {
+  margin-top: 20px;
+  margin-bottom: 20px;
 }
 
-.project-header-archive {
-  flex-shrink: 0;
+.project-goal-heading {
+  margin: 0 0 6px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.project-goal-text {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text);
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
 }
 
 .priority-badge {
@@ -4301,6 +4309,15 @@ textarea.risk-cell-input {
   margin-top: 2rem;
 }
 
+/* Column wrapper around <ProjectNav/> (primary+secondary nav, laid out as
+   a row by .project-nav below) plus the Archive Project footer beneath it -
+   ProjectNav itself stays presentation-only/unaware of Archive. */
+.project-sidebar {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
 .project-nav {
   display: flex;
   gap: 16px;
@@ -4383,6 +4400,27 @@ textarea.risk-cell-input {
 .project-nav-content {
   flex: 1;
   min-width: 0;
+}
+
+/* Archive Project footer, set apart from the nav links above it (divider +
+   spacing, muted styling) rather than looking like another nav item. */
+.project-nav-footer {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  width: 140px;
+}
+
+.project-nav-archive {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--text-dim, var(--text));
+  opacity: 0.75;
+}
+
+.project-nav-archive:hover {
+  opacity: 1;
 }
 
 @media (max-width: 720px) {

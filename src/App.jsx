@@ -124,14 +124,13 @@ function App() {
           </Route>
 
           <Route path="/m/projects/:projectId" element={<MobileProjectLayout />}>
-            {/* Overview index now renders Key Metrics Dashboard directly -
-                genuinely the same component as /metrics, not a lookalike
-                copy (see MobileProjectMetrics.jsx). */}
+            {/* Overview - single destination, project goal + Key Metrics
+                Dashboard content (see MobileProjectMetrics.jsx). No
+                separate /metrics route - collapsed into this index route. */}
             <Route index element={<MobileProjectMetrics />} />
             <Route path="tasks" element={<MobileProjectTasks />} />
             <Route path="tasks/:taskId" element={<MobileTaskDetail />} />
             <Route path="sprint-board" element={<MobileProjectSprintBoard />} />
-            <Route path="metrics" element={<MobileProjectMetrics />} />
             <Route path="more" element={<MobileProjectMore />} />
             <Route path="more/documents" element={<MobileProjectDocuments />} />
             <Route path="more/risks" element={<MobileProjectRisks />} />
