@@ -31,6 +31,7 @@ import MobileMore from './mobile/MobileMore'
 import MobileProjectLayout from './mobile/MobileProjectLayout'
 import MobileProjectOverview from './mobile/MobileProjectOverview'
 import MobileProjectTasks from './mobile/MobileProjectTasks'
+import MobileTaskDetail from './mobile/MobileTaskDetail'
 import MobileProjectSprintBoard from './mobile/MobileProjectSprintBoard'
 import MobileProjectMetrics from './mobile/MobileProjectMetrics'
 import MobileProjectMore from './mobile/MobileProjectMore'
@@ -112,6 +113,7 @@ function App() {
         <Route path="/m/projects/:projectId" element={<MobileProjectLayout />}>
           <Route index element={<MobileProjectOverview />} />
           <Route path="tasks" element={<MobileProjectTasks />} />
+          <Route path="tasks/:taskId" element={<MobileTaskDetail />} />
           <Route path="sprint-board" element={<MobileProjectSprintBoard />} />
           <Route path="metrics" element={<MobileProjectMetrics />} />
           <Route path="more" element={<MobileProjectMore />} />
