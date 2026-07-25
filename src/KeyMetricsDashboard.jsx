@@ -1,6 +1,30 @@
 import { useEffect, useMemo, useState } from 'react'
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  LabelList,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts'
 import { supabase } from './supabaseClient'
 import { HEALTH_LABELS, HEALTH_COLOR_CLASS, formatEvalMetric } from './projectEvalHealth'
+import { visibleSides } from './projectSections'
+
+const CHART_TOOLTIP_STYLE = {
+  background: 'var(--surface-1-solid)',
+  border: '1px solid var(--border)',
+  borderRadius: 8,
+  fontSize: 12,
+}
+const CHART_TOOLTIP_LABEL_STYLE = { color: 'var(--text-h)' }
+const CHART_AXIS_TICK = { fill: 'var(--text-muted)', fontSize: 12 }
 
 function formatDateTime(iso) {
   return new Date(iso).toLocaleString(undefined, {
@@ -66,7 +90,10 @@ const ISSUE_TAG_CLASS = {
   'Overdue Phase': 'issue-tag-phase',
 }
 
-function ProjectStatusCard({ project }) {
+// Lifted out of ProjectStatusCard so ProgressRingCard can read the same
+// project_evaluations row without a second query - both cards show facets
+// of one snapshot (see the module comment above KeyMetricsDashboard).
+function useLatestEvaluation(projectId) {
   const [evaluation, setEvaluation] = useState(null)
   const [loading, setLoading] = useState(true)
 
@@ -80,7 +107,7 @@ function ProjectStatusCard({ project }) {
       const { data, error } = await supabase
         .from('project_evaluations')
         .select('health_status, metrics, created_at')
-        .eq('project_id', project.id)
+        .eq('project_id', projectId)
         .order('created_at', { ascending: false })
         .limit(1)
 
@@ -93,8 +120,12 @@ function ProjectStatusCard({ project }) {
     return () => {
       cancelled = true
     }
-  }, [project.id])
+  }, [projectId])
 
+  return { evaluation, loading }
+}
+
+function ProjectStatusCard({ evaluation, loading }) {
   if (loading) {
     return <p className="charter-status">Loading...</p>
   }
@@ -142,13 +173,250 @@ function CriticalIssuesCard({ issues }) {
   )
 }
 
+// Circular meter (donut ring) for a single 0-100 value - Pie with two
+// slices (value + remainder), full circle via startAngle 90 -> -270. Fill
+// is --accent; track is --code-bg, a lighter neutral step of the same
+// surface family (mirrors the "meter" contract: fill carries state,
+// unfilled track is a lighter step so state reads across the whole ring).
+function ProgressRing({ pct, caption }) {
+  const clamped = Math.max(0, Math.min(100, pct))
+  const data = [
+    { name: 'complete', value: clamped },
+    { name: 'remaining', value: 100 - clamped },
+  ]
+
+  return (
+    <div className="key-metrics-ring-wrap">
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Pie
+            data={data}
+            dataKey="value"
+            startAngle={90}
+            endAngle={-270}
+            innerRadius="72%"
+            outerRadius="100%"
+            cornerRadius={4}
+            stroke="none"
+            isAnimationActive={false}
+          >
+            <Cell fill="var(--accent)" />
+            <Cell fill="var(--code-bg)" />
+          </Pie>
+        </PieChart>
+      </ResponsiveContainer>
+      <div className="key-metrics-ring-label">
+        <span className="key-metrics-ring-pct">{clamped}%</span>
+        <span className="key-metrics-ring-caption">{caption}</span>
+      </div>
+    </div>
+  )
+}
+
+// Which metric reads as "Progress %" depends on methodology - same fields
+// formatEvalMetric() already knows how to format, see projectEvalHealth.js.
+// Agile has no task/milestone completion figure at all (no dates, no fixed
+// task schedule - see methodologyInstructions() in project-eval/index.ts),
+// so velocity_ratio (committed-vs-completed points for the most recent
+// sprint) is used as the closest available progress proxy - it's a
+// per-sprint snapshot, not cumulative project completion, so the caption
+// says so rather than passing it off as the same thing Waterfall/Hybrid show.
+function progressFromMetrics(methodology, metrics) {
+  if (!metrics) return null
+  if (methodology === 'agile') {
+    if (metrics.velocity_ratio == null) return null
+    return { pct: Math.round(metrics.velocity_ratio * 100), caption: 'Velocity, most recent sprint' }
+  }
+  if (methodology === 'hybrid') {
+    if (metrics.milestone_pct_complete == null) return null
+    return { pct: Math.round(metrics.milestone_pct_complete * 100), caption: 'Epic work complete' }
+  }
+  if (metrics.task_pct_complete == null) return null
+  return { pct: Math.round(metrics.task_pct_complete * 100), caption: 'Tasks complete' }
+}
+
+function ProgressRingCard({ project, evaluation, loading }) {
+  if (loading) {
+    return <p className="charter-status">Loading...</p>
+  }
+
+  const progress = evaluation ? progressFromMetrics(project.methodology, evaluation.metrics) : null
+
+  if (!progress) {
+    return (
+      <p className="charter-status">
+        Not evaluated yet — run Evaluate Project (under Documents) to see progress here.
+      </p>
+    )
+  }
+
+  return (
+    <>
+      <ProgressRing pct={progress.pct} caption={progress.caption} />
+      <p className="key-metrics-as-of">As of {formatDateTime(evaluation.created_at)}</p>
+    </>
+  )
+}
+
+const SEVERITY_LEVELS = ['High', 'Medium', 'Low']
+// High maps to the same "critical" hue Critical Issues/health badges use
+// elsewhere in this file (HEALTH_COLOR_CLASS.off_track); Medium/Low mirror
+// the badge-warning/badge-success solid accents already defined in
+// index.css, so this chart doesn't invent a new color vocabulary.
+const SEVERITY_COLOR = {
+  High: 'var(--card-accent-red)',
+  Medium: 'var(--card-accent-amber)',
+  Low: 'var(--badge-success-text)',
+}
+
+function useRiskSeverityCounts(riskLog) {
+  return useMemo(() => {
+    const counts = { High: 0, Medium: 0, Low: 0 }
+    ;(riskLog?.risks || []).forEach((r) => {
+      if (r.impact in counts) counts[r.impact] += 1
+    })
+    return SEVERITY_LEVELS.map((level) => ({ level, count: counts[level] }))
+  }, [riskLog])
+}
+
+// Severity is directly labeled on the Y-axis, so no legend box - a legend
+// would just restate the axis (see marks-and-anatomy.md: "a single series
+// needs no legend box").
+function RiskSeverityCard({ riskLog }) {
+  const data = useRiskSeverityCounts(riskLog)
+  const total = data.reduce((sum, d) => sum + d.count, 0)
+
+  if (total === 0) {
+    return <p className="charter-status">No risks logged yet.</p>
+  }
+
+  return (
+    <ResponsiveContainer width="100%" height={140}>
+      <BarChart data={data} layout="vertical" margin={{ top: 4, right: 28, bottom: 4, left: 4 }}>
+        <CartesianGrid horizontal={false} stroke="var(--border-faint)" />
+        <XAxis type="number" allowDecimals={false} tick={CHART_AXIS_TICK} axisLine={{ stroke: 'var(--border-faint)' }} tickLine={false} />
+        <YAxis type="category" dataKey="level" tick={{ fill: 'var(--text)', fontSize: 12 }} axisLine={false} tickLine={false} width={56} />
+        <Tooltip cursor={{ fill: 'var(--code-bg)' }} contentStyle={CHART_TOOLTIP_STYLE} labelStyle={CHART_TOOLTIP_LABEL_STYLE} />
+        <Bar dataKey="count" radius={[0, 4, 4, 0]} maxBarSize={20} isAnimationActive={false}>
+          {data.map((d) => (
+            <Cell key={d.level} fill={SEVERITY_COLOR[d.level]} />
+          ))}
+          <LabelList dataKey="count" position="right" style={{ fill: 'var(--text)', fontSize: 12 }} />
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  )
+}
+
+const VELOCITY_SPRINT_LIMIT = 5
+
+// Mirrors project-eval/index.ts's velocityStats() (committed-vs-completed
+// story points per sprint, chronological, capped to the most recent 5
+// sprints with committed points) but as a live client query instead of
+// text fed to Claude - that function's output never gets persisted as
+// structured data, so there's nothing to read it back from. Project-wide
+// (no milestone_id scoping), matching what velocity_ratio in the
+// project_evaluations snapshot already uses for its single-sprint figure.
+function useSprintVelocity(projectId, enabled) {
+  const [sprints, setSprints] = useState([])
+  const [loading, setLoading] = useState(enabled)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    if (!enabled) return
+    let cancelled = false
+
+    async function load() {
+      setLoading(true)
+      setError(null)
+
+      const [sprintRes, taskRes] = await Promise.all([
+        supabase.from('sprints').select('id, name, start_date, end_date, created_at').eq('project_id', projectId),
+        supabase
+          .from('tasks')
+          .select('sprint_id, story_points, board_status')
+          .eq('project_id', projectId)
+          .not('sprint_id', 'is', null),
+      ])
+
+      if (cancelled) return
+
+      const firstError = sprintRes.error || taskRes.error
+      if (firstError) {
+        setError(firstError.message)
+        setLoading(false)
+        return
+      }
+
+      const bySprintId = new Map()
+      ;(taskRes.data || []).forEach((t) => {
+        const entry = bySprintId.get(t.sprint_id) || { committed: 0, completed: 0 }
+        entry.committed += t.story_points ?? 0
+        if (t.board_status === 'done') entry.completed += t.story_points ?? 0
+        bySprintId.set(t.sprint_id, entry)
+      })
+
+      const relevant = (sprintRes.data || [])
+        .filter((s) => bySprintId.has(s.id))
+        .sort((a, b) => (a.start_date || '').localeCompare(b.start_date || '') || (a.created_at || '').localeCompare(b.created_at || ''))
+        .slice(-VELOCITY_SPRINT_LIMIT)
+        .map((s) => ({ name: s.name, ...bySprintId.get(s.id) }))
+
+      setSprints(relevant)
+      setLoading(false)
+    }
+
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [projectId, enabled])
+
+  return { sprints, loading, error }
+}
+
+// Committed = the sprint's planned points (neutral gray, a "plan" tone);
+// Completed = points actually done (--accent, the same primary blue used
+// for the Progress ring's fill) - two distinct series so both get a
+// legend per marks-and-anatomy.md's "legend always present for >= 2 series".
+function SprintVelocityCard({ project }) {
+  const { sprints, loading, error } = useSprintVelocity(project.id, true)
+
+  if (loading) {
+    return <p className="charter-status">Loading sprint data...</p>
+  }
+  if (error) {
+    return <p className="charter-status">{error}</p>
+  }
+  if (sprints.length === 0) {
+    return <p className="charter-status">No sprint data with committed points yet.</p>
+  }
+
+  return (
+    <ResponsiveContainer width="100%" height={200}>
+      <BarChart data={sprints} margin={{ top: 8, right: 8, bottom: 4, left: 4 }}>
+        <CartesianGrid vertical={false} stroke="var(--border-faint)" />
+        <XAxis dataKey="name" tick={CHART_AXIS_TICK} axisLine={{ stroke: 'var(--border-faint)' }} tickLine={false} />
+        <YAxis allowDecimals={false} tick={CHART_AXIS_TICK} axisLine={false} tickLine={false} />
+        <Tooltip cursor={{ fill: 'var(--code-bg)' }} contentStyle={CHART_TOOLTIP_STYLE} labelStyle={CHART_TOOLTIP_LABEL_STYLE} />
+        <Legend wrapperStyle={{ fontSize: 12, color: 'var(--text-muted)' }} />
+        <Bar dataKey="committed" name="Committed" fill="var(--zone-accent-neutral)" radius={[4, 4, 0, 0]} maxBarSize={28} isAnimationActive={false} />
+        <Bar dataKey="completed" name="Completed" fill="var(--accent)" radius={[4, 4, 0, 0]} maxBarSize={28} isAnimationActive={false} />
+      </BarChart>
+    </ResponsiveContainer>
+  )
+}
+
 // New top-level section, same level as Tasks and Milestones / Backlog /
 // Sprint Board / Gantt Chart - Project Status + Progress % is a snapshot of
-// the latest Evaluate Project run (see ProjectStatusCard); Critical Issues
-// is a live recomputation from already-loaded tasks/phases/riskLog props,
-// not tied to that snapshot at all.
+// the latest Evaluate Project run (see ProjectStatusCard/ProgressRingCard);
+// Critical Issues and Risk Severity are live recomputations from
+// already-loaded tasks/phases/riskLog props, not tied to that snapshot at
+// all; Sprint Velocity is its own live query (see useSprintVelocity).
 function KeyMetricsDashboard({ project, tasks, phases, riskLog, expanded }) {
   const issues = useCriticalIssues(project, tasks, phases, riskLog)
+  const { evaluation, loading: evalLoading } = useLatestEvaluation(project.id)
+  const showVelocity = visibleSides(project.methodology).agile
 
   return (
     <div className="detail-zone key-metrics-dashboard">
@@ -163,13 +431,30 @@ function KeyMetricsDashboard({ project, tasks, phases, riskLog, expanded }) {
         <div className="key-metrics-body">
           <div className="key-metrics-panel">
             <h3 className="key-metrics-panel-heading">Project Status</h3>
-            <ProjectStatusCard project={project} />
+            <ProjectStatusCard evaluation={evaluation} loading={evalLoading} />
+          </div>
+
+          <div className="key-metrics-panel">
+            <h3 className="key-metrics-panel-heading">Progress</h3>
+            <ProgressRingCard project={project} evaluation={evaluation} loading={evalLoading} />
           </div>
 
           <div className="key-metrics-panel">
             <h3 className="key-metrics-panel-heading">Critical Issues ({issues.length})</h3>
             <CriticalIssuesCard issues={issues} />
           </div>
+
+          <div className="key-metrics-panel">
+            <h3 className="key-metrics-panel-heading">Risk Severity</h3>
+            <RiskSeverityCard riskLog={riskLog} />
+          </div>
+
+          {showVelocity && (
+            <div className="key-metrics-panel">
+              <h3 className="key-metrics-panel-heading">Sprint Velocity</h3>
+              <SprintVelocityCard project={project} />
+            </div>
+          )}
         </div>
       )}
     </div>
