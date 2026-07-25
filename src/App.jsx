@@ -18,6 +18,7 @@ import {
   ExecutionSprintRetroRoute,
   ExecutionListAgileRoute,
   ExecutionTeamAgileRoute,
+  ExecutionRiskLogRoute,
 } from './ProjectSectionRoutes'
 import Settings from './Settings'
 import NotFound from './NotFound'
@@ -31,7 +32,6 @@ import MobileDashboard from './mobile/MobileDashboard'
 import MobileNotifications from './mobile/MobileNotifications'
 import MobileMore from './mobile/MobileMore'
 import MobileProjectLayout from './mobile/MobileProjectLayout'
-import MobileProjectOverview from './mobile/MobileProjectOverview'
 import MobileProjectTasks from './mobile/MobileProjectTasks'
 import MobileTaskDetail from './mobile/MobileTaskDetail'
 import MobileProjectSprintBoard from './mobile/MobileProjectSprintBoard'
@@ -102,6 +102,7 @@ function App() {
               <Route path="sprint-retro" element={<ExecutionSprintRetroRoute />} />
               <Route path="list-agile" element={<ExecutionListAgileRoute />} />
               <Route path="team-agile" element={<ExecutionTeamAgileRoute />} />
+              <Route path="risk-log" element={<ExecutionRiskLogRoute />} />
             </Route>
 
             <Route path="documents" element={<DocumentsRoute />} />
@@ -123,7 +124,10 @@ function App() {
           </Route>
 
           <Route path="/m/projects/:projectId" element={<MobileProjectLayout />}>
-            <Route index element={<MobileProjectOverview />} />
+            {/* Overview index now renders Key Metrics Dashboard directly -
+                genuinely the same component as /metrics, not a lookalike
+                copy (see MobileProjectMetrics.jsx). */}
+            <Route index element={<MobileProjectMetrics />} />
             <Route path="tasks" element={<MobileProjectTasks />} />
             <Route path="tasks/:taskId" element={<MobileTaskDetail />} />
             <Route path="sprint-board" element={<MobileProjectSprintBoard />} />

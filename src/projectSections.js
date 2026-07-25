@@ -32,6 +32,7 @@ export const SECTIONS_BY_CATEGORY = {
     { key: 'sprint-retro', label: 'Sprint Retro', path: 'sprint-retro', side: 'agile' },
     { key: 'list-agile', label: 'List (Backlog)', path: 'list-agile', side: 'agile' },
     { key: 'team-agile', label: 'Team (Backlog)', path: 'team-agile', side: 'agile' },
+    { key: 'risk-log', label: 'Log a Risk', path: 'risk-log' },
   ],
   documents: [],
 }
