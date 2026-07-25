@@ -2747,6 +2747,29 @@
   font-size: 13px;
 }
 
+.key-metrics-progress-velocity-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.key-metrics-progress-col {
+  flex-shrink: 0;
+  width: 190px;
+}
+
+.key-metrics-velocity-col {
+  flex: 1 1 240px;
+  min-width: 240px;
+}
+
+@media (max-width: 560px) {
+  .key-metrics-progress-col {
+    width: 100%;
+  }
+}
+
 .key-metrics-ring-wrap {
   position: relative;
   width: 96px;

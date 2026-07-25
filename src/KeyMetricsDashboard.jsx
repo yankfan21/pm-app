@@ -426,7 +426,13 @@ function SprintVelocityCard({ project }) {
 // the latest Evaluate Project run (see ProjectStatusCard/ProgressRingCard);
 // Critical Issues and Risk Severity are live recomputations from
 // already-loaded tasks/phases/riskLog props, not tied to that snapshot at
-// all; Sprint Velocity is its own live query (see useSprintVelocity).
+// all. Progress and Sprint Velocity share one panel/row - the donut is the
+// current velocity_ratio snapshot, the bar chart is the trend behind it
+// (own live query, see useSprintVelocity) - pairing them makes that
+// relationship visible at a glance. Waterfall has no Sprint Velocity (see
+// visibleSides().agile), so the row falls back to just the donut,
+// left-aligned at its normal size - .key-metrics-progress-col's fixed
+// width means it never stretches to fill the row on its own.
 function KeyMetricsDashboard({ project, tasks, phases, riskLog, expanded }) {
   const issues = useCriticalIssues(project, tasks, phases, riskLog)
   const { evaluation, loading: evalLoading } = useLatestEvaluation(project.id)
@@ -449,8 +455,17 @@ function KeyMetricsDashboard({ project, tasks, phases, riskLog, expanded }) {
           </div>
 
           <div className="key-metrics-panel">
-            <h3 className="key-metrics-panel-heading">Progress</h3>
-            <ProgressRingCard project={project} evaluation={evaluation} loading={evalLoading} />
+            <h3 className="key-metrics-panel-heading">Progress &amp; Velocity</h3>
+            <div className="key-metrics-progress-velocity-row">
+              <div className="key-metrics-progress-col">
+                <ProgressRingCard project={project} evaluation={evaluation} loading={evalLoading} />
+              </div>
+              {showVelocity && (
+                <div className="key-metrics-velocity-col">
+                  <SprintVelocityCard project={project} />
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="key-metrics-panel">
@@ -462,13 +477,6 @@ function KeyMetricsDashboard({ project, tasks, phases, riskLog, expanded }) {
             <h3 className="key-metrics-panel-heading">Risk Severity</h3>
             <RiskSeverityCard riskLog={riskLog} />
           </div>
-
-          {showVelocity && (
-            <div className="key-metrics-panel">
-              <h3 className="key-metrics-panel-heading">Sprint Velocity</h3>
-              <SprintVelocityCard project={project} />
-            </div>
-          )}
         </div>
       )}
     </div>
