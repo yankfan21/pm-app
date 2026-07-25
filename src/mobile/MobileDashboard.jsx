@@ -14,12 +14,15 @@ import { METHODOLOGY_LABELS } from '../methodology'
 // hide-project, etc.) that phone mode doesn't need for this screen.
 // Hidden-project filtering is app-level, not RLS-enforced (hidden lives on
 // project_collaborators, per-user) - same second query ProjectsShell.jsx
-// runs on desktop, duplicated here.
+// runs on desktop, duplicated here. Active/Archived toggle mirrors
+// AllProjects.jsx's tab filter on projects.status - hidden stays excluded
+// in both toggle states, it's a stronger/separate exclusion than Archived.
 function MobileDashboard() {
   const { user } = useAuth()
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [tab, setTab] = useState('active')
 
   useEffect(() => {
     let cancelled = false
@@ -67,20 +70,43 @@ function MobileDashboard() {
     }
   }, [user?.id])
 
+  const display = projects.filter((p) =>
+    tab === 'archived' ? p.status === 'Archived' : p.status !== 'Archived'
+  )
+
   return (
     <div>
       <h1 className="mobile-screen-title">Home</h1>
 
+      <div className="mobile-filter-row">
+        <button
+          type="button"
+          className={`mobile-filter-chip ${tab === 'active' ? 'selected' : ''}`}
+          onClick={() => setTab('active')}
+        >
+          Active
+        </button>
+        <button
+          type="button"
+          className={`mobile-filter-chip ${tab === 'archived' ? 'selected' : ''}`}
+          onClick={() => setTab('archived')}
+        >
+          Archived
+        </button>
+      </div>
+
       {loading && <p className="mobile-screen-stub">Loading projects...</p>}
       {error && <p className="mobile-error">{error}</p>}
 
-      {!loading && !error && projects.length === 0 && (
-        <p className="mobile-screen-stub">No projects yet.</p>
+      {!loading && !error && display.length === 0 && (
+        <p className="mobile-screen-stub">
+          {tab === 'archived' ? 'No archived projects.' : 'No projects yet.'}
+        </p>
       )}
 
-      {!loading && !error && projects.length > 0 && (
+      {!loading && !error && display.length > 0 && (
         <ul className="mobile-project-list">
-          {projects.map((project) => (
+          {display.map((project) => (
             <li key={project.id}>
               <Link to={`/m/projects/${project.id}`} className="mobile-project-list-item">
                 <span className="mobile-project-list-name">{project.name}</span>
