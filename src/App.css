@@ -2740,6 +2740,12 @@
   margin-top: 0;
 }
 
+.key-metrics-severity-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .key-metrics-as-of {
   margin: 0;
   color: var(--text);

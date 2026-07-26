@@ -5,7 +5,6 @@ import {
   CartesianGrid,
   Cell,
   Legend,
-  LabelList,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -263,14 +262,13 @@ function ProgressRingCard({ project, evaluation, loading }) {
 }
 
 const SEVERITY_LEVELS = ['High', 'Medium', 'Low']
-// High maps to the same "critical" hue Critical Issues/health badges use
-// elsewhere in this file (HEALTH_COLOR_CLASS.off_track); Medium/Low mirror
-// the badge-warning/badge-success solid accents already defined in
-// index.css, so this chart doesn't invent a new color vocabulary.
-const SEVERITY_COLOR = {
-  High: 'var(--card-accent-red)',
-  Medium: 'var(--card-accent-amber)',
-  Low: 'var(--badge-success-text)',
+// Reuse doc-status-badge's existing color modifiers instead of inventing a
+// new vocabulary - critical/partial/done are the same red/amber/green used
+// for Project Status and the section header badge above.
+const SEVERITY_BADGE_CLASS = {
+  High: 'critical',
+  Medium: 'partial',
+  Low: 'done',
 }
 
 function useRiskSeverityCounts(riskLog) {
@@ -283,9 +281,6 @@ function useRiskSeverityCounts(riskLog) {
   }, [riskLog])
 }
 
-// Severity is directly labeled on the Y-axis, so no legend box - a legend
-// would just restate the axis (see marks-and-anatomy.md: "a single series
-// needs no legend box").
 function RiskSeverityCard({ riskLog }) {
   const data = useRiskSeverityCounts(riskLog)
   const total = data.reduce((sum, d) => sum + d.count, 0)
@@ -295,25 +290,13 @@ function RiskSeverityCard({ riskLog }) {
   }
 
   return (
-    <ResponsiveContainer width="100%" height={140}>
-      <BarChart data={data} layout="vertical" margin={{ top: 4, right: 28, bottom: 4, left: 4 }}>
-        <CartesianGrid horizontal={false} stroke="var(--border-faint)" />
-        <XAxis type="number" allowDecimals={false} tick={CHART_AXIS_TICK} axisLine={{ stroke: 'var(--border-faint)' }} tickLine={false} />
-        <YAxis type="category" dataKey="level" tick={{ fill: 'var(--text)', fontSize: 12 }} axisLine={false} tickLine={false} width={56} />
-        <Tooltip
-          cursor={{ fill: 'var(--code-bg)' }}
-          contentStyle={CHART_TOOLTIP_STYLE}
-          labelStyle={CHART_TOOLTIP_LABEL_STYLE}
-          itemStyle={CHART_TOOLTIP_ITEM_STYLE}
-        />
-        <Bar dataKey="count" radius={[0, 4, 4, 0]} maxBarSize={20} isAnimationActive={false}>
-          {data.map((d) => (
-            <Cell key={d.level} fill={SEVERITY_COLOR[d.level]} />
-          ))}
-          <LabelList dataKey="count" position="right" style={{ fill: 'var(--text)', fontSize: 12 }} />
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
+    <div className="key-metrics-severity-badges">
+      {data.map((d) => (
+        <span key={d.level} className={`doc-status-badge ${SEVERITY_BADGE_CLASS[d.level]}`}>
+          {d.count} {d.level}
+        </span>
+      ))}
+    </div>
   )
 }
 
