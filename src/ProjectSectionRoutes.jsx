@@ -11,6 +11,7 @@ import TaskListView from './TaskListView'
 import TeamView from './TeamView'
 import RiskLogView from './RiskLogView'
 import IssueLogView from './IssueLogView'
+import { createIssueObject } from './issueLogUtils'
 import { visibleSides, visibleSectionsForCategory } from './projectSections'
 
 // Every route below hands `expanded` a hard `true` - under the old
@@ -327,20 +328,6 @@ export function ExecutionRiskLogRoute() {
   )
 }
 
-// Blank issue row shape matching IssueLogView.jsx's own newRow() (not
-// exported from there) - same manual-sync tradeoff as newRiskLogRow() above.
-function newIssueLogRow() {
-  return {
-    id: crypto.randomUUID(),
-    description: '',
-    priority: 'Medium',
-    owner: '',
-    status: 'Open',
-    resolution: '',
-    resolution_date: '',
-  }
-}
-
 // Execution's "Log an Issue" entry point - mirrors ExecutionRiskLogRoute
 // above exactly, including the direct .insert() bypass for a project's
 // first issue_logs row (Issues Log has no AI Q&A flow at all - see
@@ -358,7 +345,7 @@ export function ExecutionIssueLogRoute() {
 
     const { data, error } = await supabase
       .from('issue_logs')
-      .insert({ project_id: project.id, issues: [newIssueLogRow()] })
+      .insert({ project_id: project.id, issues: [createIssueObject()] })
       .select()
       .single()
 

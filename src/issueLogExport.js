@@ -7,9 +7,34 @@ const COLUMNS = [
   { key: 'priority', label: 'Priority' },
   { key: 'owner', label: 'Owner' },
   { key: 'status', label: 'Status' },
-  { key: 'resolution', label: 'Resolution' },
-  { key: 'resolution_date', label: 'Date' },
+  { key: 'status_notes', label: 'Status Notes' },
+  { key: 'last_update', label: 'Last Update' },
 ]
+
+function formatLastUpdate(iso) {
+  if (!iso) return ''
+  return new Date(iso).toLocaleString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+}
+
+// Status Notes is append-only (newest first, per issueLogUtils.appendStatusNote)
+// - render every entry stacked with its own timestamp rather than flattening
+// to one string, so exported docs keep the full history.
+function formatStatusNotes(notes) {
+  if (!notes || notes.length === 0) return ''
+  return notes.map((n) => `${n.note} (${formatLastUpdate(n.created_at)})`).join('\n')
+}
+
+function cellValue(issue, key) {
+  if (key === 'status_notes') return formatStatusNotes(issue.status_notes)
+  if (key === 'last_update') return formatLastUpdate(issue.last_update)
+  return issue[key]
+}
 
 function sanitizeFilename(name) {
   const cleaned = name.trim().replace(/[^a-zA-Z0-9-_ ]/g, '').replace(/\s+/g, '-')
@@ -45,7 +70,7 @@ export function exportIssueLogPdf(project, issues) {
     startY: 84,
     margin: { left: marginX, right: marginX },
     head: [COLUMNS.map((c) => c.label)],
-    body: issues.map((i) => COLUMNS.map((c) => i[c.key] || String.fromCharCode(8212))),
+    body: issues.map((i) => COLUMNS.map((c) => cellValue(i, c.key) || String.fromCharCode(8212))),
     styles: { fontSize: 9, cellPadding: 6, valign: 'top' },
     headStyles: { fillColor: [38, 33, 92], textColor: 255 },
     columnStyles: {
@@ -80,12 +105,22 @@ export async function exportIssueLogDocx(project, issues) {
   const dataRows = issues.map(
     (i) =>
       new TableRow({
-        children: COLUMNS.map(
-          (c) =>
-            new TableCell({
-              children: [new Paragraph(i[c.key] || '')],
+        children: COLUMNS.map((c) => {
+          // Status Notes is a list of entries, not a scalar - one Paragraph
+          // per note (with its timestamp) instead of Paragraph(text) which
+          // can't render embedded newlines.
+          if (c.key === 'status_notes') {
+            const notes = i.status_notes || []
+            return new TableCell({
+              children:
+                notes.length > 0
+                  ? notes.map((n) => new Paragraph(`${n.note} (${formatLastUpdate(n.created_at)})`))
+                  : [new Paragraph('')],
             })
-        ),
+          }
+
+          return new TableCell({ children: [new Paragraph(cellValue(i, c.key) || '')] })
+        }),
       })
   )
 

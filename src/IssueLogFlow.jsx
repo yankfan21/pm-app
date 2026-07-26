@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createIssueObject } from './issueLogUtils'
 
 // Issues Log has no AI Q&A generation path (unlike RiskLogFlow.jsx) - issues
 // are things that DID/ARE happening, not something worth speculatively
@@ -7,17 +8,6 @@ import { useState } from 'react'
 // a blank row and hands off straight to IssueLogView, matching how
 // ExecutionRiskLogRoute already bypasses RiskLogFlow's AI Q&A for the same
 // "flag it now" reasoning.
-function newIssueRow() {
-  return {
-    id: crypto.randomUUID(),
-    description: '',
-    priority: 'Medium',
-    owner: '',
-    status: 'Open',
-    resolution: '',
-    resolution_date: '',
-  }
-}
 
 function IssueLogFlow({ onGenerated, onClose }) {
   const [starting, setStarting] = useState(false)
@@ -27,7 +17,7 @@ function IssueLogFlow({ onGenerated, onClose }) {
     setStarting(true)
     setError(null)
 
-    const saveError = await onGenerated([newIssueRow()], [])
+    const saveError = await onGenerated([createIssueObject()], [])
     setStarting(false)
     if (saveError) setError(saveError)
   }

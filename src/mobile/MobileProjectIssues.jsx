@@ -1,33 +1,22 @@
 import { useEffect, useState } from 'react'
 import { useOutletContext, useParams } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
+import { createIssueObject } from '../issueLogUtils'
 
 // Quick issue log (/m/projects/:projectId/more/issues). Mirrors
 // MobileProjectRisks.jsx's exact pattern (quick-log form + list view) but
 // against issue_logs instead of risk_logs, matching IssueLogView.jsx's
-// field shape (description/priority/owner/status/resolution/
-// resolution_date) rather than copying Risk's shape verbatim. Status
-// defaults to 'Open' and resolution/resolution_date start blank - those
-// get filled in later via desktop's full Issues Log table
-// (IssueLogView.jsx), same as owner/mitigation on the Risks quick form.
+// field shape (description/priority/owner/status/status_notes/last_update)
+// rather than copying Risk's shape verbatim. Status defaults to 'Open' and
+// status_notes starts empty - those get filled in later via desktop's full
+// Issues Log table (IssueLogView.jsx), same as owner/mitigation on the
+// Risks quick form.
 const PRIORITIES = ['Low', 'Medium', 'High']
 
 const PRIORITY_BADGE_CLASS = {
   Low: 'pending',
   Medium: 'partial',
   High: 'critical',
-}
-
-function newIssueObject(description, priority, owner) {
-  return {
-    id: crypto.randomUUID(),
-    description,
-    priority,
-    owner: owner || '',
-    status: 'Open',
-    resolution: '',
-    resolution_date: '',
-  }
 }
 
 function formatDate(iso) {
@@ -86,7 +75,7 @@ function MobileProjectIssues() {
     setSubmitting(true)
     setError(null)
 
-    const oneIssue = newIssueObject(trimmed, priority, owner.trim())
+    const oneIssue = createIssueObject({ description: trimmed, priority, owner: owner.trim() })
 
     const result = issueLog
       ? await supabase
@@ -182,9 +171,11 @@ function MobileProjectIssues() {
                 {` · ${issue.status}`}
                 {issue.owner ? ` · ${issue.owner}` : ''}
               </p>
-              {issue.resolution && <p className="mobile-doc-section-body">{issue.resolution}</p>}
-              {issue.resolution_date && (
-                <p className="mobile-doc-risk-meta">Resolved: {formatDate(issue.resolution_date)}</p>
+              {issue.status_notes?.[0] && (
+                <p className="mobile-doc-section-body">{issue.status_notes[0].note}</p>
+              )}
+              {issue.last_update && (
+                <p className="mobile-doc-risk-meta">Last update: {formatDate(issue.last_update)}</p>
               )}
             </div>
           ))}

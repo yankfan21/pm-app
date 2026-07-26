@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from './supabaseClient'
 import { exportIssueLogDocx, exportIssueLogPdf } from './issueLogExport'
+import { appendStatusNote, createIssueObject, sortIssues } from './issueLogUtils'
 
 // Own component, not a reuse/shrink of RiskLogView.jsx - Issues Log is a
 // separate entity (issues DID/ARE happening, risks MAY happen), with its
@@ -13,21 +14,20 @@ function autoResize(el) {
   el.style.height = `${el.scrollHeight}px`
 }
 
-const PRIORITIES = ['Low', 'Medium', 'High']
-const STATUSES = ['Open', 'In Progress', 'Pending', 'Closed']
-const STATUS_FILTERS = ['All', ...STATUSES]
-
-function newRow() {
-  return {
-    id: crypto.randomUUID(),
-    description: '',
-    priority: 'Medium',
-    owner: '',
-    status: 'Open',
-    resolution: '',
-    resolution_date: '',
-  }
+function formatDateTime(iso) {
+  if (!iso) return String.fromCharCode(8212)
+  return new Date(iso).toLocaleString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  })
 }
+
+const PRIORITIES = ['Low', 'Medium', 'High']
+const STATUSES = ['Open', 'In Progress', 'Blocked', 'Closed']
+const STATUS_FILTERS = ['All', ...STATUSES]
 
 function withIds(issues) {
   return (issues || []).map((i) => (i.id ? i : { ...i, id: crypto.randomUUID() }))
@@ -41,14 +41,15 @@ function IssueLogView({ project, issueLog, canEdit, onUpdate }) {
   const [rows, setRows] = useState(() => withIds(issueLog.issues))
   const [error, setError] = useState(null)
   const [statusFilter, setStatusFilter] = useState('All')
+  const [noteDrafts, setNoteDrafts] = useState({})
   const textareaRefs = useRef({})
 
-  const displayRows = statusFilter === 'All' ? rows : rows.filter((r) => r.status === statusFilter)
+  const filteredRows = statusFilter === 'All' ? rows : rows.filter((r) => r.status === statusFilter)
+  const displayRows = sortIssues(filteredRows)
 
   useEffect(() => {
     rows.forEach((r) => {
       autoResize(textareaRefs.current[`${r.id}-description`])
-      autoResize(textareaRefs.current[`${r.id}-resolution`])
     })
   }, [rows])
 
@@ -89,7 +90,7 @@ function IssueLogView({ project, issueLog, canEdit, onUpdate }) {
   }
 
   function addRow() {
-    const next = [...rows, newRow()]
+    const next = [...rows, createIssueObject()]
     setRows(next)
     persist(next)
   }
@@ -97,6 +98,16 @@ function IssueLogView({ project, issueLog, canEdit, onUpdate }) {
   function deleteRow(id) {
     const next = rows.filter((r) => r.id !== id)
     setRows(next)
+    persist(next)
+  }
+
+  function handleAddNote(id) {
+    const draft = noteDrafts[id]
+    if (!draft || !draft.trim()) return
+
+    const next = rows.map((r) => (r.id === id ? appendStatusNote(r, draft) : r))
+    setRows(next)
+    setNoteDrafts((prev) => ({ ...prev, [id]: '' }))
     persist(next)
   }
 
@@ -152,8 +163,8 @@ function IssueLogView({ project, issueLog, canEdit, onUpdate }) {
               <th>Priority</th>
               <th>Owner</th>
               <th>Status</th>
-              <th>Resolution</th>
-              <th>Date</th>
+              <th>Status Notes</th>
+              <th>Last Update</th>
               <th aria-hidden="true"></th>
             </tr>
           </thead>
@@ -213,28 +224,37 @@ function IssueLogView({ project, issueLog, canEdit, onUpdate }) {
                   </select>
                 </td>
                 <td>
-                  <textarea
-                    ref={(el) => (textareaRefs.current[`${row.id}-resolution`] = el)}
-                    className="risk-cell-input"
-                    value={row.resolution}
-                    rows={2}
-                    readOnly={!canEdit}
-                    onChange={(e) => {
-                      updateCell(row.id, 'resolution', e.target.value)
-                      autoResize(e.target)
-                    }}
-                    onBlur={handleTextBlur}
-                  />
+                  <div className="issue-status-notes-cell">
+                    {(row.status_notes || []).length > 0 && (
+                      <ul className="issue-status-notes-list">
+                        {row.status_notes.map((n, i) => (
+                          <li key={i}>
+                            <span className="issue-status-note-text">{n.note}</span>
+                            <span className="issue-status-note-date">{formatDateTime(n.created_at)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {canEdit && (
+                      <div className="issue-status-note-add">
+                        <textarea
+                          rows={2}
+                          placeholder="Add a status note..."
+                          value={noteDrafts[row.id] || ''}
+                          onChange={(e) => setNoteDrafts((prev) => ({ ...prev, [row.id]: e.target.value }))}
+                        />
+                        <button
+                          type="button"
+                          className="btn-secondary issue-status-note-add-btn"
+                          onClick={() => handleAddNote(row.id)}
+                        >
+                          Add
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </td>
-                <td>
-                  <input
-                    type="date"
-                    className="risk-cell-input"
-                    value={row.resolution_date || ''}
-                    disabled={!canEdit}
-                    onChange={(e) => handleSelectChange(row.id, 'resolution_date', e.target.value)}
-                  />
-                </td>
+                <td>{formatDateTime(row.last_update)}</td>
                 <td>
                   {canEdit && (
                     <button

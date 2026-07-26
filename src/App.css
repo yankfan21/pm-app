@@ -3677,8 +3677,8 @@
    <input> columns (Priority, Status, Owner) claim more width than they
    need, squeezing Description's <textarea>. table-layout:fixed + explicit
    percentages give Description the majority share instead. 7 columns:
-   Description, Priority, Owner, Status, Resolution, Date, delete. (Risk
-   Log itself moved off a fixed-column table entirely in favor of a
+   Description, Priority, Owner, Status, Status Notes, Last Update, delete.
+   (Risk Log itself moved off a fixed-column table entirely in favor of a
    collapsed-row/expand-on-click list - see .risk-list above.) */
 .issue-log-main-table {
   table-layout: fixed;
@@ -3729,7 +3729,7 @@
   color: var(--badge-info-text, var(--badge-warning-text));
 }
 
-.issue-status-pending {
+.issue-status-blocked {
   background: var(--badge-warning-bg);
   color: var(--badge-warning-text);
 }
@@ -3740,12 +3740,12 @@
 }
 
 /* Opaque <option> pairs, same reasoning as .risk-level-option above -
-   mirrors each state's closed-pill color 1:1 (open/in-progress/pending all
+   mirrors each state's closed-pill color 1:1 (open/in-progress/blocked all
    render amber today via the badge-info fallback above, so they share the
    same option token). */
 .issue-status-option.open,
 .issue-status-option.in-progress,
-.issue-status-option.pending {
+.issue-status-option.blocked {
   background: var(--option-partial-bg);
   color: var(--option-partial-text);
 }
@@ -3753,6 +3753,62 @@
 .issue-status-option.closed {
   background: var(--option-done-bg);
   color: var(--option-done-text);
+}
+
+.issue-status-notes-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.issue-status-notes-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.issue-status-notes-list li {
+  font-size: 13px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.issue-status-notes-list li:last-child {
+  border-bottom: none;
+}
+
+.issue-status-note-text {
+  display: block;
+  color: var(--text-h);
+}
+
+.issue-status-note-date {
+  display: block;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.issue-status-note-add {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.issue-status-note-add textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  font-size: 13px;
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.issue-status-note-add-btn {
+  align-self: flex-start;
 }
 
 .risk-cell-input {
