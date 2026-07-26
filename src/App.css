@@ -3566,9 +3566,15 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  /* Collapsed-row size only - reads lighter/smaller relative to the row's
+     Band/Score/Owner than the inherited 16px body default. The expanded
+     card's title (below) restates the full size since there it's acting
+     as the card's heading, not a compact-row line. */
+  font-size: 14px;
 }
 
 .risk-row-expanded .risk-row-title {
+  font-size: 1rem;
   font-weight: 500;
 }
 
