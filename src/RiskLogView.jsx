@@ -302,7 +302,7 @@ function RiskLogView({
                 <td>
                   <input
                     type="text"
-                    className="risk-cell-input"
+                    className="risk-cell-input risk-owner-input"
                     value={row.owner}
                     readOnly={!canEdit}
                     onChange={(e) => updateCell(row.id, 'owner', e.target.value)}

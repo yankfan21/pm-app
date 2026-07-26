@@ -3696,6 +3696,15 @@ textarea.risk-cell-input {
   min-height: 44px;
 }
 
+/* Owner's column is only ~9-10% of the table's width (see
+   .risk-log-main-table's nth-child(7)) - the shared .risk-cell-input base's
+   120px min-width (sized for Risk/Mitigation's textareas) was forcing this
+   input wider than its own <td>, overflowing into the delete button's
+   column next to it and reading as the "x" overlapping Owner's text. */
+.risk-owner-input {
+  min-width: 0;
+}
+
 .risk-cell-input:hover {
   background: rgba(127, 127, 127, 0.08);
 }
