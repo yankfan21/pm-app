@@ -1650,11 +1650,19 @@
 }
 
 /* Critical risk band (score 15-25) - one step up from .critical/danger.
-   Inverts the same two danger tokens rather than inventing a new color, so
-   it reads as "more" than plain High without a new theme variable. */
+   Solid --badge-danger-text as the background reads as "more" than plain
+   High without a new theme variable. Text used to be --badge-danger-bg
+   (i.e. straight bg/text swap) - but that token is a low-alpha rgba tint
+   meant to sit under text on the page, not act as a solid text color: its
+   alpha composites almost entirely with whatever's now behind it (this
+   badge's own background), landing within a few RGB values of that same
+   background in both themes (near-invisible pale-pink-on-pale-pink in dark
+   mode, dark-red-on-dark-red in light mode). --bg (the page background,
+   already solid and near-opposite luminance from danger-text in both
+   themes) gives real contrast instead. */
 .doc-status-badge.severe {
   background: var(--badge-danger-text);
-  color: var(--badge-danger-bg);
+  color: var(--bg);
 }
 
 .toggle-header-with-badge {
@@ -3975,10 +3983,11 @@ textarea.risk-cell-input {
   color: var(--badge-danger-text);
 }
 
-/* Critical band - same inverted-danger treatment as .doc-status-badge.severe. */
+/* Critical band - same treatment as .doc-status-badge.severe (see its
+   comment for why color is --bg, not a straight --badge-danger-bg swap). */
 .risk-level-critical {
   background: var(--badge-danger-text);
-  color: var(--badge-danger-bg);
+  color: var(--bg);
 }
 
 .risk-level-unscored {
