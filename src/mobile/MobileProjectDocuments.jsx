@@ -63,6 +63,7 @@ const MOBILE_DOC_TYPES = [
     sections: REQUIREMENTS_SECTIONS,
   },
   { key: 'risk_log', label: 'Risk Log', table: 'risk_logs', kind: 'risks' },
+  { key: 'issue_log', label: 'Issues Log', table: 'issue_logs', kind: 'issues' },
   {
     key: 'exec_comms_plan',
     label: 'Exec Comms Plan',
@@ -164,6 +165,26 @@ function RiskLogDetail({ doc }) {
             {r.owner ? ` · Owner: ${r.owner}` : ''}
           </p>
           {r.mitigation && <p className="mobile-doc-section-body">{r.mitigation}</p>}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function IssueLogDetail({ doc }) {
+  const issues = doc.issues || []
+  if (issues.length === 0) return <p className="mobile-screen-stub">No issues logged.</p>
+  return (
+    <div className="mobile-doc-card-list">
+      {issues.map((issue, i) => (
+        <div className="mobile-doc-risk-card" key={i}>
+          <p className="mobile-doc-section-body">{issue.description}</p>
+          <p className="mobile-doc-risk-meta">
+            Priority: {issue.priority} &middot; Status: {issue.status}
+            {issue.owner ? ` · Owner: ${issue.owner}` : ''}
+          </p>
+          {issue.resolution && <p className="mobile-doc-section-body">{issue.resolution}</p>}
+          {issue.resolution_date && <p className="mobile-doc-risk-meta">Resolved: {formatDate(issue.resolution_date)}</p>}
         </div>
       ))}
     </div>
@@ -289,6 +310,8 @@ function renderDetail(docType, doc) {
   switch (docType.kind) {
     case 'risks':
       return <RiskLogDetail doc={doc} />
+    case 'issues':
+      return <IssueLogDetail doc={doc} />
     case 'budget':
       return <BudgetDetail doc={doc} />
     case 'status':

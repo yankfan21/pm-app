@@ -162,7 +162,7 @@ function ProjectStatusCard({ evaluation, loading }) {
 
 function CriticalIssuesCard({ issues }) {
   if (issues.length === 0) {
-    return <p className="charter-status">No critical issues right now.</p>
+    return <p className="charter-status">No hotspots right now.</p>
   }
 
   return (
@@ -436,7 +436,7 @@ function KeyMetricsDashboard({ project, tasks, phases, riskLog, expanded }) {
       <h2 className="tasks-heading section-heading-static">
         <span className="toggle-header-main">Key Metrics Dashboard</span>
         <span className={`doc-status-badge ${issues.length > 0 ? 'critical' : 'done'}`}>
-          {issues.length > 0 ? `${issues.length} Critical Issue${issues.length === 1 ? '' : 's'}` : 'All Clear'}
+          {issues.length > 0 ? `${issues.length} Hotspot${issues.length === 1 ? '' : 's'}` : 'All Clear'}
         </span>
       </h2>
 
@@ -462,7 +462,7 @@ function KeyMetricsDashboard({ project, tasks, phases, riskLog, expanded }) {
           </div>
 
           <div className="key-metrics-panel">
-            <h3 className="key-metrics-panel-heading">Critical Issues ({issues.length})</h3>
+            <h3 className="key-metrics-panel-heading">Project Hotspots ({issues.length})</h3>
             <CriticalIssuesCard issues={issues} />
           </div>
 

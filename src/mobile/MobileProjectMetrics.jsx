@@ -172,13 +172,13 @@ function MobileProjectMetrics() {
 
       <div className="mobile-metrics-card">
         <h2 className="mobile-section-title">
-          Critical Issues
+          Project Hotspots
           <span className={`mobile-issues-count ${issues.length > 0 ? 'has-issues' : ''}`}>
             {issues.length > 0 ? issues.length : 'All Clear'}
           </span>
         </h2>
         {issues.length === 0 ? (
-          <p className="mobile-screen-stub">No critical issues right now.</p>
+          <p className="mobile-screen-stub">No hotspots right now.</p>
         ) : (
           <ul className="mobile-issue-list">
             {issues.map((issue) => (
