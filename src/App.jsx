@@ -19,6 +19,7 @@ import {
   ExecutionListAgileRoute,
   ExecutionTeamAgileRoute,
   ExecutionRiskLogRoute,
+  ExecutionIssueLogRoute,
 } from './ProjectSectionRoutes'
 import Settings from './Settings'
 import NotFound from './NotFound'
@@ -105,6 +106,7 @@ function App() {
               <Route path="list-agile" element={<ExecutionListAgileRoute />} />
               <Route path="team-agile" element={<ExecutionTeamAgileRoute />} />
               <Route path="risk-log" element={<ExecutionRiskLogRoute />} />
+              <Route path="issue-log" element={<ExecutionIssueLogRoute />} />
             </Route>
 
             <Route path="documents" element={<DocumentsRoute />} />

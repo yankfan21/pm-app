@@ -10,6 +10,7 @@ import SprintRetroView from './SprintRetroView'
 import TaskListView from './TaskListView'
 import TeamView from './TeamView'
 import RiskLogView from './RiskLogView'
+import IssueLogView from './IssueLogView'
 import { visibleSides, visibleSectionsForCategory } from './projectSections'
 
 // Every route below hands `expanded` a hard `true` - under the old
@@ -321,6 +322,80 @@ export function ExecutionRiskLogRoute() {
         riskLog={riskLog}
         canEdit={canEdit}
         onUpdate={(updatedRow) => setDocs((prev) => ({ ...prev, risk_log: updatedRow }))}
+      />
+    </div>
+  )
+}
+
+// Blank issue row shape matching IssueLogView.jsx's own newRow() (not
+// exported from there) - same manual-sync tradeoff as newRiskLogRow() above.
+function newIssueLogRow() {
+  return {
+    id: crypto.randomUUID(),
+    description: '',
+    priority: 'Medium',
+    owner: '',
+    status: 'Open',
+    resolution: '',
+    resolution_date: '',
+  }
+}
+
+// Execution's "Log an Issue" entry point - mirrors ExecutionRiskLogRoute
+// above exactly, including the direct .insert() bypass for a project's
+// first issue_logs row (Issues Log has no AI Q&A flow at all - see
+// IssueLogFlow.jsx - so this is the same "flag it now" shortcut applied to
+// a doc type that's manual-only everywhere, not just from this entry point).
+export function ExecutionIssueLogRoute() {
+  const { project, docs, setDocs, canEdit } = useOutletContext()
+  const [creating, setCreating] = useState(false)
+  const [error, setError] = useState(null)
+  const issueLog = docs.issue_log
+
+  async function handleStart() {
+    setCreating(true)
+    setError(null)
+
+    const { data, error } = await supabase
+      .from('issue_logs')
+      .insert({ project_id: project.id, issues: [newIssueLogRow()] })
+      .select()
+      .single()
+
+    setCreating(false)
+
+    if (error) {
+      setError(error.message)
+      return
+    }
+
+    setDocs((prev) => ({ ...prev, issue_log: data }))
+  }
+
+  if (!issueLog) {
+    return (
+      <div className="detail-zone">
+        <h2 className="tasks-heading">Log an Issue</h2>
+        {error && <p className="error">{error}</p>}
+        {canEdit ? (
+          <button type="button" className="btn-primary" onClick={handleStart} disabled={creating}>
+            {creating ? 'Starting...' : '+ Log an Issue'}
+          </button>
+        ) : (
+          <p className="charter-status">No issues logged yet.</p>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div className="detail-zone">
+      <h2 className="tasks-heading">Log an Issue</h2>
+      <IssueLogView
+        project={project}
+        issueLog={issueLog}
+        canEdit={canEdit}
+        onUpdate={(updatedRow) => setDocs((prev) => ({ ...prev, issue_log: updatedRow }))}
       />
     </div>
   )

@@ -3496,6 +3496,68 @@
   width: 5%;
 }
 
+/* Issues Log's own table - same table-layout: fixed reasoning as
+   .risk-log-main-table above, sized for its 7 columns (one more than Risk
+   Log's 6: Description, Priority, Owner, Status, Resolution, Date, delete). */
+.issue-log-main-table {
+  table-layout: fixed;
+}
+
+.issue-log-main-table th:nth-child(1),
+.issue-log-main-table td:nth-child(1) {
+  width: 26%;
+}
+
+.issue-log-main-table th:nth-child(2),
+.issue-log-main-table td:nth-child(2) {
+  width: 9%;
+}
+
+.issue-log-main-table th:nth-child(3),
+.issue-log-main-table td:nth-child(3) {
+  width: 12%;
+}
+
+.issue-log-main-table th:nth-child(4),
+.issue-log-main-table td:nth-child(4) {
+  width: 12%;
+}
+
+.issue-log-main-table th:nth-child(5),
+.issue-log-main-table td:nth-child(5) {
+  width: 24%;
+}
+
+.issue-log-main-table th:nth-child(6),
+.issue-log-main-table td:nth-child(6) {
+  width: 12%;
+}
+
+.issue-log-main-table th:nth-child(7),
+.issue-log-main-table td:nth-child(7) {
+  width: 5%;
+}
+
+.issue-status-open {
+  background: var(--badge-warning-bg);
+  color: var(--badge-warning-text);
+}
+
+.issue-status-in-progress {
+  background: var(--badge-info-bg, var(--badge-warning-bg));
+  color: var(--badge-info-text, var(--badge-warning-text));
+}
+
+.issue-status-pending {
+  background: var(--badge-warning-bg);
+  color: var(--badge-warning-text);
+}
+
+.issue-status-closed {
+  background: var(--badge-success-bg);
+  color: var(--badge-success-text);
+}
+
 .risk-cell-input {
   display: block;
   width: 100%;

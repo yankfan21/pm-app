@@ -33,6 +33,7 @@ export const SECTIONS_BY_CATEGORY = {
     { key: 'list-agile', label: 'List (Backlog)', path: 'list-agile', side: 'agile' },
     { key: 'team-agile', label: 'Team (Backlog)', path: 'team-agile', side: 'agile' },
     { key: 'risk-log', label: 'Log a Risk', path: 'risk-log' },
+    { key: 'issue-log', label: 'Log an Issue', path: 'issue-log' },
   ],
   documents: [],
 }

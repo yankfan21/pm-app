@@ -4,6 +4,8 @@ import RequirementsFlow from './RequirementsFlow'
 import RequirementsView from './RequirementsView'
 import RiskLogFlow from './RiskLogFlow'
 import RiskLogView from './RiskLogView'
+import IssueLogFlow from './IssueLogFlow'
+import IssueLogView from './IssueLogView'
 import CommsFlow from './CommsFlow'
 import CommsView from './CommsView'
 import BudgetFlow from './BudgetFlow'
@@ -79,6 +81,16 @@ export const DOCUMENT_TYPES = [
     ViewComponent: RiskLogView,
     context: (docs) => ({ charter: docs.charter, brief: docs.requirements_brief }),
     buildInsert: (result) => ({ risks: result }),
+  },
+  {
+    key: 'issue_log',
+    label: 'Issues Log',
+    table: 'issue_logs',
+    docProp: 'issueLog',
+    FlowComponent: IssueLogFlow,
+    ViewComponent: IssueLogView,
+    context: () => ({}),
+    buildInsert: (result) => ({ issues: result }),
   },
   {
     key: 'exec_comms_plan',
