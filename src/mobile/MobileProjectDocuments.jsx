@@ -386,6 +386,44 @@ function LockedDocRow({ docType }) {
   )
 }
 
+// TEMP DEBUG - remove this whole banner block once the Issues Log mobile
+// bug is diagnosed. Renders a big, unmissable on-screen status so this can
+// be read directly off the phone screen without devtools access.
+function IssueLogDebugBanner({ debug }) {
+  const base = {
+    padding: '14px',
+    margin: '10px 0',
+    fontWeight: 'bold',
+    fontSize: '16px',
+    border: '3px solid black',
+    borderRadius: '8px',
+    wordBreak: 'break-word',
+  }
+
+  if (!debug || debug.status === 'loading') {
+    return <div style={{ ...base, background: '#e5e7eb', color: '#111' }}>ISSUE_LOG DEBUG: loading...</div>
+  }
+  if (debug.status === 'error') {
+    return (
+      <div style={{ ...base, background: '#dc2626', color: '#fff' }}>
+        ISSUE_LOG FETCH ERROR: {debug.message}
+      </div>
+    )
+  }
+  if (debug.doc == null) {
+    return <div style={{ ...base, background: '#f97316', color: '#111' }}>ISSUE_LOG: doc is null/undefined</div>
+  }
+  const issues = debug.doc.issues || []
+  if (issues.length === 0) {
+    return <div style={{ ...base, background: '#2563eb', color: '#fff' }}>ISSUE_LOG: doc exists, 0 issues</div>
+  }
+  return (
+    <div style={{ ...base, background: '#16a34a', color: '#fff' }}>
+      ISSUE_LOG: {issues.length} issue{issues.length === 1 ? '' : 's'} found
+    </div>
+  )
+}
+
 function MobileProjectDocuments() {
   const { project } = useOutletContext()
   const { projectId } = useParams()
@@ -395,6 +433,42 @@ function MobileProjectDocuments() {
   const [error, setError] = useState(null)
   const [expandedKey, setExpandedKey] = useState(null)
   const [expandedGroup, setExpandedGroup] = useState(null)
+
+  // TEMP DEBUG - independent of the main Promise.all batch below, so this
+  // always reports the true state of the issue_logs fetch/table on its own
+  // even if something else in the batch (or the row-iteration loop further
+  // down) is what's actually broken. Remove alongside IssueLogDebugBanner.
+  const [issueLogDebug, setIssueLogDebug] = useState({ status: 'loading' })
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function debugFetchIssueLog() {
+      try {
+        const { data, error: fetchError } = await supabase
+          .from('issue_logs')
+          .select('*')
+          .eq('project_id', projectId)
+          .maybeSingle()
+
+        if (cancelled) return
+
+        if (fetchError) {
+          setIssueLogDebug({ status: 'error', message: fetchError.message })
+          return
+        }
+        setIssueLogDebug({ status: 'ok', doc: data })
+      } catch (err) {
+        if (cancelled) return
+        setIssueLogDebug({ status: 'error', message: err?.message || String(err) })
+      }
+    }
+
+    debugFetchIssueLog()
+    return () => {
+      cancelled = true
+    }
+  }, [projectId])
 
   useEffect(() => {
     let cancelled = false
@@ -437,6 +511,7 @@ function MobileProjectDocuments() {
     return (
       <div>
         <h1 className="mobile-screen-title">Documents</h1>
+        <IssueLogDebugBanner debug={issueLogDebug} />
         <p className="mobile-screen-stub">Loading documents...</p>
       </div>
     )
@@ -446,6 +521,7 @@ function MobileProjectDocuments() {
     return (
       <div>
         <h1 className="mobile-screen-title">Documents</h1>
+        <IssueLogDebugBanner debug={issueLogDebug} />
         <p className="mobile-error">{error}</p>
       </div>
     )
@@ -462,6 +538,7 @@ function MobileProjectDocuments() {
   return (
     <div>
       <h1 className="mobile-screen-title">Documents</h1>
+      <IssueLogDebugBanner debug={issueLogDebug} />
 
       <div className="mobile-doc-list">
         {groupDocTypes(MOBILE_DOC_TYPES).map((row) => {
@@ -471,6 +548,31 @@ function MobileProjectDocuments() {
             const locked = !!docType.available && !docType.available(project) && !isDocDone(docType, doc)
 
             if (locked) return <LockedDocRow key={docType.key} docType={docType} />
+
+            // TEMP DEBUG - if this branch is reached for issue_log, the
+            // row-iteration path itself is fine; the banner above already
+            // shows the fetch/data state independently. If the normal
+            // "Issues Log" row is missing from the screen entirely (not
+            // even this debug variant), the row is never being iterated at
+            // all - that's the one failure mode this can't directly show.
+            if (docType.key === 'issue_log') {
+              return (
+                <div
+                  key={docType.key}
+                  style={{
+                    padding: '12px',
+                    margin: '8px 0',
+                    fontWeight: 'bold',
+                    border: '3px dashed black',
+                    borderRadius: '8px',
+                    background: '#fef08a',
+                  }}
+                >
+                  ISSUE_LOG ROW REACHED (in row-iteration loop)
+                  <IssueLogDebugBanner debug={issueLogDebug} />
+                </div>
+              )
+            }
 
             return (
               <DocRow
