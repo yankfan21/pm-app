@@ -3473,7 +3473,7 @@
 
 .risk-log-table {
   width: 100%;
-  min-width: 820px;
+  min-width: 880px;
   border-collapse: collapse;
   font-size: 14px;
 }
@@ -3511,43 +3511,59 @@
    List/Team/Budget/Sprint Retro's candidate table, each with different
    columns - a column-width rule here would misapply to all of them).
    Same root cause as the earlier Backlog title bug: plain table-layout:auto
-   let Likelihood/Impact/Owner's short <select>/<input> content claim more
+   let Likelihood/Severity/Owner's short <select>/<input> content claim more
    width than they need, leaving Risk/Mitigation's <textarea> columns
    squeezed - narrow enough that even with the auto-resize fix in
    RiskLogView.jsx, long entries had nowhere to wrap into. table-layout:
-   fixed + explicit percentages give Risk/Mitigation the majority share. */
+   fixed + explicit percentages give Risk/Mitigation the majority share.
+   8 columns since the 5x5 matrix rollout added Score/Band between
+   Severity and Mitigation - these nth-child rules were left sized for the
+   old 6-column (Risk/Likelihood/Impact/Mitigation/Owner/delete) layout,
+   which silently handed Score the old Mitigation column's 30% and Band the
+   old Owner column's 15%, while real Mitigation fell into the old delete
+   button's unstyled 5% - that was the overflow/cutoff bug. */
 .risk-log-main-table {
   table-layout: fixed;
 }
 
 .risk-log-main-table th:nth-child(1),
 .risk-log-main-table td:nth-child(1) {
-  width: 30%;
+  width: 24%;
 }
 
 .risk-log-main-table th:nth-child(2),
 .risk-log-main-table td:nth-child(2) {
-  width: 10%;
+  width: 11%;
 }
 
 .risk-log-main-table th:nth-child(3),
 .risk-log-main-table td:nth-child(3) {
-  width: 10%;
+  width: 11%;
 }
 
 .risk-log-main-table th:nth-child(4),
 .risk-log-main-table td:nth-child(4) {
-  width: 30%;
+  width: 6%;
 }
 
 .risk-log-main-table th:nth-child(5),
 .risk-log-main-table td:nth-child(5) {
-  width: 15%;
+  width: 10%;
 }
 
 .risk-log-main-table th:nth-child(6),
 .risk-log-main-table td:nth-child(6) {
-  width: 5%;
+  width: 24%;
+}
+
+.risk-log-main-table th:nth-child(7),
+.risk-log-main-table td:nth-child(7) {
+  width: 10%;
+}
+
+.risk-log-main-table th:nth-child(8),
+.risk-log-main-table td:nth-child(8) {
+  width: 4%;
 }
 
 /* Issues Log's own table - same table-layout: fixed reasoning as
@@ -3692,7 +3708,9 @@ textarea.risk-cell-input {
 /* Plain 1-5 Likelihood/Severity dropdowns - no longer color-coded per value
    (that's the computed Band badge's job below), just a normal input look. */
 .risk-level-select {
-  padding: 5px 8px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 5px 6px;
   border: 1px solid var(--border);
   border-radius: 6px;
   font: inherit;
@@ -3700,6 +3718,16 @@ textarea.risk-cell-input {
   background: var(--bg);
   color: var(--text-h);
   cursor: pointer;
+  text-overflow: ellipsis;
+}
+
+/* Computed Score number - deliberately bare text, no border/cursor/select
+   affordance, so it can never be mistaken for an editable control even at
+   this column's narrow fixed width. */
+.risk-score-cell {
+  text-align: center;
+  color: var(--text-h);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Computed Band badge (Score column's neighbor) - Low/Medium/High/Critical

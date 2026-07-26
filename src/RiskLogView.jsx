@@ -279,7 +279,7 @@ function RiskLogView({
                     ))}
                   </select>
                 </td>
-                <td>{score ?? '—'}</td>
+                <td className="risk-score-cell">{score ?? '—'}</td>
                 <td>
                   <span className={`risk-level-badge risk-level-${(band || 'unscored').toLowerCase()}`}>
                     {band || 'Needs scoring'}
