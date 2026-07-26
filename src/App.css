@@ -542,6 +542,27 @@
   color: var(--badge-danger-text);
 }
 
+/* Opaque <option> pairs, same reasoning as .risk-level-option above. */
+.task-status-option.pending {
+  background: var(--option-pending-bg);
+  color: var(--option-pending-text);
+}
+
+.task-status-option.partial {
+  background: var(--option-partial-bg);
+  color: var(--option-partial-text);
+}
+
+.task-status-option.done {
+  background: var(--option-done-bg);
+  color: var(--option-done-text);
+}
+
+.task-status-option.critical {
+  background: var(--option-danger-bg);
+  color: var(--option-danger-text);
+}
+
 .task-list {
   list-style: none;
   margin: 0;
@@ -796,9 +817,13 @@
   color: var(--text);
 }
 
+/* Was hardcoded #dbeafe/#1d4ed8 - not theme-aware at all, so it read as a
+   light-blue pill even in dark mode. --accent-bg/--accent are already the
+   theme's blue "info" pair (light and dark variants defined), so this
+   reuses them instead of inventing a dedicated badge token. */
 .backlog-status-select.ready {
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: var(--accent-bg);
+  color: var(--accent);
 }
 
 .backlog-status-select.partial {
@@ -809,6 +834,27 @@
 .backlog-status-select.done {
   background: var(--badge-success-bg);
   color: var(--badge-success-text);
+}
+
+/* Opaque <option> pairs, same reasoning as .risk-level-option above. */
+.backlog-status-option.pending {
+  background: var(--option-pending-bg);
+  color: var(--option-pending-text);
+}
+
+.backlog-status-option.ready {
+  background: var(--option-info-bg);
+  color: var(--option-info-text);
+}
+
+.backlog-status-option.partial {
+  background: var(--option-partial-bg);
+  color: var(--option-partial-text);
+}
+
+.backlog-status-option.done {
+  background: var(--option-done-bg);
+  color: var(--option-done-text);
 }
 
 .backlog-assign-select {
@@ -3558,6 +3604,22 @@
   color: var(--badge-success-text);
 }
 
+/* Opaque <option> pairs, same reasoning as .risk-level-option above -
+   mirrors each state's closed-pill color 1:1 (open/in-progress/pending all
+   render amber today via the badge-info fallback above, so they share the
+   same option token). */
+.issue-status-option.open,
+.issue-status-option.in-progress,
+.issue-status-option.pending {
+  background: var(--option-partial-bg);
+  color: var(--option-partial-text);
+}
+
+.issue-status-option.closed {
+  background: var(--option-done-bg);
+  color: var(--option-done-text);
+}
+
 .risk-cell-input {
   display: block;
   width: 100%;
@@ -3642,6 +3704,25 @@ textarea.risk-cell-input {
 .risk-level-high {
   background: var(--badge-danger-bg);
   color: var(--badge-danger-text);
+}
+
+/* Opaque pairs for native <option> rows, same reasoning as
+   .board-status-option - the translucent --badge-*-bg tints above read
+   washed-out (light/cream) when the browser paints them as an opaque
+   native popup row instead of over the card surface they were tuned for. */
+.risk-level-option.low {
+  background: var(--option-done-bg);
+  color: var(--option-done-text);
+}
+
+.risk-level-option.medium {
+  background: var(--option-partial-bg);
+  color: var(--option-partial-text);
+}
+
+.risk-level-option.high {
+  background: var(--option-danger-bg);
+  color: var(--option-danger-text);
 }
 
 .risk-delete-btn {

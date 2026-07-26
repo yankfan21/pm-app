@@ -315,7 +315,7 @@ function PlanningTasksRoute() {
               onChange={(e) => updateTaskField(task, 'status', e.target.value)}
             >
               {TASK_STATUS_OPTIONS.map((s) => (
-                <option key={s.key} value={s.key}>
+                <option key={s.key} value={s.key} className={`task-status-option ${s.colorClass}`}>
                   {s.label}
                 </option>
               ))}

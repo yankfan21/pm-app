@@ -436,7 +436,7 @@ function BacklogView({
                               onChange={(e) => updateItem(item, { backlog_status: e.target.value })}
                             >
                               {STATUS_OPTIONS.map((s) => (
-                                <option key={s.key} value={s.key}>
+                                <option key={s.key} value={s.key} className={`backlog-status-option ${s.colorClass}`}>
                                   {s.label}
                                 </option>
                               ))}

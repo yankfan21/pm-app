@@ -245,7 +245,7 @@ function RiskLogView({
                     onChange={(e) => handleSelectChange(row.id, 'likelihood', e.target.value)}
                   >
                     {LEVELS.map((level) => (
-                      <option key={level} value={level}>
+                      <option key={level} value={level} className={`risk-level-option ${level.toLowerCase()}`}>
                         {level}
                       </option>
                     ))}
@@ -259,7 +259,7 @@ function RiskLogView({
                     onChange={(e) => handleSelectChange(row.id, 'impact', e.target.value)}
                   >
                     {LEVELS.map((level) => (
-                      <option key={level} value={level}>
+                      <option key={level} value={level} className={`risk-level-option ${level.toLowerCase()}`}>
                         {level}
                       </option>
                     ))}

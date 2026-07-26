@@ -108,6 +108,10 @@
   --option-partial-text: #b45309;
   --option-done-bg: #d1fae5;
   --option-done-text: #047857;
+  --option-danger-bg: #fee2e2;
+  --option-danger-text: #b91c1c;
+  --option-info-bg: #dbeafe;
+  --option-info-text: #1d4ed8;
 
   --btn-primary-bg: #2563eb;
   --btn-primary-hover-bg: #1d4ed8;
@@ -217,6 +221,10 @@
   --option-partial-text: #fde68a;
   --option-done-bg: #065f46;
   --option-done-text: #a7f3d0;
+  --option-danger-bg: #7f1d1d;
+  --option-danger-text: #fecaca;
+  --option-info-bg: #1e3a8b;
+  --option-info-text: #93c5fd;
 
   --btn-primary-bg: rgba(59, 130, 246, 0.25);
   --btn-primary-hover-bg: rgba(59, 130, 246, 0.35);

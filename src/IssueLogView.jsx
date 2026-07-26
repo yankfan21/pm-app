@@ -182,7 +182,7 @@ function IssueLogView({ project, issueLog, canEdit, onUpdate }) {
                     onChange={(e) => handleSelectChange(row.id, 'priority', e.target.value)}
                   >
                     {PRIORITIES.map((p) => (
-                      <option key={p} value={p}>
+                      <option key={p} value={p} className={`risk-level-option ${p.toLowerCase()}`}>
                         {p}
                       </option>
                     ))}
@@ -206,7 +206,7 @@ function IssueLogView({ project, issueLog, canEdit, onUpdate }) {
                     onChange={(e) => handleSelectChange(row.id, 'status', e.target.value)}
                   >
                     {STATUSES.map((s) => (
-                      <option key={s} value={s}>
+                      <option key={s} value={s} className={`issue-status-option ${statusSlug(s)}`}>
                         {s}
                       </option>
                     ))}
