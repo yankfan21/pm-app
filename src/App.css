@@ -3532,6 +3532,17 @@
   table-layout: fixed;
 }
 
+/* table-layout:fixed only governs each column's layout width - a <td> is
+   still overflow:visible by default, so anything that ends up even
+   slightly wider than its cell (rounding, a long unbroken value, a future
+   regression) paints over the next column instead of being contained.
+   Belt-and-suspenders on top of the column widths/risk-owner-input fix
+   below, so the delete button can never again be overlapped by Owner
+   (or any other neighboring column) regardless of cause. */
+.risk-log-main-table td {
+  overflow: hidden;
+}
+
 .risk-log-main-table th:nth-child(1),
 .risk-log-main-table td:nth-child(1) {
   width: 26%;
