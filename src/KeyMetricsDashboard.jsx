@@ -482,7 +482,7 @@ function KeyMetricsDashboard({ project, tasks, phases, riskLog, issueLog, expand
   return (
     <div className="detail-zone key-metrics-dashboard">
       <h2 className="tasks-heading section-heading-static">
-        <span className="toggle-header-main">Key Metrics Dashboard</span>
+        <span className="toggle-header-main">Overview</span>
         <span className={`doc-status-badge ${issues.length > 0 ? 'critical' : 'done'}`}>
           {issues.length > 0 ? `${issues.length} Hotspot${issues.length === 1 ? '' : 's'}` : 'All Clear'}
         </span>
@@ -515,7 +515,7 @@ function KeyMetricsDashboard({ project, tasks, phases, riskLog, issueLog, expand
           </div>
 
           <div className="key-metrics-panel">
-            <h3 className="key-metrics-panel-heading">Risk Severity</h3>
+            <h3 className="key-metrics-panel-heading">Risks</h3>
             <RiskSeverityCard project={project} riskLog={riskLog} />
           </div>
 
