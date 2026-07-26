@@ -15,19 +15,21 @@ function ProjectAdmin({ project, isOwner, archiving, onToggleArchive }) {
       <ul className="project-nav-admin-list">
         {isOwner && (
           <li className="project-nav-admin-item">
-            <button
-              type="button"
-              className="collapsible-toggle"
-              onClick={() => setAccessExpanded((prev) => !prev)}
-              aria-expanded={accessExpanded}
-            >
-              <span className={`chevron ${accessExpanded ? '' : 'collapsed'}`} aria-hidden="true">
-                ▾
-              </span>
-              Manage Access
-            </button>
+            <div className="project-nav-manage-access">
+              <button
+                type="button"
+                className="collapsible-toggle"
+                onClick={() => setAccessExpanded((prev) => !prev)}
+                aria-expanded={accessExpanded}
+              >
+                <span className={`chevron ${accessExpanded ? '' : 'collapsed'}`} aria-hidden="true">
+                  ▾
+                </span>
+                Manage Access
+              </button>
 
-            {accessExpanded && <ManageAccess project={project} />}
+              {accessExpanded && <ManageAccess project={project} />}
+            </div>
           </li>
         )}
 

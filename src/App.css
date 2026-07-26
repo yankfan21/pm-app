@@ -4502,6 +4502,38 @@ textarea.risk-cell-input {
   opacity: 1;
 }
 
+/* One continuous box around both the "Manage Access" toggle row and its
+   expanded content - same border/background/radius as .project-nav-archive
+   (via .btn-secondary), just a <div> instead of a <button> since it holds
+   more than one interactive element once expanded. Collapsed padding
+   matches .project-nav-archive's 8px/12px exactly so the two boxes read as
+   the same height; the box just grows to fit the invite form when open
+   instead of the header having its own box separate from the content. */
+.project-nav-manage-access {
+  border: 1px solid var(--btn-secondary-border);
+  border-radius: 8px;
+  background: var(--btn-secondary-bg);
+  padding: 8px 12px;
+}
+
+.project-nav-manage-access .collapsible-toggle {
+  margin: 0;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--btn-secondary-text);
+  opacity: 0.75;
+}
+
+.project-nav-manage-access .collapsible-toggle:hover {
+  background: none;
+  opacity: 1;
+}
+
+.project-nav-manage-access .charter {
+  margin-top: 12px;
+}
+
 /* ManageAccess's collaborator rows/invite form assume a full-width page
    column (see .collaborator-invite-form's 220px flex-basis email input) -
    narrow those down so they fit the 220px admin box instead of overflowing
