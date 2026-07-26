@@ -3473,7 +3473,13 @@
 
 .risk-log-table {
   width: 100%;
-  min-width: 880px;
+  /* 880px was still wider than .project-nav-content's available width at a
+     common 1280px viewport (~814px, after the 346px sidebar + 1400px
+     .app-body cap) - that's what was forcing the scrollbar at normal
+     desktop widths. 760px clears that with room to spare; overflow-x:auto
+     on .risk-table-wrap (below) is still the intentional fallback for
+     anything narrower than that. */
+  min-width: 760px;
   border-collapse: collapse;
   font-size: 14px;
 }
@@ -3528,32 +3534,32 @@
 
 .risk-log-main-table th:nth-child(1),
 .risk-log-main-table td:nth-child(1) {
-  width: 24%;
+  width: 26%;
 }
 
 .risk-log-main-table th:nth-child(2),
 .risk-log-main-table td:nth-child(2) {
-  width: 11%;
+  width: 10%;
 }
 
 .risk-log-main-table th:nth-child(3),
 .risk-log-main-table td:nth-child(3) {
-  width: 11%;
+  width: 10%;
 }
 
 .risk-log-main-table th:nth-child(4),
 .risk-log-main-table td:nth-child(4) {
-  width: 6%;
+  width: 5%;
 }
 
 .risk-log-main-table th:nth-child(5),
 .risk-log-main-table td:nth-child(5) {
-  width: 10%;
+  width: 9%;
 }
 
 .risk-log-main-table th:nth-child(6),
 .risk-log-main-table td:nth-child(6) {
-  width: 24%;
+  width: 26%;
 }
 
 .risk-log-main-table th:nth-child(7),
@@ -3564,6 +3570,20 @@
 .risk-log-main-table th:nth-child(8),
 .risk-log-main-table td:nth-child(8) {
   width: 4%;
+}
+
+/* Narrow fixed-vocabulary columns (Likelihood/Severity selects, Score
+   number, Band badge, delete button) don't need the table's default
+   8px horizontal cell padding - reclaiming a few px here (rather than
+   just shrinking min-width further) is what let Risk/Mitigation keep
+   26% instead of dropping back toward the old 24%. */
+.risk-log-main-table td:nth-child(2),
+.risk-log-main-table td:nth-child(3),
+.risk-log-main-table td:nth-child(4),
+.risk-log-main-table td:nth-child(5),
+.risk-log-main-table td:nth-child(8) {
+  padding-left: 4px;
+  padding-right: 4px;
 }
 
 /* Issues Log's own table - same table-layout: fixed reasoning as
