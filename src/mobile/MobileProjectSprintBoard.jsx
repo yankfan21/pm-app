@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, Navigate, useOutletContext, useParams } from 'react-router-dom'
+import { Navigate, useOutletContext, useParams } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { visibleSides } from '../projectSections'
 import { useSprintSelection, formatSprintLabel } from '../useSprintSelection'
@@ -104,10 +104,6 @@ function MobileProjectSprintBoard() {
   return (
     <div>
       <h1 className="mobile-screen-title">Sprint Board</h1>
-
-      <Link to={`/m/projects/${projectId}/more/risks`} className="mobile-more-list-item">
-        Log a Risk
-      </Link>
 
       {loading && <p className="mobile-screen-stub">Loading...</p>}
       {error && <p className="mobile-error">{error}</p>}

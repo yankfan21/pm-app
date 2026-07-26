@@ -99,10 +99,6 @@ function MobileProjectTasks() {
     <div>
       <h1 className="mobile-screen-title">Tasks</h1>
 
-      <Link to={`/m/projects/${projectId}/more/risks`} className="mobile-more-list-item">
-        Log a Risk
-      </Link>
-
       <div className="mobile-filter-row">
         {STATUS_FILTERS.map((s) => (
           <button

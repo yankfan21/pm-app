@@ -41,6 +41,7 @@ import MobileProjectMetrics from './mobile/MobileProjectMetrics'
 import MobileProjectMore from './mobile/MobileProjectMore'
 import MobileProjectDocuments from './mobile/MobileProjectDocuments'
 import MobileProjectRisks from './mobile/MobileProjectRisks'
+import MobileProjectIssues from './mobile/MobileProjectIssues'
 import MobileProjectStatusUpdate from './mobile/MobileProjectStatusUpdate'
 import MobileProjectExecComms from './mobile/MobileProjectExecComms'
 import MobileProjectNewsletter from './mobile/MobileProjectNewsletter'
@@ -139,6 +140,7 @@ function App() {
             <Route path="more" element={<MobileProjectMore />} />
             <Route path="more/documents" element={<MobileProjectDocuments />} />
             <Route path="more/risks" element={<MobileProjectRisks />} />
+            <Route path="more/issues" element={<MobileProjectIssues />} />
             <Route path="more/status-update" element={<MobileProjectStatusUpdate />} />
             <Route path="more/exec-comms" element={<MobileProjectExecComms />} />
             <Route path="more/newsletter" element={<MobileProjectNewsletter />} />
