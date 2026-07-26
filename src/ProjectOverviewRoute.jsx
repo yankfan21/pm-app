@@ -25,6 +25,7 @@ function ProjectOverviewRoute() {
         tasks={tasks}
         phases={phases}
         riskLog={docs.risk_log}
+        issueLog={docs.issue_log}
         expanded
       />
     </>

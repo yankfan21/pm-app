@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from './supabaseClient'
 import { exportIssueLogDocx, exportIssueLogPdf } from './issueLogExport'
-import { appendStatusNote, createIssueObject, sortIssues } from './issueLogUtils'
+import { OPEN_ISSUE_STATUSES, appendStatusNote, createIssueObject, sortIssues } from './issueLogUtils'
 
 // Own component, not a reuse/shrink of RiskLogView.jsx - Issues Log is a
 // separate entity (issues DID/ARE happening, risks MAY happen), with its
@@ -28,6 +28,11 @@ function formatDateTime(iso) {
 const PRIORITIES = ['Low', 'Medium', 'High']
 const STATUSES = ['Open', 'In Progress', 'Blocked', 'Closed']
 const STATUS_FILTERS = ['All', ...STATUSES]
+// 'OpenGroup' is a deep-link-only filter value (Key Metrics Dashboard's
+// Issue Summary card - see KeyMetricsDashboard.jsx/DocumentsRoute.jsx),
+// combining Open/In Progress/Blocked - not a visible tab, since none of the
+// literal-status tabs above map 1:1 to it.
+const VALID_FILTER_VALUES = ['All', 'OpenGroup', ...STATUSES]
 
 function withIds(issues) {
   return (issues || []).map((i) => (i.id ? i : { ...i, id: crypto.randomUUID() }))
@@ -37,15 +42,41 @@ function statusSlug(status) {
   return status.toLowerCase().replace(/\s+/g, '-')
 }
 
-function IssueLogView({ project, issueLog, canEdit, onUpdate }) {
+function IssueLogView({
+  project,
+  issueLog,
+  canEdit,
+  onUpdate,
+  initialStatusFilter,
+  onStatusFilterChange,
+}) {
   const [rows, setRows] = useState(() => withIds(issueLog.issues))
   const [error, setError] = useState(null)
-  const [statusFilter, setStatusFilter] = useState('All')
+  const [statusFilter, setStatusFilter] = useState(
+    VALID_FILTER_VALUES.includes(initialStatusFilter) ? initialStatusFilter : 'All'
+  )
   const [noteDrafts, setNoteDrafts] = useState({})
   const textareaRefs = useRef({})
 
-  const filteredRows = statusFilter === 'All' ? rows : rows.filter((r) => r.status === statusFilter)
+  // Re-sync when arriving with a different filter (e.g. clicking the other
+  // Issue Summary badge while already on this page) - the URL param changes
+  // but this component doesn't remount.
+  useEffect(() => {
+    if (VALID_FILTER_VALUES.includes(initialStatusFilter)) setStatusFilter(initialStatusFilter)
+  }, [initialStatusFilter])
+
+  const filteredRows =
+    statusFilter === 'All'
+      ? rows
+      : statusFilter === 'OpenGroup'
+        ? rows.filter((r) => OPEN_ISSUE_STATUSES.includes(r.status))
+        : rows.filter((r) => r.status === statusFilter)
   const displayRows = sortIssues(filteredRows)
+
+  function handleFilterChange(status) {
+    setStatusFilter(status)
+    onStatusFilterChange?.(status)
+  }
 
   useEffect(() => {
     rows.forEach((r) => {
@@ -148,7 +179,7 @@ function IssueLogView({ project, issueLog, canEdit, onUpdate }) {
             key={status}
             type="button"
             className={`filter-tab ${statusFilter === status ? 'selected' : ''}`}
-            onClick={() => setStatusFilter(status)}
+            onClick={() => handleFilterChange(status)}
           >
             {status}
           </button>
@@ -272,7 +303,9 @@ function IssueLogView({ project, issueLog, canEdit, onUpdate }) {
             {displayRows.length === 0 && (
               <tr>
                 <td colSpan={7} className="empty">
-                  {rows.length === 0 ? 'No issues logged yet' : `No ${statusFilter} issues logged`}
+                  {rows.length === 0
+                    ? 'No issues logged yet'
+                    : `No ${statusFilter === 'OpenGroup' ? 'open' : statusFilter} issues logged`}
                 </td>
               </tr>
             )}

@@ -7,6 +7,19 @@
 // picked date, matching the Resolution/Date -> Status Notes/Last Update
 // rework.
 
+// Combined "Open" bucket for the Key Metrics Dashboard / Project Hotspots
+// issue count card (KeyMetricsDashboard.jsx, mobile/MobileProjectMetrics.jsx)
+// - Open/In Progress/Blocked all read as "still open" there; only Closed is
+// closed.
+export const OPEN_ISSUE_STATUSES = ['Open', 'In Progress', 'Blocked']
+
+export function getIssueStatusCounts(issues) {
+  const list = issues || []
+  const open = list.filter((i) => OPEN_ISSUE_STATUSES.includes(i.status)).length
+  const closed = list.filter((i) => i.status === 'Closed').length
+  return { open, closed }
+}
+
 export function createIssueObject(overrides = {}) {
   return {
     id: crypto.randomUUID(),

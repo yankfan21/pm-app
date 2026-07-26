@@ -17,6 +17,7 @@ import { supabase } from './supabaseClient'
 import { HEALTH_LABELS, HEALTH_COLOR_CLASS, formatEvalMetric } from './projectEvalHealth'
 import { visibleSides } from './projectSections'
 import { getRiskBand } from './riskScale'
+import { getIssueStatusCounts } from './issueLogUtils'
 
 const CHART_TOOLTIP_STYLE = {
   background: 'var(--surface-1-solid)',
@@ -318,6 +319,45 @@ function RiskSeverityCard({ project, riskLog }) {
   )
 }
 
+// Live snapshot, not tied to the project_evaluations snapshot at all - same
+// "recomputed from already-loaded props on every render" treatment as
+// useCriticalIssues/useRiskSeverityCounts above. Open bucket = Open/In
+// Progress/Blocked combined (see issueLogUtils.js's OPEN_ISSUE_STATUSES);
+// Closed is its own bucket.
+function useIssueStatusCounts(issueLog) {
+  return useMemo(() => getIssueStatusCounts(issueLog?.issues), [issueLog])
+}
+
+// Mirrors RiskSeverityCard's deep-link pattern: each badge links to
+// Documents > Issues Log pre-filtered (DocumentsRoute.jsx reads the
+// issueFilter param and expands the Issue Log row; IssueLogView.jsx applies
+// the actual filter - 'OpenGroup' is a deep-link-only value combining
+// Open/In Progress/Blocked, not one of its visible tabs).
+function IssueSummaryCard({ project, issueLog }) {
+  const { open, closed } = useIssueStatusCounts(issueLog)
+
+  if (open + closed === 0) {
+    return <p className="charter-status">No issues logged yet.</p>
+  }
+
+  return (
+    <div className="key-metrics-severity-badges">
+      <Link
+        to={`/projects/${project.id}/documents?issueFilter=OpenGroup`}
+        className="doc-status-badge key-metrics-severity-badge-link critical"
+      >
+        {open} Open
+      </Link>
+      <Link
+        to={`/projects/${project.id}/documents?issueFilter=Closed`}
+        className="doc-status-badge key-metrics-severity-badge-link done"
+      >
+        {closed} Closed
+      </Link>
+    </div>
+  )
+}
+
 const VELOCITY_SPRINT_LIMIT = 5
 
 // Mirrors project-eval/index.ts's velocityStats() (committed-vs-completed
@@ -434,7 +474,7 @@ function SprintVelocityCard({ project }) {
 // visibleSides().agile), so the row falls back to just the donut,
 // left-aligned at its normal size - .key-metrics-progress-col's fixed
 // width means it never stretches to fill the row on its own.
-function KeyMetricsDashboard({ project, tasks, phases, riskLog, expanded }) {
+function KeyMetricsDashboard({ project, tasks, phases, riskLog, issueLog, expanded }) {
   const issues = useCriticalIssues(project, tasks, phases, riskLog)
   const { evaluation, loading: evalLoading } = useLatestEvaluation(project.id)
   const showVelocity = visibleSides(project.methodology).agile
@@ -477,6 +517,11 @@ function KeyMetricsDashboard({ project, tasks, phases, riskLog, expanded }) {
           <div className="key-metrics-panel">
             <h3 className="key-metrics-panel-heading">Risk Severity</h3>
             <RiskSeverityCard project={project} riskLog={riskLog} />
+          </div>
+
+          <div className="key-metrics-panel">
+            <h3 className="key-metrics-panel-heading">Issues</h3>
+            <IssueSummaryCard project={project} issueLog={issueLog} />
           </div>
         </div>
       )}

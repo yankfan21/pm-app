@@ -737,6 +737,12 @@
   white-space: nowrap;
 }
 
+.mobile-issue-summary-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
 /* Documents (MobileProjectDocuments) ------------------------------------ */
 
 .mobile-doc-list {

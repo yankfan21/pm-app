@@ -44,6 +44,7 @@ function DocumentsRoute() {
   const [expandedGroup, setExpandedGroup] = useState(null)
   const [searchParams, setSearchParams] = useSearchParams()
   const riskFilter = searchParams.get('riskFilter')
+  const issueFilter = searchParams.get('issueFilter')
 
   // Arrival from a Key Metrics Dashboard severity badge (see
   // KeyMetricsDashboard.jsx's RiskSeverityCard) - land straight on the
@@ -52,6 +53,13 @@ function DocumentsRoute() {
     if (riskFilter) setExpandedSection('risk_log')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [riskFilter])
+
+  // Same arrival behavior for the Issue Summary card (KeyMetricsDashboard.jsx's
+  // IssueSummaryCard) - lands straight on the already-expanded Issues Log row.
+  useEffect(() => {
+    if (issueFilter) setExpandedSection('issue_log')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [issueFilter])
 
   // Keeps the URL in sync with whatever severity RiskLogView is currently
   // showing - both explicit "Clear" (back to All) and switching to a
@@ -62,6 +70,16 @@ function DocumentsRoute() {
       const next = new URLSearchParams(prev)
       if (level === 'All') next.delete('riskFilter')
       else next.set('riskFilter', level)
+      return next
+    })
+  }
+
+  // Same URL-sync behavior for IssueLogView's status filter.
+  function setIssueFilter(status) {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      if (status === 'All') next.delete('issueFilter')
+      else next.set('issueFilter', status)
       return next
     })
   }
@@ -210,6 +228,9 @@ function DocumentsRoute() {
                 onUpdate={(updatedRow) => handleDocUpdated(docType, updatedRow)}
                 {...(docType.key === 'risk_log'
                   ? { initialSeverityFilter: riskFilter, onSeverityFilterChange: setRiskFilter }
+                  : {})}
+                {...(docType.key === 'issue_log'
+                  ? { initialStatusFilter: issueFilter, onStatusFilterChange: setIssueFilter }
                   : {})}
               />
             )}

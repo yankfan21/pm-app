@@ -3,6 +3,7 @@ import { useOutletContext, useParams } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { HEALTH_LABELS, formatEvalMetric } from '../projectEvalHealth'
 import { getRiskBand } from '../riskScale'
+import { getIssueStatusCounts } from '../issueLogUtils'
 
 function formatDateTime(iso) {
   return new Date(iso).toLocaleString(undefined, {
@@ -76,6 +77,7 @@ function MobileProjectMetrics() {
   const [tasks, setTasks] = useState([])
   const [phases, setPhases] = useState([])
   const [risks, setRisks] = useState([])
+  const [issueLogIssues, setIssueLogIssues] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -86,7 +88,7 @@ function MobileProjectMetrics() {
       setLoading(true)
       setError(null)
 
-      const [evalRes, taskRes, phaseRes, riskRes] = await Promise.all([
+      const [evalRes, taskRes, phaseRes, riskRes, issueRes] = await Promise.all([
         supabase
           .from('project_evaluations')
           .select('health_status, metrics, created_at')
@@ -98,11 +100,12 @@ function MobileProjectMetrics() {
           ? supabase.from('phases').select('id, phase_name, effective_end_date').eq('project_id', projectId)
           : Promise.resolve({ data: [], error: null }),
         supabase.from('risk_logs').select('risks').eq('project_id', projectId).maybeSingle(),
+        supabase.from('issue_logs').select('issues').eq('project_id', projectId).maybeSingle(),
       ])
 
       if (cancelled) return
 
-      const firstError = evalRes.error || taskRes.error || phaseRes.error || riskRes.error
+      const firstError = evalRes.error || taskRes.error || phaseRes.error || riskRes.error || issueRes.error
       if (firstError) {
         setError(firstError.message)
         setLoading(false)
@@ -113,6 +116,7 @@ function MobileProjectMetrics() {
       setTasks(taskRes.data || [])
       setPhases(phaseRes.data || [])
       setRisks(riskRes.data?.risks || [])
+      setIssueLogIssues(issueRes.data?.issues || [])
       setLoading(false)
     }
 
@@ -123,6 +127,7 @@ function MobileProjectMetrics() {
   }, [projectId, project.methodology])
 
   const issues = useCriticalIssues(project, tasks, phases, risks)
+  const { open: openIssueCount, closed: closedIssueCount } = getIssueStatusCounts(issueLogIssues)
 
   if (loading) {
     return (
@@ -190,6 +195,13 @@ function MobileProjectMetrics() {
               </li>
             ))}
           </ul>
+        )}
+
+        {openIssueCount + closedIssueCount > 0 && (
+          <div className="mobile-issue-summary-row">
+            <span className="mobile-doc-badge critical">{openIssueCount} Open</span>
+            <span className="mobile-doc-badge done">{closedIssueCount} Closed</span>
+          </div>
         )}
       </div>
     </div>
