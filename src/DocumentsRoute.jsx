@@ -45,6 +45,7 @@ function DocumentsRoute() {
   const [searchParams, setSearchParams] = useSearchParams()
   const riskFilter = searchParams.get('riskFilter')
   const issueFilter = searchParams.get('issueFilter')
+  const riskId = searchParams.get('riskId')
 
   // Arrival from a Key Metrics Dashboard severity badge (see
   // KeyMetricsDashboard.jsx's RiskSeverityCard) - land straight on the
@@ -72,6 +73,22 @@ function DocumentsRoute() {
       else next.set('riskFilter', level)
       return next
     })
+  }
+
+  // Fired once RiskLogView has scrolled to and flashed the target row (see
+  // its highlightRiskId effect) - drops just riskId, keeping riskFilter so
+  // the severity view the Hotspot landed on stays put. `replace: true` so
+  // this doesn't add a second back-button stop on top of the navigation
+  // that brought the PM here.
+  function clearRiskId() {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        next.delete('riskId')
+        return next
+      },
+      { replace: true }
+    )
   }
 
   // Same URL-sync behavior for IssueLogView's status filter.
@@ -227,7 +244,12 @@ function DocumentsRoute() {
                 canEdit={canEdit}
                 onUpdate={(updatedRow) => handleDocUpdated(docType, updatedRow)}
                 {...(docType.key === 'risk_log'
-                  ? { initialSeverityFilter: riskFilter, onSeverityFilterChange: setRiskFilter }
+                  ? {
+                      initialSeverityFilter: riskFilter,
+                      onSeverityFilterChange: setRiskFilter,
+                      highlightRiskId: riskId,
+                      onRiskHighlightDone: clearRiskId,
+                    }
                   : {})}
                 {...(docType.key === 'issue_log'
                   ? { initialStatusFilter: issueFilter, onStatusFilterChange: setIssueFilter }

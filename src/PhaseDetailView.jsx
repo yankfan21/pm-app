@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from './supabaseClient'
 
 // Fixed Initiation -> Planning -> Execution -> Closing grouping layer for
@@ -7,8 +8,26 @@ import { supabase } from './supabaseClient'
 // it (Auto, from the tasks assigned to it, vs. Custom, a PM-set override),
 // and a toggle to switch between the two - the tool computes a suggestion,
 // the PM decides whether to keep it.
-function PhaseDetailView({ phases, setPhases, canEdit, expanded }) {
+function PhaseDetailView({ phases, setPhases, canEdit, expanded, highlightPhaseId, onPhaseHighlightDone }) {
   const sorted = [...phases].sort((a, b) => a.phase_number - b.phase_number)
+  const rowRefs = useRef({})
+  const [flashPhaseId, setFlashPhaseId] = useState(null)
+
+  // Arrival from a Project Hotspots card (KeyMetricsDashboard.jsx's
+  // hotspotLinkTo) - scroll the target phase's row into view and flash it,
+  // same treatment as RiskLogView's highlightRiskId / PlanningTasksRoute's
+  // taskId handling.
+  useEffect(() => {
+    if (!highlightPhaseId) return
+    setFlashPhaseId(highlightPhaseId)
+    rowRefs.current[highlightPhaseId]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    const timer = setTimeout(() => {
+      setFlashPhaseId(null)
+      onPhaseHighlightDone?.()
+    }, 2000)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [highlightPhaseId])
 
   async function setMode(phase, isCustom) {
     const { data, error } = await supabase
@@ -48,7 +67,13 @@ function PhaseDetailView({ phases, setPhases, canEdit, expanded }) {
       {expanded && (
         <ul className="backlog-list phase-list">
           {sorted.map((phase) => (
-            <li key={phase.id} className="backlog-item phase-item">
+            <li
+              key={phase.id}
+              ref={(el) => {
+                rowRefs.current[phase.id] = el
+              }}
+              className={`backlog-item phase-item ${flashPhaseId === phase.id ? 'hotspot-row-highlight' : ''}`}
+            >
               <div className="backlog-item-main">
                 <div className="backlog-item-title-row">
                   <span className="backlog-item-title">

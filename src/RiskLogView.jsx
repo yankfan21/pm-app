@@ -39,6 +39,8 @@ function RiskLogView({
   onUpdate,
   initialSeverityFilter,
   onSeverityFilterChange,
+  highlightRiskId,
+  onRiskHighlightDone,
 }) {
   const [rows, setRows] = useState(() => withIds(riskLog.risks))
   const [error, setError] = useState(null)
@@ -58,6 +60,8 @@ function RiskLogView({
   // mid-edit either.
   const [expandedIds, setExpandedIds] = useState(() => new Set())
   const textareaRefs = useRef({})
+  const rowRefs = useRef({})
+  const [flashRiskId, setFlashRiskId] = useState(null)
 
   // Re-sync when arriving with a different severity badge (e.g. clicking
   // "Medium" from Key Metrics while already on this page) - the URL param
@@ -65,6 +69,25 @@ function RiskLogView({
   useEffect(() => {
     if (SEVERITY_FILTERS.includes(initialSeverityFilter)) setSeverityFilter(initialSeverityFilter)
   }, [initialSeverityFilter])
+
+  // Arrival from a Project Hotspots card (KeyMetricsDashboard.jsx's
+  // hotspotLinkTo) - scroll the target risk's row into view and flash it
+  // via .hotspot-row-highlight (App.css), same treatment PlanningTasksRoute/
+  // PhaseDetailView use for their own Hotspot arrivals. Doesn't force the
+  // row open - the collapsed header already shows band/score/owner, enough
+  // to identify it. onRiskHighlightDone strips riskId from the URL once the
+  // flash finishes so refresh/back doesn't replay it.
+  useEffect(() => {
+    if (!highlightRiskId) return
+    setFlashRiskId(highlightRiskId)
+    rowRefs.current[highlightRiskId]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    const timer = setTimeout(() => {
+      setFlashRiskId(null)
+      onRiskHighlightDone?.()
+    }, 2000)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [highlightRiskId])
 
   const displayRows =
     severityFilter === 'All'
@@ -244,7 +267,13 @@ function RiskLogView({
           const isExpanded = expandedIds.has(row.id)
 
           return (
-            <li className={`risk-row ${isExpanded ? 'risk-row-expanded' : ''}`} key={row.id}>
+            <li
+              className={`risk-row ${isExpanded ? 'risk-row-expanded' : ''} ${flashRiskId === row.id ? 'hotspot-row-highlight' : ''}`}
+              key={row.id}
+              ref={(el) => {
+                rowRefs.current[row.id] = el
+              }}
+            >
               <div className="risk-row-header">
                 <button
                   type="button"

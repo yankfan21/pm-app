@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Navigate, useOutletContext } from 'react-router-dom'
+import { Navigate, useOutletContext, useSearchParams } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import PhaseDetailView from './PhaseDetailView'
 import GanttChart from './GanttChart'
@@ -58,9 +58,33 @@ export function ExecutionIndexRoute() {
 
 export function PlanningPhasesRoute() {
   const { phases, setPhases, canEdit } = useOutletContext()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const phaseId = searchParams.get('phaseId')
+
+  // Same clear-after-flash contract as DocumentsRoute's clearRiskId /
+  // PlanningTasksRoute's taskId handling - see PhaseDetailView's
+  // highlightPhaseId effect for the arrival side.
+  function clearPhaseId() {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        next.delete('phaseId')
+        return next
+      },
+      { replace: true }
+    )
+  }
+
   return (
     <MethodologySection side="waterfall">
-      <PhaseDetailView phases={phases} setPhases={setPhases} canEdit={canEdit} expanded />
+      <PhaseDetailView
+        phases={phases}
+        setPhases={setPhases}
+        canEdit={canEdit}
+        expanded
+        highlightPhaseId={phaseId}
+        onPhaseHighlightDone={clearPhaseId}
+      />
     </MethodologySection>
   )
 }

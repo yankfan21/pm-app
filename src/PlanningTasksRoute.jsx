@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useOutletContext } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { useOutletContext, useSearchParams } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import TaskGenFlow from './TaskGenFlow'
 import TaskImportFlow from './TaskImportFlow'
@@ -48,6 +48,11 @@ function PlanningTasksRoute() {
   const [showAiGen, setShowAiGen] = useState(false)
   const [showImport, setShowImport] = useState(false)
 
+  const [searchParams, setSearchParams] = useSearchParams()
+  const taskId = searchParams.get('taskId')
+  const [flashTaskId, setFlashTaskId] = useState(null)
+  const taskRowRefs = useRef({})
+
   // Per-group collapse state, keyed by group id ('none' or `phase:<id>`) -
   // an override map rather than a Set of collapsed ids so a group whose
   // default (see taskGroups below) is "collapsed" can still be explicitly
@@ -62,6 +67,31 @@ function PlanningTasksRoute() {
   function toggleGroup(key, currentlyCollapsed) {
     setCollapseOverrides((prev) => ({ ...prev, [key]: !currentlyCollapsed }))
   }
+
+  // Arrival from a Project Hotspots card (KeyMetricsDashboard.jsx's
+  // hotspotLinkTo) - scroll the target task's row into view and flash it.
+  // No group-expand step needed: a collapsed group still renders every task
+  // as a compact row (see taskGroups below), it's just less detailed, so
+  // the target row already exists in the DOM either way. Strips taskId from
+  // the URL once the flash finishes, same as RiskLogView's riskId handling.
+  useEffect(() => {
+    if (!taskId) return
+    setFlashTaskId(taskId)
+    taskRowRefs.current[taskId]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    const timer = setTimeout(() => {
+      setFlashTaskId(null)
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev)
+          next.delete('taskId')
+          return next
+        },
+        { replace: true }
+      )
+    }, 2000)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [taskId])
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -280,7 +310,13 @@ function PlanningTasksRoute() {
   function renderCompactTaskRow(task) {
     const status = statusFor(task)
     return (
-      <li key={task.id} className="group-compact-row">
+      <li
+        key={task.id}
+        ref={(el) => {
+          taskRowRefs.current[task.id] = el
+        }}
+        className={`group-compact-row ${flashTaskId === task.id ? 'hotspot-row-highlight' : ''}`}
+      >
         <span className="group-compact-title">{task.title}</span>
         <span className="group-compact-meta">{resolveAssigneeLabel(task, collaborators) || 'Unassigned'}</span>
         <span className="group-compact-meta">{task.due_date || '—'}</span>
@@ -291,7 +327,13 @@ function PlanningTasksRoute() {
 
   function renderFullTaskRow(task) {
     return (
-      <li key={task.id} className={task.completed ? 'completed' : ''}>
+      <li
+        key={task.id}
+        ref={(el) => {
+          taskRowRefs.current[task.id] = el
+        }}
+        className={`${task.completed ? 'completed' : ''} ${flashTaskId === task.id ? 'hotspot-row-highlight' : ''}`}
+      >
         <div className="task-row-main">
           <label>
             <input

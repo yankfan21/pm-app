@@ -69,13 +69,23 @@ function useCriticalIssues(project, tasks, phases, riskLog) {
     // same waterfallTasks scoping project-eval/index.ts's taskStats() uses.
     tasks
       .filter((t) => t.backlog_status == null && t.status === 'delayed')
-      .forEach((t) => issues.push({ key: `task-${t.id}`, type: 'Delayed Task', label: t.title }))
+      .forEach((t) => issues.push({ key: `task-${t.id}`, type: 'Delayed Task', label: t.title, id: t.id }))
 
     // High/Critical-band risks - mirrors project-eval/index.ts's
-    // riskStats() band filter.
+    // riskStats() band filter. `id` is r.id verbatim (not the key's index
+    // fallback below) - a risk missing an id just can't be linked, see
+    // hotspotLinkTo().
     ;(riskLog?.risks || [])
       .filter((r) => ['High', 'Critical'].includes(getRiskBand(r.likelihood, r.severity)))
-      .forEach((r, i) => issues.push({ key: `risk-${r.id ?? i}`, type: 'High Risk', label: r.risk || `Risk ${i + 1}` }))
+      .forEach((r, i) =>
+        issues.push({
+          key: `risk-${r.id ?? i}`,
+          type: 'High Risk',
+          label: r.risk || `Risk ${i + 1}`,
+          id: r.id ?? null,
+          band: getRiskBand(r.likelihood, r.severity),
+        })
+      )
 
     // Overdue phases - Waterfall/Hybrid only, matching visibleSides() in
     // ProjectDetail.jsx (phases are hidden entirely for pure Agile).
@@ -83,7 +93,7 @@ function useCriticalIssues(project, tasks, phases, riskLog) {
       const waterfallTasks = tasks.filter((t) => t.backlog_status == null)
       phases
         .filter((p) => isPhaseOverdue(p, waterfallTasks, todayStr))
-        .forEach((p) => issues.push({ key: `phase-${p.id}`, type: 'Overdue Phase', label: p.phase_name }))
+        .forEach((p) => issues.push({ key: `phase-${p.id}`, type: 'Overdue Phase', label: p.phase_name, id: p.id }))
     }
 
     return issues
@@ -162,19 +172,50 @@ function ProjectStatusCard({ evaluation, loading }) {
   )
 }
 
-function CriticalIssuesCard({ issues }) {
+// Click-through destination per Hotspot type - each lands on the section
+// that actually owns the record, pre-filtered/highlighted to it. Risk uses
+// the same riskFilter param RiskSeverityCard already deep-links with (see
+// DocumentsRoute.jsx), plus a riskId on top for the row-level highlight;
+// Delayed Task and Overdue Phase are new taskId/phaseId params (see
+// PlanningTasksRoute.jsx/ProjectSectionRoutes.jsx's PlanningPhasesRoute).
+// Returns null when there's nothing to link to (missing id) - the card
+// falls back to a plain, non-clickable row rather than linking to the
+// wrong record.
+function hotspotLinkTo(issue, projectId) {
+  if (!issue.id) return null
+  if (issue.type === 'Delayed Task') return `/projects/${projectId}/planning/tasks?taskId=${issue.id}`
+  if (issue.type === 'High Risk') return `/projects/${projectId}/documents?riskFilter=${issue.band}&riskId=${issue.id}`
+  if (issue.type === 'Overdue Phase') return `/projects/${projectId}/planning/phases?phaseId=${issue.id}`
+  return null
+}
+
+function CriticalIssuesCard({ issues, projectId }) {
   if (issues.length === 0) {
     return <p className="charter-status">No hotspots right now.</p>
   }
 
   return (
     <ul className="critical-issues-list">
-      {issues.map((issue) => (
-        <li key={issue.key}>
-          <span className={`issue-tag ${ISSUE_TAG_CLASS[issue.type] || ''}`}>{issue.type}</span>
-          <span className="critical-issue-label">{issue.label}</span>
-        </li>
-      ))}
+      {issues.map((issue) => {
+        const to = hotspotLinkTo(issue, projectId)
+        const content = (
+          <>
+            <span className={`issue-tag ${ISSUE_TAG_CLASS[issue.type] || ''}`}>{issue.type}</span>
+            <span className="critical-issue-label">{issue.label}</span>
+          </>
+        )
+        return (
+          <li key={issue.key}>
+            {to ? (
+              <Link to={to} className="critical-issue-row">
+                {content}
+              </Link>
+            ) : (
+              <span className="critical-issue-row">{content}</span>
+            )}
+          </li>
+        )
+      })}
     </ul>
   )
 }
@@ -511,7 +552,7 @@ function KeyMetricsDashboard({ project, tasks, phases, riskLog, issueLog, expand
 
           <div className="key-metrics-panel">
             <h3 className="key-metrics-panel-heading">Project Hotspots ({issues.length})</h3>
-            <CriticalIssuesCard issues={issues} />
+            <CriticalIssuesCard issues={issues} projectId={project.id} />
           </div>
 
           <div className="key-metrics-panel">

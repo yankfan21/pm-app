@@ -2911,6 +2911,45 @@
   color: var(--text-h);
 }
 
+/* Fills the .critical-issues-list li's existing flex/padding/border box -
+   li itself stays the styled container so a missing-id row (rendered as a
+   plain span instead of a Link, see KeyMetricsDashboard.jsx's
+   hotspotLinkTo) looks identical to a clickable one. */
+.critical-issue-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  color: inherit;
+  text-decoration: none;
+}
+
+.critical-issues-list li:has(a.critical-issue-row) {
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.critical-issues-list li:has(a.critical-issue-row):hover {
+  background: var(--code-bg);
+}
+
+/* Shared "you've arrived" flash for a Hotspot click-through landing on its
+   source row - used by PlanningTasksRoute (taskId), PhaseDetailView
+   (phaseId), and RiskLogView (riskId). Plain background fade, not a
+   layout-affecting class, so it's safe on <li> and <tr> alike. */
+@keyframes hotspot-row-flash {
+  from {
+    background-color: var(--accent-border);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+
+.hotspot-row-highlight {
+  animation: hotspot-row-flash 2s ease-out;
+}
+
 .issue-tag {
   flex-shrink: 0;
   padding: 3px 10px;
