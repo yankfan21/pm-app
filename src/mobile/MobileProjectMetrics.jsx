@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useOutletContext, useParams } from 'react-router-dom'
+import { Link, useOutletContext, useParams } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { HEALTH_LABELS, formatEvalMetric } from '../projectEvalHealth'
 import { getRiskBand } from '../riskScale'
@@ -35,17 +35,27 @@ function useCriticalIssues(project, tasks, phases, risks) {
 
     tasks
       .filter((t) => t.backlog_status == null && t.status === 'delayed')
-      .forEach((t) => issues.push({ key: `task-${t.id}`, type: 'Delayed Task', label: t.title }))
+      .forEach((t) => issues.push({ key: `task-${t.id}`, type: 'Delayed Task', label: t.title, id: t.id }))
 
+    // `id` is r.id verbatim (not the key's index fallback below) - a risk
+    // missing an id just can't be linked, see hotspotLinkTo().
     ;(risks || [])
       .filter((r) => ['High', 'Critical'].includes(getRiskBand(r.likelihood, r.severity)))
-      .forEach((r, i) => issues.push({ key: `risk-${r.id ?? i}`, type: 'High Risk', label: r.risk || `Risk ${i + 1}` }))
+      .forEach((r, i) =>
+        issues.push({
+          key: `risk-${r.id ?? i}`,
+          type: 'High Risk',
+          label: r.risk || `Risk ${i + 1}`,
+          id: r.id ?? null,
+          band: getRiskBand(r.likelihood, r.severity),
+        })
+      )
 
     if (project.methodology !== 'agile') {
       const waterfallTasks = tasks.filter((t) => t.backlog_status == null)
       phases
         .filter((p) => isPhaseOverdue(p, waterfallTasks, todayStr))
-        .forEach((p) => issues.push({ key: `phase-${p.id}`, type: 'Overdue Phase', label: p.phase_name }))
+        .forEach((p) => issues.push({ key: `phase-${p.id}`, type: 'Overdue Phase', label: p.phase_name, id: p.id }))
     }
 
     return issues
@@ -56,6 +66,20 @@ const ISSUE_TAG_CLASS = {
   'Delayed Task': 'mobile-issue-tag-task',
   'High Risk': 'mobile-issue-tag-risk',
   'Overdue Phase': 'mobile-issue-tag-phase',
+}
+
+// Mirrors KeyMetricsDashboard.jsx's hotspotLinkTo, adapted to mobile's own
+// routes (see MobileProjectLayout.jsx's route tree - no Planning/Phases
+// screen exists on mobile at all, so Overdue Phase is deliberately never
+// clickable here, not just when it's missing an id). Delayed Task goes
+// straight to MobileTaskDetail (a real per-task page already) rather than
+// the task list with a highlight - no scroll/highlight plumbing needed for
+// that type. High Risk goes to the flagged-risks list with a riskId for
+// scroll-to + highlight, same shape as desktop's riskId handling.
+function hotspotLinkTo(issue, projectId) {
+  if (issue.type === 'Delayed Task') return issue.id ? `/m/projects/${projectId}/tasks/${issue.id}` : null
+  if (issue.type === 'High Risk') return issue.id ? `/m/projects/${projectId}/more/risks?riskId=${issue.id}` : null
+  return null
 }
 
 const HEALTH_BADGE_CLASS = {
@@ -188,12 +212,26 @@ function MobileProjectMetrics() {
           <p className="mobile-screen-stub">No hotspots right now.</p>
         ) : (
           <ul className="mobile-issue-list">
-            {issues.map((issue) => (
-              <li key={issue.key} className="mobile-issue-row">
-                <span className={`mobile-issue-tag ${ISSUE_TAG_CLASS[issue.type] || ''}`}>{issue.type}</span>
-                <span className="mobile-issue-label">{issue.label}</span>
-              </li>
-            ))}
+            {issues.map((issue) => {
+              const to = hotspotLinkTo(issue, projectId)
+              const content = (
+                <>
+                  <span className={`mobile-issue-tag ${ISSUE_TAG_CLASS[issue.type] || ''}`}>{issue.type}</span>
+                  <span className="mobile-issue-label">{issue.label}</span>
+                </>
+              )
+              return (
+                <li key={issue.key} className="mobile-issue-row">
+                  {to ? (
+                    <Link to={to} className="mobile-issue-row-link">
+                      {content}
+                    </Link>
+                  ) : (
+                    <span className="mobile-issue-row-link">{content}</span>
+                  )}
+                </li>
+              )
+            })}
           </ul>
         )}
 

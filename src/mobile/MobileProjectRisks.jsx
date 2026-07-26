@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { useOutletContext, useParams } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { useOutletContext, useParams, useSearchParams } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { getRiskBand } from '../riskScale'
 
@@ -43,6 +43,11 @@ function MobileProjectRisks() {
   const [taskId, setTaskId] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
+  const [searchParams, setSearchParams] = useSearchParams()
+  const highlightRiskId = searchParams.get('riskId')
+  const [flashRiskId, setFlashRiskId] = useState(null)
+  const rowRefs = useRef({})
+
   useEffect(() => {
     let cancelled = false
 
@@ -74,6 +79,29 @@ function MobileProjectRisks() {
       cancelled = true
     }
   }, [projectId])
+
+  // Arrival from a Project Hotspots row (MobileProjectMetrics.jsx's
+  // hotspotLinkTo) - scroll the target risk's card into view and flash it,
+  // same shape as desktop's RiskLogView highlightRiskId handling, adapted
+  // to this screen's flat card list (no severity filter to re-sync here).
+  useEffect(() => {
+    if (!highlightRiskId || loading) return
+    setFlashRiskId(highlightRiskId)
+    rowRefs.current[highlightRiskId]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    const timer = setTimeout(() => {
+      setFlashRiskId(null)
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev)
+          next.delete('riskId')
+          return next
+        },
+        { replace: true }
+      )
+    }, 2000)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [highlightRiskId, loading])
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -168,7 +196,13 @@ function MobileProjectRisks() {
           {[...risks].reverse().map((r) => {
             const band = getRiskBand(r.likelihood, r.severity)
             return (
-              <div className="mobile-doc-risk-card" key={r.id}>
+              <div
+                className={`mobile-doc-risk-card ${flashRiskId === r.id ? 'mobile-hotspot-highlight' : ''}`}
+                key={r.id}
+                ref={(el) => {
+                  rowRefs.current[r.id] = el
+                }}
+              >
                 <p className="mobile-doc-section-body">{r.risk}</p>
                 <p className="mobile-doc-risk-meta">
                   <span className={`mobile-doc-badge ${band ? BAND_BADGE_CLASS[band] : 'pending'}`}>
