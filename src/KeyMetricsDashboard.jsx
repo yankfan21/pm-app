@@ -515,13 +515,13 @@ function KeyMetricsDashboard({ project, tasks, phases, riskLog, issueLog, expand
           </div>
 
           <div className="key-metrics-panel">
-            <h3 className="key-metrics-panel-heading">Risks</h3>
-            <RiskSeverityCard project={project} riskLog={riskLog} />
+            <h3 className="key-metrics-panel-heading">Issues</h3>
+            <IssueSummaryCard project={project} issueLog={issueLog} />
           </div>
 
           <div className="key-metrics-panel">
-            <h3 className="key-metrics-panel-heading">Issues</h3>
-            <IssueSummaryCard project={project} issueLog={issueLog} />
+            <h3 className="key-metrics-panel-heading">Risks</h3>
+            <RiskSeverityCard project={project} riskLog={riskLog} />
           </div>
         </div>
       )}
