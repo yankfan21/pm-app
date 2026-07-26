@@ -76,6 +76,7 @@ function RiskLogView({
     rows.forEach((r) => {
       autoResize(textareaRefs.current[`${r.id}-risk`])
       autoResize(textareaRefs.current[`${r.id}-mitigation`])
+      autoResize(textareaRefs.current[`${r.id}-owner`])
     })
   }, [rows])
 
@@ -300,12 +301,16 @@ function RiskLogView({
                   />
                 </td>
                 <td>
-                  <input
-                    type="text"
+                  <textarea
+                    ref={(el) => (textareaRefs.current[`${row.id}-owner`] = el)}
                     className="risk-cell-input risk-owner-input"
                     value={row.owner}
+                    rows={2}
                     readOnly={!canEdit}
-                    onChange={(e) => updateCell(row.id, 'owner', e.target.value)}
+                    onChange={(e) => {
+                      updateCell(row.id, 'owner', e.target.value)
+                      autoResize(e.target)
+                    }}
                     onBlur={handleTextBlur}
                   />
                 </td>

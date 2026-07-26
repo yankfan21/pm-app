@@ -3553,14 +3553,22 @@
   width: 10%;
 }
 
+/* Widened 10% -> 14% - "1 - Negligible" (the longest Severity label) was
+   getting cut off to "1 - Ne...". Paid for by Score (5% -> 3%, a bare 1-2
+   digit number needs little room) and Owner (10% -> 8%, now that Owner
+   wraps across lines instead of needing to fit on one - see
+   .risk-owner-input). Likelihood's own longest label ("5 - Almost
+   Certain") is actually longer than Severity's but wasn't reported as
+   truncated, so left at 10% per the scope of this fix - may need the same
+   treatment later if it comes up. */
 .risk-log-main-table th:nth-child(3),
 .risk-log-main-table td:nth-child(3) {
-  width: 10%;
+  width: 14%;
 }
 
 .risk-log-main-table th:nth-child(4),
 .risk-log-main-table td:nth-child(4) {
-  width: 5%;
+  width: 3%;
 }
 
 .risk-log-main-table th:nth-child(5),
@@ -3575,7 +3583,7 @@
 
 .risk-log-main-table th:nth-child(7),
 .risk-log-main-table td:nth-child(7) {
-  width: 10%;
+  width: 8%;
 }
 
 .risk-log-main-table th:nth-child(8),
@@ -3707,11 +3715,14 @@ textarea.risk-cell-input {
   min-height: 44px;
 }
 
-/* Owner's column is only ~9-10% of the table's width (see
+/* Owner's column is only ~8% of the table's width (see
    .risk-log-main-table's nth-child(7)) - the shared .risk-cell-input base's
-   120px min-width (sized for Risk/Mitigation's textareas) was forcing this
-   input wider than its own <td>, overflowing into the delete button's
-   column next to it and reading as the "x" overlapping Owner's text. */
+   120px min-width (sized for Risk/Mitigation's textareas) was forcing
+   Owner's field wider than its own <td>, overflowing into the delete
+   button's column next to it. Same equal-specificity-but-later-in-source
+   override works whether Owner renders as an <input> or (now) a wrapping
+   <textarea> - textarea.risk-cell-input only adds min-height, so it never
+   conflicts with this rule zeroing min-width. */
 .risk-owner-input {
   min-width: 0;
 }
