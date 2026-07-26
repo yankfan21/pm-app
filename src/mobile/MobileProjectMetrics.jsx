@@ -77,8 +77,18 @@ const ISSUE_TAG_CLASS = {
 // that type. High Risk goes to the flagged-risks list with a riskId for
 // scroll-to + highlight, same shape as desktop's riskId handling.
 function hotspotLinkTo(issue, projectId) {
-  if (issue.type === 'Delayed Task') return issue.id ? `/m/projects/${projectId}/tasks/${issue.id}` : null
-  if (issue.type === 'High Risk') return issue.id ? `/m/projects/${projectId}/more/risks?riskId=${issue.id}` : null
+  console.log('[HOTSPOT DEBUG] hotspotLinkTo called with issue:', { type: issue.type, id: issue.id, key: issue.key })
+  if (issue.type === 'Delayed Task') {
+    const to = issue.id ? `/m/projects/${projectId}/tasks/${issue.id}` : null
+    console.log('[HOTSPOT DEBUG] Delayed Task -> to:', to)
+    return to
+  }
+  if (issue.type === 'High Risk') {
+    const to = issue.id ? `/m/projects/${projectId}/more/risks?riskId=${issue.id}` : null
+    console.log('[HOTSPOT DEBUG] High Risk -> to:', to)
+    return to
+  }
+  console.log('[HOTSPOT DEBUG] Overdue Phase (or unknown type) -> to: null')
   return null
 }
 
@@ -214,6 +224,7 @@ function MobileProjectMetrics() {
           <ul className="mobile-issue-list">
             {issues.map((issue) => {
               const to = hotspotLinkTo(issue, projectId)
+              console.log('[HOTSPOT DEBUG] render issue:', issue.key, 'to:', to, 'rendering:', to ? 'Link' : 'span fallback')
               const content = (
                 <>
                   <span className={`mobile-issue-tag ${ISSUE_TAG_CLASS[issue.type] || ''}`}>{issue.type}</span>
