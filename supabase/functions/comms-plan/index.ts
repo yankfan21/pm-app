@@ -130,9 +130,21 @@ function risksText(risks) {
   return risks
     .map(
       (r, i) =>
-        `${i + 1}. ${r.risk} | Likelihood: ${r.likelihood} | Impact: ${r.impact} | Mitigation: ${r.mitigation || "(none)"} | Owner: ${r.owner || "(unassigned)"}`
+        `${i + 1}. ${r.risk} | Likelihood: ${r.likelihood ?? "unscored"} | Severity: ${r.severity ?? "unscored"} | Mitigation: ${r.mitigation || "(none)"} | Owner: ${r.owner || "(unassigned)"}`
     )
     .join("\n")
+}
+
+// Mirrors src/riskScale.js's getRiskBand (1-4 Low, 5-9 Medium, 10-14 High,
+// 15-25 Critical) - duplicated rather than imported because this runs as a
+// Deno Edge Function deployed separately from the Vite build.
+function riskBand(likelihood, severity) {
+  if (!likelihood || !severity) return null
+  const score = likelihood * severity
+  if (score <= 4) return "Low"
+  if (score <= 9) return "Medium"
+  if (score <= 14) return "High"
+  return "Critical"
 }
 
 function establishedContext(charter, brief, riskLog) {
@@ -160,11 +172,12 @@ function statusUpdateText(status) {
   return `Latest Status Update${dated}:\n${parts.join("\n")}`
 }
 
-// Exec Comms regeneration must always surface current high-impact risks so
-// leadership sees them without the PM needing to remember to mention them -
-// "severity" here is the risk log's Impact field (High/Medium/Low).
+// Exec Comms regeneration must always surface current High/Critical-band
+// risks so leadership sees them without the PM needing to remember to
+// mention them - band is computed from the risk's likelihood x severity
+// score (see riskBand above).
 function highSeverityRisksText(riskLog) {
-  const risks = (riskLog?.risks || []).filter((r) => r.impact === "High")
+  const risks = (riskLog?.risks || []).filter((r) => ["High", "Critical"].includes(riskBand(r.likelihood, r.severity)))
   if (risks.length === 0) return null
   return risks
     .map(
@@ -293,7 +306,7 @@ Additional context from communications Q&A:
 ${qaText || "(none provided)"}
 
 ${instructions} Base it on the project data, charter/brief/risk log (if provided), status update (if provided), and Q&A above; do not invent specifics that weren't provided.
-${highRisksText ? `\nThe Risks & Blockers section MUST explicitly mention every one of these current high-impact risks, in addition to anything else relevant:\n${highRisksText}\n` : ""}
+${highRisksText ? `\nThe Risks & Blockers section MUST explicitly mention every one of these current High/Critical-band risks, in addition to anything else relevant:\n${highRisksText}\n` : ""}
 Return ONLY this JSON shape:
 {${Object.keys(SECTION_LABELS_BY_VARIANT[variant])
         .map((k) => `"${k}": "..."`)

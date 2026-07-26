@@ -1,30 +1,29 @@
 import { useEffect, useState } from 'react'
 import { useOutletContext, useParams } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
+import { getRiskBand } from '../riskScale'
 
 // Quick risk flag (/m/projects/:projectId/more/risks). Minimal subset of
 // desktop's full Risk Log entry (RiskLogView.jsx, via Evaluate Project) -
-// description + severity + optional task link only, no mitigation/owner/
-// status. Writes into the same risk_logs.risks jsonb array desktop reads,
-// using likelihood/impact literal values ('Low'/'Medium'/'High', see
-// RiskLogView.jsx's LEVELS) so desktop's Critical Issues check
-// (r.impact === 'High') and its row rendering (row.likelihood.toLowerCase())
-// both keep working on rows created here. task_id is a new key desktop
+// description + optional task link only, no likelihood/severity scoring,
+// mitigation, or owner. Writes into the same risk_logs.risks jsonb array
+// desktop reads, but with likelihood/severity left null (unscored) - the PM
+// scores it on next desktop visit via RiskLogView.jsx's "Needs scoring"
+// prompt, rather than mobile guessing a value. task_id is a key desktop
 // doesn't read yet - harmless, jsonb ignores unknown keys.
-const SEVERITIES = ['Low', 'Medium', 'High']
-
-const SEVERITY_BADGE_CLASS = {
-  Low: 'pending',
-  Medium: 'partial',
+const BAND_BADGE_CLASS = {
+  Critical: 'severe',
   High: 'critical',
+  Medium: 'partial',
+  Low: 'done',
 }
 
-function newRiskObject(description, severity, taskId) {
+function newRiskObject(description, taskId) {
   return {
     id: crypto.randomUUID(),
     risk: description,
-    likelihood: severity,
-    impact: severity,
+    likelihood: null,
+    severity: null,
     mitigation: '',
     owner: '',
     task_id: taskId || null,
@@ -41,7 +40,6 @@ function MobileProjectRisks() {
   const [error, setError] = useState(null)
 
   const [description, setDescription] = useState('')
-  const [severity, setSeverity] = useState('Medium')
   const [taskId, setTaskId] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
@@ -85,7 +83,7 @@ function MobileProjectRisks() {
     setSubmitting(true)
     setError(null)
 
-    const oneRisk = newRiskObject(trimmed, severity, taskId)
+    const oneRisk = newRiskObject(trimmed, taskId)
 
     const result = riskLog
       ? await supabase
@@ -109,7 +107,6 @@ function MobileProjectRisks() {
 
     setRiskLog(result.data)
     setDescription('')
-    setSeverity('Medium')
     setTaskId('')
   }
 
@@ -144,17 +141,6 @@ function MobileProjectRisks() {
           </label>
 
           <label className="mobile-select-field">
-            Severity
-            <select value={severity} onChange={(e) => setSeverity(e.target.value)}>
-              {SEVERITIES.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="mobile-select-field">
             Related task (optional)
             <select value={taskId} onChange={(e) => setTaskId(e.target.value)}>
               <option value="">None</option>
@@ -179,17 +165,20 @@ function MobileProjectRisks() {
         <p className="mobile-screen-stub">No risks flagged yet.</p>
       ) : (
         <div className="mobile-doc-card-list">
-          {[...risks].reverse().map((r) => (
-            <div className="mobile-doc-risk-card" key={r.id}>
-              <p className="mobile-doc-section-body">{r.risk}</p>
-              <p className="mobile-doc-risk-meta">
-                <span className={`mobile-doc-badge ${SEVERITY_BADGE_CLASS[r.impact] || 'pending'}`}>
-                  {r.impact}
-                </span>
-                {r.task_id && taskTitleById.has(r.task_id) ? ` · ${taskTitleById.get(r.task_id)}` : ''}
-              </p>
-            </div>
-          ))}
+          {[...risks].reverse().map((r) => {
+            const band = getRiskBand(r.likelihood, r.severity)
+            return (
+              <div className="mobile-doc-risk-card" key={r.id}>
+                <p className="mobile-doc-section-body">{r.risk}</p>
+                <p className="mobile-doc-risk-meta">
+                  <span className={`mobile-doc-badge ${band ? BAND_BADGE_CLASS[band] : 'pending'}`}>
+                    {band || 'Needs scoring'}
+                  </span>
+                  {r.task_id && taskTitleById.has(r.task_id) ? ` · ${taskTitleById.get(r.task_id)}` : ''}
+                </p>
+              </div>
+            )
+          })}
         </div>
       )}
     </div>

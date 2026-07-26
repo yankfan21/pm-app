@@ -16,6 +16,7 @@ import {
 import { supabase } from './supabaseClient'
 import { HEALTH_LABELS, HEALTH_COLOR_CLASS, formatEvalMetric } from './projectEvalHealth'
 import { visibleSides } from './projectSections'
+import { getRiskBand } from './riskScale'
 
 const CHART_TOOLTIP_STYLE = {
   background: 'var(--surface-1-solid)',
@@ -69,10 +70,10 @@ function useCriticalIssues(project, tasks, phases, riskLog) {
       .filter((t) => t.backlog_status == null && t.status === 'delayed')
       .forEach((t) => issues.push({ key: `task-${t.id}`, type: 'Delayed Task', label: t.title }))
 
-    // High-impact risks - mirrors project-eval/index.ts's riskStats()
-    // filter (`r.impact === 'High'`).
+    // High/Critical-band risks - mirrors project-eval/index.ts's
+    // riskStats() band filter.
     ;(riskLog?.risks || [])
-      .filter((r) => r.impact === 'High')
+      .filter((r) => ['High', 'Critical'].includes(getRiskBand(r.likelihood, r.severity)))
       .forEach((r, i) => issues.push({ key: `risk-${r.id ?? i}`, type: 'High Risk', label: r.risk || `Risk ${i + 1}` }))
 
     // Overdue phases - Waterfall/Hybrid only, matching visibleSides() in
@@ -262,21 +263,28 @@ function ProgressRingCard({ project, evaluation, loading }) {
   )
 }
 
-const SEVERITY_LEVELS = ['High', 'Medium', 'Low']
+const SEVERITY_LEVELS = ['Critical', 'High', 'Medium', 'Low']
 // Reuse doc-status-badge's existing color modifiers instead of inventing a
 // new vocabulary - critical/partial/done are the same red/amber/green used
-// for Project Status and the section header badge above.
+// for Project Status and the section header badge above. 'severe' is the
+// one addition, an inverted-danger variant for the new Critical band (see
+// App.css) so it reads as a step up from High's plain danger red.
 const SEVERITY_BADGE_CLASS = {
+  Critical: 'severe',
   High: 'critical',
   Medium: 'partial',
   Low: 'done',
 }
 
+// Unscored risks (band === null) aren't counted here - this card is a
+// scored-risk summary, not a full risk enumeration. RiskLogView.jsx's own
+// "Needs scoring" badge is where unscored risks get surfaced.
 function useRiskSeverityCounts(riskLog) {
   return useMemo(() => {
-    const counts = { High: 0, Medium: 0, Low: 0 }
+    const counts = { Critical: 0, High: 0, Medium: 0, Low: 0 }
     ;(riskLog?.risks || []).forEach((r) => {
-      if (r.impact in counts) counts[r.impact] += 1
+      const band = getRiskBand(r.likelihood, r.severity)
+      if (band in counts) counts[band] += 1
     })
     return SEVERITY_LEVELS.map((level) => ({ level, count: counts[level] }))
   }, [riskLog])

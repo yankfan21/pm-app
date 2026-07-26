@@ -250,8 +250,8 @@ function newRiskLogRow() {
   return {
     id: crypto.randomUUID(),
     risk: '',
-    likelihood: 'Medium',
-    impact: 'Medium',
+    likelihood: null,
+    severity: null,
     mitigation: '',
     owner: '',
   }

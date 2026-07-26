@@ -114,7 +114,7 @@ function riskLogText(riskLog) {
   return risks
     .map(
       (r, i) =>
-        `${i + 1}. ${r.risk} | Likelihood: ${r.likelihood} | Impact: ${r.impact} | Mitigation: ${r.mitigation || "(none)"} | Owner: ${r.owner || "(unassigned)"}`
+        `${i + 1}. ${r.risk} | Likelihood: ${r.likelihood ?? "unscored"} | Severity: ${r.severity ?? "unscored"} | Mitigation: ${r.mitigation || "(none)"} | Owner: ${r.owner || "(unassigned)"}`
     )
     .join("\n")
 }

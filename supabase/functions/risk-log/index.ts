@@ -134,13 +134,17 @@ function risksText(risks) {
   return risks
     .map(
       (r, i) =>
-        `${i + 1}. ${r.risk} | Likelihood: ${r.likelihood} | Impact: ${r.impact} | Mitigation: ${r.mitigation || "(none)"} | Owner: ${r.owner || "(unassigned)"}`
+        `${i + 1}. ${r.risk} | Likelihood: ${r.likelihood ?? "unscored"} | Severity: ${r.severity ?? "unscored"} | Mitigation: ${r.mitigation || "(none)"} | Owner: ${r.owner || "(unassigned)"}`
     )
     .join("\n")
 }
 
 const RISK_ROW_SHAPE_HINT =
-  '{"risk": "short description of the risk", "likelihood": "Low" | "Medium" | "High", "impact": "Low" | "Medium" | "High", "mitigation": "short mitigation plan", "owner": "role or name responsible, or empty string if unknown"}'
+  '{"risk": "short description of the risk", "likelihood": 1 | 2 | 3 | 4 | 5, "severity": 1 | 2 | 3 | 4 | 5, "mitigation": "short mitigation plan", "owner": "role or name responsible, or empty string if unknown"}'
+
+const RISK_SCALE_GUIDE = `Score each risk on two independent 1-5 scales - pick the single best-fit number for each axis based on the project context, never default to the middle value out of uncertainty:
+Likelihood: 1 Rare, 2 Unlikely, 3 Possible, 4 Likely, 5 Almost Certain
+Severity: 1 Negligible, 2 Minor, 3 Moderate, 4 Major, 5 Critical`
 
 const QUESTION_SHAPE_HINT =
   '{"questions": [{"id": "short_snake_case_id", "text": "question text", "type": "text", "suggested_answer": "a proposed answer the PM can accept, edit, or dismiss, or null if you have no reasonable basis to suggest one"}, {"id": "short_snake_case_id", "text": "question text", "type": "choice", "choices": ["A", "B", "C"], "suggested_answer": "A" }]}'
@@ -162,7 +166,7 @@ Deno.serve(async (req) => {
 
 ${context ? `Already established (do not re-ask about anything covered here):\n${context}` : "No project charter or requirements brief exists yet for this project."}
 
-Generate 3 to 6 short, targeted questions to surface the project's known risks, needed to build a Risk Log capturing each risk's likelihood, impact, mitigation plan, and owner. Skip anything already answered by the project data, charter, or brief above. Favor questions like "what could delay/derail this" or that probe specific risk categories relevant to this kind of project (technical, schedule, resource, budget, external/vendor, compliance) rather than generic filler.
+Generate 3 to 6 short, targeted questions to surface the project's known risks, needed to build a Risk Log capturing each risk's likelihood, severity, mitigation plan, and owner. Skip anything already answered by the project data, charter, or brief above. Favor questions like "what could delay/derail this" or that probe specific risk categories relevant to this kind of project (technical, schedule, resource, budget, external/vendor, compliance) rather than generic filler.
 
 For each question:
 - Decide if it's better answered with free text or a small set of button choices (max 4 choices, only for genuinely categorical answers).
@@ -191,7 +195,9 @@ ${context ? `${context}\n` : ""}
 Discovery Q&A about risks:
 ${qaText || "(none provided)"}
 
-Write a Risk Log: a list of concrete risks for this project, each with a likelihood, impact, short mitigation plan, and owner (a role or name if implied by context, otherwise an empty string). Base it on the project data, charter/brief (if provided), and Q&A above; do not invent specifics that weren't provided or implied. Keep each field short (risk and mitigation are one sentence each).
+Write a Risk Log: a list of concrete risks for this project, each with a likelihood score, severity score, short mitigation plan, and owner (a role or name if implied by context, otherwise an empty string). Base it on the project data, charter/brief (if provided), and Q&A above; do not invent specifics that weren't provided or implied. Keep each text field short (risk and mitigation are one sentence each).
+
+${RISK_SCALE_GUIDE}
 
 Return ONLY this JSON shape:
 {"risks": [${RISK_ROW_SHAPE_HINT}]}`
@@ -214,6 +220,8 @@ Risks already logged (do not repeat these):
 ${risksText(risks)}
 
 Propose 1 to 4 additional risks for this project that are NOT already covered above. Only propose risks that are plausibly relevant given the project context - do not pad with generic boilerplate risks that don't fit this specific project. If you can't identify any genuinely new, relevant risks, return an empty array.
+
+${RISK_SCALE_GUIDE}
 
 Return ONLY this JSON shape:
 {"risks": [${RISK_ROW_SHAPE_HINT}]}`

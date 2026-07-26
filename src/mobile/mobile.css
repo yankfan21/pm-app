@@ -809,6 +809,7 @@
 .mobile-doc-badge.done { background: #d1fae5; color: #065f46; }
 .mobile-doc-badge.partial { background: #fef3c7; color: #92400e; }
 .mobile-doc-badge.critical { background: #fee2e2; color: #991b1b; }
+.mobile-doc-badge.severe { background: #7f1d1d; color: #fee2e2; }
 
 .mobile-doc-chevron {
   flex-shrink: 0;

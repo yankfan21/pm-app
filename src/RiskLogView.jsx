@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { supabase } from './supabaseClient'
 import { exportRiskLogDocx, exportRiskLogPdf } from './riskLogExport'
 import LoadingButton from './LoadingButton'
+import { LIKELIHOOD_SCALE, SEVERITY_SCALE, getRiskScore, getRiskBand, scaleLabel } from './riskScale'
 
 // Same manual-height-tracking approach as CharterView.jsx's autoResize -
 // a plain <textarea rows={2}> clips or scrolls anything past its fixed
@@ -15,15 +16,14 @@ function autoResize(el) {
   el.style.height = `${el.scrollHeight}px`
 }
 
-const LEVELS = ['Low', 'Medium', 'High']
-const SEVERITY_FILTERS = ['All', 'High', 'Medium', 'Low']
+const SEVERITY_FILTERS = ['All', 'Critical', 'High', 'Medium', 'Low']
 
 function newRow() {
   return {
     id: crypto.randomUUID(),
     risk: '',
-    likelihood: 'Medium',
-    impact: 'Medium',
+    likelihood: null,
+    severity: null,
     mitigation: '',
     owner: '',
   }
@@ -59,7 +59,10 @@ function RiskLogView({
     if (SEVERITY_FILTERS.includes(initialSeverityFilter)) setSeverityFilter(initialSeverityFilter)
   }, [initialSeverityFilter])
 
-  const displayRows = severityFilter === 'All' ? rows : rows.filter((r) => r.impact === severityFilter)
+  const displayRows =
+    severityFilter === 'All'
+      ? rows
+      : rows.filter((r) => getRiskBand(r.likelihood, r.severity) === severityFilter)
 
   function handleFilterChange(level) {
     setSeverityFilter(level)
@@ -214,14 +217,19 @@ function RiskLogView({
             <tr>
               <th>Risk</th>
               <th>Likelihood</th>
-              <th>Impact</th>
+              <th>Severity</th>
+              <th>Score</th>
+              <th>Band</th>
               <th>Mitigation</th>
               <th>Owner</th>
               <th aria-hidden="true"></th>
             </tr>
           </thead>
           <tbody>
-            {displayRows.map((row) => (
+            {displayRows.map((row) => {
+              const score = getRiskScore(row.likelihood, row.severity)
+              const band = getRiskBand(row.likelihood, row.severity)
+              return (
               <tr key={row.id}>
                 <td>
                   <textarea
@@ -239,31 +247,43 @@ function RiskLogView({
                 </td>
                 <td>
                   <select
-                    className={`risk-level-select risk-level-${row.likelihood.toLowerCase()}`}
-                    value={row.likelihood}
+                    className="risk-level-select"
+                    value={row.likelihood ?? ''}
                     disabled={!canEdit}
-                    onChange={(e) => handleSelectChange(row.id, 'likelihood', e.target.value)}
+                    onChange={(e) =>
+                      handleSelectChange(row.id, 'likelihood', e.target.value ? Number(e.target.value) : null)
+                    }
                   >
-                    {LEVELS.map((level) => (
-                      <option key={level} value={level} className={`risk-level-option ${level.toLowerCase()}`}>
-                        {level}
+                    <option value="">Unscored</option>
+                    {LIKELIHOOD_SCALE.map((s) => (
+                      <option key={s.value} value={s.value}>
+                        {s.value} - {s.label}
                       </option>
                     ))}
                   </select>
                 </td>
                 <td>
                   <select
-                    className={`risk-level-select risk-level-${row.impact.toLowerCase()}`}
-                    value={row.impact}
+                    className="risk-level-select"
+                    value={row.severity ?? ''}
                     disabled={!canEdit}
-                    onChange={(e) => handleSelectChange(row.id, 'impact', e.target.value)}
+                    onChange={(e) =>
+                      handleSelectChange(row.id, 'severity', e.target.value ? Number(e.target.value) : null)
+                    }
                   >
-                    {LEVELS.map((level) => (
-                      <option key={level} value={level} className={`risk-level-option ${level.toLowerCase()}`}>
-                        {level}
+                    <option value="">Unscored</option>
+                    {SEVERITY_SCALE.map((s) => (
+                      <option key={s.value} value={s.value}>
+                        {s.value} - {s.label}
                       </option>
                     ))}
                   </select>
+                </td>
+                <td>{score ?? '—'}</td>
+                <td>
+                  <span className={`risk-level-badge risk-level-${(band || 'unscored').toLowerCase()}`}>
+                    {band || 'Needs scoring'}
+                  </span>
                 </td>
                 <td>
                   <textarea
@@ -302,10 +322,11 @@ function RiskLogView({
                   )}
                 </td>
               </tr>
-            ))}
+              )
+            })}
             {displayRows.length === 0 && (
               <tr>
-                <td colSpan={6} className="empty">
+                <td colSpan={8} className="empty">
                   {rows.length === 0 ? 'No risks logged yet' : `No ${severityFilter} risks logged`}
                 </td>
               </tr>
@@ -336,7 +357,10 @@ function RiskLogView({
                   <div className="risk-suggestion-body">
                     <p className="risk-suggestion-title">{s.risk}</p>
                     <p className="risk-suggestion-meta">
-                      Likelihood: {s.likelihood} &middot; Impact: {s.impact}
+                      Likelihood: {scaleLabel(LIKELIHOOD_SCALE, s.likelihood)} &middot; Severity:{' '}
+                      {scaleLabel(SEVERITY_SCALE, s.severity)} &middot; Score:{' '}
+                      {getRiskScore(s.likelihood, s.severity) ?? '—'} (
+                      {getRiskBand(s.likelihood, s.severity) || 'Needs scoring'})
                       {s.owner ? ` · Owner: ${s.owner}` : ''}
                     </p>
                     {s.mitigation && <p className="risk-suggestion-mitigation">{s.mitigation}</p>}

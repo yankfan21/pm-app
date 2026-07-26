@@ -1643,6 +1643,14 @@
   color: var(--badge-danger-text);
 }
 
+/* Critical risk band (score 15-25) - one step up from .critical/danger.
+   Inverts the same two danger tokens rather than inventing a new color, so
+   it reads as "more" than plain High without a new theme variable. */
+.doc-status-badge.severe {
+  background: var(--badge-danger-text);
+  color: var(--badge-danger-bg);
+}
+
 .toggle-header-with-badge {
   justify-content: space-between;
 }
@@ -3465,7 +3473,7 @@
 
 .risk-log-table {
   width: 100%;
-  min-width: 640px;
+  min-width: 820px;
   border-collapse: collapse;
   font-size: 14px;
 }
@@ -3681,14 +3689,29 @@ textarea.risk-cell-input {
   margin-top: 16px;
 }
 
+/* Plain 1-5 Likelihood/Severity dropdowns - no longer color-coded per value
+   (that's the computed Band badge's job below), just a normal input look. */
 .risk-level-select {
   padding: 5px 8px;
-  border: 1px solid transparent;
-  border-radius: 999px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
   font: inherit;
+  font-size: 13px;
+  background: var(--bg);
+  color: var(--text-h);
+  cursor: pointer;
+}
+
+/* Computed Band badge (Score column's neighbor) - Low/Medium/High/Critical
+   from getRiskBand(), plus an "unscored" state for risks still missing a
+   likelihood or severity value ("Needs scoring"). */
+.risk-level-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
   font-size: 12px;
   font-weight: 600;
-  cursor: pointer;
+  white-space: nowrap;
 }
 
 .risk-level-low {
@@ -3706,23 +3729,15 @@ textarea.risk-cell-input {
   color: var(--badge-danger-text);
 }
 
-/* Opaque pairs for native <option> rows, same reasoning as
-   .board-status-option - the translucent --badge-*-bg tints above read
-   washed-out (light/cream) when the browser paints them as an opaque
-   native popup row instead of over the card surface they were tuned for. */
-.risk-level-option.low {
-  background: var(--option-done-bg);
-  color: var(--option-done-text);
+/* Critical band - same inverted-danger treatment as .doc-status-badge.severe. */
+.risk-level-critical {
+  background: var(--badge-danger-text);
+  color: var(--badge-danger-bg);
 }
 
-.risk-level-option.medium {
-  background: var(--option-partial-bg);
-  color: var(--option-partial-text);
-}
-
-.risk-level-option.high {
-  background: var(--option-danger-bg);
-  color: var(--option-danger-text);
+.risk-level-unscored {
+  background: var(--pill-neutral-bg);
+  color: var(--pill-neutral-text);
 }
 
 .risk-delete-btn {

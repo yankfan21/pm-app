@@ -145,7 +145,7 @@ function risksText(risks) {
   return risks
     .map(
       (r, i) =>
-        `${i + 1}. ${r.risk} | Likelihood: ${r.likelihood} | Impact: ${r.impact} | Mitigation: ${r.mitigation || "(none)"}`
+        `${i + 1}. ${r.risk} | Likelihood: ${r.likelihood ?? "unscored"} | Severity: ${r.severity ?? "unscored"} | Mitigation: ${r.mitigation || "(none)"}`
     )
     .join("\n")
 }

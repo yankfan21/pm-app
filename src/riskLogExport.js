@@ -1,14 +1,28 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { Document, HeadingLevel, Paragraph, Packer, Table, TableCell, TableRow, TextRun, WidthType } from 'docx'
+import { LIKELIHOOD_SCALE, SEVERITY_SCALE, getRiskScore, getRiskBand, scaleLabel } from './riskScale'
 
 const COLUMNS = [
   { key: 'risk', label: 'Risk' },
-  { key: 'likelihood', label: 'Likelihood' },
-  { key: 'impact', label: 'Impact' },
+  { key: 'likelihood', label: 'Likelihood', format: (r) => scaleLabel(LIKELIHOOD_SCALE, r.likelihood) },
+  { key: 'severity', label: 'Severity', format: (r) => scaleLabel(SEVERITY_SCALE, r.severity) },
+  {
+    key: 'score',
+    label: 'Score / Band',
+    format: (r) => {
+      const score = getRiskScore(r.likelihood, r.severity)
+      const band = getRiskBand(r.likelihood, r.severity)
+      return score == null ? 'Needs scoring' : `${score} (${band})`
+    },
+  },
   { key: 'mitigation', label: 'Mitigation' },
   { key: 'owner', label: 'Owner' },
 ]
+
+function cellText(row, column) {
+  return column.format ? column.format(row) : row[column.key]
+}
 
 function sanitizeFilename(name) {
   const cleaned = name.trim().replace(/[^a-zA-Z0-9-_ ]/g, '').replace(/\s+/g, '-')
@@ -44,15 +58,16 @@ export function exportRiskLogPdf(project, risks) {
     startY: 84,
     margin: { left: marginX, right: marginX },
     head: [COLUMNS.map((c) => c.label)],
-    body: risks.map((r) => COLUMNS.map((c) => r[c.key] || String.fromCharCode(8212))),
+    body: risks.map((r) => COLUMNS.map((c) => cellText(r, c) || String.fromCharCode(8212))),
     styles: { fontSize: 9, cellPadding: 6, valign: 'top' },
     headStyles: { fillColor: [38, 33, 92], textColor: 255 },
     columnStyles: {
-      0: { cellWidth: 130 },
-      1: { cellWidth: 60 },
-      2: { cellWidth: 55 },
-      3: { cellWidth: 140 },
-      4: { cellWidth: 75 },
+      0: { cellWidth: 120 },
+      1: { cellWidth: 65 },
+      2: { cellWidth: 60 },
+      3: { cellWidth: 70 },
+      4: { cellWidth: 110 },
+      5: { cellWidth: 65 },
     },
   })
 
@@ -81,7 +96,7 @@ export async function exportRiskLogDocx(project, risks) {
         children: COLUMNS.map(
           (c) =>
             new TableCell({
-              children: [new Paragraph(r[c.key] || '')],
+              children: [new Paragraph(cellText(r, c) || '')],
             })
         ),
       })

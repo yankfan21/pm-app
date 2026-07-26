@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useOutletContext, useParams } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { HEALTH_LABELS, formatEvalMetric } from '../projectEvalHealth'
+import { getRiskBand } from '../riskScale'
 
 function formatDateTime(iso) {
   return new Date(iso).toLocaleString(undefined, {
@@ -23,8 +24,9 @@ function isPhaseOverdue(phase, waterfallTasks, todayStr) {
   return linked.some((t) => !t.completed)
 }
 
-// Mirrors KeyMetricsDashboard.jsx's useCriticalIssues - same three checks,
-// same methodology gate on overdue phases (Agile skips it).
+// Mirrors KeyMetricsDashboard.jsx's useCriticalIssues - same three checks
+// (including the High/Critical-band risk filter), same methodology gate on
+// overdue phases (Agile skips it).
 function useCriticalIssues(project, tasks, phases, risks) {
   return useMemo(() => {
     const todayStr = new Date().toISOString().slice(0, 10)
@@ -35,7 +37,7 @@ function useCriticalIssues(project, tasks, phases, risks) {
       .forEach((t) => issues.push({ key: `task-${t.id}`, type: 'Delayed Task', label: t.title }))
 
     ;(risks || [])
-      .filter((r) => r.impact === 'High')
+      .filter((r) => ['High', 'Critical'].includes(getRiskBand(r.likelihood, r.severity)))
       .forEach((r, i) => issues.push({ key: `risk-${r.id ?? i}`, type: 'High Risk', label: r.risk || `Risk ${i + 1}` }))
 
     if (project.methodology !== 'agile') {

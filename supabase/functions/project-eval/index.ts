@@ -156,6 +156,18 @@ function charterText(charter) {
     .join("\n")
 }
 
+// Mirrors src/riskScale.js's getRiskBand (1-4 Low, 5-9 Medium, 10-14 High,
+// 15-25 Critical) - duplicated rather than imported because this runs as a
+// Deno Edge Function deployed separately from the Vite build.
+function riskBand(likelihood, severity) {
+  if (!likelihood || !severity) return null
+  const score = likelihood * severity
+  if (score <= 4) return "Low"
+  if (score <= 9) return "Medium"
+  if (score <= 14) return "High"
+  return "Critical"
+}
+
 // There's no per-risk resolved flag or timestamp in the risk log schema -
 // every risk currently in the log is "open" by definition (a risk the PM
 // considers resolved gets deleted from the log), and the only age signal
@@ -164,22 +176,23 @@ function charterText(charter) {
 // per-risk date.
 function riskStats(riskLog, today) {
   const risks = riskLog?.risks || []
-  const high = risks.filter((r) => r.impact === "High")
+  const high = risks.filter((r) => ["High", "Critical"].includes(riskBand(r.likelihood, r.severity)))
   const logAgeDays = riskLog?.created_at ? daysBetween(riskLog.created_at.slice(0, 10), today) : null
   return { risks, high, logAgeDays }
 }
 
 function riskStatsText(stats) {
   if (stats.risks.length === 0) return null
-  const lines = stats.risks.map(
-    (r, i) =>
-      `${i + 1}. ${r.risk} | Likelihood: ${r.likelihood} | Impact: ${r.impact} | Mitigation: ${r.mitigation || "(none)"}`
-  )
+  const lines = stats.risks.map((r, i) => {
+    const score = r.likelihood && r.severity ? r.likelihood * r.severity : null
+    const band = riskBand(r.likelihood, r.severity)
+    return `${i + 1}. ${r.risk} | Likelihood: ${r.likelihood ?? "unscored"} | Severity: ${r.severity ?? "unscored"} | Score: ${score ?? "n/a"}${band ? ` (${band})` : ""} | Mitigation: ${r.mitigation || "(none)"}`
+  })
   const ageNote =
     stats.logAgeDays != null
       ? `This risk log has been active for ${stats.logAgeDays} day(s) (no per-risk resolution tracking exists, so treat all listed risks as currently open).`
       : ""
-  return `${lines.join("\n")}\n\n${stats.high.length} of these are High-impact. ${ageNote}`
+  return `${lines.join("\n")}\n\n${stats.high.length} of these are High or Critical band. ${ageNote}`
 }
 
 function budgetStats(budget) {
@@ -669,7 +682,7 @@ ${context || "No charter, risk log, budget tracker, phases, milestones, tasks, s
 Perform a project health check:
 1. Decide an overall health_status: exactly one of "on_track", "at_risk", or "off_track".
 2. Write a one-paragraph rationale that explains the reasoning by connecting specific data points across categories appropriate to this project's methodology (see the guidance above) - e.g. don't just say "budget is 80% spent", relate it to something else like phase/schedule pace, risk exposure, or velocity trend. Never simply restate a single number in isolation; every claim should connect at least two facts.
-3. Write 2 to 5 recommended actions - specific and concrete, naming the actual phase/task/Epic/sprint/risk/category involved (e.g. "Phase \\"Execution\\" is 12 day(s) overdue with 3 incomplete linked tasks" or "Epic \\"Payments\\" still has 6 of 9 linked items incomplete" or "Address the N High-impact risks still open"), not generic advice.
+3. Write 2 to 5 recommended actions - specific and concrete, naming the actual phase/task/Epic/sprint/risk/category involved (e.g. "Phase \\"Execution\\" is 12 day(s) overdue with 3 incomplete linked tasks" or "Epic \\"Payments\\" still has 6 of 9 linked items incomplete" or "Address the N High/Critical-band risks still open"), not generic advice.
 
 Ground everything in the facts given above; never invent numbers, phase/task/Epic/sprint names, or risks that weren't provided.
 
