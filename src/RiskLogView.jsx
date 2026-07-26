@@ -16,6 +16,7 @@ function autoResize(el) {
 }
 
 const LEVELS = ['Low', 'Medium', 'High']
+const SEVERITY_FILTERS = ['All', 'High', 'Medium', 'Low']
 
 function newRow() {
   return {
@@ -32,12 +33,38 @@ function withIds(risks) {
   return (risks || []).map((r) => (r.id ? r : { ...r, id: crypto.randomUUID() }))
 }
 
-function RiskLogView({ project, charter, brief, riskLog, canEdit, onUpdate }) {
+function RiskLogView({
+  project,
+  charter,
+  brief,
+  riskLog,
+  canEdit,
+  onUpdate,
+  initialSeverityFilter,
+  onSeverityFilterChange,
+}) {
   const [rows, setRows] = useState(() => withIds(riskLog.risks))
   const [error, setError] = useState(null)
   const [suggestions, setSuggestions] = useState(null)
   const [suggestLoading, setSuggestLoading] = useState(false)
+  const [severityFilter, setSeverityFilter] = useState(
+    SEVERITY_FILTERS.includes(initialSeverityFilter) ? initialSeverityFilter : 'All'
+  )
   const textareaRefs = useRef({})
+
+  // Re-sync when arriving with a different severity badge (e.g. clicking
+  // "Medium" from Key Metrics while already on this page) - the URL param
+  // changes but this component doesn't remount.
+  useEffect(() => {
+    if (SEVERITY_FILTERS.includes(initialSeverityFilter)) setSeverityFilter(initialSeverityFilter)
+  }, [initialSeverityFilter])
+
+  const displayRows = severityFilter === 'All' ? rows : rows.filter((r) => r.impact === severityFilter)
+
+  function handleFilterChange(level) {
+    setSeverityFilter(level)
+    onSeverityFilterChange?.(level)
+  }
 
   // Covers both the initial mount (so an existing long entry isn't clipped
   // before its first keystroke) and any row added/removed/reordered - the
@@ -168,6 +195,19 @@ function RiskLogView({ project, charter, brief, riskLog, canEdit, onUpdate }) {
 
       {error && <p className="error">{error}</p>}
 
+      <div className="filter-tabs risk-log-severity-filter">
+        {SEVERITY_FILTERS.map((level) => (
+          <button
+            key={level}
+            type="button"
+            className={`filter-tab ${severityFilter === level ? 'selected' : ''}`}
+            onClick={() => handleFilterChange(level)}
+          >
+            {level}
+          </button>
+        ))}
+      </div>
+
       <div className="risk-table-wrap">
         <table className="risk-log-table risk-log-main-table">
           <thead>
@@ -181,7 +221,7 @@ function RiskLogView({ project, charter, brief, riskLog, canEdit, onUpdate }) {
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
+            {displayRows.map((row) => (
               <tr key={row.id}>
                 <td>
                   <textarea
@@ -263,10 +303,10 @@ function RiskLogView({ project, charter, brief, riskLog, canEdit, onUpdate }) {
                 </td>
               </tr>
             ))}
-            {rows.length === 0 && (
+            {displayRows.length === 0 && (
               <tr>
                 <td colSpan={6} className="empty">
-                  No risks logged yet
+                  {rows.length === 0 ? 'No risks logged yet' : `No ${severityFilter} risks logged`}
                 </td>
               </tr>
             )}

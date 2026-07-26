@@ -2746,6 +2746,17 @@
   gap: 10px;
 }
 
+.key-metrics-severity-badge-link {
+  text-decoration: none;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+.key-metrics-severity-badge-link:hover,
+.key-metrics-severity-badge-link:focus-visible {
+  filter: brightness(1.15);
+}
+
 .key-metrics-as-of {
   margin: 0;
   color: var(--text);
@@ -3391,6 +3402,11 @@
   justify-content: flex-end;
   gap: 8px;
   margin-top: 8px;
+}
+
+.risk-log-severity-filter {
+  margin-top: 12px;
+  margin-bottom: 0;
 }
 
 .risk-table-wrap {

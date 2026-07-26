@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useOutletContext } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useOutletContext, useSearchParams } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import { DOCUMENT_TYPES, groupDocumentTypes } from './documentTypes'
 
@@ -42,6 +42,29 @@ function DocumentsRoute() {
   const [expandedSection, setExpandedSection] = useState(null)
   const [activeFlowKey, setActiveFlowKey] = useState(null)
   const [expandedGroup, setExpandedGroup] = useState(null)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const riskFilter = searchParams.get('riskFilter')
+
+  // Arrival from a Key Metrics Dashboard severity badge (see
+  // KeyMetricsDashboard.jsx's RiskSeverityCard) - land straight on the
+  // already-expanded Risk Log row instead of making the PM click it open.
+  useEffect(() => {
+    if (riskFilter) setExpandedSection('risk_log')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [riskFilter])
+
+  // Keeps the URL in sync with whatever severity RiskLogView is currently
+  // showing - both explicit "Clear" (back to All) and switching to a
+  // different severity chip while already on this page - so refresh/back
+  // don't leave a stale filter behind.
+  function setRiskFilter(level) {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      if (level === 'All') next.delete('riskFilter')
+      else next.set('riskFilter', level)
+      return next
+    })
+  }
 
   function toggleSection(key) {
     setExpandedSection((prev) => (prev === key ? null : key))
@@ -185,6 +208,9 @@ function DocumentsRoute() {
                 {...docType.context(docs, tasks, { sprints, retros, milestones, phases, taskDependencies })}
                 canEdit={canEdit}
                 onUpdate={(updatedRow) => handleDocUpdated(docType, updatedRow)}
+                {...(docType.key === 'risk_log'
+                  ? { initialSeverityFilter: riskFilter, onSeverityFilterChange: setRiskFilter }
+                  : {})}
               />
             )}
             {isFlowOpen && canEdit && (

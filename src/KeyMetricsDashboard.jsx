@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   Bar,
   BarChart,
@@ -281,7 +282,12 @@ function useRiskSeverityCounts(riskLog) {
   }, [riskLog])
 }
 
-function RiskSeverityCard({ riskLog }) {
+// Each badge links to Documents > Risk Log pre-filtered to that severity
+// (DocumentsRoute.jsx reads the riskFilter param and expands the Risk Log
+// row; RiskLogView.jsx applies the actual filter). Still a plain count
+// badge visually - .key-metrics-severity-badge-link just adds the
+// pointer/hover affordance doc-status-badge doesn't have on its own.
+function RiskSeverityCard({ project, riskLog }) {
   const data = useRiskSeverityCounts(riskLog)
   const total = data.reduce((sum, d) => sum + d.count, 0)
 
@@ -292,9 +298,13 @@ function RiskSeverityCard({ riskLog }) {
   return (
     <div className="key-metrics-severity-badges">
       {data.map((d) => (
-        <span key={d.level} className={`doc-status-badge ${SEVERITY_BADGE_CLASS[d.level]}`}>
+        <Link
+          key={d.level}
+          to={`/projects/${project.id}/documents?riskFilter=${d.level}`}
+          className={`doc-status-badge key-metrics-severity-badge-link ${SEVERITY_BADGE_CLASS[d.level]}`}
+        >
           {d.count} {d.level}
-        </span>
+        </Link>
       ))}
     </div>
   )
@@ -458,7 +468,7 @@ function KeyMetricsDashboard({ project, tasks, phases, riskLog, expanded }) {
 
           <div className="key-metrics-panel">
             <h3 className="key-metrics-panel-heading">Risk Severity</h3>
-            <RiskSeverityCard riskLog={riskLog} />
+            <RiskSeverityCard project={project} riskLog={riskLog} />
           </div>
         </div>
       )}
