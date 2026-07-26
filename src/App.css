@@ -3513,101 +3513,167 @@
   padding: 24px 12px;
 }
 
-/* Risk Log's own table, not the shared .risk-log-table base (also used by
-   List/Team/Budget/Sprint Retro's candidate table, each with different
-   columns - a column-width rule here would misapply to all of them).
-   Same root cause as the earlier Backlog title bug: plain table-layout:auto
-   let Likelihood/Severity/Owner's short <select>/<input> content claim more
-   width than they need, leaving Risk/Mitigation's <textarea> columns
-   squeezed - narrow enough that even with the auto-resize fix in
-   RiskLogView.jsx, long entries had nowhere to wrap into. table-layout:
-   fixed + explicit percentages give Risk/Mitigation the majority share.
-   8 columns since the 5x5 matrix rollout added Score/Band between
-   Severity and Mitigation - these nth-child rules were left sized for the
-   old 6-column (Risk/Likelihood/Impact/Mitigation/Owner/delete) layout,
-   which silently handed Score the old Mitigation column's 30% and Band the
-   old Owner column's 15%, while real Mitigation fell into the old delete
-   button's unstyled 5% - that was the overflow/cutoff bug. */
-.risk-log-main-table {
-  table-layout: fixed;
+/* Risk Log's own collapsed-row/expand-on-click list - replaced the old
+   fixed-column <table> entirely (RiskLogView.jsx). That table spent several
+   rounds fighting truncation/overflow because 8 columns of very different
+   natural width (a sentence-length Risk field vs a 1-2 digit Score) don't
+   fit one fixed-percentage layout. A card list has no such constraint -
+   collapsed rows show a single truncated line (same convention as
+   .group-compact-row below), and expanded rows get a full-width form with
+   nothing needing to be squeezed into a column.
+   Same collapsed-row/expand-on-click convention as Backlog/Tasks-and-
+   Milestones' group collapsing (.collapsible-toggle/.chevron), just at
+   per-risk granularity since risks have no natural grouping. */
+.risk-list {
+  list-style: none;
+  margin: 24px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-/* table-layout:fixed only governs each column's layout width - a <td> is
-   still overflow:visible by default, so anything that ends up even
-   slightly wider than its cell (rounding, a long unbroken value, a future
-   regression) paints over the next column instead of being contained.
-   Belt-and-suspenders on top of the column widths/risk-owner-input fix
-   below, so the delete button can never again be overlapped by Owner
-   (or any other neighboring column) regardless of cause. */
-.risk-log-main-table td {
+.risk-list li.empty {
+  text-align: center;
+  color: var(--text);
+  padding: 24px 12px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+}
+
+.risk-row {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.risk-row-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.risk-row-toggle {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  margin: 0;
+  border-radius: 8px;
+}
+
+.risk-row-title {
+  flex: 1 1 auto;
+  min-width: 0;
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.risk-log-main-table th:nth-child(1),
-.risk-log-main-table td:nth-child(1) {
-  width: 26%;
+.risk-row-expanded .risk-row-title {
+  font-weight: 500;
 }
 
-.risk-log-main-table th:nth-child(2),
-.risk-log-main-table td:nth-child(2) {
-  width: 10%;
+.risk-row-band {
+  flex-shrink: 0;
 }
 
-/* Widened 10% -> 14% - "1 - Negligible" (the longest Severity label) was
-   getting cut off to "1 - Ne...". Paid for by Score (5% -> 3%, a bare 1-2
-   digit number needs little room) and Owner (10% -> 8%, now that Owner
-   wraps across lines instead of needing to fit on one - see
-   .risk-owner-input). Likelihood's own longest label ("5 - Almost
-   Certain") is actually longer than Severity's but wasn't reported as
-   truncated, so left at 10% per the scope of this fix - may need the same
-   treatment later if it comes up. */
-.risk-log-main-table th:nth-child(3),
-.risk-log-main-table td:nth-child(3) {
-  width: 14%;
+.risk-row-score {
+  flex-shrink: 0;
+  width: 24px;
+  text-align: center;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
 }
 
-.risk-log-main-table th:nth-child(4),
-.risk-log-main-table td:nth-child(4) {
-  width: 3%;
+.risk-row-owner {
+  flex-shrink: 0;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+  font-size: 13px;
 }
 
-.risk-log-main-table th:nth-child(5),
-.risk-log-main-table td:nth-child(5) {
-  width: 9%;
+/* Delete stays a sibling of .risk-row-toggle, not nested inside it - a
+   <button> can't contain another interactive <button>. stopPropagation on
+   its onClick (RiskLogView.jsx) keeps a click here from also toggling the
+   row open/closed. */
+.risk-row-header .risk-delete-btn {
+  flex-shrink: 0;
+  margin-right: 4px;
 }
 
-.risk-log-main-table th:nth-child(6),
-.risk-log-main-table td:nth-child(6) {
-  width: 26%;
+.risk-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px 12px 12px;
 }
 
-.risk-log-main-table th:nth-child(7),
-.risk-log-main-table td:nth-child(7) {
-  width: 8%;
+.risk-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.risk-log-main-table th:nth-child(8),
-.risk-log-main-table td:nth-child(8) {
-  width: 4%;
+.risk-field-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--text);
 }
 
-/* Narrow fixed-vocabulary columns (Likelihood/Severity selects, Score
-   number, Band badge, delete button) don't need the table's default
-   8px horizontal cell padding - reclaiming a few px here (rather than
-   just shrinking min-width further) is what let Risk/Mitigation keep
-   26% instead of dropping back toward the old 24%. */
-.risk-log-main-table td:nth-child(2),
-.risk-log-main-table td:nth-child(3),
-.risk-log-main-table td:nth-child(4),
-.risk-log-main-table td:nth-child(5),
-.risk-log-main-table td:nth-child(8) {
-  padding-left: 4px;
-  padding-right: 4px;
+/* Unlike the old table cells, these fields aren't already delineated by a
+   row/column grid, so the textarea gets its own resting border instead of
+   the transparent-until-hover one .risk-cell-input normally uses. */
+.risk-card-textarea {
+  border-color: var(--border);
 }
 
-/* Issues Log's own table - same table-layout: fixed reasoning as
-   .risk-log-main-table above, sized for its 7 columns (one more than Risk
-   Log's 6: Description, Priority, Owner, Status, Resolution, Date, delete). */
+.risk-score-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* flex-basis 160px is enough for the longest option text in either select
+   ("5 - Almost Certain") to render without truncation - the entire point
+   of moving off the fixed-percentage table columns that kept clipping it. */
+.risk-field-narrow {
+  flex: 1 1 160px;
+  min-width: 140px;
+}
+
+.risk-score-band-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+}
+
+.risk-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.risk-delete-btn-labeled {
+  color: #d1242f;
+  border-color: #d1242f;
+}
+
+.risk-delete-btn-labeled:hover {
+  background: var(--badge-danger-bg);
+}
+
+/* Issues Log's own table - plain table-layout:auto lets short <select>/
+   <input> columns (Priority, Status, Owner) claim more width than they
+   need, squeezing Description's <textarea>. table-layout:fixed + explicit
+   percentages give Description the majority share instead. 7 columns:
+   Description, Priority, Owner, Status, Resolution, Date, delete. (Risk
+   Log itself moved off a fixed-column table entirely in favor of a
+   collapsed-row/expand-on-click list - see .risk-list above.) */
 .issue-log-main-table {
   table-layout: fixed;
 }
@@ -3713,18 +3779,6 @@
 
 textarea.risk-cell-input {
   min-height: 44px;
-}
-
-/* Owner's column is only ~8% of the table's width (see
-   .risk-log-main-table's nth-child(7)) - the shared .risk-cell-input base's
-   120px min-width (sized for Risk/Mitigation's textareas) was forcing
-   Owner's field wider than its own <td>, overflowing into the delete
-   button's column next to it. Same equal-specificity-but-later-in-source
-   override works whether Owner renders as an <input> or (now) a wrapping
-   <textarea> - textarea.risk-cell-input only adds min-height, so it never
-   conflicts with this rule zeroing min-width. */
-.risk-owner-input {
-  min-width: 0;
 }
 
 .risk-cell-input:hover {

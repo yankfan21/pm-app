@@ -6,10 +6,7 @@ import { LIKELIHOOD_SCALE, SEVERITY_SCALE, getRiskScore, getRiskBand, scaleLabel
 
 // Same manual-height-tracking approach as CharterView.jsx's autoResize -
 // a plain <textarea rows={2}> clips or scrolls anything past its fixed
-// 2-row height instead of growing, which combined with a too-narrow column
-// (see .risk-log-main-table below) was the "Risk/Mitigation cut off with no
-// way to see full text" bug: even a wide-enough column doesn't help if a
-// long entry still needs more than 2 rows to display.
+// 2-row height instead of growing.
 function autoResize(el) {
   if (!el) return
   el.style.height = 'auto'
@@ -50,6 +47,16 @@ function RiskLogView({
   const [severityFilter, setSeverityFilter] = useState(
     SEVERITY_FILTERS.includes(initialSeverityFilter) ? initialSeverityFilter : 'All'
   )
+  // Per-row expand state, same collapsed-row/expand-on-click convention as
+  // Backlog/Tasks-and-Milestones' group collapsing (collapseOverrides +
+  // .collapsible-toggle/.chevron in BacklogView.jsx/PlanningTasksRoute.jsx),
+  // just at per-risk granularity instead of per-group - risks have no
+  // natural grouping to collapse by, so each row is its own independently
+  // toggleable unit. A row stays expanded until explicitly collapsed again
+  // (clicking its header, or the delete action) - it does not auto-collapse
+  // on blur/save, matching how those group views never auto-collapse
+  // mid-edit either.
+  const [expandedIds, setExpandedIds] = useState(() => new Set())
   const textareaRefs = useRef({})
 
   // Re-sync when arriving with a different severity badge (e.g. clicking
@@ -69,16 +76,28 @@ function RiskLogView({
     onSeverityFilterChange?.(level)
   }
 
-  // Covers both the initial mount (so an existing long entry isn't clipped
-  // before its first keystroke) and any row added/removed/reordered - the
-  // per-keystroke case is handled directly in each textarea's onChange.
+  function toggleExpanded(id) {
+    setExpandedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  // Only expanded rows render textareas at all (collapsed rows show plain
+  // text), so this only needs to size whichever are currently mounted -
+  // covers both the initial mount of a freshly-expanded row and any
+  // programmatic value change; the per-keystroke case is handled directly
+  // in each textarea's onChange.
   useEffect(() => {
     rows.forEach((r) => {
+      if (!expandedIds.has(r.id)) return
       autoResize(textareaRefs.current[`${r.id}-risk`])
       autoResize(textareaRefs.current[`${r.id}-mitigation`])
       autoResize(textareaRefs.current[`${r.id}-owner`])
     })
-  }, [rows])
+  }, [rows, expandedIds])
 
   async function persist(nextRows) {
     setError(null)
@@ -117,9 +136,14 @@ function RiskLogView({
   }
 
   function addRow() {
-    const next = [...rows, newRow()]
+    const row = newRow()
+    const next = [...rows, row]
     setRows(next)
     persist(next)
+    // Opens already expanded so the PM can fill in Likelihood/Severity/
+    // Mitigation/Owner immediately, rather than having to click it open
+    // right after creating it.
+    setExpandedIds((prev) => new Set(prev).add(row.id))
   }
 
   function deleteRow(id) {
@@ -212,133 +236,171 @@ function RiskLogView({
         ))}
       </div>
 
-      <div className="risk-table-wrap">
-        <table className="risk-log-table risk-log-main-table">
-          <thead>
-            <tr>
-              <th>Risk</th>
-              <th>Likelihood</th>
-              <th>Severity</th>
-              <th>Score</th>
-              <th>Band</th>
-              <th>Mitigation</th>
-              <th>Owner</th>
-              <th aria-hidden="true"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {displayRows.map((row) => {
-              const score = getRiskScore(row.likelihood, row.severity)
-              const band = getRiskBand(row.likelihood, row.severity)
-              return (
-              <tr key={row.id}>
-                <td>
-                  <textarea
-                    ref={(el) => (textareaRefs.current[`${row.id}-risk`] = el)}
-                    className="risk-cell-input"
-                    value={row.risk}
-                    rows={2}
-                    readOnly={!canEdit}
-                    onChange={(e) => {
-                      updateCell(row.id, 'risk', e.target.value)
-                      autoResize(e.target)
-                    }}
-                    onBlur={handleTextBlur}
-                  />
-                </td>
-                <td>
-                  <select
-                    className="risk-level-select"
-                    value={row.likelihood ?? ''}
-                    disabled={!canEdit}
-                    onChange={(e) =>
-                      handleSelectChange(row.id, 'likelihood', e.target.value ? Number(e.target.value) : null)
-                    }
-                  >
-                    <option value="">Unscored</option>
-                    {LIKELIHOOD_SCALE.map((s) => (
-                      <option key={s.value} value={s.value}>
-                        {s.value} - {s.label}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-                <td>
-                  <select
-                    className="risk-level-select"
-                    value={row.severity ?? ''}
-                    disabled={!canEdit}
-                    onChange={(e) =>
-                      handleSelectChange(row.id, 'severity', e.target.value ? Number(e.target.value) : null)
-                    }
-                  >
-                    <option value="">Unscored</option>
-                    {SEVERITY_SCALE.map((s) => (
-                      <option key={s.value} value={s.value}>
-                        {s.value} - {s.label}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-                <td className="risk-score-cell">{score ?? '—'}</td>
-                <td>
-                  <span className={`risk-level-badge risk-level-${(band || 'unscored').toLowerCase()}`}>
-                    {band || 'Needs scoring'}
+      <ul className="risk-list">
+        {displayRows.map((row) => {
+          const score = getRiskScore(row.likelihood, row.severity)
+          const band = getRiskBand(row.likelihood, row.severity)
+          const bandClass = (band || 'unscored').toLowerCase()
+          const isExpanded = expandedIds.has(row.id)
+
+          return (
+            <li className={`risk-row ${isExpanded ? 'risk-row-expanded' : ''}`} key={row.id}>
+              <div className="risk-row-header">
+                <button
+                  type="button"
+                  className="collapsible-toggle risk-row-toggle"
+                  aria-expanded={isExpanded}
+                  onClick={() => toggleExpanded(row.id)}
+                >
+                  <span className={`chevron ${isExpanded ? '' : 'collapsed'}`} aria-hidden="true">
+                    ▾
                   </span>
-                </td>
-                <td>
-                  <textarea
-                    ref={(el) => (textareaRefs.current[`${row.id}-mitigation`] = el)}
-                    className="risk-cell-input"
-                    value={row.mitigation}
-                    rows={2}
-                    readOnly={!canEdit}
-                    onChange={(e) => {
-                      updateCell(row.id, 'mitigation', e.target.value)
-                      autoResize(e.target)
-                    }}
-                    onBlur={handleTextBlur}
-                  />
-                </td>
-                <td>
-                  <textarea
-                    ref={(el) => (textareaRefs.current[`${row.id}-owner`] = el)}
-                    className="risk-cell-input risk-owner-input"
-                    value={row.owner}
-                    rows={2}
-                    readOnly={!canEdit}
-                    onChange={(e) => {
-                      updateCell(row.id, 'owner', e.target.value)
-                      autoResize(e.target)
-                    }}
-                    onBlur={handleTextBlur}
-                  />
-                </td>
-                <td>
-                  {canEdit && (
-                    <button
-                      type="button"
-                      className="risk-delete-btn"
-                      aria-label="Delete risk"
-                      onClick={() => deleteRow(row.id)}
-                    >
-                      &times;
-                    </button>
+                  <span className="risk-row-title">{row.risk || '(untitled risk)'}</span>
+                  {!isExpanded && (
+                    <>
+                      <span className={`risk-level-badge risk-row-band risk-level-${bandClass}`}>
+                        {band || 'Needs scoring'}
+                      </span>
+                      <span className="risk-row-score">{score ?? '—'}</span>
+                      <span className="risk-row-owner">{row.owner || 'Unassigned'}</span>
+                    </>
                   )}
-                </td>
-              </tr>
-              )
-            })}
-            {displayRows.length === 0 && (
-              <tr>
-                <td colSpan={8} className="empty">
-                  {rows.length === 0 ? 'No risks logged yet' : `No ${severityFilter} risks logged`}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                </button>
+                {canEdit && !isExpanded && (
+                  <button
+                    type="button"
+                    className="risk-delete-btn"
+                    aria-label="Delete risk"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      deleteRow(row.id)
+                    }}
+                  >
+                    &times;
+                  </button>
+                )}
+              </div>
+
+              {isExpanded && (
+                <div className="risk-card-body">
+                  <label className="risk-field">
+                    <span className="risk-field-label">Risk</span>
+                    <textarea
+                      ref={(el) => (textareaRefs.current[`${row.id}-risk`] = el)}
+                      className="risk-cell-input risk-card-textarea"
+                      value={row.risk}
+                      rows={2}
+                      readOnly={!canEdit}
+                      onChange={(e) => {
+                        updateCell(row.id, 'risk', e.target.value)
+                        autoResize(e.target)
+                      }}
+                      onBlur={handleTextBlur}
+                    />
+                  </label>
+
+                  <div className="risk-score-row">
+                    <label className="risk-field risk-field-narrow">
+                      <span className="risk-field-label">Likelihood</span>
+                      <select
+                        className="risk-level-select"
+                        value={row.likelihood ?? ''}
+                        disabled={!canEdit}
+                        onChange={(e) =>
+                          handleSelectChange(row.id, 'likelihood', e.target.value ? Number(e.target.value) : null)
+                        }
+                      >
+                        <option value="">Unscored</option>
+                        {LIKELIHOOD_SCALE.map((s) => (
+                          <option key={s.value} value={s.value}>
+                            {s.value} - {s.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <label className="risk-field risk-field-narrow">
+                      <span className="risk-field-label">Severity</span>
+                      <select
+                        className="risk-level-select"
+                        value={row.severity ?? ''}
+                        disabled={!canEdit}
+                        onChange={(e) =>
+                          handleSelectChange(row.id, 'severity', e.target.value ? Number(e.target.value) : null)
+                        }
+                      >
+                        <option value="">Unscored</option>
+                        {SEVERITY_SCALE.map((s) => (
+                          <option key={s.value} value={s.value}>
+                            {s.value} - {s.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <div className="risk-field risk-field-narrow">
+                      <span className="risk-field-label">Score / Band</span>
+                      <div className="risk-score-band-value">
+                        <span className="risk-score-cell">{score ?? '—'}</span>
+                        <span className={`risk-level-badge risk-level-${bandClass}`}>
+                          {band || 'Needs scoring'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <label className="risk-field">
+                    <span className="risk-field-label">Mitigation</span>
+                    <textarea
+                      ref={(el) => (textareaRefs.current[`${row.id}-mitigation`] = el)}
+                      className="risk-cell-input risk-card-textarea"
+                      value={row.mitigation}
+                      rows={2}
+                      readOnly={!canEdit}
+                      onChange={(e) => {
+                        updateCell(row.id, 'mitigation', e.target.value)
+                        autoResize(e.target)
+                      }}
+                      onBlur={handleTextBlur}
+                    />
+                  </label>
+
+                  <label className="risk-field">
+                    <span className="risk-field-label">Owner</span>
+                    <textarea
+                      ref={(el) => (textareaRefs.current[`${row.id}-owner`] = el)}
+                      className="risk-cell-input risk-card-textarea"
+                      value={row.owner}
+                      rows={2}
+                      readOnly={!canEdit}
+                      onChange={(e) => {
+                        updateCell(row.id, 'owner', e.target.value)
+                        autoResize(e.target)
+                      }}
+                      onBlur={handleTextBlur}
+                    />
+                  </label>
+
+                  {canEdit && (
+                    <div className="risk-card-actions">
+                      <button
+                        type="button"
+                        className="btn-secondary risk-delete-btn-labeled"
+                        onClick={() => deleteRow(row.id)}
+                      >
+                        Delete Risk
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </li>
+          )
+        })}
+        {displayRows.length === 0 && (
+          <li className="empty">{rows.length === 0 ? 'No risks logged yet' : `No ${severityFilter} risks logged`}</li>
+        )}
+      </ul>
 
       {canEdit && (
         <button type="button" className="btn-secondary risk-add-btn" onClick={addRow}>
