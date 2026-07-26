@@ -187,13 +187,13 @@ function IssueLogView({ project, issueLog, canEdit, onUpdate }) {
                 </td>
                 <td>
                   <select
-                    className={`risk-level-select risk-level-${row.priority.toLowerCase()}`}
+                    className="issue-priority-select"
                     value={row.priority}
                     disabled={!canEdit}
                     onChange={(e) => handleSelectChange(row.id, 'priority', e.target.value)}
                   >
                     {PRIORITIES.map((p) => (
-                      <option key={p} value={p} className={`risk-level-option ${p.toLowerCase()}`}>
+                      <option key={p} value={p} className={`issue-priority-option ${p.toLowerCase()}`}>
                         {p}
                       </option>
                     ))}

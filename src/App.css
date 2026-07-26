@@ -542,7 +542,10 @@
   color: var(--badge-danger-text);
 }
 
-/* Opaque <option> pairs, same reasoning as .risk-level-option above. */
+/* Opaque <option> pairs - <option> ignores border-radius/font-weight/padding
+   inherited from the pill-style <select> above it, only background/color
+   carry over, so these get their own flat background/color pins via
+   dedicated --option-* tokens instead. */
 .task-status-option.pending {
   background: var(--option-pending-bg);
   color: var(--option-pending-text);
@@ -836,7 +839,10 @@
   color: var(--badge-success-text);
 }
 
-/* Opaque <option> pairs, same reasoning as .risk-level-option above. */
+/* Opaque <option> pairs - <option> ignores border-radius/font-weight/padding
+   inherited from the pill-style <select> above it, only background/color
+   carry over, so these get their own flat background/color pins via
+   dedicated --option-* tokens instead. */
 .backlog-status-option.pending {
   background: var(--option-pending-bg);
   color: var(--option-pending-text);
@@ -3739,10 +3745,12 @@
   color: var(--badge-success-text);
 }
 
-/* Opaque <option> pairs, same reasoning as .risk-level-option above -
-   mirrors each state's closed-pill color 1:1 (open/in-progress/blocked all
-   render amber today via the badge-info fallback above, so they share the
-   same option token). */
+/* Opaque <option> pairs - <option> ignores border-radius/font-weight/padding
+   inherited from the pill-style <select> above it, only background/color
+   carry over, so these get their own flat background/color pins via
+   dedicated --option-* tokens instead (open/in-progress/blocked all render
+   amber today via the badge-info fallback above, so they share the same
+   option token). */
 .issue-status-option.open,
 .issue-status-option.in-progress,
 .issue-status-option.blocked {
@@ -3809,6 +3817,49 @@
 
 .issue-status-note-add-btn {
   align-self: flex-start;
+}
+
+/* Issues Log's own Priority dropdown - deliberately its own class names,
+   not .risk-level-*. Risk Log's 5x5 migration repurposed .risk-level-low/
+   medium/high into the Band badge pill style (border-radius:999px, bold,
+   badge colors) for a <span>, not a <select>/<option> - Issues Log's
+   Priority select was still wearing those same classes, so it inherited
+   the pill shaping on a control that needs to look like a plain dropdown
+   (see App.css history / IssueLogView.jsx). This block is fully decoupled
+   from Risk Log's classes so a future Risk Log change can't collide again.
+   Plain-box look matches .risk-level-select's current "no longer a pill"
+   styling for Risk Log's own dropdowns. */
+.issue-priority-select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 5px 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 13px;
+  background: var(--bg);
+  color: var(--text-h);
+  cursor: pointer;
+  text-overflow: ellipsis;
+}
+
+/* Opaque <option> pairs - <option> ignores border-radius/font-weight/padding
+   inherited from the <select> above it, only background/color carry over,
+   so these get their own flat background/color pins via dedicated
+   --option-* tokens instead. */
+.issue-priority-option.low {
+  background: var(--option-done-bg);
+  color: var(--option-done-text);
+}
+
+.issue-priority-option.medium {
+  background: var(--option-partial-bg);
+  color: var(--option-partial-text);
+}
+
+.issue-priority-option.high {
+  background: var(--option-danger-bg);
+  color: var(--option-danger-text);
 }
 
 .risk-cell-input {
