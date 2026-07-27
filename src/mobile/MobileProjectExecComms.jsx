@@ -78,7 +78,12 @@ function MobileProjectExecComms() {
       {!loading && !error && doc == null && (
         <p className="mobile-screen-stub">Please log into the desktop version to generate this.</p>
       )}
-      {!loading && !error && doc != null && <SectionsDetail doc={doc} />}
+      {!loading && !error && doc != null && (
+        <>
+          <SectionsDetail doc={doc} />
+          <p className="mobile-screen-stub">Log into the desktop version to edit or regenerate this.</p>
+        </>
+      )}
     </div>
   )
 }
