@@ -6,6 +6,7 @@ import TaskImportFlow from './TaskImportFlow'
 import DependencyPicker from './components/DependencyPicker'
 import AssigneePicker, { resolveAssigneeLabel } from './components/AssigneePicker'
 import { MethodologySection } from './ProjectSectionRoutes'
+import { getEasternTodayStr, isTaskDelayed } from './taskUtils'
 
 // Waterfall/Hybrid "Tasks and Milestones" - Phase 2 extraction out of
 // ProjectOverviewRoute.jsx (which was its Phase 1 interim home; see
@@ -29,6 +30,10 @@ const TASK_STATUS_OPTIONS = [
 // KeyMetricsDashboard.jsx) already maps 1:1 onto the 'delayed' status.
 const VALID_TASK_FILTER_VALUES = ['All', ...TASK_STATUS_OPTIONS.map((s) => s.key)]
 
+// Exactly the columns trg_recalc_phase_auto_dates (phases_schema.sql)
+// listens on - see updateTaskField's refreshPhases call below.
+const PHASE_AUTO_DATE_FIELDS = ['phase_id', 'start_date', 'due_date']
+
 function PlanningTasksRoute() {
   const {
     project,
@@ -38,6 +43,7 @@ function PlanningTasksRoute() {
     taskDependencies,
     setTaskDependencies,
     phases,
+    refreshPhases,
     collaborators,
     docs,
     setError,
@@ -71,6 +77,9 @@ function PlanningTasksRoute() {
   // and both can be present at once without conflict.
   const rawTaskFilter = searchParams.get('taskFilter')
   const taskFilter = VALID_TASK_FILTER_VALUES.includes(rawTaskFilter) ? rawTaskFilter : 'All'
+  // Computed once per render, not memoized - cheap (a single Intl format
+  // call) and this component already re-renders on every task edit anyway.
+  const todayEasternStr = getEasternTodayStr()
 
   function setTaskFilter(next) {
     setSearchParams((prev) => {
@@ -209,6 +218,16 @@ function PlanningTasksRoute() {
     }
 
     setTasks((prev) => prev.map((t) => (t.id === task.id ? data[0] : t)))
+
+    // phase_id/start_date/due_date are exactly the columns
+    // recalc_phase_auto_dates (phases_schema.sql) recomputes
+    // auto_start_date/auto_end_date from - refetch phases so
+    // effective_end_date (and Overdue Phase detection downstream, see
+    // KeyMetricsDashboard.jsx/PhaseDetailView.jsx) reflects that
+    // server-side recalc without needing a hard refresh. Every other field
+    // (title, status, assignee, ...) doesn't move a phase's dates, so it's
+    // deliberately left out of this refetch.
+    if (PHASE_AUTO_DATE_FIELDS.includes(field)) refreshPhases?.()
   }
 
   async function updateTaskDependencies(task, nextSelectedIds) {
@@ -313,8 +332,14 @@ function PlanningTasksRoute() {
     setTasks((prev) => prev.filter((t) => t.id !== task.id))
   }
 
+  // 'delayed' goes through the same combined manual-flag/auto-trigger check
+  // as the Project Hotspots badge (KeyMetricsDashboard.jsx's useCriticalIssues,
+  // both via taskUtils.js's isTaskDelayed) - every other filter value is
+  // still a plain literal status match.
   function passesTaskFilter(task) {
-    return taskFilter === 'All' || (task.status ?? 'not_started') === taskFilter
+    if (taskFilter === 'All') return true
+    if (taskFilter === 'delayed') return isTaskDelayed(task, todayEasternStr)
+    return (task.status ?? 'not_started') === taskFilter
   }
 
   const sortedPhases = [...phases].sort((a, b) => a.phase_number - b.phase_number)

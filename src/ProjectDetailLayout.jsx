@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, Outlet } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import AppHeader from './AppHeader'
@@ -89,6 +89,25 @@ function ProjectDetailLayout({ project, isOwner, canEdit }) {
   const [docsLoading, setDocsLoading] = useState(true)
   const [selectedSprintId, setSelectedSprintId] = useSprintSelection(sprints)
 
+  // Pulled out of the mount-time load effect below so it can also be
+  // called on demand after a task edit that moves a phase's effective
+  // dates (see PlanningTasksRoute.jsx's updateTaskField) - the DB trigger
+  // (recalc_phase_auto_dates, phases_schema.sql) recalculates
+  // auto_start_date/auto_end_date server-side on those edits, but nothing
+  // tells this component's `phases` state to go re-read them, so without
+  // this it stays stale (and downstream Overdue Phase checks with it)
+  // until a hard refresh or project switch.
+  const loadPhases = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('phases')
+      .select('*')
+      .eq('project_id', currentProject.id)
+      .order('phase_number', { ascending: true })
+
+    if (error) setError(error.message)
+    else setPhases(data)
+  }, [currentProject.id])
+
   useEffect(() => {
     async function loadTasks() {
       const { data, error } = await supabase
@@ -162,17 +181,6 @@ function ProjectDetailLayout({ project, isOwner, canEdit }) {
       else setMilestones(data)
     }
 
-    async function loadPhases() {
-      const { data, error } = await supabase
-        .from('phases')
-        .select('*')
-        .eq('project_id', currentProject.id)
-        .order('phase_number', { ascending: true })
-
-      if (error) setError(error.message)
-      else setPhases(data)
-    }
-
     async function loadCollaborators() {
       const { data, error } = await supabase
         .from('project_collaborators')
@@ -213,7 +221,7 @@ function ProjectDetailLayout({ project, isOwner, canEdit }) {
     loadPhases()
     loadCollaborators()
     loadDocs()
-  }, [currentProject.id])
+  }, [currentProject.id, loadPhases])
 
   async function toggleArchived() {
     const nextStatus = currentProject.status === 'Archived' ? 'Active' : 'Archived'
@@ -297,6 +305,7 @@ function ProjectDetailLayout({ project, isOwner, canEdit }) {
     setMilestones,
     phases,
     setPhases,
+    refreshPhases: loadPhases,
     collaborators,
     docs,
     setDocs,

@@ -19,6 +19,7 @@ import { visibleSides } from './projectSections'
 import { getRiskBand } from './riskScale'
 import { getIssueStatusCounts } from './issueLogUtils'
 import { isPhaseOverdue } from './phaseUtils'
+import { getEasternTodayStr, isTaskDelayed } from './taskUtils'
 
 const CHART_TOOLTIP_STYLE = {
   background: 'var(--surface-1-solid)',
@@ -49,15 +50,21 @@ function formatDateTime(iso) {
 function useCriticalIssues(project, tasks, phases, riskLog) {
   return useMemo(() => {
     const todayStr = new Date().toISOString().slice(0, 10)
+    const todayEasternStr = getEasternTodayStr()
     const issues = []
 
     // Delayed tasks - Waterfall-side only (backlog_status == null). Backlog
     // items are driven by backlog_status/board_status instead (see
     // BacklogView.jsx/SprintBoardView.jsx) and never get `status` set
-    // through those views, so they'd never legitimately read 'delayed' -
-    // same waterfallTasks scoping project-eval/index.ts's taskStats() uses.
+    // through those views, so they'd never legitimately trip either arm of
+    // isTaskDelayed - same waterfallTasks scoping project-eval/index.ts's
+    // taskStats() uses. isTaskDelayed (taskUtils.js) covers both the manual
+    // PM flag (status === 'delayed') and the auto-trigger (5+ days past due,
+    // not yet Completed) - same helper PlanningTasksRoute.jsx's
+    // ?taskFilter=delayed uses, so this count and that filtered list can't
+    // drift apart.
     tasks
-      .filter((t) => t.backlog_status == null && t.status === 'delayed')
+      .filter((t) => t.backlog_status == null && isTaskDelayed(t, todayEasternStr))
       .forEach((t) => issues.push({ key: `task-${t.id}`, type: 'Delayed Task', label: t.title, id: t.id }))
 
     // High/Critical-band risks - mirrors project-eval/index.ts's
