@@ -135,6 +135,21 @@ function risksText(risks) {
     .join("\n")
 }
 
+// Unlike risksText/highSeverityRisksText, no priority filter - issues
+// represent problems already happening (not potential future risk), so
+// every Open issue is relevant regardless of priority. Only the status
+// filter (exact 'Open' match) narrows the list.
+function openIssuesText(issueLog) {
+  const issues = (issueLog?.issues || []).filter((i) => i.status === "Open")
+  if (issues.length === 0) return null
+  return issues
+    .map(
+      (iss, i) =>
+        `${i + 1}. ${iss.description} | Priority: ${iss.priority ?? "unscored"} | Owner: ${iss.owner || "(unassigned)"}`
+    )
+    .join("\n")
+}
+
 // Mirrors src/riskScale.js's getRiskBand (1-4 Low, 5-9 Medium, 10-14 High,
 // 15-25 Critical) - duplicated rather than imported because this runs as a
 // Deno Edge Function deployed separately from the Vite build.
@@ -147,14 +162,16 @@ function riskBand(likelihood, severity) {
   return "Critical"
 }
 
-function establishedContext(charter, brief, riskLog) {
+function establishedContext(charter, brief, riskLog, issueLog) {
   const parts = []
   const c = charterText(charter)
   const b = briefText(brief)
   const r = risksText(riskLog?.risks)
+  const i = openIssuesText(issueLog)
   if (c) parts.push(`Existing project charter:\n${c}`)
   if (b) parts.push(`Existing requirements brief:\n${b}`)
   if (r) parts.push(`Existing risk log:\n${r}`)
+  if (i) parts.push(`Open issues from the issues log:\n${i}`)
   return parts.length > 0 ? parts.join("\n\n") : null
 }
 
@@ -239,6 +256,7 @@ Deno.serve(async (req) => {
       charter,
       brief,
       riskLog,
+      issueLog,
       answers,
       doc,
       sectionKey,
@@ -248,7 +266,7 @@ Deno.serve(async (req) => {
     } = await req.json()
 
     if (action === "questions") {
-      const context = establishedContext(charter, brief, riskLog)
+      const context = establishedContext(charter, brief, riskLog, issueLog)
 
       const system =
         "You are a project management assistant preparing a Stakeholder Communications Plan intake. You first check what is already established from the project data and any existing project charter, requirements brief, and risk log, and only ask about what's genuinely still missing. Where you can reasonably infer a likely answer from the context already given, you propose it as a suggestion for the PM to accept, edit, or dismiss - you never present a guess as settled fact. Respond with ONLY a JSON object, no markdown fences, no other text."
@@ -281,7 +299,7 @@ ${QUESTION_SHAPE_HINT}`
         })
       }
 
-      const context = establishedContext(charter, brief, riskLog)
+      const context = establishedContext(charter, brief, riskLog, issueLog)
       const qaText = (answers || [])
         .map((a) => `Q: ${a.question}\nA: ${a.answer}`)
         .join("\n\n")

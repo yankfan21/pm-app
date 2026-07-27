@@ -8,7 +8,7 @@ import { COMMS_VARIANTS } from './commsSections'
 // (Exec Comms Plan, Team Newsletter). The two documents share one Q&A
 // intake - the "variant" prop only changes the title and which edge
 // function "generate" branch produces the output.
-function CommsFlow({ variant, project, charter, brief, riskLog, onGenerated, onClose }) {
+function CommsFlow({ variant, project, charter, brief, riskLog, issueLog, onGenerated, onClose }) {
   const { title } = COMMS_VARIANTS[variant]
   const [phase, setPhase] = useState('loading-questions')
   const [questions, setQuestions] = useState([])
@@ -24,7 +24,7 @@ function CommsFlow({ variant, project, charter, brief, riskLog, onGenerated, onC
     setError(null)
 
     const { data, error } = await supabase.functions.invoke('comms-plan', {
-      body: { action: 'questions', variant, project, charter, brief, riskLog },
+      body: { action: 'questions', variant, project, charter, brief, riskLog, issueLog },
     })
 
     if (error || data?.error) {
@@ -49,7 +49,7 @@ function CommsFlow({ variant, project, charter, brief, riskLog, onGenerated, onC
       }))
 
     const { data, error } = await supabase.functions.invoke('comms-plan', {
-      body: { action: 'generate', variant, project, charter, brief, riskLog, answers: answerList },
+      body: { action: 'generate', variant, project, charter, brief, riskLog, issueLog, answers: answerList },
     })
 
     if (error || data?.error) {

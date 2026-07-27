@@ -41,7 +41,7 @@ function formatDate(iso) {
 // accepted version. Accepting snapshots the row being superseded into the
 // generic `document_versions` table before overwriting it, which backs the
 // "History" panel below.
-function CommsView({ variant, project, charter, brief, riskLog, statusUpdates, doc, canEdit, onUpdate }) {
+function CommsView({ variant, project, charter, brief, riskLog, issueLog, statusUpdates, doc, canEdit, onUpdate }) {
   const { table, pageSubtitle, sections } = COMMS_VARIANTS[variant]
   const docTypeKey = DOC_TYPE_BY_VARIANT[variant]
   const [values, setValues] = useState(() =>
@@ -97,6 +97,7 @@ function CommsView({ variant, project, charter, brief, riskLog, statusUpdates, d
         charter,
         brief,
         riskLog,
+        issueLog,
         answers: doc.qa_answers || [],
         latestStatus: fromStatus || null,
       },
