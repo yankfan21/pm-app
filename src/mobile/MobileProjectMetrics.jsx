@@ -131,7 +131,7 @@ function MobileProjectMetrics() {
           .eq('project_id', projectId)
           .order('created_at', { ascending: false })
           .limit(1),
-        supabase.from('tasks').select('id, title, status, backlog_status, phase_id, completed').eq('project_id', projectId),
+        supabase.from('tasks').select('id, title, status, due_date, backlog_status, phase_id, completed').eq('project_id', projectId),
         project.methodology !== 'agile'
           ? supabase.from('phases').select('id, phase_name, effective_end_date').eq('project_id', projectId)
           : Promise.resolve({ data: [], error: null }),
