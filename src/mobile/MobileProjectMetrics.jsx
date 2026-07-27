@@ -5,6 +5,7 @@ import { HEALTH_LABELS, formatEvalMetric } from '../projectEvalHealth'
 import { getRiskBand } from '../riskScale'
 import { getIssueStatusCounts } from '../issueLogUtils'
 import { getEasternTodayStr, isTaskDelayed } from '../taskUtils'
+import { isSprintOverdue } from '../sprintStats'
 
 function formatDateTime(iso) {
   return new Date(iso).toLocaleString(undefined, {
@@ -112,6 +113,7 @@ function MobileProjectMetrics() {
   const [evaluation, setEvaluation] = useState(null)
   const [tasks, setTasks] = useState([])
   const [phases, setPhases] = useState([])
+  const [sprints, setSprints] = useState([])
   const [risks, setRisks] = useState([])
   const [issueLogIssues, setIssueLogIssues] = useState([])
   const [loading, setLoading] = useState(true)
@@ -124,16 +126,22 @@ function MobileProjectMetrics() {
       setLoading(true)
       setError(null)
 
-      const [evalRes, taskRes, phaseRes, riskRes, issueRes] = await Promise.all([
+      const [evalRes, taskRes, phaseRes, sprintRes, riskRes, issueRes] = await Promise.all([
         supabase
           .from('project_evaluations')
           .select('health_status, metrics, created_at')
           .eq('project_id', projectId)
           .order('created_at', { ascending: false })
           .limit(1),
-        supabase.from('tasks').select('id, title, status, due_date, backlog_status, phase_id, completed').eq('project_id', projectId),
+        supabase
+          .from('tasks')
+          .select('id, title, status, due_date, backlog_status, phase_id, completed, sprint_id, board_status')
+          .eq('project_id', projectId),
         project.methodology !== 'agile'
           ? supabase.from('phases').select('id, phase_name, effective_end_date').eq('project_id', projectId)
+          : Promise.resolve({ data: [], error: null }),
+        project.methodology !== 'waterfall'
+          ? supabase.from('sprints').select('id, name, start_date, end_date, created_at').eq('project_id', projectId)
           : Promise.resolve({ data: [], error: null }),
         supabase.from('risk_logs').select('risks').eq('project_id', projectId).maybeSingle(),
         supabase.from('issue_logs').select('issues').eq('project_id', projectId).maybeSingle(),
@@ -141,7 +149,7 @@ function MobileProjectMetrics() {
 
       if (cancelled) return
 
-      const firstError = evalRes.error || taskRes.error || phaseRes.error || riskRes.error || issueRes.error
+      const firstError = evalRes.error || taskRes.error || phaseRes.error || sprintRes.error || riskRes.error || issueRes.error
       if (firstError) {
         setError(firstError.message)
         setLoading(false)
@@ -151,6 +159,7 @@ function MobileProjectMetrics() {
       setEvaluation(evalRes.data && evalRes.data.length > 0 ? evalRes.data[0] : null)
       setTasks(taskRes.data || [])
       setPhases(phaseRes.data || [])
+      setSprints(sprintRes.data || [])
       setRisks(riskRes.data?.risks || [])
       setIssueLogIssues(issueRes.data?.issues || [])
       setLoading(false)
@@ -170,6 +179,14 @@ function MobileProjectMetrics() {
   // to can't disagree.
   const delayedTaskCount = issues.filter((i) => i.type === 'Delayed Task').length
   const riskSeverityCounts = getRiskSeverityCounts(risks)
+  // Delayed Tasks is Waterfall-side only (see useCriticalIssues' own
+  // backlog_status == null scoping - always 0 for pure Agile) - Agile gets
+  // Overdue Sprints in its place instead, Hybrid keeps both. Mirrors
+  // desktop KeyMetricsDashboard.jsx's showDelayedTasks/showVelocity gates.
+  const showDelayedTasks = project.methodology !== 'agile'
+  const showOverdueSprints = project.methodology !== 'waterfall'
+  const todayStr = new Date().toISOString().slice(0, 10)
+  const overdueSprints = sprints.filter((s) => isSprintOverdue(s, tasks, todayStr))
 
   if (loading) {
     return (
@@ -249,21 +266,41 @@ function MobileProjectMetrics() {
           )}
         </div>
 
-        <div className="mobile-hotspot-group">
-          <h3 className="mobile-hotspot-group-title">Delayed Tasks</h3>
-          {delayedTaskCount === 0 ? (
-            <p className="mobile-screen-stub">No delayed tasks.</p>
-          ) : (
-            <div className="mobile-issue-summary-row">
-              <Link
-                to={`/m/projects/${projectId}/tasks?taskFilter=delayed`}
-                className="mobile-doc-badge critical mobile-badge-link"
-              >
-                {delayedTaskCount} Delayed
-              </Link>
-            </div>
-          )}
-        </div>
+        {showDelayedTasks && (
+          <div className="mobile-hotspot-group">
+            <h3 className="mobile-hotspot-group-title">Delayed Tasks</h3>
+            {delayedTaskCount === 0 ? (
+              <p className="mobile-screen-stub">No delayed tasks.</p>
+            ) : (
+              <div className="mobile-issue-summary-row">
+                <Link
+                  to={`/m/projects/${projectId}/tasks?taskFilter=delayed`}
+                  className="mobile-doc-badge critical mobile-badge-link"
+                >
+                  {delayedTaskCount} Delayed
+                </Link>
+              </div>
+            )}
+          </div>
+        )}
+
+        {showOverdueSprints && (
+          <div className="mobile-hotspot-group">
+            <h3 className="mobile-hotspot-group-title">Overdue Sprints</h3>
+            {overdueSprints.length === 0 ? (
+              <p className="mobile-screen-stub">No overdue sprints.</p>
+            ) : (
+              <div className="mobile-issue-summary-row">
+                <Link
+                  to={`/m/projects/${projectId}/sprint-board?sprintFilter=overdue`}
+                  className="mobile-doc-badge critical mobile-badge-link"
+                >
+                  {overdueSprints.length} Overdue
+                </Link>
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="mobile-hotspot-group">
           <h3 className="mobile-hotspot-group-title">Risks</h3>

@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Navigate, useOutletContext, useParams } from 'react-router-dom'
+import { Navigate, useOutletContext, useParams, useSearchParams } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { visibleSides } from '../projectSections'
 import { useSprintSelection, formatSprintLabel } from '../useSprintSelection'
-import { computeSprintPoints } from '../sprintStats'
+import { computeSprintPoints, isSprintOverdue } from '../sprintStats'
 
 // Sprint Board view, Agile/Hybrid only (/m/projects/:projectId/sprint-board).
 // The tab bar hides this route for pure Waterfall projects, but a stale/
@@ -31,6 +31,8 @@ function MobileProjectSprintBoard() {
   const [error, setError] = useState(null)
   const [movingId, setMovingId] = useState(null)
   const [selectedSprintId, setSelectedSprintId] = useSprintSelection(sprints)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const sprintFilter = searchParams.get('sprintFilter')
 
   useEffect(() => {
     let cancelled = false
@@ -67,6 +69,34 @@ function MobileProjectSprintBoard() {
       cancelled = true
     }
   }, [projectId])
+
+  // ?sprintFilter=overdue - deep-link target for Overview's "Overdue
+  // Sprints" badge (MobileProjectMetrics.jsx). One-shot jump, not a
+  // persistent filter view - auto-selects the earliest overdue sprint via
+  // the local selectedSprintId state above, then clears the param so
+  // switching sprints manually afterward doesn't re-trigger it. Mirrors
+  // desktop ProjectSectionRoutes.jsx's ExecutionSprintBoardRoute, just
+  // local to this component instead of outlet-context/layout-level.
+  useEffect(() => {
+    if (sprintFilter !== 'overdue' || sprints.length === 0) return
+
+    const todayStr = new Date().toISOString().slice(0, 10)
+    const earliestOverdue = [...sprints]
+      .filter((s) => isSprintOverdue(s, tasks, todayStr))
+      .sort((a, b) => (a.end_date || '').localeCompare(b.end_date || ''))[0]
+
+    if (earliestOverdue) setSelectedSprintId(earliestOverdue.id)
+
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        next.delete('sprintFilter')
+        return next
+      },
+      { replace: true }
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sprintFilter, sprints, tasks])
 
   if (!visibleSides(project.methodology).agile) {
     return <Navigate to=".." replace />
