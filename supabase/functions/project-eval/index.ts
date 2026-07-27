@@ -227,7 +227,7 @@ function budgetStatsText(stats) {
 // Waterfall-side task stats - called only on tasks with backlog_status ==
 // null (see the module comment). Unchanged logic from before this
 // refactor, just scoped to the right subset now.
-function taskStats(tasks, today, firstDependsOnByTaskId) {
+function taskStats(tasks, today, dependsOnByTaskId) {
   const list = tasks || []
   const incomplete = list.filter((t) => !t.completed)
   const overdue = incomplete
@@ -240,13 +240,13 @@ function taskStats(tasks, today, firstDependsOnByTaskId) {
   const byId = new Map(list.map((t) => [t.id, t]))
   const blockedCounts = new Map()
   incomplete.forEach((t) => {
-    const dependsOnId = firstDependsOnByTaskId?.get(t.id)
-    if (dependsOnId) {
+    const dependsOnIds = dependsOnByTaskId?.get(t.id) || []
+    dependsOnIds.forEach((dependsOnId) => {
       const blocker = byId.get(dependsOnId)
       if (blocker && !blocker.completed) {
         blockedCounts.set(dependsOnId, (blockedCounts.get(dependsOnId) || 0) + 1)
       }
-    }
+    })
   })
   const blockers = [...blockedCounts.entries()]
     .map(([id, count]) => ({ task: byId.get(id), count }))
@@ -533,16 +533,15 @@ Deno.serve(async (req) => {
     const waterfallTasks = allTasks.filter((t) => t.backlog_status == null)
     const backlogItems = allTasks.filter((t) => t.backlog_status != null)
 
-    // task_dependencies supports multiple predecessors per task, but
-    // blocked-task scoring below is still single-predecessor (same
-    // behavior as the legacy tasks.depends_on scalar column). Caller
-    // orders rows by created_at ascending, so the first row seen per
-    // task_id here is that task's earliest-recorded predecessor. Full
-    // multi-predecessor blocked-task logic is Phase 4 (see CLAUDE.md),
-    // alongside the Gantt multi-line work.
-    const firstDependsOnByTaskId = new Map()
+    // task_dependencies supports multiple predecessors per task (one row
+    // per task_id/depends_on_id pair) - collect every depends_on_id per
+    // task_id here so blocked-task scoring below can aggregate across all
+    // of a task's recorded predecessors, not just one.
+    const dependsOnByTaskId = new Map()
     ;(taskDependencies || []).forEach((d) => {
-      if (!firstDependsOnByTaskId.has(d.task_id)) firstDependsOnByTaskId.set(d.task_id, d.depends_on_id)
+      const list = dependsOnByTaskId.get(d.task_id) || []
+      list.push(d.depends_on_id)
+      dependsOnByTaskId.set(d.task_id, list)
     })
 
     const rStats = riskStats(riskLog, todayStr)
@@ -605,7 +604,7 @@ Deno.serve(async (req) => {
           : "Phases: none set up yet for this project."
       )
 
-      const tStats = taskStats(waterfallTasks, todayStr, firstDependsOnByTaskId)
+      const tStats = taskStats(waterfallTasks, todayStr, dependsOnByTaskId)
       const tText = taskStatsText(tStats)
       if (tText) contextParts.push(`Tasks, Waterfall side (computed exactly - use these figures as-is, do not recompute):\n${tText}`)
 
