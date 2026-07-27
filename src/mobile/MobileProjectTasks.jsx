@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useOutletContext, useParams } from 'react-router-dom'
+import { Link, useOutletContext, useParams, useSearchParams } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 
 // Task list/status/mark-done (/m/projects/:projectId/tasks) - own fetch,
@@ -21,14 +21,34 @@ function statusLabel(status) {
   return STATUS_FILTERS.find((s) => s.key === (status ?? 'not_started'))?.label ?? 'Not Started'
 }
 
+const VALID_TASK_FILTER_KEYS = STATUS_FILTERS.map((s) => s.key)
+
 function MobileProjectTasks() {
   const { canEdit } = useOutletContext()
   const { projectId } = useParams()
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [filter, setFilter] = useState('all')
   const [markingId, setMarkingId] = useState(null)
+
+  // ?taskFilter= - deep-link target for the Project Hotspots "Delayed
+  // Tasks" badge (MobileProjectMetrics.jsx), mirroring desktop's
+  // ?taskFilter= pattern (PlanningTasksRoute.jsx). Derived straight from
+  // searchParams each render rather than mirrored into local state, same
+  // reasoning as that file - this screen owns its own searchParams
+  // directly, so there's no prop/state re-sync to do.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const rawTaskFilter = searchParams.get('taskFilter')
+  const filter = VALID_TASK_FILTER_KEYS.includes(rawTaskFilter) ? rawTaskFilter : 'all'
+
+  function setFilter(next) {
+    setSearchParams((prev) => {
+      const nextParams = new URLSearchParams(prev)
+      if (next === 'all') nextParams.delete('taskFilter')
+      else nextParams.set('taskFilter', next)
+      return nextParams
+    })
+  }
 
   useEffect(() => {
     let cancelled = false

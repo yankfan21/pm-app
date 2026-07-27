@@ -37,8 +37,11 @@ function useCriticalIssues(project, tasks, phases, risks) {
       .filter((t) => t.backlog_status == null && t.status === 'delayed')
       .forEach((t) => issues.push({ key: `task-${t.id}`, type: 'Delayed Task', label: t.title, id: t.id }))
 
-    // `id` is r.id verbatim (not the key's index fallback below) - a risk
-    // missing an id just can't be linked, see hotspotLinkTo().
+    // `id`/`label`/`band` aren't read by the badge-group cards below
+    // (they only need the `type` count, same as desktop's
+    // KeyMetricsDashboard.jsx after its own itemized-list removal) - `id`
+    // is r.id verbatim (not the key's index fallback below) anyway, kept
+    // as a straight mirror of desktop's useCriticalIssues shape.
     ;(risks || [])
       .filter((r) => ['High', 'Critical'].includes(getRiskBand(r.likelihood, r.severity)))
       .forEach((r, i) =>
@@ -62,40 +65,33 @@ function useCriticalIssues(project, tasks, phases, risks) {
   }, [project.methodology, tasks, phases, risks])
 }
 
-const ISSUE_TAG_CLASS = {
-  'Delayed Task': 'mobile-issue-tag-task',
-  'High Risk': 'mobile-issue-tag-risk',
-  'Overdue Phase': 'mobile-issue-tag-phase',
-}
-
-// Mirrors KeyMetricsDashboard.jsx's hotspotLinkTo, adapted to mobile's own
-// routes (see MobileProjectLayout.jsx's route tree - no Planning/Phases
-// screen exists on mobile at all, so Overdue Phase is deliberately never
-// clickable here, not just when it's missing an id). Delayed Task goes
-// straight to MobileTaskDetail (a real per-task page already) rather than
-// the task list with a highlight - no scroll/highlight plumbing needed for
-// that type. High Risk goes to the flagged-risks list with a riskId for
-// scroll-to + highlight, same shape as desktop's riskId handling.
-function hotspotLinkTo(issue, projectId) {
-  console.log('[HOTSPOT DEBUG] hotspotLinkTo called with issue:', { type: issue.type, id: issue.id, key: issue.key })
-  if (issue.type === 'Delayed Task') {
-    const to = issue.id ? `/m/projects/${projectId}/tasks/${issue.id}` : null
-    console.log('[HOTSPOT DEBUG] Delayed Task -> to:', to)
-    return to
-  }
-  if (issue.type === 'High Risk') {
-    const to = issue.id ? `/m/projects/${projectId}/more/risks?riskId=${issue.id}` : null
-    console.log('[HOTSPOT DEBUG] High Risk -> to:', to)
-    return to
-  }
-  console.log('[HOTSPOT DEBUG] Overdue Phase (or unknown type) -> to: null')
-  return null
-}
-
 const HEALTH_BADGE_CLASS = {
   on_track: 'mobile-health-on_track',
   at_risk: 'mobile-health-at_risk',
   off_track: 'mobile-health-off_track',
+}
+
+const SEVERITY_LEVELS = ['Critical', 'High', 'Medium', 'Low']
+
+// Mirrors MobileProjectRisks.jsx's own BAND_BADGE_CLASS (same color
+// vocabulary as desktop's SEVERITY_BADGE_CLASS) - kept as its own local
+// copy rather than importing across screen files, same "purpose-built,
+// independent per screen" reasoning as useCriticalIssues/isPhaseOverdue
+// above.
+const BAND_BADGE_CLASS = {
+  Critical: 'severe',
+  High: 'critical',
+  Medium: 'partial',
+  Low: 'done',
+}
+
+function getRiskSeverityCounts(risks) {
+  const counts = { Critical: 0, High: 0, Medium: 0, Low: 0 }
+  ;(risks || []).forEach((r) => {
+    const band = getRiskBand(r.likelihood, r.severity)
+    if (band in counts) counts[band] += 1
+  })
+  return SEVERITY_LEVELS.map((level) => ({ level, count: counts[level] }))
 }
 
 // Overview - project goal plus Key Metrics Dashboard content, read-only
@@ -162,6 +158,13 @@ function MobileProjectMetrics() {
 
   const issues = useCriticalIssues(project, tasks, phases, risks)
   const { open: openIssueCount, closed: closedIssueCount } = getIssueStatusCounts(issueLogIssues)
+  // Reuses useCriticalIssues' own Delayed Task entries for the count -
+  // same manual-flag-only definition (status === 'delayed') MobileProjectTasks.jsx's
+  // ?taskFilter=delayed now filters by, so the badge and the list it links
+  // to can't disagree. Mobile deliberately doesn't get desktop's 5-day
+  // auto-trigger (taskUtils.js) here - out of scope for this redesign.
+  const delayedTaskCount = issues.filter((i) => i.type === 'Delayed Task').length
+  const riskSeverityCounts = getRiskSeverityCounts(risks)
 
   if (loading) {
     return (
@@ -218,40 +221,63 @@ function MobileProjectMetrics() {
             {issues.length > 0 ? issues.length : 'All Clear'}
           </span>
         </h2>
-        {issues.length === 0 ? (
-          <p className="mobile-screen-stub">No hotspots right now.</p>
-        ) : (
-          <ul className="mobile-issue-list">
-            {issues.map((issue) => {
-              const to = hotspotLinkTo(issue, projectId)
-              console.log('[HOTSPOT DEBUG] render issue:', issue.key, 'to:', to, 'rendering:', to ? 'Link' : 'span fallback')
-              const content = (
-                <>
-                  <span className={`mobile-issue-tag ${ISSUE_TAG_CLASS[issue.type] || ''}`}>{issue.type}</span>
-                  <span className="mobile-issue-label">{issue.label}</span>
-                </>
-              )
-              return (
-                <li key={issue.key} className="mobile-issue-row">
-                  {to ? (
-                    <Link to={to} className="mobile-issue-row-link">
-                      {content}
-                    </Link>
-                  ) : (
-                    <span className="mobile-issue-row-link">{content}</span>
-                  )}
-                </li>
-              )
-            })}
-          </ul>
-        )}
 
-        {openIssueCount + closedIssueCount > 0 && (
-          <div className="mobile-issue-summary-row">
-            <span className="mobile-doc-badge critical">{openIssueCount} Open</span>
-            <span className="mobile-doc-badge done">{closedIssueCount} Closed</span>
-          </div>
-        )}
+        <div className="mobile-hotspot-group">
+          <h3 className="mobile-hotspot-group-title">Issues</h3>
+          {openIssueCount + closedIssueCount === 0 ? (
+            <p className="mobile-screen-stub">No issues logged yet.</p>
+          ) : (
+            <div className="mobile-issue-summary-row">
+              <Link
+                to={`/m/projects/${projectId}/more/issues?issueFilter=open`}
+                className="mobile-doc-badge critical mobile-badge-link"
+              >
+                {openIssueCount} Open
+              </Link>
+              <Link
+                to={`/m/projects/${projectId}/more/issues?issueFilter=closed`}
+                className="mobile-doc-badge done mobile-badge-link"
+              >
+                {closedIssueCount} Closed
+              </Link>
+            </div>
+          )}
+        </div>
+
+        <div className="mobile-hotspot-group">
+          <h3 className="mobile-hotspot-group-title">Delayed Tasks</h3>
+          {delayedTaskCount === 0 ? (
+            <p className="mobile-screen-stub">No delayed tasks.</p>
+          ) : (
+            <div className="mobile-issue-summary-row">
+              <Link
+                to={`/m/projects/${projectId}/tasks?taskFilter=delayed`}
+                className="mobile-doc-badge critical mobile-badge-link"
+              >
+                {delayedTaskCount} Delayed
+              </Link>
+            </div>
+          )}
+        </div>
+
+        <div className="mobile-hotspot-group">
+          <h3 className="mobile-hotspot-group-title">Risks</h3>
+          {riskSeverityCounts.every((d) => d.count === 0) ? (
+            <p className="mobile-screen-stub">No risks logged yet.</p>
+          ) : (
+            <div className="mobile-issue-summary-row mobile-issue-summary-row-wrap">
+              {riskSeverityCounts.map((d) => (
+                <Link
+                  key={d.level}
+                  to={`/m/projects/${projectId}/more/risks?riskFilter=${d.level}`}
+                  className={`mobile-doc-badge ${BAND_BADGE_CLASS[d.level]} mobile-badge-link`}
+                >
+                  {d.count} {d.level}
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

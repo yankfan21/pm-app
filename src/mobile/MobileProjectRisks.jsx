@@ -44,9 +44,23 @@ function MobileProjectRisks() {
   const [submitting, setSubmitting] = useState(false)
 
   const [searchParams, setSearchParams] = useSearchParams()
-  const highlightRiskId = searchParams.get('riskId')
+  const explicitRiskId = searchParams.get('riskId')
+  const riskFilterBand = searchParams.get('riskFilter')
   const [flashRiskId, setFlashRiskId] = useState(null)
   const rowRefs = useRef({})
+
+  // Same order the list itself renders in ([...risks].reverse(), newest
+  // first) - "first match" for a ?riskFilter= band means the first one the
+  // PM would actually see scrolling down, not first-inserted.
+  const displayRisks = [...(riskLog?.risks || [])].reverse()
+  const firstBandMatch = riskFilterBand
+    ? displayRisks.find((r) => getRiskBand(r.likelihood, r.severity) === riskFilterBand)
+    : null
+  // ?riskId= (Project Hotspots' old single-item link, still used
+  // elsewhere) wins if somehow both are present - riskId names one exact
+  // risk, riskFilter only narrows down to "first of this band".
+  const targetRiskId = explicitRiskId || firstBandMatch?.id || null
+  const targetParamKey = explicitRiskId ? 'riskId' : riskFilterBand ? 'riskFilter' : null
 
   useEffect(() => {
     let cancelled = false
@@ -80,20 +94,22 @@ function MobileProjectRisks() {
     }
   }, [projectId])
 
-  // Arrival from a Project Hotspots row (MobileProjectMetrics.jsx's
-  // hotspotLinkTo) - scroll the target risk's card into view and flash it,
-  // same shape as desktop's RiskLogView highlightRiskId handling, adapted
-  // to this screen's flat card list (no severity filter to re-sync here).
+  // Arrival from a Project Hotspots row/badge (MobileProjectMetrics.jsx's
+  // hotspotLinkTo, or a Risks severity badge) - scroll the target risk's
+  // card into view and flash it, same shape as desktop's RiskLogView
+  // highlightRiskId handling, adapted to this screen's flat card list (no
+  // persistent severity filter to re-sync here - riskFilter only resolves
+  // to a one-time scroll target, see targetRiskId above).
   useEffect(() => {
-    if (!highlightRiskId || loading) return
-    setFlashRiskId(highlightRiskId)
-    rowRefs.current[highlightRiskId]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    if (!targetRiskId || loading) return
+    setFlashRiskId(targetRiskId)
+    rowRefs.current[targetRiskId]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
     const timer = setTimeout(() => {
       setFlashRiskId(null)
       setSearchParams(
         (prev) => {
           const next = new URLSearchParams(prev)
-          next.delete('riskId')
+          if (targetParamKey) next.delete(targetParamKey)
           return next
         },
         { replace: true }
@@ -101,7 +117,7 @@ function MobileProjectRisks() {
     }, 2000)
     return () => clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [highlightRiskId, loading])
+  }, [targetRiskId, loading])
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -147,7 +163,6 @@ function MobileProjectRisks() {
     )
   }
 
-  const risks = riskLog?.risks || []
   const taskTitleById = new Map(tasks.map((t) => [t.id, t.title]))
 
   return (
@@ -189,11 +204,11 @@ function MobileProjectRisks() {
       )}
 
       <h2 className="mobile-section-title">Flagged Risks</h2>
-      {risks.length === 0 ? (
+      {displayRisks.length === 0 ? (
         <p className="mobile-screen-stub">No risks flagged yet.</p>
       ) : (
         <div className="mobile-doc-card-list">
-          {[...risks].reverse().map((r) => {
+          {displayRisks.map((r) => {
             const band = getRiskBand(r.likelihood, r.severity)
             return (
               <div

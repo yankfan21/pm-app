@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { useOutletContext, useParams } from 'react-router-dom'
+import { useOutletContext, useParams, useSearchParams } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
-import { createIssueObject } from '../issueLogUtils'
+import { createIssueObject, OPEN_ISSUE_STATUSES } from '../issueLogUtils'
 
 // Quick issue log (/m/projects/:projectId/more/issues). Mirrors
 // MobileProjectRisks.jsx's exact pattern (quick-log form + list view) but
@@ -12,6 +12,19 @@ import { createIssueObject } from '../issueLogUtils'
 // Issues Log table (IssueLogView.jsx), same as owner/mitigation on the
 // Risks quick form.
 const PRIORITIES = ['Low', 'Medium', 'High']
+
+// ?issueFilter= - deep-link target for the Project Hotspots Issues badges
+// (MobileProjectMetrics.jsx), mirroring desktop's ?issueFilter= pattern
+// (IssueLogView.jsx/DocumentsRoute.jsx) but with its own simpler two-value
+// vocabulary rather than reusing desktop's literal status strings - this
+// screen has no per-status (Open/In Progress/Blocked/Closed) breakdown to
+// begin with, just the same Open-bucket/Closed split the badges already
+// show (OPEN_ISSUE_STATUSES, issueLogUtils.js).
+const ISSUE_FILTERS = [
+  { key: 'all', label: 'All' },
+  { key: 'open', label: 'Open' },
+  { key: 'closed', label: 'Closed' },
+]
 
 const PRIORITY_BADGE_CLASS = {
   Low: 'pending',
@@ -30,6 +43,19 @@ function MobileProjectIssues() {
   const [issueLog, setIssueLog] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+
+  const [searchParams, setSearchParams] = useSearchParams()
+  const rawIssueFilter = searchParams.get('issueFilter')
+  const issueFilter = ISSUE_FILTERS.some((f) => f.key === rawIssueFilter) ? rawIssueFilter : 'all'
+
+  function setIssueFilter(next) {
+    setSearchParams((prev) => {
+      const nextParams = new URLSearchParams(prev)
+      if (next === 'all') nextParams.delete('issueFilter')
+      else nextParams.set('issueFilter', next)
+      return nextParams
+    })
+  }
 
   const [description, setDescription] = useState('')
   const [priority, setPriority] = useState('Medium')
@@ -113,6 +139,12 @@ function MobileProjectIssues() {
   }
 
   const issues = issueLog?.issues || []
+  const visibleIssues =
+    issueFilter === 'all'
+      ? issues
+      : issueFilter === 'open'
+        ? issues.filter((i) => OPEN_ISSUE_STATUSES.includes(i.status))
+        : issues.filter((i) => i.status === 'Closed')
 
   return (
     <div>
@@ -157,11 +189,29 @@ function MobileProjectIssues() {
       )}
 
       <h2 className="mobile-section-title">Logged Issues</h2>
-      {issues.length === 0 ? (
-        <p className="mobile-screen-stub">No issues logged yet.</p>
+
+      {issues.length > 0 && (
+        <div className="mobile-filter-row">
+          {ISSUE_FILTERS.map((f) => (
+            <button
+              key={f.key}
+              type="button"
+              className={`mobile-filter-chip ${issueFilter === f.key ? 'selected' : ''}`}
+              onClick={() => setIssueFilter(f.key)}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {visibleIssues.length === 0 ? (
+        <p className="mobile-screen-stub">
+          {issues.length === 0 ? 'No issues logged yet.' : `No ${issueFilter} issues logged.`}
+        </p>
       ) : (
         <div className="mobile-doc-card-list">
-          {[...issues].reverse().map((issue) => (
+          {[...visibleIssues].reverse().map((issue) => (
             <div className="mobile-doc-risk-card" key={issue.id}>
               <p className="mobile-doc-section-body">{issue.description}</p>
               <p className="mobile-doc-risk-meta">
