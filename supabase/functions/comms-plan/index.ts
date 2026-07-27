@@ -305,6 +305,10 @@ ${QUESTION_SHAPE_HINT}`
         .join("\n\n")
       const statusText = statusUpdateText(latestStatus)
       const highRisksText = variant === "exec" ? highSeverityRisksText(riskLog) : null
+      // Unlike highRisksText, not gated to exec - Open issues are already-
+      // happening problems, relevant to both the exec update and the
+      // newsletter's audience, so both variants get the hard mention.
+      const openIssuesHardText = openIssuesText(issueLog)
 
       const system =
         variant === "exec"
@@ -323,8 +327,9 @@ ${statusText ? `${statusText}\nTreat this Status Update as the primary, freshest
 Additional context from communications Q&A:
 ${qaText || "(none provided)"}
 
-${instructions} Base it on the project data, charter/brief/risk log (if provided), status update (if provided), and Q&A above; do not invent specifics that weren't provided.
+${instructions} Base it on the project data, charter/brief/risk log/issues log (if provided), status update (if provided), and Q&A above; do not invent specifics that weren't provided.
 ${highRisksText ? `\nThe Risks & Blockers section MUST explicitly mention every one of these current High/Critical-band risks, in addition to anything else relevant:\n${highRisksText}\n` : ""}
+${openIssuesHardText ? `\n${variant === "exec" ? "The Risks & Blockers section" : "The newsletter, in whichever section fits most naturally (e.g. Links & Resources)"} MUST explicitly mention every one of these current Open issues, in addition to anything else relevant:\n${openIssuesHardText}\n` : ""}
 Return ONLY this JSON shape:
 {${Object.keys(SECTION_LABELS_BY_VARIANT[variant])
         .map((k) => `"${k}": "..."`)
