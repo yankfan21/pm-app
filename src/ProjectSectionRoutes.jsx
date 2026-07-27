@@ -174,7 +174,7 @@ export function ExecutionGanttRoute() {
 // labels (SECTIONS_BY_CATEGORY in projectSections.js) need to say the same
 // thing the page itself does.
 export function ExecutionListWaterfallRoute() {
-  const { tasks, collaborators } = useOutletContext()
+  const { project, tasks, collaborators } = useOutletContext()
   return (
     <MethodologySection side="waterfall">
       <TaskListView
@@ -182,6 +182,7 @@ export function ExecutionListWaterfallRoute() {
         variant="waterfall"
         tasks={tasks.filter((t) => t.backlog_status == null)}
         collaborators={collaborators}
+        project={project}
         expanded
       />
     </MethodologySection>
@@ -189,7 +190,7 @@ export function ExecutionListWaterfallRoute() {
 }
 
 export function ExecutionTeamWaterfallRoute() {
-  const { tasks, collaborators } = useOutletContext()
+  const { project, tasks, collaborators } = useOutletContext()
   return (
     <MethodologySection side="waterfall">
       <TeamView
@@ -197,6 +198,7 @@ export function ExecutionTeamWaterfallRoute() {
         variant="waterfall"
         tasks={tasks.filter((t) => t.backlog_status == null)}
         collaborators={collaborators}
+        project={project}
         expanded
       />
     </MethodologySection>
@@ -285,7 +287,7 @@ export function ExecutionSprintRetroRoute() {
 }
 
 export function ExecutionListAgileRoute() {
-  const { tasks, collaborators } = useOutletContext()
+  const { project, tasks, collaborators } = useOutletContext()
   return (
     <MethodologySection side="agile">
       <TaskListView
@@ -293,6 +295,7 @@ export function ExecutionListAgileRoute() {
         variant="agile"
         tasks={tasks.filter((t) => t.backlog_status != null)}
         collaborators={collaborators}
+        project={project}
         expanded
       />
     </MethodologySection>
@@ -300,7 +303,7 @@ export function ExecutionListAgileRoute() {
 }
 
 export function ExecutionTeamAgileRoute() {
-  const { tasks, collaborators, sprints, selectedSprintId } = useOutletContext()
+  const { project, tasks, collaborators, sprints, selectedSprintId } = useOutletContext()
   return (
     <MethodologySection side="agile">
       <TeamView
@@ -308,6 +311,7 @@ export function ExecutionTeamAgileRoute() {
         variant="agile"
         tasks={tasks.filter((t) => t.backlog_status != null)}
         collaborators={collaborators}
+        project={project}
         sprints={sprints}
         selectedSprintId={selectedSprintId}
         expanded

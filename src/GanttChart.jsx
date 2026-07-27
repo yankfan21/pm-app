@@ -258,7 +258,7 @@ function GanttChart({ project, tasks, taskDependencies, phases, milestones = [],
     const key = assigneeKey(task)
     if (!key || seenAssigneeKeys.has(key)) return
     seenAssigneeKeys.add(key)
-    assigneeFilterOptions.push({ key, label: resolveAssigneeLabel(task, collaborators) })
+    assigneeFilterOptions.push({ key, label: resolveAssigneeLabel(task, collaborators, project) })
   })
   assigneeFilterOptions.sort((a, b) => a.label.localeCompare(b.label))
 
@@ -803,7 +803,7 @@ function GanttChart({ project, tasks, taskDependencies, phases, milestones = [],
               const isMilestone = task.task_type === 'milestone_marker'
               const isDelayed = task.status === 'delayed'
               const isCritical = !!criticalPath?.taskIds.has(task.id)
-              const assigneeLabel = resolveAssigneeLabel(task, collaborators)
+              const assigneeLabel = resolveAssigneeLabel(task, collaborators, project)
               const assigneeSuffix = assigneeLabel ? ` · ${assigneeLabel}` : ''
               return (
                 <Fragment key={task.id}>

@@ -492,6 +492,7 @@ function SprintBoardView({
                                     assigneeUserId={task.assignee_user_id}
                                     assigneeName={task.assignee_name}
                                     ownerUserId={project.owner_id}
+                                    ownerEmail={project.owner_email}
                                     disabled={!canEdit}
                                     onChange={(next) => updateAssignee(task, next)}
                                   />

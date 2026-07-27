@@ -46,7 +46,7 @@ function computeAgileStats(groupTasks) {
 // Waterfall/Hybrid doesn't) and which stats apply, per the spec this was
 // built from. Read-only, no editing here (that lives on the Backlog/Sprint
 // Board/Task list rows themselves).
-function TeamView({ title, variant, tasks, collaborators, sprints, selectedSprintId, expanded }) {
+function TeamView({ title, variant, tasks, collaborators, project, sprints, selectedSprintId, expanded }) {
   const activeSprint = variant === 'agile' ? sprints?.find((s) => s.id === selectedSprintId) || null : null
 
   const groups = useMemo(() => {
@@ -56,13 +56,13 @@ function TeamView({ title, variant, tasks, collaborators, sprints, selectedSprin
     scoped.forEach((task) => {
       const key = groupKeyFor(task)
       if (!map.has(key)) {
-        map.set(key, { key, label: resolveAssigneeLabel(task, collaborators) || 'Unassigned', tasks: [] })
+        map.set(key, { key, label: resolveAssigneeLabel(task, collaborators, project) || 'Unassigned', tasks: [] })
       }
       map.get(key).tasks.push(task)
     })
     return [...map.values()]
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tasks, collaborators, variant, activeSprint?.id])
+  }, [tasks, collaborators, project, variant, activeSprint?.id])
 
   const todayStr = todayLocalDateString()
 

@@ -376,7 +376,7 @@ function PlanningTasksRoute() {
         className={`group-compact-row ${flashTaskId === task.id ? 'hotspot-row-highlight' : ''}`}
       >
         <span className="group-compact-title">{task.title}</span>
-        <span className="group-compact-meta">{resolveAssigneeLabel(task, collaborators) || 'Unassigned'}</span>
+        <span className="group-compact-meta">{resolveAssigneeLabel(task, collaborators, project) || 'Unassigned'}</span>
         <span className="group-compact-meta">{task.due_date || '—'}</span>
         <span className={`doc-status-badge ${status.colorClass}`}>{status.label}</span>
       </li>
@@ -403,9 +403,9 @@ function PlanningTasksRoute() {
             <span>{task.title}</span>
           </label>
           <div className="task-row-controls">
-            {resolveAssigneeLabel(task, collaborators) && (
+            {resolveAssigneeLabel(task, collaborators, project) && (
               <span className="task-assignee-badge">
-                {resolveAssigneeLabel(task, collaborators)}
+                {resolveAssigneeLabel(task, collaborators, project)}
               </span>
             )}
             <select
@@ -497,6 +497,7 @@ function PlanningTasksRoute() {
               assigneeUserId={task.assignee_user_id}
               assigneeName={task.assignee_name}
               ownerUserId={project.owner_id}
+              ownerEmail={project.owner_email}
               disabled={!canEdit}
               onChange={(next) => updateTaskAssignee(task, next)}
             />
@@ -631,6 +632,7 @@ function PlanningTasksRoute() {
                 assigneeUserId={assignee.assignee_user_id}
                 assigneeName={assignee.assignee_name}
                 ownerUserId={project.owner_id}
+                ownerEmail={project.owner_email}
                 onChange={setAssignee}
               />
             </label>

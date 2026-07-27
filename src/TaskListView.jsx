@@ -35,7 +35,7 @@ function statusFor(task, variant) {
 // (already scoped to one side - Waterfall or Agile - by ProjectDetail.jsx,
 // same convention GanttChart/BacklogView use). Title is deliberately not
 // sortable; only Due Date/Status/Assignee were asked for.
-function TaskListView({ title, tasks, collaborators, variant, expanded }) {
+function TaskListView({ title, tasks, collaborators, project, variant, expanded }) {
   const [sortKey, setSortKey] = useState('due_date')
   const [sortDir, setSortDir] = useState('asc')
 
@@ -52,7 +52,7 @@ function TaskListView({ title, tasks, collaborators, variant, expanded }) {
     const withMeta = tasks.map((task) => ({
       task,
       status: statusFor(task, variant),
-      assigneeLabel: resolveAssigneeLabel(task, collaborators) || 'Unassigned',
+      assigneeLabel: resolveAssigneeLabel(task, collaborators, project) || 'Unassigned',
     }))
 
     const dir = sortDir === 'asc' ? 1 : -1
@@ -72,7 +72,7 @@ function TaskListView({ title, tasks, collaborators, variant, expanded }) {
       return a.assigneeLabel.localeCompare(b.assigneeLabel) * dir
     })
     return withMeta
-  }, [tasks, collaborators, variant, sortKey, sortDir])
+  }, [tasks, collaborators, project, variant, sortKey, sortDir])
 
   function sortHeader(label, key) {
     const active = sortKey === key

@@ -369,7 +369,7 @@ function BacklogView({
                         <li key={item.id} className="group-compact-row">
                           <span className="group-compact-title">{item.title}</span>
                           <span className="group-compact-meta">
-                            {resolveAssigneeLabel(item, collaborators) || 'Unassigned'}
+                            {resolveAssigneeLabel(item, collaborators, project) || 'Unassigned'}
                           </span>
                           <span className="group-compact-meta">{item.due_date || '—'}</span>
                           <span className={`doc-status-badge ${STATUS_COLOR[item.backlog_status] || 'pending'}`}>
@@ -479,6 +479,7 @@ function BacklogView({
                               assigneeUserId={item.assignee_user_id}
                               assigneeName={item.assignee_name}
                               ownerUserId={project.owner_id}
+                              ownerEmail={project.owner_email}
                               disabled={!canEdit}
                               onChange={(next) => updateItem(item, next)}
                             />

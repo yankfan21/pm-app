@@ -39,6 +39,7 @@ function NewProjectFlow({ onCreated, onClose }) {
         deadline: tbd ? null : deadline,
         methodology,
         owner_id: user?.id ?? null,
+        owner_email: user?.email ?? null,
       })
       .select()
       .single()

@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useAuth } from '../AuthContext'
 
 // Assignee = either a real project collaborator (assignee_user_id, FK to
 // auth.users - see tasks_assignee.sql) or a one-off free-text name
@@ -25,23 +24,21 @@ export default function AssigneePicker({
   assigneeUserId,
   assigneeName,
   ownerUserId,
+  ownerEmail,
   onChange,
   disabled = false,
 }) {
-  const { user } = useAuth()
   const [mode, setMode] = useState(() => (assigneeUserId ? 'collaborator' : assigneeName ? 'other' : 'none'))
   const [nameDraft, setNameDraft] = useState(assigneeName || '')
 
   // project_collaborators never includes the owner (ManageAccess.jsx blocks
   // inviting yourself), so the owner is otherwise invisible to this picker.
-  // Synthesizing a self-entry only when the viewer IS the owner - there's no
-  // stored owner email/name readable by other viewers to label an entry for
-  // them, so this only solves owner self-assignment, not other collaborators
-  // assigning tasks to the owner.
-  const isOwnerViewing = Boolean(user && ownerUserId && user.id === ownerUserId)
-  const options = isOwnerViewing
-    ? [...collaborators, { user_id: ownerUserId, email: `${user.email} (Owner)` }]
-    : collaborators
+  // Always synthesize a self-entry when the owner's id/email are known -
+  // projects.owner_email (see add_owner_email_to_projects.sql) is
+  // denormalized onto the project row itself, same pattern as
+  // project_collaborators.email, so every viewer with access to the project
+  // can see who the owner is, not just the owner viewing their own tasks.
+  const options = ownerUserId && ownerEmail ? [...collaborators, { user_id: ownerUserId, email: `${ownerEmail} (Owner)` }] : collaborators
 
   function handleSelectChange(e) {
     const val = e.target.value
@@ -101,9 +98,14 @@ export default function AssigneePicker({
 // tooltips/filter) renders an assignee identically. Prefers the resolved
 // collaborator email over the raw uuid; falls back to the free-text name;
 // null (not a placeholder string) when unassigned, so callers can decide
-// their own "Unassigned" copy.
-export function resolveAssigneeLabel(task, collaborators) {
+// their own "Unassigned" copy. `project` is optional (defaults to no owner
+// match) so call sites that never render owner-assigned tasks don't need to
+// thread it through just to call this.
+export function resolveAssigneeLabel(task, collaborators, project) {
   if (task.assignee_user_id) {
+    if (project && task.assignee_user_id === project.owner_id) {
+      return project.owner_email ? `${project.owner_email} (Owner)` : 'Owner'
+    }
     const match = collaborators.find((c) => c.user_id === task.assignee_user_id)
     return match ? match.email : 'Unknown collaborator'
   }
