@@ -309,13 +309,12 @@
   padding: 2px 8px;
   border-radius: 999px;
   font-size: 11px;
-  background: var(--surface-alt, #eee);
 }
 
-.mobile-status-badge.status-not_started { background: #e5e7eb; color: #374151; }
-.mobile-status-badge.status-in_progress { background: #fef3c7; color: #92400e; }
-.mobile-status-badge.status-completed { background: #d1fae5; color: #065f46; }
-.mobile-status-badge.status-delayed { background: #fee2e2; color: #991b1b; }
+.mobile-status-badge.status-not_started { background: var(--pill-neutral-bg); color: var(--pill-neutral-text); }
+.mobile-status-badge.status-in_progress { background: var(--badge-warning-bg); color: var(--badge-warning-text); }
+.mobile-status-badge.status-completed { background: var(--badge-success-bg); color: var(--badge-success-text); }
+.mobile-status-badge.status-delayed { background: var(--badge-danger-bg); color: var(--badge-danger-text); }
 
 /* Task detail (MobileTaskDetail) --------------------------------------- */
 
