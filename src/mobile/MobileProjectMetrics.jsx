@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient'
 import { HEALTH_LABELS, formatEvalMetric } from '../projectEvalHealth'
 import { getRiskBand } from '../riskScale'
 import { getIssueStatusCounts } from '../issueLogUtils'
+import { getEasternTodayStr, isTaskDelayed } from '../taskUtils'
 
 function formatDateTime(iso) {
   return new Date(iso).toLocaleString(undefined, {
@@ -27,14 +28,19 @@ function isPhaseOverdue(phase, waterfallTasks, todayStr) {
 
 // Mirrors KeyMetricsDashboard.jsx's useCriticalIssues - same three checks
 // (including the High/Critical-band risk filter), same methodology gate on
-// overdue phases (Agile skips it).
+// overdue phases (Agile skips it). Delayed Task now goes through the same
+// shared isTaskDelayed (taskUtils.js) desktop uses - manual PM flag
+// (status === 'delayed') OR 5+ days past due and not yet Completed - so
+// mobile's badge count can't drift from what desktop shows for the same
+// project.
 function useCriticalIssues(project, tasks, phases, risks) {
   return useMemo(() => {
     const todayStr = new Date().toISOString().slice(0, 10)
+    const todayEasternStr = getEasternTodayStr()
     const issues = []
 
     tasks
-      .filter((t) => t.backlog_status == null && t.status === 'delayed')
+      .filter((t) => t.backlog_status == null && isTaskDelayed(t, todayEasternStr))
       .forEach((t) => issues.push({ key: `task-${t.id}`, type: 'Delayed Task', label: t.title, id: t.id }))
 
     // `id`/`label`/`band` aren't read by the badge-group cards below
@@ -158,11 +164,10 @@ function MobileProjectMetrics() {
 
   const issues = useCriticalIssues(project, tasks, phases, risks)
   const { open: openIssueCount, closed: closedIssueCount } = getIssueStatusCounts(issueLogIssues)
-  // Reuses useCriticalIssues' own Delayed Task entries for the count -
-  // same manual-flag-only definition (status === 'delayed') MobileProjectTasks.jsx's
+  // Reuses useCriticalIssues' own Delayed Task entries for the count - same
+  // isTaskDelayed definition (taskUtils.js) MobileProjectTasks.jsx's
   // ?taskFilter=delayed now filters by, so the badge and the list it links
-  // to can't disagree. Mobile deliberately doesn't get desktop's 5-day
-  // auto-trigger (taskUtils.js) here - out of scope for this redesign.
+  // to can't disagree.
   const delayedTaskCount = issues.filter((i) => i.type === 'Delayed Task').length
   const riskSeverityCounts = getRiskSeverityCounts(risks)
 

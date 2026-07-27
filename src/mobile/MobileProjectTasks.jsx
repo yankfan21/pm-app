@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useOutletContext, useParams, useSearchParams } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
+import { getEasternTodayStr, isTaskDelayed } from '../taskUtils'
 
 // Task list/status/mark-done (/m/projects/:projectId/tasks) - own fetch,
 // scoped to the active project (the projectId already in the URL via
@@ -113,7 +114,18 @@ function MobileProjectTasks() {
     setTasks((prev) => prev.map((t) => (t.id === task.id ? data[0] : t)))
   }
 
-  const visibleTasks = filter === 'all' ? tasks : tasks.filter((t) => (t.status ?? 'not_started') === filter)
+  // 'delayed' goes through the same isTaskDelayed check (taskUtils.js) the
+  // Project Hotspots badge counts by (MobileProjectMetrics.jsx) - manual PM
+  // flag OR 5+ days past due and not Completed - so this list can't
+  // disagree with what the badge said was there. Every other filter is
+  // still a plain literal status match.
+  const todayEasternStr = getEasternTodayStr()
+  const visibleTasks =
+    filter === 'all'
+      ? tasks
+      : filter === 'delayed'
+        ? tasks.filter((t) => isTaskDelayed(t, todayEasternStr))
+        : tasks.filter((t) => (t.status ?? 'not_started') === filter)
 
   return (
     <div>
