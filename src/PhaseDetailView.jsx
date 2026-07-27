@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from './supabaseClient'
+import { isPhaseOverdue } from './phaseUtils'
 
 // Fixed Initiation -> Planning -> Execution -> Closing grouping layer for
 // Waterfall/Hybrid projects (phases_schema.sql) - no add/remove/reorder yet,
@@ -8,8 +9,29 @@ import { supabase } from './supabaseClient'
 // it (Auto, from the tasks assigned to it, vs. Custom, a PM-set override),
 // and a toggle to switch between the two - the tool computes a suggestion,
 // the PM decides whether to keep it.
-function PhaseDetailView({ phases, setPhases, canEdit, expanded, highlightPhaseId, onPhaseHighlightDone }) {
-  const sorted = [...phases].sort((a, b) => a.phase_number - b.phase_number)
+//
+// filterOverdue/onFilterOverdueChange back the ?phaseFilter=overdue deep
+// link from the Project Hotspots "Overdue Phases" badge
+// (KeyMetricsDashboard.jsx's OverduePhaseCard, wired through
+// ProjectSectionRoutes.jsx's PlanningPhasesRoute) - a plain two-tab
+// All/Overdue toggle rather than full filter-tab parity with Issues/Risks,
+// since there are only ever 4 phases to begin with.
+function PhaseDetailView({
+  phases,
+  setPhases,
+  tasks = [],
+  canEdit,
+  expanded,
+  highlightPhaseId,
+  onPhaseHighlightDone,
+  filterOverdue,
+  onFilterOverdueChange,
+}) {
+  const todayStr = new Date().toISOString().slice(0, 10)
+  const waterfallTasks = tasks.filter((t) => t.backlog_status == null)
+  const sorted = [...phases]
+    .sort((a, b) => a.phase_number - b.phase_number)
+    .filter((p) => !filterOverdue || isPhaseOverdue(p, waterfallTasks, todayStr))
   const rowRefs = useRef({})
   const [flashPhaseId, setFlashPhaseId] = useState(null)
 
@@ -59,10 +81,29 @@ function PhaseDetailView({ phases, setPhases, canEdit, expanded, highlightPhaseI
     <div className="phases detail-zone">
       <h2 className="tasks-heading section-heading-static">
         <span className="toggle-header-main">Phases</span>
-        <span className={`doc-status-badge ${sorted.length > 0 ? 'done' : 'pending'}`}>
-          {sorted.length > 0 ? `${sorted.length} Phase${sorted.length === 1 ? '' : 's'}` : 'Not seeded'}
+        <span className={`doc-status-badge ${phases.length > 0 ? 'done' : 'pending'}`}>
+          {phases.length > 0 ? `${phases.length} Phase${phases.length === 1 ? '' : 's'}` : 'Not seeded'}
         </span>
       </h2>
+
+      {expanded && onFilterOverdueChange && phases.length > 0 && (
+        <div className="filter-tabs risk-log-severity-filter">
+          <button
+            type="button"
+            className={`filter-tab ${!filterOverdue ? 'selected' : ''}`}
+            onClick={() => onFilterOverdueChange(false)}
+          >
+            All Phases
+          </button>
+          <button
+            type="button"
+            className={`filter-tab ${filterOverdue ? 'selected' : ''}`}
+            onClick={() => onFilterOverdueChange(true)}
+          >
+            Overdue
+          </button>
+        </div>
+      )}
 
       {expanded && (
         <ul className="backlog-list phase-list">
@@ -82,6 +123,9 @@ function PhaseDetailView({ phases, setPhases, canEdit, expanded, highlightPhaseI
                   <span className="story-points-badge">
                     {phase.effective_start_date || 'TBD'} &rarr; {phase.effective_end_date || 'TBD'}
                   </span>
+                  {isPhaseOverdue(phase, waterfallTasks, todayStr) && (
+                    <span className="doc-status-badge critical">Overdue</span>
+                  )}
                 </div>
 
                 <div className="phase-mode-toggle" role="group" aria-label={`${phase.phase_name} date mode`}>
@@ -136,7 +180,10 @@ function PhaseDetailView({ phases, setPhases, canEdit, expanded, highlightPhaseI
               </div>
             </li>
           ))}
-          {sorted.length === 0 && (
+          {sorted.length === 0 && phases.length > 0 && filterOverdue && (
+            <li className="empty">No overdue phases.</li>
+          )}
+          {sorted.length === 0 && phases.length === 0 && (
             <li className="empty">
               No phases yet - re-run the phases migration's backfill, or recreate the project, to seed them.
             </li>

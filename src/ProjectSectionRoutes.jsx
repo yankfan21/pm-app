@@ -57,9 +57,12 @@ export function ExecutionIndexRoute() {
 }
 
 export function PlanningPhasesRoute() {
-  const { phases, setPhases, canEdit } = useOutletContext()
+  const { phases, setPhases, tasks, canEdit } = useOutletContext()
   const [searchParams, setSearchParams] = useSearchParams()
   const phaseId = searchParams.get('phaseId')
+  // ?phaseFilter=overdue - deep-link target for the Project Hotspots
+  // "Overdue Phases" badge (KeyMetricsDashboard.jsx's OverduePhaseCard).
+  const phaseFilter = searchParams.get('phaseFilter')
 
   // Same clear-after-flash contract as DocumentsRoute's clearRiskId /
   // PlanningTasksRoute's taskId handling - see PhaseDetailView's
@@ -75,15 +78,27 @@ export function PlanningPhasesRoute() {
     )
   }
 
+  function setPhaseFilterOverdue(next) {
+    setSearchParams((prev) => {
+      const nextParams = new URLSearchParams(prev)
+      if (next) nextParams.set('phaseFilter', 'overdue')
+      else nextParams.delete('phaseFilter')
+      return nextParams
+    })
+  }
+
   return (
     <MethodologySection side="waterfall">
       <PhaseDetailView
         phases={phases}
         setPhases={setPhases}
+        tasks={tasks}
         canEdit={canEdit}
         expanded
         highlightPhaseId={phaseId}
         onPhaseHighlightDone={clearPhaseId}
+        filterOverdue={phaseFilter === 'overdue'}
+        onFilterOverdueChange={setPhaseFilterOverdue}
       />
     </MethodologySection>
   )

@@ -2887,50 +2887,27 @@
   line-height: 1.3;
 }
 
-.critical-issues-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+/* Project Hotspots' four sub-groups (Issues / Delayed Tasks / Overdue
+   Phases / Risks) - each is just a heading + one of the existing badge
+   cards (IssueSummaryCard/DelayedTaskCard/OverduePhaseCard/
+   RiskSeverityCard), laid out as wrapping columns so they read as one
+   panel rather than four stacked ones. */
+.key-metrics-hotspot-groups {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 20px 32px;
 }
 
-.critical-issues-list li {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
-  border: 1px solid var(--row-border);
-  border-radius: 6px;
-  background: var(--row-bg);
-  backdrop-filter: var(--card-backdrop-filter);
+.key-metrics-hotspot-group {
+  flex: 1 1 200px;
+  min-width: 160px;
 }
 
-.critical-issue-label {
-  color: var(--text-h);
-}
-
-/* Fills the .critical-issues-list li's existing flex/padding/border box -
-   li itself stays the styled container so a missing-id row (rendered as a
-   plain span instead of a Link, see KeyMetricsDashboard.jsx's
-   hotspotLinkTo) looks identical to a clickable one. */
-.critical-issue-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  color: inherit;
-  text-decoration: none;
-}
-
-.critical-issues-list li:has(a.critical-issue-row) {
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-
-.critical-issues-list li:has(a.critical-issue-row):hover {
-  background: var(--code-bg);
+.key-metrics-subheading {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
 }
 
 /* Shared "you've arrived" flash for a Hotspot click-through landing on its
@@ -2948,30 +2925,6 @@
 
 .hotspot-row-highlight {
   animation: hotspot-row-flash 2s ease-out;
-}
-
-.issue-tag {
-  flex-shrink: 0;
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.issue-tag-task {
-  background: var(--badge-danger-bg);
-  color: var(--badge-danger-text);
-}
-
-.issue-tag-risk {
-  background: var(--badge-warning-bg);
-  color: var(--badge-warning-text);
-}
-
-.issue-tag-phase {
-  background: var(--badge-danger-bg);
-  color: var(--badge-danger-text);
 }
 
 @media (max-width: 480px) {

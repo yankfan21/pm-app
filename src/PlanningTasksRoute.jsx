@@ -23,6 +23,12 @@ const TASK_STATUS_OPTIONS = [
   { key: 'delayed', label: 'Delayed', colorClass: 'critical' },
 ]
 
+// 'All' plus every TASK_STATUS_OPTIONS key - same idea as IssueLogView.jsx's
+// VALID_FILTER_VALUES, but no 'OpenGroup'-style combined bucket needed here
+// since Delayed Tasks (the Project Hotspots deep-link target, see
+// KeyMetricsDashboard.jsx) already maps 1:1 onto the 'delayed' status.
+const VALID_TASK_FILTER_VALUES = ['All', ...TASK_STATUS_OPTIONS.map((s) => s.key)]
+
 function PlanningTasksRoute() {
   const {
     project,
@@ -52,6 +58,28 @@ function PlanningTasksRoute() {
   const taskId = searchParams.get('taskId')
   const [flashTaskId, setFlashTaskId] = useState(null)
   const taskRowRefs = useRef({})
+
+  // ?taskFilter= - deep-link target for the Project Hotspots "Delayed
+  // Tasks" badge (KeyMetricsDashboard.jsx's DelayedTaskCard), following
+  // IssueLogView.jsx's ?issueFilter= pattern. Derived straight from
+  // searchParams each render rather than mirrored into local state - unlike
+  // IssueLogView (whose filter prop comes from a parent route one level up,
+  // DocumentsRoute.jsx), this route owns its own searchParams directly, so
+  // there's no prop/state re-sync needed. Coexists with taskId: a badge
+  // click sets taskFilter only, an existing single-item Hotspot link (High
+  // Risk/Overdue Phase's siblings before this redesign) sets taskId only,
+  // and both can be present at once without conflict.
+  const rawTaskFilter = searchParams.get('taskFilter')
+  const taskFilter = VALID_TASK_FILTER_VALUES.includes(rawTaskFilter) ? rawTaskFilter : 'All'
+
+  function setTaskFilter(next) {
+    setSearchParams((prev) => {
+      const nextParams = new URLSearchParams(prev)
+      if (next === 'All') nextParams.delete('taskFilter')
+      else nextParams.set('taskFilter', next)
+      return nextParams
+    })
+  }
 
   // Per-group collapse state, keyed by group id ('none' or `phase:<id>`) -
   // an override map rather than a Set of collapsed ids so a group whose
@@ -285,21 +313,26 @@ function PlanningTasksRoute() {
     setTasks((prev) => prev.filter((t) => t.id !== task.id))
   }
 
+  function passesTaskFilter(task) {
+    return taskFilter === 'All' || (task.status ?? 'not_started') === taskFilter
+  }
+
   const sortedPhases = [...phases].sort((a, b) => a.phase_number - b.phase_number)
   const taskGroups = [
     {
       key: 'none',
       label: 'No Phase',
-      items: tasks.filter((t) => !t.phase_id),
+      items: tasks.filter((t) => !t.phase_id && passesTaskFilter(t)),
       defaultCollapsed: false,
     },
     ...sortedPhases.map((phase) => ({
       key: `phase:${phase.id}`,
       label: `${phase.phase_number}. ${phase.phase_name}`,
-      items: tasks.filter((t) => t.phase_id === phase.id),
+      items: tasks.filter((t) => t.phase_id === phase.id && passesTaskFilter(t)),
       defaultCollapsed: true,
     })),
   ]
+  const taskFilterLabel = TASK_STATUS_OPTIONS.find((s) => s.key === taskFilter)?.label ?? taskFilter
 
   function statusFor(task) {
     return (
@@ -582,6 +615,21 @@ function PlanningTasksRoute() {
 
         {tasks.length === 0 && <p className="empty">No tasks yet</p>}
 
+        {tasks.length > 0 && (
+          <div className="filter-tabs risk-log-severity-filter">
+            {['All', ...TASK_STATUS_OPTIONS.map((s) => s.key)].map((key) => (
+              <button
+                key={key}
+                type="button"
+                className={`filter-tab ${taskFilter === key ? 'selected' : ''}`}
+                onClick={() => setTaskFilter(key)}
+              >
+                {key === 'All' ? 'All' : TASK_STATUS_OPTIONS.find((s) => s.key === key).label}
+              </button>
+            ))}
+          </div>
+        )}
+
         {tasks.length > 0 &&
           taskGroups.map((group) => {
             const collapsed = isGroupCollapsed(group.key, group.defaultCollapsed)
@@ -605,12 +653,20 @@ function PlanningTasksRoute() {
                 {collapsed ? (
                   <ul className="task-list group-compact-list">
                     {group.items.map((task) => renderCompactTaskRow(task))}
-                    {group.items.length === 0 && <li className="empty">No tasks in this group</li>}
+                    {group.items.length === 0 && (
+                      <li className="empty">
+                        {taskFilter === 'All' ? 'No tasks in this group' : `No ${taskFilterLabel} tasks in this group`}
+                      </li>
+                    )}
                   </ul>
                 ) : (
                   <ul className="task-list">
                     {group.items.map((task) => renderFullTaskRow(task))}
-                    {group.items.length === 0 && <li className="empty">No tasks in this group</li>}
+                    {group.items.length === 0 && (
+                      <li className="empty">
+                        {taskFilter === 'All' ? 'No tasks in this group' : `No ${taskFilterLabel} tasks in this group`}
+                      </li>
+                    )}
                   </ul>
                 )}
               </div>

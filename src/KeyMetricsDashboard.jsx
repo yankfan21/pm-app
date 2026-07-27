@@ -18,6 +18,7 @@ import { HEALTH_LABELS, HEALTH_COLOR_CLASS, formatEvalMetric } from './projectEv
 import { visibleSides } from './projectSections'
 import { getRiskBand } from './riskScale'
 import { getIssueStatusCounts } from './issueLogUtils'
+import { isPhaseOverdue } from './phaseUtils'
 
 const CHART_TOOLTIP_STYLE = {
   background: 'var(--surface-1-solid)',
@@ -42,18 +43,6 @@ function formatDateTime(iso) {
   })
 }
 
-// Same overdue definition as supabase/functions/project-eval/index.ts's
-// phaseStats(): end date has passed while at least one Waterfall task
-// linked to this phase (via tasks.phase_id) is still incomplete. Can't
-// literally import that function - it runs as a Deno Edge Function
-// deployed separately from this Vite build (see CLAUDE.md) - so this
-// mirrors just the `overdue` condition, not the full stats object.
-function isPhaseOverdue(phase, waterfallTasks, todayStr) {
-  if (!phase.effective_end_date || todayStr <= phase.effective_end_date) return false
-  const linked = waterfallTasks.filter((t) => t.phase_id === phase.id)
-  return linked.some((t) => !t.completed)
-}
-
 // Everything here is recomputed from already-loaded props on every render -
 // unlike the Project Status card below, this is a live view, not tied to
 // whenever Evaluate Project was last run.
@@ -72,9 +61,12 @@ function useCriticalIssues(project, tasks, phases, riskLog) {
       .forEach((t) => issues.push({ key: `task-${t.id}`, type: 'Delayed Task', label: t.title, id: t.id }))
 
     // High/Critical-band risks - mirrors project-eval/index.ts's
-    // riskStats() band filter. `id` is r.id verbatim (not the key's index
-    // fallback below) - a risk missing an id just can't be linked, see
-    // hotspotLinkTo().
+    // riskStats() band filter. `id`/`label`/`band` aren't read by anything
+    // downstream anymore (DelayedTaskCard/OverduePhaseCard/RiskSeverityCard
+    // only need the `type` count, now that the per-item itemized list/
+    // hotspotLinkTo is gone) - left on the issue object as harmless
+    // leftover shape rather than trimmed, so this stays a straight mirror
+    // of project-eval/index.ts's riskStats() row shape.
     ;(riskLog?.risks || [])
       .filter((r) => ['High', 'Critical'].includes(getRiskBand(r.likelihood, r.severity)))
       .forEach((r, i) =>
@@ -98,12 +90,6 @@ function useCriticalIssues(project, tasks, phases, riskLog) {
 
     return issues
   }, [project.methodology, tasks, phases, riskLog])
-}
-
-const ISSUE_TAG_CLASS = {
-  'Delayed Task': 'issue-tag-task',
-  'High Risk': 'issue-tag-risk',
-  'Overdue Phase': 'issue-tag-phase',
 }
 
 // Lifted out of ProjectStatusCard so ProgressRingCard can read the same
@@ -169,54 +155,6 @@ function ProjectStatusCard({ evaluation, loading }) {
       </div>
       <p className="key-metrics-as-of">As of {formatDateTime(evaluation.created_at)}</p>
     </div>
-  )
-}
-
-// Click-through destination per Hotspot type - each lands on the section
-// that actually owns the record, pre-filtered/highlighted to it. Risk uses
-// the same riskFilter param RiskSeverityCard already deep-links with (see
-// DocumentsRoute.jsx), plus a riskId on top for the row-level highlight;
-// Delayed Task and Overdue Phase are new taskId/phaseId params (see
-// PlanningTasksRoute.jsx/ProjectSectionRoutes.jsx's PlanningPhasesRoute).
-// Returns null when there's nothing to link to (missing id) - the card
-// falls back to a plain, non-clickable row rather than linking to the
-// wrong record.
-function hotspotLinkTo(issue, projectId) {
-  if (!issue.id) return null
-  if (issue.type === 'Delayed Task') return `/projects/${projectId}/planning/tasks?taskId=${issue.id}`
-  if (issue.type === 'High Risk') return `/projects/${projectId}/documents?riskFilter=${issue.band}&riskId=${issue.id}`
-  if (issue.type === 'Overdue Phase') return `/projects/${projectId}/planning/phases?phaseId=${issue.id}`
-  return null
-}
-
-function CriticalIssuesCard({ issues, projectId }) {
-  if (issues.length === 0) {
-    return <p className="charter-status">No hotspots right now.</p>
-  }
-
-  return (
-    <ul className="critical-issues-list">
-      {issues.map((issue) => {
-        const to = hotspotLinkTo(issue, projectId)
-        const content = (
-          <>
-            <span className={`issue-tag ${ISSUE_TAG_CLASS[issue.type] || ''}`}>{issue.type}</span>
-            <span className="critical-issue-label">{issue.label}</span>
-          </>
-        )
-        return (
-          <li key={issue.key}>
-            {to ? (
-              <Link to={to} className="critical-issue-row">
-                {content}
-              </Link>
-            ) : (
-              <span className="critical-issue-row">{content}</span>
-            )}
-          </li>
-        )
-      })}
-    </ul>
   )
 }
 
@@ -399,6 +337,53 @@ function IssueSummaryCard({ project, issueLog }) {
   )
 }
 
+// Delayed Task / Overdue Phase counts both come straight off useCriticalIssues'
+// `issues` array instead of recomputing from tasks/phases a second time -
+// that array already carries one entry per delayed task / overdue phase
+// (see useCriticalIssues above), so filtering by `type` here can't drift
+// from the top-level "N Hotspots" count.
+function DelayedTaskCard({ project, issues }) {
+  const count = issues.filter((i) => i.type === 'Delayed Task').length
+
+  if (count === 0) {
+    return <p className="charter-status">No delayed tasks.</p>
+  }
+
+  return (
+    <div className="key-metrics-severity-badges">
+      <Link
+        to={`/projects/${project.id}/planning/tasks?taskFilter=delayed`}
+        className="doc-status-badge key-metrics-severity-badge-link critical"
+      >
+        {count} Delayed
+      </Link>
+    </div>
+  )
+}
+
+// Overdue Phases has no PM-facing "Issue" or "Risk" concept to fold into -
+// it's its own sub-group rather than merged into one of the other three
+// (see redesign discussion). Links into PlanningPhasesRoute's new
+// ?phaseFilter=overdue view (ProjectSectionRoutes.jsx/PhaseDetailView.jsx).
+function OverduePhaseCard({ project, issues }) {
+  const count = issues.filter((i) => i.type === 'Overdue Phase').length
+
+  if (count === 0) {
+    return <p className="charter-status">No overdue phases.</p>
+  }
+
+  return (
+    <div className="key-metrics-severity-badges">
+      <Link
+        to={`/projects/${project.id}/planning/phases?phaseFilter=overdue`}
+        className="doc-status-badge key-metrics-severity-badge-link critical"
+      >
+        {count} Overdue
+      </Link>
+    </div>
+  )
+}
+
 const VELOCITY_SPRINT_LIMIT = 5
 
 // Mirrors project-eval/index.ts's velocityStats() (committed-vs-completed
@@ -506,9 +491,9 @@ function SprintVelocityCard({ project }) {
 // New top-level section, same level as Tasks and Milestones / Backlog /
 // Sprint Board / Gantt Chart - Project Status + Progress % is a snapshot of
 // the latest Evaluate Project run (see ProjectStatusCard/ProgressRingCard);
-// Critical Issues and Risk Severity are live recomputations from
-// already-loaded tasks/phases/riskLog props, not tied to that snapshot at
-// all. Progress and Sprint Velocity share one panel/row - the donut is the
+// Project Hotspots is a live recomputation from already-loaded
+// tasks/phases/riskLog/issueLog props, not tied to that snapshot at all.
+// Progress and Sprint Velocity share one panel/row - the donut is the
 // current velocity_ratio snapshot, the bar chart is the trend behind it
 // (own live query, see useSprintVelocity) - pairing them makes that
 // relationship visible at a glance. Waterfall has no Sprint Velocity (see
@@ -519,6 +504,10 @@ function KeyMetricsDashboard({ project, tasks, phases, riskLog, issueLog, expand
   const issues = useCriticalIssues(project, tasks, phases, riskLog)
   const { evaluation, loading: evalLoading } = useLatestEvaluation(project.id)
   const showVelocity = visibleSides(project.methodology).agile
+  // Phases don't exist as a concept for pure Agile (see useCriticalIssues'
+  // own methodology gate above) - hide the sub-group entirely there rather
+  // than showing a permanent, meaningless "0 overdue".
+  const showPhases = project.methodology !== 'agile'
 
   return (
     <div className="detail-zone key-metrics-dashboard">
@@ -552,17 +541,29 @@ function KeyMetricsDashboard({ project, tasks, phases, riskLog, issueLog, expand
 
           <div className="key-metrics-panel">
             <h3 className="key-metrics-panel-heading">Project Hotspots ({issues.length})</h3>
-            <CriticalIssuesCard issues={issues} projectId={project.id} />
-          </div>
+            <div className="key-metrics-hotspot-groups">
+              <div className="key-metrics-hotspot-group">
+                <h4 className="key-metrics-subheading">Issues</h4>
+                <IssueSummaryCard project={project} issueLog={issueLog} />
+              </div>
 
-          <div className="key-metrics-panel">
-            <h3 className="key-metrics-panel-heading">Issues</h3>
-            <IssueSummaryCard project={project} issueLog={issueLog} />
-          </div>
+              <div className="key-metrics-hotspot-group">
+                <h4 className="key-metrics-subheading">Delayed Tasks</h4>
+                <DelayedTaskCard project={project} issues={issues} />
+              </div>
 
-          <div className="key-metrics-panel">
-            <h3 className="key-metrics-panel-heading">Risks</h3>
-            <RiskSeverityCard project={project} riskLog={riskLog} />
+              {showPhases && (
+                <div className="key-metrics-hotspot-group">
+                  <h4 className="key-metrics-subheading">Overdue Phases</h4>
+                  <OverduePhaseCard project={project} issues={issues} />
+                </div>
+              )}
+
+              <div className="key-metrics-hotspot-group">
+                <h4 className="key-metrics-subheading">Risks</h4>
+                <RiskSeverityCard project={project} riskLog={riskLog} />
+              </div>
+            </div>
           </div>
         </div>
       )}
