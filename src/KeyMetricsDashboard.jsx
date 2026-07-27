@@ -20,6 +20,7 @@ import { getRiskBand } from './riskScale'
 import { getIssueStatusCounts } from './issueLogUtils'
 import { isPhaseOverdue } from './phaseUtils'
 import { getEasternTodayStr, isTaskDelayed } from './taskUtils'
+import { isSprintOverdue } from './sprintStats'
 
 const CHART_TOOLTIP_STYLE = {
   background: 'var(--surface-1-solid)',
@@ -391,6 +392,35 @@ function OverduePhaseCard({ project, issues }) {
   )
 }
 
+// Agile/Hybrid only (methodology !== 'waterfall' - same side useSprintVelocity
+// is gated on, since Waterfall has no sprints concept at all). Data comes
+// from useSprintVelocity's overdueSprints, computed alongside the velocity
+// chart's own query rather than a separate fetch. Links into Sprint Board's
+// ?sprintFilter=overdue deep link (ProjectSectionRoutes.jsx's
+// ExecutionSprintBoardRoute), which auto-selects the earliest overdue sprint.
+function OverdueSprintsCard({ project, overdueSprints, loading, error }) {
+  if (loading) {
+    return <p className="charter-status">Loading sprint data...</p>
+  }
+  if (error) {
+    return <p className="charter-status">{error}</p>
+  }
+  if (overdueSprints.length === 0) {
+    return <p className="charter-status">No overdue sprints.</p>
+  }
+
+  return (
+    <div className="key-metrics-severity-badges">
+      <Link
+        to={`/projects/${project.id}/execution/sprint-board?sprintFilter=overdue`}
+        className="doc-status-badge key-metrics-severity-badge-link critical"
+      >
+        {overdueSprints.length} Overdue
+      </Link>
+    </div>
+  )
+}
+
 const VELOCITY_SPRINT_LIMIT = 5
 
 // Mirrors project-eval/index.ts's velocityStats() (committed-vs-completed
@@ -400,8 +430,19 @@ const VELOCITY_SPRINT_LIMIT = 5
 // structured data, so there's nothing to read it back from. Project-wide
 // (no milestone_id scoping), matching what velocity_ratio in the
 // project_evaluations snapshot already uses for its single-sprint figure.
+//
+// Also derives overdueSprints (Project Hotspots' Overdue Sprints count) off
+// this same sprints+tasks query rather than issuing a second one - id/name/
+// end_date for every sprint that trips isSprintOverdue, earliest end_date
+// first (the ?sprintFilter=overdue deep-link auto-selects the first one).
+// Unlike the velocity chart's `sprints`, this isn't capped to the last 5 or
+// scoped to sprints with committed points - a sprint can be overdue with no
+// story-pointed tasks at all... though isSprintOverdue itself then reads it
+// as not overdue (no linked tasks to be incomplete), so in practice this
+// only ever contains sprints that do have linked tasks.
 function useSprintVelocity(projectId, enabled) {
   const [sprints, setSprints] = useState([])
+  const [overdueSprints, setOverdueSprints] = useState([])
   const [loading, setLoading] = useState(enabled)
   const [error, setError] = useState(null)
 
@@ -446,6 +487,14 @@ function useSprintVelocity(projectId, enabled) {
         .map((s) => ({ name: s.name, ...bySprintId.get(s.id) }))
 
       setSprints(relevant)
+
+      const todayStr = new Date().toISOString().slice(0, 10)
+      const overdue = (sprintRes.data || [])
+        .filter((s) => isSprintOverdue(s, taskRes.data || [], todayStr))
+        .sort((a, b) => (a.end_date || '').localeCompare(b.end_date || ''))
+        .map((s) => ({ id: s.id, name: s.name, end_date: s.end_date }))
+
+      setOverdueSprints(overdue)
       setLoading(false)
     }
 
@@ -455,16 +504,14 @@ function useSprintVelocity(projectId, enabled) {
     }
   }, [projectId, enabled])
 
-  return { sprints, loading, error }
+  return { sprints, overdueSprints, loading, error }
 }
 
 // Committed = the sprint's planned points (neutral gray, a "plan" tone);
 // Completed = points actually done (--accent, the same primary blue used
 // for the Progress ring's fill) - two distinct series so both get a
 // legend per marks-and-anatomy.md's "legend always present for >= 2 series".
-function SprintVelocityCard({ project }) {
-  const { sprints, loading, error } = useSprintVelocity(project.id, true)
-
+function SprintVelocityCard({ sprints, loading, error }) {
   if (loading) {
     return <p className="charter-status">Loading sprint data...</p>
   }
@@ -511,10 +558,21 @@ function KeyMetricsDashboard({ project, tasks, phases, riskLog, issueLog, expand
   const issues = useCriticalIssues(project, tasks, phases, riskLog)
   const { evaluation, loading: evalLoading } = useLatestEvaluation(project.id)
   const showVelocity = visibleSides(project.methodology).agile
+  const {
+    sprints: velocitySprints,
+    overdueSprints,
+    loading: velocityLoading,
+    error: velocityError,
+  } = useSprintVelocity(project.id, showVelocity)
   // Phases don't exist as a concept for pure Agile (see useCriticalIssues'
   // own methodology gate above) - hide the sub-group entirely there rather
   // than showing a permanent, meaningless "0 overdue".
   const showPhases = project.methodology !== 'agile'
+  // Delayed Tasks is Waterfall-side only (see useCriticalIssues' own
+  // backlog_status == null scoping - it's always 0 for pure Agile since
+  // every Agile task has backlog_status set) - Agile gets Overdue Sprints
+  // in its place instead, Hybrid keeps both.
+  const showDelayedTasks = project.methodology !== 'agile'
 
   return (
     <div className="detail-zone key-metrics-dashboard">
@@ -540,7 +598,7 @@ function KeyMetricsDashboard({ project, tasks, phases, riskLog, issueLog, expand
               </div>
               {showVelocity && (
                 <div className="key-metrics-velocity-col">
-                  <SprintVelocityCard project={project} />
+                  <SprintVelocityCard sprints={velocitySprints} loading={velocityLoading} error={velocityError} />
                 </div>
               )}
             </div>
@@ -554,15 +612,29 @@ function KeyMetricsDashboard({ project, tasks, phases, riskLog, issueLog, expand
                 <IssueSummaryCard project={project} issueLog={issueLog} />
               </div>
 
-              <div className="key-metrics-hotspot-group">
-                <h4 className="key-metrics-subheading">Delayed Tasks</h4>
-                <DelayedTaskCard project={project} issues={issues} />
-              </div>
+              {showDelayedTasks && (
+                <div className="key-metrics-hotspot-group">
+                  <h4 className="key-metrics-subheading">Delayed Tasks</h4>
+                  <DelayedTaskCard project={project} issues={issues} />
+                </div>
+              )}
 
               {showPhases && (
                 <div className="key-metrics-hotspot-group">
                   <h4 className="key-metrics-subheading">Overdue Phases</h4>
                   <OverduePhaseCard project={project} issues={issues} />
+                </div>
+              )}
+
+              {showVelocity && (
+                <div className="key-metrics-hotspot-group">
+                  <h4 className="key-metrics-subheading">Overdue Sprints</h4>
+                  <OverdueSprintsCard
+                    project={project}
+                    overdueSprints={overdueSprints}
+                    loading={velocityLoading}
+                    error={velocityError}
+                  />
                 </div>
               )}
 

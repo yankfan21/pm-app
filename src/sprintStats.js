@@ -9,3 +9,15 @@ export function computeSprintPoints(tasks, sprintId) {
 
   return { sprintTasks, committed, completed }
 }
+
+// Mirrors phaseUtils.js's isPhaseOverdue exactly, applied to sprints instead
+// of phases: end date has passed while at least one linked task/backlog
+// item is still incomplete (board_status !== 'done'). Used by
+// KeyMetricsDashboard.jsx (Project Hotspots' Overdue Sprints count) and
+// ProjectSectionRoutes.jsx's ExecutionSprintBoardRoute (the
+// ?sprintFilter=overdue deep-link's auto-select).
+export function isSprintOverdue(sprint, tasks, todayStr) {
+  if (!sprint.end_date || todayStr <= sprint.end_date) return false
+  const linked = tasks.filter((t) => t.sprint_id === sprint.id)
+  return linked.some((t) => (t.board_status ?? 'todo') !== 'done')
+}

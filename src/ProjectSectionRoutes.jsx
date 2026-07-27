@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Navigate, useOutletContext, useSearchParams } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import PhaseDetailView from './PhaseDetailView'
@@ -12,6 +12,7 @@ import TeamView from './TeamView'
 import RiskLogView from './RiskLogView'
 import IssueLogView from './IssueLogView'
 import { createIssueObject } from './issueLogUtils'
+import { isSprintOverdue } from './sprintStats'
 import { visibleSides, visibleSectionsForCategory } from './projectSections'
 
 // Every route below hands `expanded` a hard `true` - under the old
@@ -215,6 +216,38 @@ export function ExecutionSprintBoardRoute() {
     selectedSprintId,
     setSelectedSprintId,
   } = useOutletContext()
+  const [searchParams, setSearchParams] = useSearchParams()
+  // ?sprintFilter=overdue - deep-link target for the Project Hotspots
+  // "Overdue Sprints" badge (KeyMetricsDashboard.jsx's OverdueSprintsCard).
+  // A one-shot jump rather than a persistent filter view (Sprint Board only
+  // ever shows one sprint at a time, unlike Phases' All/Overdue toggle) -
+  // auto-selects the earliest overdue sprint via the same layout-level
+  // selectedSprintId state the Sprint dropdown uses, then clears the param
+  // so switching sprints manually afterward doesn't re-trigger it and it
+  // doesn't linger if the page is left/revisited without the param.
+  const sprintFilter = searchParams.get('sprintFilter')
+
+  useEffect(() => {
+    if (sprintFilter !== 'overdue' || sprints.length === 0) return
+
+    const todayStr = new Date().toISOString().slice(0, 10)
+    const earliestOverdue = [...sprints]
+      .filter((s) => isSprintOverdue(s, tasks, todayStr))
+      .sort((a, b) => (a.end_date || '').localeCompare(b.end_date || ''))[0]
+
+    if (earliestOverdue) setSelectedSprintId(earliestOverdue.id)
+
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        next.delete('sprintFilter')
+        return next
+      },
+      { replace: true }
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sprintFilter, sprints, tasks])
+
   return (
     <MethodologySection side="agile">
       <SprintBoardView
