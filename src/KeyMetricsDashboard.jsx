@@ -540,7 +540,7 @@ function KeyMetricsDashboard({ project, tasks, phases, riskLog, issueLog, expand
           </div>
 
           <div className="key-metrics-panel">
-            <h3 className="key-metrics-panel-heading">Project Hotspots ({issues.length})</h3>
+            <h3 className="key-metrics-panel-heading">Project Hotspots</h3>
             <div className="key-metrics-hotspot-groups">
               <div className="key-metrics-hotspot-group">
                 <h4 className="key-metrics-subheading">Issues</h4>
