@@ -335,46 +335,50 @@ function ProjectDetailLayout({ project, isOwner, canEdit }) {
           </div>
         )}
 
-        {/* Single-line header - this used to be a 3-row block (title+archive
-            row, description paragraph, badge row) that only ever rendered
-            once on the old single-scroll page. Now that ProjectDetailLayout
-            persists across every section route, that same block was
-            repeating on every page switch, eating vertical space each time.
-            Compressed to one row; goal wraps (full text, no truncation) if
-            it doesn't fit alongside the other badges. Archive Project and
-            Manage Access live in the sidebar now (project-nav-admin below),
-            not here. */}
-        <div className="project-header-bar">
-          <h2 className="project-header-name">{currentProject.name}</h2>
+        {/* Persistent header - name/badges/date row, plus a second line for
+            the project goal (full text, no truncation). Both persist across
+            every section route (Overview, Planning, Execution, Documents).
+            Project Goal's ONLY other home used to be Overview's body
+            section; that's been removed so this header line is the single
+            source of truth. Archive Project and Manage Access live in the
+            sidebar now (project-nav-admin below), not here. */}
+        <div className="project-header">
+          <div className="project-header-bar">
+            <h2 className="project-header-name">{currentProject.name}</h2>
 
-          <div className="project-header-badges">
-            {canEdit ? (
-              <select
-                className="methodology-badge methodology-badge-select"
-                aria-label="Methodology"
-                value={currentProject.methodology}
-                onChange={(e) => handleMethodologyChange(e.target.value)}
-              >
-                {METHODOLOGIES.map((m) => (
-                  <option key={m} value={m}>
-                    {METHODOLOGY_LABELS[m] ?? m}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <span className="methodology-badge">
-                {METHODOLOGY_LABELS[currentProject.methodology] ?? currentProject.methodology}
+            <div className="project-header-badges">
+              {canEdit ? (
+                <select
+                  className="methodology-badge methodology-badge-select"
+                  aria-label="Methodology"
+                  value={currentProject.methodology}
+                  onChange={(e) => handleMethodologyChange(e.target.value)}
+                >
+                  {METHODOLOGIES.map((m) => (
+                    <option key={m} value={m}>
+                      {METHODOLOGY_LABELS[m] ?? m}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <span className="methodology-badge">
+                  {METHODOLOGY_LABELS[currentProject.methodology] ?? currentProject.methodology}
+                </span>
+              )}
+              <span className={`priority-badge ${currentProject.priority.toLowerCase()}`}>
+                {currentProject.priority}
               </span>
-            )}
-            <span className={`priority-badge ${currentProject.priority.toLowerCase()}`}>
-              {currentProject.priority}
-            </span>
-            {currentProject.status === 'Archived' && (
-              <span className="status-badge archived">Archived</span>
-            )}
+              {currentProject.status === 'Archived' && (
+                <span className="status-badge archived">Archived</span>
+              )}
+            </div>
+
+            <span className="project-header-date">{currentProject.deadline ?? 'TBD'}</span>
           </div>
 
-          <span className="project-header-date">{currentProject.deadline ?? 'TBD'}</span>
+          {currentProject.goal && (
+            <p className="project-header-goal-line">{currentProject.goal}</p>
+          )}
         </div>
 
         {error && <p className="error">{error}</p>}

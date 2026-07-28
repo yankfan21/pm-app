@@ -3043,26 +3043,29 @@
   font-size: 15px;
 }
 
-/* Single-line project header (ProjectDetailLayout.jsx) - name + methodology
-   + priority + date + truncated description + archive button, all inline.
-   Replaces the old 3-row title/description/badges block, which only ever
-   rendered once on the old single-scroll page; now that this layout
-   persists across every section route, a multi-row block would repeat its
-   full height on every page switch. */
+/* Persistent project header (ProjectDetailLayout.jsx) - name/methodology/
+   priority/date row plus a goal line beneath it. Both rows persist across
+   every section route, so the divider sits under the whole block (kept
+   light - --border-faint - to read as integrated with page content rather
+   than a separate chrome bar). */
+.project-header {
+  margin-top: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-faint);
+}
+
 .project-header-bar {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 10px 12px;
-  margin-top: 20px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--border);
 }
 
 .project-header-name {
   flex-shrink: 0;
   margin: 0;
   font-size: 20px;
+  font-weight: 500;
   letter-spacing: -0.3px;
 }
 
@@ -3080,22 +3083,9 @@
   color: var(--text-secondary, var(--text));
 }
 
-/* Goal/purpose block on the Overview page itself (ProjectOverviewRoute.jsx),
-   above Key Metrics Dashboard - full untruncated text, its own block rather
-   than sharing the header row's tight single line. */
-.project-goal-block {
-  margin-top: 20px;
-  margin-bottom: 20px;
-}
-
-.project-goal-heading {
-  margin: 0 0 6px;
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.project-goal-text {
-  margin: 0;
+/* Full goal text, no truncation - wraps to as many lines as it needs. */
+.project-header-goal-line {
+  margin: 8px 0 0;
   font-size: 14px;
   color: var(--text);
   white-space: pre-wrap;

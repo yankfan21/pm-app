@@ -13,13 +13,6 @@ function ProjectOverviewRoute() {
 
   return (
     <>
-      {project.goal && (
-        <div className="project-goal-block">
-          <h2 className="project-goal-heading">Project Goal</h2>
-          <p className="project-goal-text">{project.goal}</p>
-        </div>
-      )}
-
       <KeyMetricsDashboard
         project={project}
         tasks={tasks}
