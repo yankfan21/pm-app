@@ -3227,6 +3227,40 @@
   cursor: pointer;
 }
 
+/* Contact Support form (ContactSupportForm.jsx) - same shape as .modal-step's
+   label/input rules above, but inline in Settings.jsx rather than a modal, and
+   covering email/select/textarea too since NewProjectFlow's modal never needed those. */
+.contact-support-form {
+  max-width: 480px;
+}
+
+.contact-support-form label {
+  display: block;
+  margin-bottom: 16px;
+  font-weight: 500;
+  color: var(--text-h);
+}
+
+.contact-support-form input[type='text'],
+.contact-support-form input[type='email'],
+.contact-support-form select,
+.contact-support-form textarea {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: inherit;
+  color: var(--text-h);
+  background: var(--bg);
+  box-sizing: border-box;
+}
+
+.contact-support-form textarea {
+  resize: vertical;
+}
+
 .priority-buttons button.selected {
   border-color: var(--accent);
   background: var(--accent-bg);

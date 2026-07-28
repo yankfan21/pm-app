@@ -16,6 +16,9 @@ function MobileMore() {
         <Link to="/m/settings" className="mobile-more-list-item">
           Settings
         </Link>
+        <Link to="/m/settings#contact-support" className="mobile-more-list-item">
+          Contact Support
+        </Link>
         <button type="button" className="mobile-more-list-item" onClick={signOut}>
           Sign out
         </button>

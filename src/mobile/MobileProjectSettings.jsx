@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { useAuth } from '../AuthContext'
+import MobileContactSupport from './MobileContactSupport'
 import { useTheme } from '../hooks/useTheme'
 import { useDeviceMode } from '../hooks/useDeviceMode'
 import { resolveDeviceModeTarget, MOBILE_HOME, DESKTOP_HOME } from '../deviceRouteMap'
@@ -44,6 +45,15 @@ function MobileProjectSettings() {
   const [hiddenProjects, setHiddenProjects] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const contactSectionRef = useRef(null)
+
+  // Lets the More-menu "Contact Support" link (MobileMore.jsx) land here and
+  // scroll straight to this section, rather than needing its own route.
+  useEffect(() => {
+    if (location.hash === '#contact-support' && contactSectionRef.current) {
+      contactSectionRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [location.hash])
 
   useEffect(() => {
     async function loadHiddenProjects() {
@@ -200,6 +210,14 @@ function MobileProjectSettings() {
           ))}
         </div>
       )}
+
+      <h2 className="mobile-section-title" id="contact-support" ref={contactSectionRef}>
+        Contact / Support
+      </h2>
+      <p className="mobile-screen-stub">
+        Have a question or ran into a problem? Send us a message and we&rsquo;ll get back to you.
+      </p>
+      <MobileContactSupport />
     </div>
   )
 }

@@ -48,6 +48,9 @@ function AppHeader() {
         {user ? (
           <div className="account-menu">
             <span className="account-menu-email">{user.email}</span>
+            <Link to="/settings#contact-support" className="btn-secondary">
+              Contact Support
+            </Link>
             <button type="button" className="btn-secondary" onClick={signOut}>
               Sign out
             </button>
