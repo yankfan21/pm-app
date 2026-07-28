@@ -779,7 +779,8 @@
 }
 
 .backlog-item-title {
-  font-weight: 500;
+  font-size: var(--item-title-size);
+  font-weight: var(--item-title-weight);
   color: var(--text-h);
 }
 
@@ -997,8 +998,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-weight: 500;
-  font-size: 14px;
+  font-weight: var(--label-board-column-weight);
+  font-size: var(--label-board-column-size);
   color: var(--text-h);
   margin-bottom: 10px;
 }
@@ -1504,7 +1505,8 @@
 }
 
 .group-header-label {
-  font-weight: 500;
+  font-size: var(--heading-subsection-size);
+  font-weight: var(--heading-subsection-weight);
   color: var(--text-h);
 }
 
@@ -1530,6 +1532,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: var(--item-title-size);
+  font-weight: var(--item-title-weight);
   color: var(--text-h);
 }
 
@@ -1595,7 +1599,8 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-weight: 500;
+  font-size: var(--item-title-size);
+  font-weight: var(--item-title-weight);
   color: var(--text-h);
 }
 
@@ -2540,17 +2545,27 @@
 /* This h3 had no explicit font-weight/color/letter-spacing, so it fell back
    to the browser's bold default plus the body's muted --text color instead
    of matching h2/.tasks-heading's explicit 500-weight, --text-h (high-
-   contrast), -0.24px-tracked styling - the exact typography reference
+   contrast), -0.24px-tracked styling - the --heading-page reference
    standard the rest of the app was audited against. Same shared class
-   across every document view (Charter, Requirements Brief, Risk Log,
-   Comms, Budget Tracker, Post-Mortem) plus Sprint Retro's "Sprint: X"
-   heading, so this one fix realigns all of them at once. */
+   across every document-type view header (Charter, Requirements Brief,
+   Risk Log, Comms, Budget Tracker, Post-Mortem, and the "Generate X"/
+   "Import X" flow headers) - all page-level headers, so all use
+   --heading-page. Sprint Retro's "Sprint: X" is an in-page subsection, not
+   a page header - it uses .sprint-subsection-heading instead, below. */
 .charter-heading {
   font-family: var(--heading);
-  font-size: 24px;
-  font-weight: 500;
+  font-size: var(--heading-page-size);
+  font-weight: var(--heading-page-weight);
   line-height: 118%;
-  letter-spacing: -0.24px;
+  letter-spacing: var(--heading-page-tracking);
+  color: var(--text-h);
+  margin: 0;
+}
+
+.sprint-subsection-heading {
+  font-family: var(--heading);
+  font-size: var(--heading-subsection-size);
+  font-weight: var(--heading-subsection-weight);
   color: var(--text-h);
   margin: 0;
 }
@@ -3074,9 +3089,9 @@
 .project-header-name {
   flex-shrink: 0;
   margin: 0;
-  font-size: 20px;
-  font-weight: 500;
-  letter-spacing: -0.3px;
+  font-size: var(--heading-project-title-size);
+  font-weight: var(--heading-project-title-weight);
+  letter-spacing: var(--heading-project-title-tracking);
 }
 
 .project-header-badges {
@@ -3105,8 +3120,8 @@
 .priority-badge {
   padding: 3px 10px;
   border-radius: 999px;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--label-badge-size);
+  font-weight: var(--label-badge-weight);
 }
 
 .priority-badge.low {
@@ -3132,8 +3147,8 @@
 .status-badge {
   padding: 2px 9px;
   border-radius: 999px;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--label-badge-size);
+  font-weight: var(--label-badge-weight);
 }
 
 .status-badge.archived {
@@ -3333,8 +3348,8 @@
 .methodology-badge {
   padding: 3px 10px;
   border-radius: 999px;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--label-badge-size);
+  font-weight: var(--label-badge-weight);
   border: 1px solid var(--border);
   color: var(--text);
 }
@@ -4865,8 +4880,8 @@ textarea.risk-cell-input {
   border-radius: 8px;
   color: var(--text);
   text-decoration: none;
-  font-weight: 500;
-  font-size: 14px;
+  font-weight: var(--nav-label-weight);
+  font-size: var(--nav-label-size);
   transition:
     background 0.15s ease,
     color 0.15s ease;
@@ -4880,7 +4895,7 @@ textarea.risk-cell-input {
 .project-nav-primary-item.selected {
   background: var(--accent-bg);
   color: var(--accent);
-  font-weight: 600;
+  font-weight: var(--nav-label-weight-selected);
 }
 
 .project-nav-primary-icon {
@@ -4905,7 +4920,8 @@ textarea.risk-cell-input {
   border-radius: 6px;
   color: var(--text);
   text-decoration: none;
-  font-size: 14px;
+  font-size: var(--nav-label-size);
+  font-weight: var(--nav-label-weight-secondary);
   transition:
     background 0.15s ease,
     color 0.15s ease;
@@ -4919,7 +4935,7 @@ textarea.risk-cell-input {
 .project-nav-secondary-item.selected {
   background: var(--accent-bg);
   color: var(--accent);
-  font-weight: 600;
+  font-weight: var(--nav-label-weight-selected);
 }
 
 .project-nav-content {

@@ -135,6 +135,33 @@
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
 
+  /* Typography tokens - desktop project-detail routes (see typography audit).
+     Project title > page header > in-page subsection > item title/nav/badge. */
+  --heading-project-title-size: 28px;
+  --heading-project-title-weight: 600;
+  --heading-project-title-tracking: -0.3px;
+
+  --heading-page-size: 24px;
+  --heading-page-weight: 500;
+  --heading-page-tracking: -0.24px;
+
+  --heading-subsection-size: 16px;
+  --heading-subsection-weight: 600;
+
+  --nav-label-size: 14px;
+  --nav-label-weight: 500;
+  --nav-label-weight-secondary: 400;
+  --nav-label-weight-selected: 600;
+
+  --item-title-size: 15px;
+  --item-title-weight: 500;
+
+  --label-board-column-size: 14px;
+  --label-board-column-weight: 500;
+
+  --label-badge-size: 13px;
+  --label-badge-weight: 500;
+
   font: 18px/145% var(--sans);
   letter-spacing: 0.18px;
   /* Scoped to the resolved theme (not "light dark") - native controls
@@ -295,9 +322,10 @@ h1 {
   }
 }
 h2 {
-  font-size: 24px;
+  font-size: var(--heading-page-size);
+  font-weight: var(--heading-page-weight);
   line-height: 118%;
-  letter-spacing: -0.24px;
+  letter-spacing: var(--heading-page-tracking);
   margin: 0 0 8px;
   @media (max-width: 1024px) {
     font-size: 20px;

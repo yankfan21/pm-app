@@ -352,7 +352,7 @@ function SprintRetroView({ project, sprints, retros, setRetros, tasks, canEdit, 
                   </button>
 
                   <div className="section-header">
-                    <h3 className="charter-heading">Sprint: {selectedSprint.name}</h3>
+                    <h3 className="sprint-subsection-heading">Sprint: {selectedSprint.name}</h3>
                     <div className="charter-actions">
                       {effectiveCanEdit && (
                         <LoadingButton
