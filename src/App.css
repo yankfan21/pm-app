@@ -84,6 +84,16 @@
   color: var(--text);
 }
 
+/* Sign In/Contact Support/Sign out reuse .btn-secondary's button chrome, but
+   its font-size/weight (no explicit size, weight 500) reads heavier than the
+   Dashboard/All Projects/Settings nav links beside it (.app-nav a: 14px/600) -
+   match that text sizing here without touching .btn-secondary itself, which
+   is shared by unrelated buttons elsewhere in the app. */
+.account-menu .btn-secondary {
+  font-size: 14px;
+  font-weight: 600;
+}
+
 .page-title {
   font-size: 30px;
   letter-spacing: -0.5px;
