@@ -91,6 +91,14 @@
   color: var(--text-muted, #666);
 }
 
+/* Full goal text, no truncation - wraps to as many lines as needed. */
+.mobile-topbar-goal {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--text-muted, #666);
+  white-space: pre-wrap;
+}
+
 /* Bottom tab bars - global (root) and project-scoped are visually
    identical but never rendered at the same time, since MobileProjectLayout
    fully replaces MobileShell's tab bar while inside a project. */
@@ -653,13 +661,6 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-}
-
-.mobile-goal-text {
-  margin: 4px 0 0;
-  font-size: 14px;
-  white-space: pre-wrap;
-  overflow-wrap: break-word;
 }
 
 .mobile-health-badge {

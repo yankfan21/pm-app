@@ -212,13 +212,6 @@ function MobileProjectMetrics() {
     <div>
       <h1 className="mobile-screen-title">Overview</h1>
 
-      {project.goal && (
-        <div className="mobile-metrics-card mobile-goal-card">
-          <h2 className="mobile-section-title">Project Goal</h2>
-          <p className="mobile-goal-text">{project.goal}</p>
-        </div>
-      )}
-
       <div className="mobile-metrics-card">
         <h2 className="mobile-section-title">Project Status</h2>
         {evaluation ? (

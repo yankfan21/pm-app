@@ -107,6 +107,7 @@ function MobileProjectLayout() {
             {project.is_demo && <span className="mobile-demo-badge">✦ Demo</span>}
           </span>
           <span className="mobile-topbar-meta">{METHODOLOGY_LABELS[project.methodology] ?? project.methodology}</span>
+          {project.goal && <p className="mobile-topbar-goal">{project.goal}</p>}
         </div>
       </div>
 
