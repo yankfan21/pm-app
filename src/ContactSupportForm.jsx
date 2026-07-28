@@ -40,9 +40,11 @@ function ContactSupportForm() {
       <label>
         Contact Reason
         <select value={contactReason} onChange={(e) => setContactReason(e.target.value)} required>
-          <option value="" disabled>
-            Select a reason
-          </option>
+          {/* Not disabled - disabled <option> rows ignore author CSS in most
+              browsers and render with forced native gray, regardless of
+              --option-pending-bg/text. formValid below (contactReason !== '')
+              is what actually blocks submission with this still selected. */}
+          <option value="">Select a reason</option>
           {CONTACT_REASONS.map((reason) => (
             <option key={reason} value={reason}>
               {reason}
