@@ -102,11 +102,16 @@ function MobileProjectLayout() {
     <div className="mobile-app">
       <div className="mobile-topbar">
         <div className="mobile-topbar-title">
-          <span className="mobile-topbar-name">
+          <p className="mobile-topbar-line">
             <span className="mobile-topbar-name-text">{project.name}</span>
             {project.is_demo && <span className="mobile-demo-badge">✦ Demo</span>}
-          </span>
-          <span className="mobile-topbar-meta">{METHODOLOGY_LABELS[project.methodology] ?? project.methodology}</span>
+            <span className="mobile-topbar-meta">
+              {' | '}
+              {METHODOLOGY_LABELS[project.methodology] ?? project.methodology}
+              {' | Target Go Live: '}
+              {project.deadline ?? 'TBD'}
+            </span>
+          </p>
           {project.goal && <p className="mobile-topbar-goal">{project.goal}</p>}
         </div>
       </div>

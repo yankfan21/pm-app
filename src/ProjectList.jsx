@@ -115,7 +115,7 @@ function ProjectList({ projects, loading, emptyMessage, onHide }) {
               <div className="project-card-desc">{project.goal}</div>
               <div className="project-card-bottom">
                 <span className={`doc-status-badge ${statusColorClass}`}>{statusLabel}</span>
-                <span className="project-card-deadline">{project.deadline ?? 'TBD'}</span>
+                <span className="project-card-deadline">Target Go Live: {project.deadline ?? 'TBD'}</span>
               </div>
             </li>
           )

@@ -173,7 +173,7 @@ function NewProjectFlow({ onCreated, onClose }) {
             </div>
 
             <label>
-              Deadline
+              Target Go Live
               <input
                 type="date"
                 value={deadline}
@@ -228,7 +228,7 @@ function NewProjectFlow({ onCreated, onClose }) {
               <dd>{goal}</dd>
               <dt>Priority</dt>
               <dd>{priority}</dd>
-              <dt>Deadline</dt>
+              <dt>Target Go Live</dt>
               <dd>{tbd ? 'TBD' : deadline}</dd>
             </dl>
 

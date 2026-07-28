@@ -373,7 +373,7 @@ function ProjectDetailLayout({ project, isOwner, canEdit }) {
               )}
             </div>
 
-            <span className="project-header-date">{currentProject.deadline ?? 'TBD'}</span>
+            <span className="project-header-date">Target Go Live: {currentProject.deadline ?? 'TBD'}</span>
           </div>
 
           {currentProject.goal && (
