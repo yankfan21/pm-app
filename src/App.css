@@ -3227,17 +3227,20 @@
   cursor: pointer;
 }
 
-/* Contact Support form (ContactSupportForm.jsx) - same shape as .modal-step's
-   label/input rules above, but inline in Settings.jsx rather than a modal, and
-   covering email/select/textarea too since NewProjectFlow's modal never needed those. */
+/* Contact Support form (ContactSupportForm.jsx) - inline in Settings.jsx, so
+   sized to match the other Settings sections' text (.theme-option: 14px,
+   normal weight) rather than .modal-step's label rules, which rely on a
+   modal being visually separate from the rest of the page and never set an
+   explicit font-size themselves. */
 .contact-support-form {
   max-width: 480px;
+  font-size: 14px;
 }
 
 .contact-support-form label {
   display: block;
   margin-bottom: 16px;
-  font-weight: 500;
+  font-weight: normal;
   color: var(--text-h);
 }
 
@@ -3252,6 +3255,7 @@
   border: 1px solid var(--border);
   border-radius: 6px;
   font: inherit;
+  font-size: 14px;
   color: var(--text-h);
   background: var(--bg);
   box-sizing: border-box;
