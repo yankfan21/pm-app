@@ -3265,6 +3265,16 @@
   resize: vertical;
 }
 
+/* Opaque <option> pair for the popup list - the select's own background/color
+   above only paints its closed box, not the native popup rows (washed-out in
+   dark mode otherwise). Reuses the neutral --option-pending-* tokens since
+   these three reasons have no per-status meaning to color-code, same as
+   .assignee-picker-select option. */
+.contact-support-form select option {
+  background: var(--option-pending-bg);
+  color: var(--option-pending-text);
+}
+
 .priority-buttons button.selected {
   border-color: var(--accent);
   background: var(--accent-bg);
