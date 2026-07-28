@@ -3066,23 +3066,18 @@
   letter-spacing: -0.3px;
 }
 
+.project-header-badges {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Plain text, not a pill - it's metadata (a date), not a status indicator. */
 .project-header-date {
   flex-shrink: 0;
   font-size: 14px;
-  color: var(--text);
-}
-
-/* The one flexible item in the row - claims whatever space is left after
-   every fixed-size sibling (name/badges/date) takes what it needs, and
-   wraps its full text rather than truncating (Archive Project moved to
-   the sidebar, so this no longer needs to compete with it for width). */
-.project-header-goal {
-  flex: 1 1 100px;
-  min-width: 60px;
-  white-space: normal;
-  overflow-wrap: break-word;
-  font-size: 14px;
-  color: var(--text);
+  color: var(--text-secondary, var(--text));
 }
 
 /* Goal/purpose block on the Overview page itself (ProjectOverviewRoute.jsx),

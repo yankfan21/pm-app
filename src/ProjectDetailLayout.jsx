@@ -347,35 +347,34 @@ function ProjectDetailLayout({ project, isOwner, canEdit }) {
         <div className="project-header-bar">
           <h2 className="project-header-name">{currentProject.name}</h2>
 
-          {canEdit ? (
-            <select
-              className="methodology-badge methodology-badge-select"
-              aria-label="Methodology"
-              value={currentProject.methodology}
-              onChange={(e) => handleMethodologyChange(e.target.value)}
-            >
-              {METHODOLOGIES.map((m) => (
-                <option key={m} value={m}>
-                  {METHODOLOGY_LABELS[m] ?? m}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <span className="methodology-badge">
-              {METHODOLOGY_LABELS[currentProject.methodology] ?? currentProject.methodology}
+          <div className="project-header-badges">
+            {canEdit ? (
+              <select
+                className="methodology-badge methodology-badge-select"
+                aria-label="Methodology"
+                value={currentProject.methodology}
+                onChange={(e) => handleMethodologyChange(e.target.value)}
+              >
+                {METHODOLOGIES.map((m) => (
+                  <option key={m} value={m}>
+                    {METHODOLOGY_LABELS[m] ?? m}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <span className="methodology-badge">
+                {METHODOLOGY_LABELS[currentProject.methodology] ?? currentProject.methodology}
+              </span>
+            )}
+            <span className={`priority-badge ${currentProject.priority.toLowerCase()}`}>
+              {currentProject.priority}
             </span>
-          )}
-          <span className={`priority-badge ${currentProject.priority.toLowerCase()}`}>
-            {currentProject.priority}
-          </span>
-          {currentProject.status === 'Archived' && (
-            <span className="status-badge archived">Archived</span>
-          )}
-          <span className="project-header-date">{currentProject.deadline ?? 'TBD'}</span>
+            {currentProject.status === 'Archived' && (
+              <span className="status-badge archived">Archived</span>
+            )}
+          </div>
 
-          {currentProject.goal && (
-            <span className="project-header-goal">{currentProject.goal}</span>
-          )}
+          <span className="project-header-date">{currentProject.deadline ?? 'TBD'}</span>
         </div>
 
         {error && <p className="error">{error}</p>}
