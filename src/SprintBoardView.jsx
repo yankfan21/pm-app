@@ -93,6 +93,37 @@ function SprintBoardView({
     setGoal('')
   }
 
+  function updateSprintNameDraft(sprintId, value) {
+    setSprints((prev) => prev.map((s) => (s.id === sprintId ? { ...s, name: value } : s)))
+  }
+
+  async function handleSprintNameBlur(sprint) {
+    const trimmed = sprint.name.trim()
+    if (!trimmed) {
+      setError('Sprint name cannot be empty.')
+      return
+    }
+
+    setError(null)
+    const { data, error } = await supabase
+      .from('sprints')
+      .update({ name: trimmed })
+      .eq('id', sprint.id)
+      .select()
+
+    if (error) {
+      setError(error.message)
+      return
+    }
+
+    if (!data || data.length === 0) {
+      setError('Update failed — you may not have permission to edit this sprint.')
+      return
+    }
+
+    setSprints((prev) => prev.map((s) => (s.id === sprint.id ? data[0] : s)))
+  }
+
   async function updateAssignee(task, fields) {
     setError(null)
     const { data, error } = await supabase
@@ -320,6 +351,18 @@ function SprintBoardView({
 
               {selectedSprint && (
                 <>
+                  <label className="sprint-select-field">
+                    Sprint Name
+                    <input
+                      type="text"
+                      className="risk-cell-input sprint-name-input"
+                      value={selectedSprint.name}
+                      readOnly={!canEdit}
+                      onChange={(e) => updateSprintNameDraft(selectedSprint.id, e.target.value)}
+                      onBlur={() => handleSprintNameBlur(selectedSprint)}
+                    />
+                  </label>
+
                   {selectedSprint.goal && (
                     <p className="project-goal">{selectedSprint.goal}</p>
                   )}

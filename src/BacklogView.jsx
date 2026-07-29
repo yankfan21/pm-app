@@ -184,6 +184,59 @@ function BacklogView({
     setTasks((prev) => prev.map((t) => (t.id === task.id ? data[0] : t)))
   }
 
+  function updateItemTitleDraft(taskId, value) {
+    setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, title: value } : t)))
+  }
+
+  async function handleTitleBlur(item) {
+    const trimmed = item.title.trim()
+    if (!trimmed) {
+      setError('Backlog item title cannot be empty.')
+      return
+    }
+
+    setError(null)
+    const { data, error } = await supabase
+      .from('tasks')
+      .update({ title: trimmed })
+      .eq('id', item.id)
+      .select()
+
+    if (error) {
+      setError(error.message)
+      return
+    }
+
+    if (!data || data.length === 0) {
+      setError('Update failed — you may not have permission to edit this task.')
+      return
+    }
+
+    setTasks((prev) => prev.map((t) => (t.id === item.id ? data[0] : t)))
+  }
+
+  async function deleteItem(item) {
+    const confirmed = window.confirm(
+      `Permanently delete "${item.title}"? This cannot be undone - it also deletes any comments and dependency links tied to this item.`
+    )
+    if (!confirmed) return
+
+    setError(null)
+    const { data, error } = await supabase.from('tasks').delete().eq('id', item.id).select()
+
+    if (error) {
+      setError(error.message)
+      return
+    }
+
+    if (!data || data.length === 0) {
+      setError('Delete failed — you may not have permission to delete this task.')
+      return
+    }
+
+    setTasks((prev) => prev.filter((t) => t.id !== item.id))
+  }
+
   async function moveItem(task, direction) {
     const index = items.findIndex((t) => t.id === task.id)
     const swapIndex = index + direction
@@ -409,7 +462,14 @@ function BacklogView({
 
                             <div className="backlog-item-main">
                               <div className="backlog-item-title-row">
-                                <span className="backlog-item-title">{item.title}</span>
+                                <input
+                                  type="text"
+                                  className="risk-cell-input backlog-item-title-input"
+                                  value={item.title}
+                                  readOnly={!canEdit}
+                                  onChange={(e) => updateItemTitleDraft(item.id, e.target.value)}
+                                  onBlur={() => handleTitleBlur(item)}
+                                />
                                 {item.story_points != null && (
                                   <span className="story-points-badge">{item.story_points} pts</span>
                                 )}
@@ -483,6 +543,16 @@ function BacklogView({
                               disabled={!canEdit}
                               onChange={(next) => updateItem(item, next)}
                             />
+
+                            {canEdit && (
+                              <button
+                                type="button"
+                                className="kanban-card-remove"
+                                onClick={() => deleteItem(item)}
+                              >
+                                Delete
+                              </button>
+                            )}
                           </li>
                         )
                       })}

@@ -784,6 +784,13 @@
   color: var(--text-h);
 }
 
+.backlog-item-title-input {
+  flex: 1 1 160px;
+  min-width: 120px;
+  font-size: var(--item-title-size);
+  font-weight: var(--item-title-weight);
+}
+
 .backlog-item-description {
   margin: 4px 0 0;
   font-size: 13px;
@@ -940,6 +947,11 @@
   font-weight: 500;
   color: var(--text-h);
   margin: 16px 0;
+}
+
+.sprint-select-field .sprint-name-input {
+  flex: 1;
+  min-width: 160px;
 }
 
 .sprint-select-field select {
