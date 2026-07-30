@@ -1,0 +1,1 @@
+select net.http_collect_response(54, async := false);

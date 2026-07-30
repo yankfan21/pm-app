@@ -1,0 +1,33 @@
+-- STEP 0 of "Automated task notifications via Resend". Enables pg_net, the
+-- extension that lets pg_cron jobs and plain DB triggers make outbound HTTP
+-- calls (net.http_post) - needed so the task-assignment trigger and the
+-- overdue/due-soon cron job (see task_assignment_notification_trigger.sql
+-- and task_notification_cron.sql) can call the new send-task-notification
+-- Edge Function directly from SQL, the same way demo_projects_nightly_reset.sql
+-- already proved pg_cron itself works in this project.
+--
+-- Run this FIRST, before the other 3 notification migrations - both of them
+-- reference net.http_post(), which doesn't exist until this runs.
+--
+-- Idempotent: safe to run whether or not pg_net is already enabled.
+-- Supabase whitelists pg_net for the `postgres` role (unlike raw Postgres,
+-- where extensions are normally superuser-only), so this should not require
+-- any dashboard step beyond running this file - but the verification query
+-- at the bottom confirms that this project didn't already have pg_net
+-- enabled in a different schema, or, in the SUPABASE_STATIC_IP_ADDRESSES/
+-- database-paused case, unavailable. Report back what that query returns
+-- before Scott runs the remaining 3 files.
+
+create extension if not exists pg_net;
+
+-- Verify afterward - expect exactly one row, extname = 'pg_net':
+--
+--   select extname, extnamespace::regnamespace as schema, extversion
+--   from pg_extension
+--   where extname = 'pg_net';
+--
+-- And confirm the function this whole feature depends on actually exists:
+--
+--   select proname, pronamespace::regnamespace as schema
+--   from pg_proc
+--   where proname = 'http_post';

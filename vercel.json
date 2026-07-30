@@ -1,5 +1,16 @@
 {
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "functions": {
+    "api/drain-task-reminders.js": {
+      "maxDuration": 60
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/drain-task-reminders",
+      "schedule": "0 13 * * *"
+    }
   ]
 }
