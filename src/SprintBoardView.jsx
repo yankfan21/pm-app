@@ -17,6 +17,7 @@ function SprintBoardView({
   setTasks,
   sprints,
   setSprints,
+  retros,
   milestones,
   collaborators,
   canEdit,
@@ -37,6 +38,7 @@ function SprintBoardView({
   const [pullingTaskId, setPullingTaskId] = useState(null)
   const [newSprintNameInline, setNewSprintNameInline] = useState('')
   const [creatingInlineSprint, setCreatingInlineSprint] = useState(false)
+  const [deletingSprint, setDeletingSprint] = useState(false)
 
   const isHybrid = project.methodology === 'hybrid'
 
@@ -57,6 +59,13 @@ function SprintBoardView({
   const unassignedReadyItems = tasks.filter((t) => t.backlog_status === 'ready' && t.sprint_id == null)
   const unfinishedItems = sprintTasks.filter((t) => (t.board_status ?? 'todo') !== 'done')
   const otherSprints = sprints.filter((s) => s.id !== selectedSprint?.id)
+
+  const sprintHasRetro = retros.some((r) => r.sprint_id === selectedSprint?.id)
+  const sprintDeleteBlockedReason = sprintTasks.length > 0
+    ? 'Remove all items from this sprint first'
+    : sprintHasRetro
+    ? "Sprints with a completed retro can't be deleted"
+    : null
 
   async function handleCreateSprint(e) {
     e.preventDefault()
@@ -122,6 +131,37 @@ function SprintBoardView({
     }
 
     setSprints((prev) => prev.map((s) => (s.id === sprint.id ? data[0] : s)))
+  }
+
+  async function handleDeleteSprint() {
+    if (!selectedSprint || sprintDeleteBlockedReason) return
+
+    const confirmed = window.confirm('Permanently delete this sprint?')
+    if (!confirmed) return
+
+    setDeletingSprint(true)
+    setError(null)
+
+    const { data, error } = await supabase
+      .from('sprints')
+      .delete()
+      .eq('id', selectedSprint.id)
+      .select()
+
+    setDeletingSprint(false)
+
+    if (error) {
+      setError(error.message)
+      return
+    }
+
+    if (!data || data.length === 0) {
+      setError('Delete failed — you may not have permission to delete this sprint.')
+      return
+    }
+
+    setSprints((prev) => prev.filter((s) => s.id !== selectedSprint.id))
+    setSelectedSprintId(null)
   }
 
   async function updateAssignee(task, fields) {
@@ -361,6 +401,17 @@ function SprintBoardView({
                       onChange={(e) => updateSprintNameDraft(selectedSprint.id, e.target.value)}
                       onBlur={() => handleSprintNameBlur(selectedSprint)}
                     />
+                    {canEdit && (
+                      <button
+                        type="button"
+                        className="kanban-card-remove"
+                        disabled={!!sprintDeleteBlockedReason || deletingSprint}
+                        title={sprintDeleteBlockedReason ?? undefined}
+                        onClick={handleDeleteSprint}
+                      >
+                        {deletingSprint ? 'Deleting...' : 'Delete Sprint'}
+                      </button>
+                    )}
                   </label>
 
                   {selectedSprint.goal && (

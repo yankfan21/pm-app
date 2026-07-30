@@ -212,6 +212,7 @@ export function ExecutionSprintBoardRoute() {
     setTasks,
     sprints,
     setSprints,
+    retros,
     milestones,
     collaborators,
     canEdit,
@@ -258,6 +259,7 @@ export function ExecutionSprintBoardRoute() {
         setTasks={setTasks}
         sprints={sprints}
         setSprints={setSprints}
+        retros={retros}
         milestones={milestones}
         collaborators={collaborators}
         canEdit={canEdit}
