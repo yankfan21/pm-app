@@ -3,7 +3,8 @@
 // history). Scanner (send_task_due_reminders(), Postgres, daily) is unchanged and
 // still populates task_reminder_queue - this endpoint only drains it.
 //
-// Scheduled via vercel.json "crons" - every 30 min. Vercel signs cron requests
+// Scheduled via vercel.json "crons" - once daily, 0 13 * * * (13:00 UTC /
+// 9:00 AM ET). Vercel signs cron requests
 // with an Authorization: Bearer header matching CRON_SECRET when that env var is
 // set; checked below. See https://vercel.com/docs/cron-jobs/manage-cron-jobs#securing-cron-jobs
 //
