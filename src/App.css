@@ -4620,16 +4620,36 @@ textarea.risk-cell-input {
   }
 
   .login-panel-form {
-    padding: 40px 24px;
+    padding: 20px 24px;
   }
 
   .login-panel-preview {
-    padding: 32px 24px;
-    gap: 24px;
+    padding: 16px 24px;
+    gap: 12px;
   }
 
   .login-preview-question {
-    font-size: 20px;
+    font-size: 18px;
+  }
+
+  .login-brand {
+    margin-bottom: 16px;
+  }
+
+  .login-subtext {
+    margin-bottom: 14px;
+  }
+
+  .login-form-v2 label {
+    margin-bottom: 10px;
+  }
+
+  .login-divider {
+    margin: 12px 0;
+  }
+
+  .login-footer-link {
+    margin: 14px 0 0;
   }
 }
 
