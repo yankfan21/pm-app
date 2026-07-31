@@ -4396,7 +4396,8 @@ textarea.risk-cell-input {
 
 .login-page {
   display: flex;
-  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-y: auto;
 }
 
 .login-panel {
@@ -4566,6 +4567,7 @@ textarea.risk-cell-input {
 .login-preview-steps {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 12px;
   margin-bottom: 24px;
 }
