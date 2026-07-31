@@ -89,6 +89,7 @@ function Login() {
           <div className="login-brand">
             <ConfidantLogo size={40} />
             <span className="login-brand-name">ConfidantPM</span>
+            <p className="login-brand-tagline">Structure the chaos. One step at a time.</p>
           </div>
 
           <h1 className="login-heading">{mode === 'sign-in' ? 'Welcome back' : 'Create your account'}</h1>
@@ -193,7 +194,6 @@ function Login() {
           <p className="login-preview-label">Recognition and scoping</p>
           <p className="login-preview-question">What is the primary milestone for Phase 1 delivery?</p>
         </div>
-        <p className="login-preview-tagline">Structure the chaos. One step at a time.</p>
       </div>
     </div>
   )
