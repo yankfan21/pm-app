@@ -4,15 +4,8 @@ import { supabase } from './supabaseClient'
 import { useAuth } from './AuthContext'
 import AppHeader from './AppHeader'
 import ContactSupportForm from './ContactSupportForm'
-import { useTheme } from './hooks/useTheme'
 import { useDeviceMode } from './hooks/useDeviceMode'
 import { resolveDeviceModeTarget, MOBILE_HOME, DESKTOP_HOME } from './deviceRouteMap'
-
-const THEME_OPTIONS = [
-  { value: 'system', label: 'System Default' },
-  { value: 'light', label: 'Light' },
-  { value: 'dark', label: 'Dark' },
-]
 
 const DEVICE_MODE_OPTIONS = [
   { value: 'mobile', label: 'Mobile' },
@@ -33,7 +26,6 @@ function formatHiddenAt(hiddenAt) {
 // toolbar, just its own AppHeader + page body.
 function Settings() {
   const { user } = useAuth()
-  const { theme, setTheme } = useTheme()
   const { mode, setOverride } = useDeviceMode()
   const location = useLocation()
   const navigate = useNavigate()
@@ -136,24 +128,6 @@ function Settings() {
 
       <div className="app-body">
         <h2 className="page-title view-title">Settings</h2>
-
-        <h3 className="settings-section-title">Appearance</h3>
-        <p className="dashboard-subtitle">Choose how ConfidantPM looks on this device.</p>
-
-        <div className="theme-option-group" role="radiogroup" aria-label="Appearance">
-          {THEME_OPTIONS.map((option) => (
-            <label key={option.value} className="theme-option">
-              <input
-                type="radio"
-                name="theme"
-                value={option.value}
-                checked={theme === option.value}
-                onChange={() => setTheme(option.value)}
-              />
-              {option.label}
-            </label>
-          ))}
-        </div>
 
         <h3 className="settings-section-title">View Mode</h3>
         <p className="dashboard-subtitle">

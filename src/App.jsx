@@ -62,8 +62,9 @@ import './App.css'
 // methodology-gated section route redirects to Overview itself in that
 // case; see MethodologySection in ProjectSectionRoutes.jsx).
 function App() {
-  // Mounted here (not just in Settings) so the 'system' preference listener
-  // stays live across the whole app, not only while Settings is on screen.
+  // No-op now that the app is a single permanent dark theme (data-theme is
+  // set unconditionally by index.html's pre-paint script) - kept as a call
+  // site in case per-user theming returns.
   useTheme()
   // Same reasoning as useTheme() above - DeviceModeGate below also calls
   // this hook itself (it's the one that acts on it), so this call is

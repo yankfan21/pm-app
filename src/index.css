@@ -1,77 +1,88 @@
-/* Theme tokens - light is the default/fallback (:root with no
-   data-theme), and :root[data-theme="light|dark"] cover the explicit,
-   user-selectable modes. data-theme is set on <html> before paint by the
-   inline snippet in index.html and kept in sync by useTheme.js - this file
-   never reads prefers-color-scheme directly, since "system" is resolved to
-   an explicit light/dark value upstream instead. */
+/* Theme tokens - single permanent dark navy palette. No light mode, no
+   system-preference switching (removed along with useTheme.js's 'light'/
+   'system' options - see index.html's pre-paint script, which now sets
+   data-theme="dark" unconditionally). data-theme='dark' is kept on <html>
+   harmlessly (rather than dropping the attribute selector) so nothing
+   downstream that still checks it silently breaks. */
 :root,
-:root[data-theme='light'] {
-  --text: #1e293b;
-  --text-h: #1e293b;
-  --text-muted: #64748b;
-  --bg: #e0e4ec;
-  --border: #cbd1db;
-  --code-bg: #f1f5f9;
-  --accent: #2563eb;
-  --accent-bg: rgba(37, 99, 235, 0.08);
-  --accent-border: rgba(37, 99, 235, 0.35);
-  --accent-muted: #3b82f6;
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --text: #e2e8f0;
+  --text-h: #f1f5f9;
+  --text-muted: #94a3b8;
+  --bg: #1a2130;
+  --border: rgba(255, 255, 255, 0.08);
+  --code-bg: rgba(15, 23, 42, 0.5);
+  /* Accent blue, in the spirit of #378ADD - --accent-bg/--accent-border
+     are that base hue at low alpha (tint/outline use), while --accent and
+     --accent-muted are lighter same-hue steps for text/icon use, same
+     structure the previous accent family used. */
+  --accent: #74ade7;
+  --accent-bg: rgba(55, 138, 221, 0.15);
+  --accent-border: rgba(55, 138, 221, 0.4);
+  --accent-muted: #4894e0;
+  /* Solid-fill buttons with white text on top need more contrast than
+     --accent's lighter shade gives against white - dedicated darker step
+     for that case only, rather than darkening --accent for every consumer. */
+  --accent-strong: #2f6fc4;
   /* Demo-project badge/banner accent - deliberately NOT the primary accent
      hue (would defeat the "stands out at a glance, distinct from normal
      UI" purpose it was added for). */
-  --demo-accent: #0d9488;
-  --demo-accent-bg: rgba(13, 148, 136, 0.08);
-  --demo-accent-border: rgba(13, 148, 136, 0.35);
-  --social-bg: rgba(241, 245, 249, 0.5);
+  --demo-accent: #5eead4;
+  --demo-accent-bg: rgba(94, 234, 212, 0.15);
+  --demo-accent-border: rgba(94, 234, 212, 0.5);
+  --social-bg: rgba(15, 23, 42, 0.5);
   --shadow:
-    rgba(15, 23, 42, 0.1) 0 10px 15px -3px,
-    rgba(15, 23, 42, 0.05) 0 4px 6px -2px;
+    rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
 
   /* Filter tabs (pill) vs. sort controls (plain text) - two distinct
      interaction languages so users don't mistake narrowing the list
      (filter) for reordering it (sort). */
-  --tab-active-bg: #2563eb;
-  --tab-active-text: #ffffff;
+  --tab-active-bg: rgba(59, 130, 246, 0.25);
+  --tab-active-text: #93c5fd;
   --tab-inactive-text: var(--text-muted);
   --sort-active: #2563eb;
 
   /* Project-card surface, lifted off the page background, plus its
      left-border accent tiers (priority/health signal - see
-     cardAccentTier in ProjectList.jsx). */
-  --card-bg: #f2f4f8;
-  --card-backdrop-filter: none;
-  --card-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
-  --card-hover-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
+     cardAccentTier in ProjectList.jsx). Dark cards are a frosted glass
+     surface over the page background rather than a solid lift - see
+     --card-backdrop-filter. */
+  --card-bg: rgba(22, 28, 39, 0.35);
+  --card-backdrop-filter: blur(12px);
+  --card-shadow: none;
+  --card-hover-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
   --card-accent-purple: var(--accent);
-  --card-accent-amber: #d97706;
-  --card-accent-red: #dc2626;
+  --card-accent-amber: #f59e0b;
+  --card-accent-red: #f87171;
   --card-accent-muted: var(--border);
-  --card-tint-purple: rgba(37, 99, 235, 0.03);
-  --card-tint-amber: rgba(217, 119, 6, 0.03);
-  --card-tint-red: rgba(220, 38, 38, 0.03);
+  --card-tint-purple: rgba(59, 130, 246, 0.06);
+  --card-tint-amber: rgba(217, 119, 6, 0.05);
+  --card-tint-red: rgba(220, 38, 38, 0.05);
 
   /* Header frame and Project Detail row surfaces - a shade between --bg
      and --card-bg. */
-  --header-bg: #eceef0;
-  --header-border: rgba(37, 99, 235, 0.15);
-  --row-bg: #eef0f2;
-  --row-border: rgba(37, 99, 235, 0.08);
+  --header-bg: rgba(15, 23, 42, 0.35);
+  --header-border: rgba(255, 255, 255, 0.08);
+  --row-bg: rgba(15, 23, 42, 0.25);
+  --row-border: rgba(255, 255, 255, 0.06);
 
   /* Project Detail section containers (Manage Access, Agile zone,
      Documents) - a lifted surface matching the project-card treatment.
-     --agile-accent/--agile-tint are a fixed indigo in both themes (like
-     --sort-active/--row-border), since the Agile zone's identity is "this
-     is Agile content," not a light/dark-remapped semantic color. */
+     --agile-accent/--agile-tint are a fixed indigo (like --row-border),
+     since the Agile zone's identity is "this is Agile content," not a
+     remapped semantic color. */
   --surface-1: var(--card-bg);
   /* Solid, opaque counterpart to --surface-1 - for spots (Gantt's frozen
      label column) that need to hide scrolled-under content and can't
-     tolerate --card-bg's dark-mode translucency/blur, same reasoning as
-     --option-pending-bg below. Light's --card-bg is already solid, so this
-     just matches it exactly. */
-  --surface-1-solid: #f2f4f8;
+     tolerate --card-bg's translucency/blur, same reasoning as
+     --option-pending-bg below. A solid approximation of the glass card's
+     color (dark charcoal at low alpha over --bg), so the Gantt frozen
+     column stays opaque instead of inheriting the blur. */
+  --surface-1-solid: #1b2233;
   --border-faint: color-mix(in srgb, var(--border) 10%, transparent);
-  --agile-accent: #4f46e5;
-  --agile-tint: rgba(79, 70, 229, 0.06);
+  --agile-accent: #818cf8;
+  --agile-tint: rgba(129, 140, 248, 0.08);
   /* Structural (non-methodology) zone accent - the same "pending/neutral"
      slate already used for status-dot/badge grays elsewhere, promoted to a
      left-accent bar so Manage Access/Documents read as clearly as the
@@ -79,57 +90,56 @@
   --zone-accent-neutral: #94a3b8;
 
   /* Neutral status pill ("Not evaluated" etc.) and alert/marker red (Gantt
-     "Today" line, future error states) - fixed across both themes, same
-     convention as --sort-active/--agile-accent above, rather than
-     remapped per mode. */
-  --pill-neutral-bg: #f1f5f9;
-  --pill-neutral-text: #64748b;
-  --alert-red: #ef4444;
+     "Today" line, future error states) - fixed, same convention as
+     --agile-accent above, rather than a semantic remap. */
+  --pill-neutral-bg: rgba(255, 255, 255, 0.06);
+  --pill-neutral-text: #94a3b8;
+  --alert-red: #f87171;
 
   /* Status badge tiers (on-track/at-risk/off-track health, priority,
      doc-status, etc. all share these three). */
-  --badge-success-bg: rgba(16, 185, 129, 0.12);
-  --badge-success-text: #047857;
-  --badge-success-border: rgba(5, 150, 105, 0.5);
-  --badge-warning-bg: #fef3c7;
-  --badge-warning-text: #b45309;
-  --badge-warning-border: rgba(180, 83, 9, 0.4);
-  --badge-danger-bg: rgba(239, 68, 68, 0.12);
-  --badge-danger-text: #b91c1c;
-  --badge-danger-border: rgba(220, 38, 38, 0.5);
+  --badge-success-bg: rgba(16, 185, 129, 0.1);
+  --badge-success-text: #a7f3d0;
+  --badge-success-border: rgba(52, 211, 153, 0.3);
+  --badge-warning-bg: rgba(245, 158, 11, 0.1);
+  --badge-warning-text: #fde68a;
+  --badge-warning-border: rgba(251, 191, 36, 0.3);
+  --badge-danger-bg: rgba(239, 68, 68, 0.1);
+  --badge-danger-text: #fecaca;
+  --badge-danger-border: rgba(248, 113, 113, 0.3);
 
   /* Solid, opaque pairs for native <option> rows (Sprint Board status
      dropdown) - the translucent --badge-*-bg tints above are card-surface
      overlays and read washed-out when the browser paints them as an opaque
-     native popup row, especially in dark mode. */
-  --option-pending-bg: #f1f5f9;
-  --option-pending-text: #1e293b;
-  --option-partial-bg: #fef3c7;
-  --option-partial-text: #b45309;
-  --option-done-bg: #d1fae5;
-  --option-done-text: #047857;
-  --option-danger-bg: #fee2e2;
-  --option-danger-text: #b91c1c;
-  --option-info-bg: #dbeafe;
-  --option-info-text: #1d4ed8;
+     native popup row. */
+  --option-pending-bg: #1e2839;
+  --option-pending-text: #e2e8f0;
+  --option-partial-bg: #78350f;
+  --option-partial-text: #fde68a;
+  --option-done-bg: #065f46;
+  --option-done-text: #a7f3d0;
+  --option-danger-bg: #7f1d1d;
+  --option-danger-text: #fecaca;
+  --option-info-bg: #1e3a8b;
+  --option-info-text: #93c5fd;
 
-  --btn-primary-bg: #2563eb;
-  --btn-primary-hover-bg: #1d4ed8;
-  --btn-primary-border: #2563eb;
-  --btn-primary-text: #ffffff;
-  --btn-primary-backdrop-filter: none;
+  --btn-primary-bg: rgba(59, 130, 246, 0.25);
+  --btn-primary-hover-bg: rgba(59, 130, 246, 0.35);
+  --btn-primary-border: rgba(59, 130, 246, 0.4);
+  --btn-primary-text: #93c5fd;
+  --btn-primary-backdrop-filter: blur(8px);
   --btn-secondary-bg: transparent;
-  --btn-secondary-border: #cbd5e1;
-  --btn-secondary-text: #1e293b;
+  --btn-secondary-border: rgba(255, 255, 255, 0.15);
+  --btn-secondary-text: #e2e8f0;
 
-  --input-bg: #ffffff;
-  --input-border: #cbd5e1;
-  --input-text: #1e293b;
-  --link: #2563eb;
+  --input-bg: rgba(15, 23, 42, 0.35);
+  --input-border: rgba(255, 255, 255, 0.15);
+  --input-text: #e2e8f0;
+  --link: #93c5fd;
 
-  --disabled-bg: #e2e8f0;
-  --disabled-text: #94a3b8;
-  --disabled-border: #cbd5e1;
+  --disabled-bg: rgba(255, 255, 255, 0.05);
+  --disabled-text: rgba(226, 232, 240, 0.4);
+  --disabled-border: rgba(255, 255, 255, 0.08);
 
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
@@ -164,11 +174,6 @@
 
   font: 18px/145% var(--sans);
   letter-spacing: 0.18px;
-  /* Scoped to the resolved theme (not "light dark") - native controls
-     (select, checkbox, scrollbar) must match data-theme, not raw OS
-     preference, or a select can render with the OS's native dark chrome
-     while its text still comes from our light-mode CSS var: dark-on-dark. */
-  color-scheme: light;
   color: var(--text);
   background: var(--bg);
   font-synthesis: none;
@@ -181,98 +186,7 @@
   }
 }
 
-:root[data-theme='dark'] {
-  color-scheme: dark;
-  --text: #e2e8f0;
-  --text-h: #f1f5f9;
-  --text-muted: #94a3b8;
-  --bg: #1a2130;
-  --border: rgba(255, 255, 255, 0.08);
-  --code-bg: rgba(15, 23, 42, 0.5);
-  --accent: #93c5fd;
-  --accent-bg: rgba(59, 130, 246, 0.15);
-  --accent-border: rgba(59, 130, 246, 0.4);
-  --accent-muted: #60a5fa;
-  --demo-accent: #5eead4;
-  --demo-accent-bg: rgba(94, 234, 212, 0.15);
-  --demo-accent-border: rgba(94, 234, 212, 0.5);
-  --social-bg: rgba(15, 23, 42, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-
-  --tab-active-bg: rgba(59, 130, 246, 0.25);
-  --tab-active-text: #93c5fd;
-
-  /* Dark cards are a frosted glass surface over the page background
-     rather than a solid lift - see --card-backdrop-filter. */
-  --card-bg: rgba(22, 28, 39, 0.35);
-  --card-backdrop-filter: blur(12px);
-  /* See --surface-1-solid in the light block above - a solid approximation
-     of this glass card's color (dark charcoal at low alpha over --bg),
-     so the Gantt frozen column stays opaque instead of inheriting the blur. */
-  --surface-1-solid: #1b2233;
-  --card-shadow: none;
-  --card-hover-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
-  --card-accent-amber: #f59e0b;
-  --card-accent-red: #f87171;
-  --card-tint-purple: rgba(59, 130, 246, 0.06);
-  --card-tint-amber: rgba(217, 119, 6, 0.05);
-  --card-tint-red: rgba(220, 38, 38, 0.05);
-
-  --header-bg: rgba(15, 23, 42, 0.35);
-  --header-border: rgba(255, 255, 255, 0.08);
-  --row-bg: rgba(15, 23, 42, 0.25);
-  --row-border: rgba(255, 255, 255, 0.06);
-
-  --agile-accent: #818cf8;
-  --agile-tint: rgba(129, 140, 248, 0.08);
-  --zone-accent-neutral: #94a3b8;
-
-  --pill-neutral-bg: rgba(255, 255, 255, 0.06);
-  --pill-neutral-text: #94a3b8;
-  --alert-red: #f87171;
-
-  --badge-success-bg: rgba(16, 185, 129, 0.1);
-  --badge-success-text: #a7f3d0;
-  --badge-success-border: rgba(52, 211, 153, 0.3);
-  --badge-warning-bg: rgba(245, 158, 11, 0.1);
-  --badge-warning-text: #fde68a;
-  --badge-warning-border: rgba(251, 191, 36, 0.3);
-  --badge-danger-bg: rgba(239, 68, 68, 0.1);
-  --badge-danger-text: #fecaca;
-  --badge-danger-border: rgba(248, 113, 113, 0.3);
-
-  --option-pending-bg: #1e2839;
-  --option-pending-text: #e2e8f0;
-  --option-partial-bg: #78350f;
-  --option-partial-text: #fde68a;
-  --option-done-bg: #065f46;
-  --option-done-text: #a7f3d0;
-  --option-danger-bg: #7f1d1d;
-  --option-danger-text: #fecaca;
-  --option-info-bg: #1e3a8b;
-  --option-info-text: #93c5fd;
-
-  --btn-primary-bg: rgba(59, 130, 246, 0.25);
-  --btn-primary-hover-bg: rgba(59, 130, 246, 0.35);
-  --btn-primary-border: rgba(59, 130, 246, 0.4);
-  --btn-primary-text: #93c5fd;
-  --btn-primary-backdrop-filter: blur(8px);
-  --btn-secondary-bg: transparent;
-  --btn-secondary-border: rgba(255, 255, 255, 0.15);
-  --btn-secondary-text: #e2e8f0;
-
-  --input-bg: rgba(15, 23, 42, 0.35);
-  --input-border: rgba(255, 255, 255, 0.15);
-  --input-text: #e2e8f0;
-  --link: #93c5fd;
-
-  --disabled-bg: rgba(255, 255, 255, 0.05);
-  --disabled-text: rgba(226, 232, 240, 0.4);
-  --disabled-border: rgba(255, 255, 255, 0.08);
-}
-
-:root[data-theme='dark'] #social .button-icon {
+#social .button-icon {
   filter: invert(1) brightness(2);
 }
 
@@ -303,6 +217,10 @@ body {
 body.login-route #root {
   width: 100%;
   border-inline: none;
+}
+
+body.login-route {
+  background-color: #161c27;
 }
 
 h1,

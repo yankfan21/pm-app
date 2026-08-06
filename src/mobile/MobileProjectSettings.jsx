@@ -3,24 +3,17 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { useAuth } from '../AuthContext'
 import MobileContactSupport from './MobileContactSupport'
-import { useTheme } from '../hooks/useTheme'
 import { useDeviceMode } from '../hooks/useDeviceMode'
 import { resolveDeviceModeTarget, MOBILE_HOME, DESKTOP_HOME } from '../deviceRouteMap'
 
 // Mobile-native Settings (/m/settings) - root-level, not project-scoped (see
 // MobileShell's sibling routes: /m/dashboard, /m/notifications, /m/more).
-// Same Appearance/View Mode/Hidden Projects functionality as desktop's
-// Settings.jsx, purpose-built markup here rather than reusing that
-// component - mirrors the MobileProjectStatusUpdate.jsx/MobileProjectRisks.jsx
-// convention of not importing desktop views into phone mode. Hooks
-// (useTheme, useDeviceMode) and the hidden-projects Supabase calls are
-// reused unchanged; only the JSX/CSS differs.
-
-const THEME_OPTIONS = [
-  { value: 'system', label: 'System Default' },
-  { value: 'light', label: 'Light' },
-  { value: 'dark', label: 'Dark' },
-]
+// Same View Mode/Hidden Projects functionality as desktop's Settings.jsx,
+// purpose-built markup here rather than reusing that component - mirrors
+// the MobileProjectStatusUpdate.jsx/MobileProjectRisks.jsx convention of
+// not importing desktop views into phone mode. Hooks (useDeviceMode) and
+// the hidden-projects Supabase calls are reused unchanged; only the
+// JSX/CSS differs.
 
 const DEVICE_MODE_OPTIONS = [
   { value: 'mobile', label: 'Mobile' },
@@ -38,7 +31,6 @@ function formatHiddenAt(hiddenAt) {
 
 function MobileProjectSettings() {
   const { user } = useAuth()
-  const { theme, setTheme } = useTheme()
   const { mode, setOverride } = useDeviceMode()
   const location = useLocation()
   const navigate = useNavigate()
@@ -137,24 +129,6 @@ function MobileProjectSettings() {
   return (
     <div>
       <h1 className="mobile-screen-title">Settings</h1>
-
-      <h2 className="mobile-section-title">Appearance</h2>
-      <p className="mobile-screen-stub">Choose how ConfidantPM looks on this device.</p>
-
-      <div className="mobile-settings-picker" role="radiogroup" aria-label="Appearance">
-        {THEME_OPTIONS.map((option) => (
-          <button
-            key={option.value}
-            type="button"
-            role="radio"
-            aria-checked={theme === option.value}
-            className={`mobile-settings-option ${theme === option.value ? 'selected' : ''}`}
-            onClick={() => setTheme(option.value)}
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
 
       <h2 className="mobile-section-title">View Mode</h2>
       <p className="mobile-screen-stub">

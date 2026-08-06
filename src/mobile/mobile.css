@@ -130,7 +130,7 @@
 }
 
 .mobile-tabbar-item.selected {
-  color: var(--accent, #2563eb);
+  color: var(--accent, #74ade7);
 }
 
 .mobile-screen-title {
@@ -202,7 +202,7 @@
 
 .mobile-project-list-meta {
   font-size: 12px;
-  color: var(--accent, #2563eb);
+  color: var(--accent, #74ade7);
 }
 
 /* Task list (MobileProjectTasks) -------------------------------------- */
@@ -233,8 +233,8 @@
 }
 
 .mobile-filter-chip.selected {
-  background: var(--accent, #2563eb);
-  border-color: var(--accent, #2563eb);
+  background: var(--accent, #74ade7);
+  border-color: var(--accent, #74ade7);
   color: #fff;
 }
 
@@ -273,8 +273,8 @@
 }
 
 .mobile-task-mark-done.done {
-  background: var(--accent, #2563eb);
-  border-color: var(--accent, #2563eb);
+  background: var(--accent, #74ade7);
+  border-color: var(--accent, #74ade7);
 }
 
 .mobile-task-row-body {
@@ -296,7 +296,7 @@
 }
 
 .mobile-milestone-badge {
-  color: var(--accent, #2563eb);
+  color: var(--accent, #74ade7);
   margin-right: 4px;
 }
 
@@ -325,7 +325,7 @@
   display: inline-block;
   margin-bottom: 8px;
   font-size: 13px;
-  color: var(--accent, #2563eb);
+  color: var(--accent, #74ade7);
   text-decoration: none;
 }
 
@@ -472,7 +472,7 @@
   padding: 8px 16px;
   border-radius: 8px;
   border: none;
-  background: var(--accent, #2563eb);
+  background: var(--accent, #74ade7);
   color: #fff;
   font-size: 13px;
   cursor: pointer;
@@ -522,7 +522,7 @@
   padding: 8px 16px;
   border-radius: 8px;
   border: none;
-  background: var(--accent);
+  background: var(--accent-strong);
   color: #fff;
   font-size: 13px;
   cursor: pointer;
@@ -543,7 +543,7 @@
   padding: 8px 16px;
   border-radius: 8px;
   border: none;
-  background: var(--accent);
+  background: var(--accent-strong);
   color: #fff;
   font-size: 13px;
   cursor: pointer;
@@ -702,7 +702,7 @@
    .hotspot-row-highlight. */
 @keyframes mobile-hotspot-flash {
   from {
-    background-color: var(--accent-border, rgba(37, 99, 235, 0.35));
+    background-color: var(--accent-border, rgba(55, 138, 221, 0.4));
   }
   to {
     background-color: transparent;
@@ -937,8 +937,8 @@
 }
 
 .mobile-settings-option.selected {
-  background: var(--accent, #2563eb);
-  border-color: var(--accent, #2563eb);
+  background: var(--accent, #74ade7);
+  border-color: var(--accent, #74ade7);
   color: #fff;
 }
 

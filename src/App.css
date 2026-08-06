@@ -255,7 +255,7 @@
 
 .toggle-group button.selected {
   border-color: var(--accent);
-  background: var(--accent);
+  background: var(--accent-strong);
   color: white;
   font-weight: 600;
 }
@@ -370,7 +370,7 @@
   border: none;
   border-radius: 6px;
   color: white;
-  background: var(--accent);
+  background: var(--accent-strong);
   font: inherit;
   cursor: pointer;
 }
@@ -705,7 +705,7 @@
   border: none;
   border-radius: 6px;
   color: white;
-  background: var(--accent);
+  background: var(--accent-strong);
   font: inherit;
   cursor: pointer;
 }
@@ -934,7 +934,7 @@
   border: none;
   border-radius: 6px;
   color: white;
-  background: var(--accent);
+  background: var(--accent-strong);
   font: inherit;
   cursor: pointer;
 }
@@ -1185,7 +1185,7 @@
   border: none;
   border-radius: 6px;
   color: white;
-  background: var(--accent);
+  background: var(--accent-strong);
   font: inherit;
   cursor: pointer;
 }
@@ -1645,7 +1645,7 @@
    status dot for a backlog item's "Ready" state reads the same as the
    Backlog section's own status select uses for it. */
 .status-dot.ready {
-  background: #1d4ed8;
+  background: var(--accent);
 }
 
 .doc-status-badge {
@@ -2401,7 +2401,7 @@
 }
 
 .gantt-zoom-btn.active {
-  background: var(--accent);
+  background: var(--accent-strong);
   color: white;
 }
 
@@ -3142,8 +3142,8 @@
 }
 
 .priority-badge.medium {
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: var(--accent-bg);
+  color: var(--accent);
 }
 
 .priority-badge.high {
@@ -4118,7 +4118,7 @@ textarea.risk-cell-input {
   border: none;
   border-radius: 6px;
   color: white;
-  background: var(--accent);
+  background: var(--accent-strong);
   font: inherit;
   cursor: pointer;
 }
@@ -4398,6 +4398,7 @@ textarea.risk-cell-input {
   display: flex;
   min-height: 100dvh;
   overflow-y: auto;
+  background-color: #161c27;
 }
 
 .login-panel {
@@ -4477,8 +4478,8 @@ textarea.risk-cell-input {
 
 .login-form-v2 input:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 1px #3b82f6;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
 }
 
 .login-btn-primary {
@@ -4487,7 +4488,7 @@ textarea.risk-cell-input {
   padding: 11px 0;
   border: none;
   border-radius: 8px;
-  background: #3b82f6;
+  background: var(--accent-strong);
   color: white;
   font: inherit;
   font-weight: 600;
@@ -4519,7 +4520,7 @@ textarea.risk-cell-input {
 
 .login-info {
   margin: 0 0 12px;
-  color: #93c5fd;
+  color: var(--accent);
   font-size: 14px;
 }
 
@@ -4553,7 +4554,7 @@ textarea.risk-cell-input {
   padding: 0;
   font: inherit;
   font-weight: 600;
-  color: #93c5fd;
+  color: var(--accent);
   cursor: pointer;
 }
 
@@ -4585,7 +4586,7 @@ textarea.risk-cell-input {
 }
 
 .login-preview-dot.filled {
-  background: #3b82f6;
+  background: var(--accent);
 }
 
 .login-preview-counter {
@@ -4599,7 +4600,7 @@ textarea.risk-cell-input {
   font-weight: 600;
   letter-spacing: 0.6px;
   text-transform: uppercase;
-  color: #93c5fd;
+  color: var(--accent);
 }
 
 .login-preview-question {
@@ -4613,6 +4614,7 @@ textarea.risk-cell-input {
 @media (max-width: 760px) {
   .login-page {
     flex-direction: column;
+    min-height: auto;
   }
 
   .login-panel {
