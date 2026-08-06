@@ -1,12 +1,15 @@
 // Deploy this via the Supabase Dashboard: Edge Functions -> Deploy a new function -> name it "charter"
 // Set the ANTHROPIC_API_KEY secret under Edge Functions -> charter -> Secrets before invoking.
 
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 }
 
 const MODEL = "claude-sonnet-5"
+const FUNCTION_NAME = "charter"
 
 function extractJson(text) {
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/)
@@ -70,7 +73,7 @@ async function callClaude(system, user, attempt = 1) {
   const textBlock = (data.content || []).find((block) => block.type === "text")
   const text = textBlock?.text ?? ""
   try {
-    return extractJson(text)
+    return { result: extractJson(text), usage: data.usage }
   } catch {
     if (attempt < 3) return callClaude(system, user, attempt + 1)
     const blockTypes = (data.content || []).map((b) => b.type).join(", ")
@@ -78,6 +81,34 @@ async function callClaude(system, user, attempt = 1) {
       `Could not parse Claude's response as JSON after ${attempt} attempts. ` +
         `stop_reason=${data.stop_reason}, content block types=[${blockTypes}], text="${text.slice(0, 200)}"`
     )
+  }
+}
+
+// Fire-and-forget usage logging for the admin usage/cost page - never
+// allowed to block or fail the actual AI response returned to the PM.
+// Two clients: the anon-key one (forwarding the caller's JWT) only resolves
+// who the caller is; ai_usage_log itself is default-deny RLS (see
+// supabase/migrations/create_ai_usage_log.sql), so the actual insert goes
+// through the service role client.
+async function logUsage(req, project, usage) {
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")
+    const authClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY"), {
+      global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } },
+    })
+    const { data: { user } } = await authClient.auth.getUser()
+    if (!user) return
+
+    const serviceClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"))
+    await serviceClient.from("ai_usage_log").insert({
+      user_id: user.id,
+      project_id: project?.id ?? null,
+      function_name: FUNCTION_NAME,
+      input_tokens: usage?.input_tokens ?? 0,
+      output_tokens: usage?.output_tokens ?? 0,
+    })
+  } catch {
+    // Logging failure must never surface to the caller.
   }
 }
 
@@ -134,7 +165,8 @@ Extract/write a project charter with these sections: Purpose, Scope, Stakeholder
 Return ONLY this JSON shape:
 {"purpose": "...", "scope": "...", "stakeholders": "...", "success_metrics": "...", "risks": "...", "timeline": "..."}`
 
-      const result = await callClaude(system, user)
+      const { result, usage } = await callClaude(system, user)
+      await logUsage(req, project, usage)
       return new Response(JSON.stringify(result), {
         headers: { ...corsHeaders, "content-type": "application/json" },
       })
@@ -152,7 +184,8 @@ For each question decide if it's better answered with free text or a small set o
 Return ONLY this JSON shape:
 {"questions": [{"id": "short_snake_case_id", "text": "question text", "type": "text"}, {"id": "short_snake_case_id", "text": "question text", "type": "choice", "choices": ["A", "B", "C"]}]}`
 
-      const result = await callClaude(system, user)
+      const { result, usage } = await callClaude(system, user)
+      await logUsage(req, project, usage)
       return new Response(JSON.stringify(result), {
         headers: { ...corsHeaders, "content-type": "application/json" },
       })
@@ -174,7 +207,8 @@ Write a project charter with these sections: Purpose, Scope, Stakeholders, Succe
 Return ONLY this JSON shape:
 {"purpose": "...", "scope": "...", "stakeholders": "...", "success_metrics": "...", "risks": "...", "timeline": "..."}`
 
-      const result = await callClaude(system, user)
+      const { result, usage } = await callClaude(system, user)
+      await logUsage(req, project, usage)
       return new Response(JSON.stringify(result), {
         headers: { ...corsHeaders, "content-type": "application/json" },
       })
@@ -204,7 +238,8 @@ Rewrite ONLY this section's text per the instruction. Preserve the original form
 Return ONLY this JSON shape:
 {"revised": "..."}`
 
-      const result = await callClaude(system, user)
+      const { result, usage } = await callClaude(system, user)
+      await logUsage(req, project, usage)
       return new Response(JSON.stringify(result), {
         headers: { ...corsHeaders, "content-type": "application/json" },
       })
@@ -225,7 +260,8 @@ For each question, decide if it's better answered with free text or a small set 
 Return ONLY this JSON shape:
 {"questions": [{"id": "short_snake_case_id", "text": "question text", "type": "text", "sections": ["stakeholders"]}, {"id": "short_snake_case_id", "text": "question text", "type": "choice", "choices": ["A", "B"], "sections": ["risks", "timeline"]}]}`
 
-      const result = await callClaude(system, user)
+      const { result, usage } = await callClaude(system, user)
+      await logUsage(req, project, usage)
       return new Response(JSON.stringify(result), {
         headers: { ...corsHeaders, "content-type": "application/json" },
       })
@@ -264,7 +300,8 @@ For each of these section keys: ${targetKeys.join(", ")} — rewrite that sectio
 Return ONLY this JSON shape:
 {"updates": {${targetKeys.map((k) => `"${k}": "..."`).join(", ")}}}`
 
-      const result = await callClaude(system, user)
+      const { result, usage } = await callClaude(system, user)
+      await logUsage(req, project, usage)
       return new Response(JSON.stringify(result), {
         headers: { ...corsHeaders, "content-type": "application/json" },
       })

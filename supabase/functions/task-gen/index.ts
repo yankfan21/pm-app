@@ -7,12 +7,15 @@
 // anything is written to the tasks table - this function only ever returns
 // proposals, it never writes to the database itself.
 
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 }
 
 const MODEL = "claude-sonnet-5"
+const FUNCTION_NAME = "task-gen"
 
 function extractJson(text) {
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/)
@@ -74,7 +77,7 @@ async function callClaude(system, user, attempt = 1) {
   const textBlock = (data.content || []).find((block) => block.type === "text")
   const text = textBlock?.text ?? ""
   try {
-    return extractJson(text)
+    return { result: extractJson(text), usage: data.usage }
   } catch {
     if (attempt < 3) return callClaude(system, user, attempt + 1)
     const blockTypes = (data.content || []).map((b) => b.type).join(", ")
@@ -82,6 +85,34 @@ async function callClaude(system, user, attempt = 1) {
       `Could not parse Claude's response as JSON after ${attempt} attempts. ` +
         `stop_reason=${data.stop_reason}, content block types=[${blockTypes}], text="${text.slice(0, 200)}"`
     )
+  }
+}
+
+// Fire-and-forget usage logging for the admin usage/cost page - never
+// allowed to block or fail the actual AI response returned to the PM.
+// Two clients: the anon-key one (forwarding the caller's JWT) only resolves
+// who the caller is; ai_usage_log itself is default-deny RLS (see
+// supabase/migrations/create_ai_usage_log.sql), so the actual insert goes
+// through the service role client.
+async function logUsage(req, project, usage) {
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")
+    const authClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY"), {
+      global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } },
+    })
+    const { data: { user } } = await authClient.auth.getUser()
+    if (!user) return
+
+    const serviceClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"))
+    await serviceClient.from("ai_usage_log").insert({
+      user_id: user.id,
+      project_id: project?.id ?? null,
+      function_name: FUNCTION_NAME,
+      input_tokens: usage?.input_tokens ?? 0,
+      output_tokens: usage?.output_tokens ?? 0,
+    })
+  } catch {
+    // Logging failure must never surface to the caller.
   }
 }
 
@@ -186,7 +217,8 @@ For each question:
 Return ONLY this JSON shape:
 ${QUESTION_SHAPE_HINT}`
 
-      const result = await callClaude(system, user)
+      const { result, usage } = await callClaude(system, user)
+      await logUsage(req, project, usage)
       return new Response(JSON.stringify(result), {
         headers: { ...corsHeaders, "content-type": "application/json" },
       })
@@ -218,7 +250,8 @@ Sequence tasks sensibly - not everything has to be sequential, use dependencies 
 Return ONLY this JSON shape:
 ${TASK_SHAPE_HINT}`
 
-      const result = await callClaude(system, user)
+      const { result, usage } = await callClaude(system, user)
+      await logUsage(req, project, usage)
       return new Response(JSON.stringify(result), {
         headers: { ...corsHeaders, "content-type": "application/json" },
       })

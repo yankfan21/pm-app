@@ -22,9 +22,11 @@ import {
   ExecutionIssueLogRoute,
 } from './ProjectSectionRoutes'
 import Settings from './Settings'
+import AdminPage from './AdminPage'
 import NotFound from './NotFound'
 import Login from './Login'
 import RequireAuth from './RequireAuth'
+import AdminRoute from './AdminRoute'
 import DeviceModeGate from './DeviceModeGate'
 import { useTheme } from './hooks/useTheme'
 import { useDeviceMode } from './hooks/useDeviceMode'
@@ -116,6 +118,11 @@ function App() {
           </Route>
 
           <Route path="/settings" element={<Settings />} />
+
+          {/* Hidden - no nav link anywhere. AdminRoute gates on ADMIN_EMAIL. */}
+          <Route element={<AdminRoute />}>
+            <Route path="/admin" element={<AdminPage />} />
+          </Route>
 
           {/* Phone mode - purpose-built components under src/mobile/, own
               route tree entirely separate from the desktop /projects/:id
