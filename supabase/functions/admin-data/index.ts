@@ -48,8 +48,15 @@ Deno.serve(async (req) => {
 
     const serviceClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"))
 
+    // auth.admin.listUsers() (GoTrue's admin API) is currently returning
+    // "Database error finding users" on every call on this project - a
+    // platform-side fault, not something the request shape controls. Routed
+    // around via list_users_for_admin(), a SECURITY DEFINER SQL function
+    // (supabase/migrations/create_list_users_for_admin_function.sql) that
+    // reads auth.users directly, same pattern as this project's existing
+    // find_user_id_by_email RPC.
     const [usersResult, projectsResult, collaboratorsResult, usageResult] = await Promise.all([
-      serviceClient.auth.admin.listUsers({ perPage: 1000 }),
+      serviceClient.rpc("list_users_for_admin"),
       serviceClient.from("projects").select("id, name, owner_id"),
       serviceClient.from("project_collaborators").select("project_id, user_id, role"),
       serviceClient.from("ai_usage_log").select("user_id, input_tokens, output_tokens"),
@@ -80,7 +87,7 @@ Deno.serve(async (req) => {
       usageByUser.set(row.user_id, entry)
     }
 
-    const users = (usersResult.data.users ?? []).map((u) => {
+    const users = (usersResult.data ?? []).map((u) => {
       const owned = projects
         .filter((p) => p.owner_id === u.id)
         .map((p) => ({ id: p.id, name: p.name, role: "owner" }))
