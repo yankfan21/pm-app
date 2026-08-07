@@ -25,6 +25,8 @@ import Settings from './Settings'
 import AdminPage from './AdminPage'
 import NotFound from './NotFound'
 import Login from './Login'
+import ForgotPassword from './ForgotPassword'
+import ResetPassword from './ResetPassword'
 import RequireAuth from './RequireAuth'
 import AdminRoute from './AdminRoute'
 import DeviceModeGate from './DeviceModeGate'
@@ -76,6 +78,15 @@ function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+
+      {/* Pre-auth siblings of /login - deliberately outside both RequireAuth
+          (a locked-out user has no session to guard) and DeviceModeGate (no
+          deviceRouteMap entry either: these render identically at any width
+          off the same CSS as /login, rather than splitting into desktop and
+          mobile trees). /reset-password is where the recovery email lands,
+          so it must stay reachable with no session. */}
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
 
       <Route element={<RequireAuth />}>
         {/* Viewport-width auto-detection (<768px -> mobile) plus the

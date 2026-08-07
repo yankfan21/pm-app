@@ -4548,7 +4548,8 @@ textarea.risk-cell-input {
   color: #94a3b8;
 }
 
-.login-footer-link button {
+.login-footer-link button,
+.login-footer-link a {
   border: none;
   background: none;
   padding: 0;
@@ -4556,6 +4557,21 @@ textarea.risk-cell-input {
   font-weight: 600;
   color: var(--accent);
   cursor: pointer;
+  text-decoration: none;
+}
+
+/* Sits between the password field and the submit button, so it pulls up
+   against the field's own 16px bottom margin rather than stacking on it. */
+.login-forgot-link {
+  margin: -6px 0 16px;
+  text-align: right;
+  font-size: 13px;
+}
+
+.login-forgot-link a {
+  color: var(--accent);
+  font-weight: 500;
+  text-decoration: none;
 }
 
 .login-panel-preview {
@@ -4644,6 +4660,10 @@ textarea.risk-cell-input {
 
   .login-form-v2 label {
     margin-bottom: 10px;
+  }
+
+  .login-forgot-link {
+    margin: -4px 0 10px;
   }
 
   .login-divider {

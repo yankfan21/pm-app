@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import ConfidantLogo from './ConfidantLogo'
 
@@ -132,6 +132,11 @@ function Login() {
                 minLength={6}
               />
             </label>
+            {mode === 'sign-in' && (
+              <p className="login-forgot-link">
+                <Link to="/forgot-password">Forgot password?</Link>
+              </p>
+            )}
             {mode === 'sign-up' && (
               <label>
                 Confirm password
