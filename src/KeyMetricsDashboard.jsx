@@ -16,11 +16,14 @@ import {
 import { supabase } from './supabaseClient'
 import { HEALTH_LABELS, HEALTH_COLOR_CLASS, formatEvalMetric } from './projectEvalHealth'
 import { visibleSides } from './projectSections'
-import { getRiskBand } from './riskScale'
+import { getRiskBand, getRiskScore } from './riskScale'
 import { getIssueStatusCounts } from './issueLogUtils'
 import { isPhaseOverdue } from './phaseUtils'
 import { getEasternTodayStr, isTaskDelayed } from './taskUtils'
 import { isSprintOverdue } from './sprintStats'
+import { resolveAssigneeLabel } from './components/AssigneePicker'
+import { buildAssigneeGroups } from './teamStats'
+import { todayLocalDateString } from './useSprintSelection'
 
 const CHART_TOOLTIP_STYLE = {
   background: 'var(--surface-1-solid)',
@@ -68,13 +71,12 @@ function useCriticalIssues(project, tasks, phases, riskLog) {
       .filter((t) => t.backlog_status == null && isTaskDelayed(t, todayEasternStr))
       .forEach((t) => issues.push({ key: `task-${t.id}`, type: 'Delayed Task', label: t.title, id: t.id }))
 
-    // High/Critical-band risks - mirrors project-eval/index.ts's
-    // riskStats() band filter. `id`/`label`/`band` aren't read by anything
-    // downstream anymore (DelayedTaskCard/OverduePhaseCard/RiskSeverityCard
-    // only need the `type` count, now that the per-item itemized list/
-    // hotspotLinkTo is gone) - left on the issue object as harmless
-    // leftover shape rather than trimmed, so this stays a straight mirror
-    // of project-eval/index.ts's riskStats() row shape.
+    // High/Critical-band risks - mirrors project-eval/index.ts's riskStats()
+    // band filter. `label`/`band`/`id` used to be dead weight here (the old
+    // four-count RiskSeverityCard only needed the `type` count); KeyRisksCard
+    // below now renders them as a real itemized list, so they're load-bearing
+    // again - along with owner/mitigation/score, carried straight off the
+    // risk row so the list doesn't need a second pass over riskLog.risks.
     ;(riskLog?.risks || [])
       .filter((r) => ['High', 'Critical'].includes(getRiskBand(r.likelihood, r.severity)))
       .forEach((r, i) =>
@@ -84,6 +86,9 @@ function useCriticalIssues(project, tasks, phases, riskLog) {
           label: r.risk || `Risk ${i + 1}`,
           id: r.id ?? null,
           band: getRiskBand(r.likelihood, r.severity),
+          score: getRiskScore(r.likelihood, r.severity),
+          owner: r.owner || null,
+          mitigation: r.mitigation || null,
         })
       )
 
@@ -252,17 +257,6 @@ function ProgressRingCard({ project, evaluation, loading }) {
 }
 
 const SEVERITY_LEVELS = ['Critical', 'High', 'Medium', 'Low']
-// Reuse doc-status-badge's existing color modifiers instead of inventing a
-// new vocabulary - critical/partial/done are the same red/amber/green used
-// for Project Status and the section header badge above. 'severe' is the
-// one addition, an inverted-danger variant for the new Critical band (see
-// App.css) so it reads as a step up from High's plain danger red.
-const SEVERITY_BADGE_CLASS = {
-  Critical: 'severe',
-  High: 'critical',
-  Medium: 'partial',
-  Low: 'done',
-}
 
 // Unscored risks (band === null) aren't counted here - this card is a
 // scored-risk summary, not a full risk enumeration. RiskLogView.jsx's own
@@ -278,31 +272,90 @@ function useRiskSeverityCounts(riskLog) {
   }, [riskLog])
 }
 
-// Each badge links to Documents > Risk Log pre-filtered to that severity
-// (DocumentsRoute.jsx reads the riskFilter param and expands the Risk Log
-// row; RiskLogView.jsx applies the actual filter). Still a plain count
-// badge visually - .key-metrics-severity-badge-link just adds the
-// pointer/hover affordance doc-status-badge doesn't have on its own.
-function RiskSeverityCard({ project, riskLog }) {
-  const data = useRiskSeverityCounts(riskLog)
-  const total = data.reduce((sum, d) => sum + d.count, 0)
+// Itemized Critical/High risks, replacing the four count badges that used to
+// live here - a PM reading Overview needs to know *which* risks are biting,
+// not just that four of them exist. Rows come straight off useCriticalIssues'
+// existing High/Critical entries rather than re-filtering riskLog.risks, so
+// this list and the "N Hotspots" header count can never disagree about what
+// qualifies.
+//
+// Critical sorts above High, then higher score first, so the worst row is
+// always the top one. Medium/Low are deliberately not itemized (they'd bury
+// the rows that matter) but aren't dropped either - the tail line below keeps
+// their counts and their deep links, which is all the old badge row gave them.
+//
+// Each row links to Documents > Risk Log with both riskFilter and riskId:
+// DocumentsRoute.jsx only auto-expands the Risk Log section when riskFilter is
+// present, while riskId is what RiskLogView.jsx flashes on arrival - a riskId
+// on its own would land on a collapsed section.
+const RISK_BAND_ORDER = { Critical: 0, High: 1 }
 
-  if (total === 0) {
+function riskLinkTo(projectId, risk) {
+  const params = new URLSearchParams({ riskFilter: risk.band })
+  if (risk.id) params.set('riskId', risk.id)
+  return `/projects/${projectId}/documents?${params}`
+}
+
+function KeyRisksCard({ project, riskLog, issues }) {
+  const counts = useRiskSeverityCounts(riskLog)
+  const countFor = (level) => counts.find((c) => c.level === level)?.count ?? 0
+  const lowerBands = ['Medium', 'Low'].filter((level) => countFor(level) > 0)
+
+  const keyRisks = useMemo(
+    () =>
+      issues
+        .filter((i) => i.type === 'High Risk')
+        .sort(
+          (a, b) => RISK_BAND_ORDER[a.band] - RISK_BAND_ORDER[b.band] || (b.score ?? 0) - (a.score ?? 0)
+        ),
+    [issues]
+  )
+
+  const totalLogged = counts.reduce((sum, c) => sum + c.count, 0)
+  if (totalLogged === 0) {
     return <p className="charter-status">No risks logged yet.</p>
   }
 
   return (
-    <div className="key-metrics-severity-badges">
-      {data.map((d) => (
-        <Link
-          key={d.level}
-          to={`/projects/${project.id}/documents?riskFilter=${d.level}`}
-          className={`doc-status-badge key-metrics-severity-badge-link ${SEVERITY_BADGE_CLASS[d.level]}`}
-        >
-          {d.count} {d.level}
-        </Link>
-      ))}
-    </div>
+    <>
+      {keyRisks.length === 0 ? (
+        <p className="charter-status">No Critical or High risks — nothing above the Medium band.</p>
+      ) : (
+        <ul className="key-risk-list">
+          {keyRisks.map((risk) => (
+            <li key={risk.key} className="key-risk-item">
+              <Link to={riskLinkTo(project.id, risk)} className="key-risk-link">
+                <span className="key-risk-head">
+                  <span className={`risk-level-badge risk-level-${risk.band.toLowerCase()}`}>
+                    {risk.band}
+                    {risk.score != null && ` · ${risk.score}`}
+                  </span>
+                  <span className="key-risk-title">{risk.label}</span>
+                </span>
+                <span className="key-risk-meta">
+                  Owner: {risk.owner || 'Unassigned'}
+                  {risk.mitigation ? ` · ${risk.mitigation}` : ' · No mitigation recorded'}
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {lowerBands.length > 0 && (
+        <p className="key-risk-tail">
+          Also logged:{' '}
+          {lowerBands.map((level, i) => (
+            <span key={level}>
+              {i > 0 && ', '}
+              <Link to={`/projects/${project.id}/documents?riskFilter=${level}`}>
+                {countFor(level)} {level}
+              </Link>
+            </span>
+          ))}
+        </p>
+      )}
+    </>
   )
 }
 
@@ -315,7 +368,7 @@ function useIssueStatusCounts(issueLog) {
   return useMemo(() => getIssueStatusCounts(issueLog?.issues), [issueLog])
 }
 
-// Mirrors RiskSeverityCard's deep-link pattern: each badge links to
+// Mirrors KeyRisksCard's deep-link pattern: each badge links to
 // Documents > Issues Log pre-filtered (DocumentsRoute.jsx reads the
 // issueFilter param and expands the Issue Log row; IssueLogView.jsx applies
 // the actual filter - 'OpenGroup' is a deep-link-only value combining
@@ -542,6 +595,191 @@ function SprintVelocityCard({ sprints, loading, error }) {
   )
 }
 
+const TEAM_HOTSPOT_LIMIT = 6
+
+// Per-assignee load table, computed by the same teamStats.js helpers the
+// Execution > Team routes use (see the module comment there for why the
+// logic was lifted out of TeamView rather than the component reused here).
+//
+// Scoping deliberately differs from the Team routes in two ways. First, no
+// active-sprint scoping: Overview is a project-wide snapshot, and quietly
+// narrowing to one sprint here would make this table disagree with every
+// other number on the page. Second, Hybrid reads its Waterfall side
+// (backlog_status == null) rather than both - same scoping the Delayed Tasks
+// and Overdue Phases sub-groups above already use, so the whole Hotspots
+// panel describes one consistent slice of the project. Pure Agile has no
+// Waterfall side at all, so it reads the backlog instead and swaps in the
+// story-point stats.
+//
+// Capped at TEAM_HOTSPOT_LIMIT rows - this is a "who's loaded up" glance, not
+// the full roster, which is what the Team route itself is for.
+function TeamHotspotsCard({ project, tasks, collaborators }) {
+  const isAgile = project.methodology === 'agile'
+  const todayStr = todayLocalDateString()
+
+  const groups = useMemo(() => {
+    const scoped = tasks.filter((t) => (isAgile ? t.backlog_status != null : t.backlog_status == null))
+    return buildAssigneeGroups(scoped, {
+      variant: isAgile ? 'agile' : 'waterfall',
+      todayStr,
+      resolveLabel: (task) => resolveAssigneeLabel(task, collaborators, project),
+    })
+  }, [tasks, collaborators, project, isAgile, todayStr])
+
+  if (groups.length === 0) {
+    return <p className="charter-status">No {isAgile ? 'backlog items' : 'tasks'} assigned yet.</p>
+  }
+
+  const shown = groups.slice(0, TEAM_HOTSPOT_LIMIT)
+
+  return (
+    <>
+      <div className="risk-table-wrap key-metrics-table-wrap">
+        <table className="risk-log-table overview-table">
+          <thead>
+            <tr>
+              <th>Assignee</th>
+              <th>{isAgile ? 'Backlog Items' : 'Tasks'}</th>
+              {isAgile ? (
+                <th>Story Points</th>
+              ) : (
+                <>
+                  <th>Overdue/Delayed</th>
+                  <th>Overlapping</th>
+                </>
+              )}
+            </tr>
+          </thead>
+          <tbody>
+            {shown.map((g) => (
+              <tr key={g.key}>
+                <td className="overview-table-label">{g.label}</td>
+                <td>{g.stats.taskCount}</td>
+                {isAgile ? (
+                  <td>{g.stats.totalPoints} pts</td>
+                ) : (
+                  <>
+                    <td>
+                      <span
+                        className={`status-dot ${g.stats.overdueOrDelayedCount > 0 ? 'critical' : 'done'}`}
+                        aria-hidden="true"
+                      />{' '}
+                      {g.stats.overdueOrDelayedCount}
+                    </td>
+                    <td>
+                      <span
+                        className={`status-dot ${g.stats.overlapCount > 0 ? 'critical' : 'done'}`}
+                        aria-hidden="true"
+                      />{' '}
+                      {g.stats.overlapCount}
+                    </td>
+                  </>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {groups.length > shown.length && (
+        <p className="key-risk-tail">
+          Showing the {shown.length} most loaded of {groups.length} assignees —{' '}
+          <Link to={`/projects/${project.id}/execution/team-${isAgile ? 'agile' : 'waterfall'}`}>
+            see the full team view
+          </Link>
+          .
+        </p>
+      )}
+    </>
+  )
+}
+
+const UPCOMING_MILESTONE_LIMIT = 5
+
+// Milestones with an end_date still ahead of today. There is no status or
+// completed column on the milestones table, so "upcoming" can only mean
+// "not yet past its end date" - a milestone finished early still shows here,
+// and that's an honest limit of the data rather than something to paper over.
+// Rows with no end_date at all are included (undated work is still ahead of
+// you), sorted last.
+//
+// The completion figure is gated twice on purpose. tasks.milestone_id is a
+// Backlog concept - Waterfall projects never set it (see GanttChart.jsx's
+// note), so on those projects every milestone would read a permanent "0/0
+// done" that looks like real, alarming data. `projectLinksTasks` suppresses
+// the column entirely unless this project actually has linked tasks, and the
+// per-row check suppresses it for any individual milestone with none.
+function useUpcomingMilestones(milestones, tasks) {
+  return useMemo(() => {
+    const todayStr = todayLocalDateString()
+    const projectLinksTasks = tasks.some((t) => t.milestone_id)
+
+    const upcoming = (milestones || [])
+      .filter((m) => !m.end_date || m.end_date >= todayStr)
+      .sort((a, b) => {
+        if (!a.end_date && !b.end_date) return 0
+        if (!a.end_date) return 1
+        if (!b.end_date) return -1
+        return a.end_date.localeCompare(b.end_date)
+      })
+      .map((m) => {
+        const linked = projectLinksTasks ? tasks.filter((t) => t.milestone_id === m.id) : []
+        const done = linked.filter((t) => t.board_status === 'done' || t.completed).length
+        return {
+          ...m,
+          progress: linked.length > 0 ? { done, total: linked.length } : null,
+        }
+      })
+
+    return { upcoming, showProgressColumn: projectLinksTasks && upcoming.some((m) => m.progress) }
+  }, [milestones, tasks])
+}
+
+function UpcomingMilestonesCard({ milestones, tasks }) {
+  const { upcoming, showProgressColumn } = useUpcomingMilestones(milestones, tasks)
+
+  if (upcoming.length === 0) {
+    return (
+      <p className="charter-status">
+        {(milestones || []).length === 0
+          ? 'No milestones defined yet.'
+          : 'No upcoming milestones — every milestone end date has passed.'}
+      </p>
+    )
+  }
+
+  const shown = upcoming.slice(0, UPCOMING_MILESTONE_LIMIT)
+
+  return (
+    <>
+      <div className="risk-table-wrap key-metrics-table-wrap">
+        <table className="risk-log-table overview-table">
+          <thead>
+            <tr>
+              <th>Milestone</th>
+              <th>Target</th>
+              {showProgressColumn && <th>Linked Work</th>}
+            </tr>
+          </thead>
+          <tbody>
+            {shown.map((m) => (
+              <tr key={m.id}>
+                <td className="overview-table-label">{m.name}</td>
+                <td>{m.end_date || 'TBD'}</td>
+                {showProgressColumn && <td>{m.progress ? `${m.progress.done}/${m.progress.total} done` : '—'}</td>}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {upcoming.length > shown.length && (
+        <p className="key-risk-tail">
+          Showing the next {shown.length} of {upcoming.length} upcoming milestones.
+        </p>
+      )}
+    </>
+  )
+}
+
 // New top-level section, same level as Tasks and Milestones / Backlog /
 // Sprint Board / Gantt Chart - Project Status + Progress % is a snapshot of
 // the latest Evaluate Project run (see ProjectStatusCard/ProgressRingCard);
@@ -554,7 +792,16 @@ function SprintVelocityCard({ sprints, loading, error }) {
 // visibleSides().agile), so the row falls back to just the donut,
 // left-aligned at its normal size - .key-metrics-progress-col's fixed
 // width means it never stretches to fill the row on its own.
-function KeyMetricsDashboard({ project, tasks, phases, riskLog, issueLog, expanded }) {
+function KeyMetricsDashboard({
+  project,
+  tasks,
+  phases,
+  milestones,
+  collaborators,
+  riskLog,
+  issueLog,
+  expanded,
+}) {
   const issues = useCriticalIssues(project, tasks, phases, riskLog)
   const { evaluation, loading: evalLoading } = useLatestEvaluation(project.id)
   const showVelocity = visibleSides(project.methodology).agile
@@ -638,11 +885,27 @@ function KeyMetricsDashboard({ project, tasks, phases, riskLog, issueLog, expand
                 </div>
               )}
 
-              <div className="key-metrics-hotspot-group">
-                <h4 className="key-metrics-subheading">Risks</h4>
-                <RiskSeverityCard project={project} riskLog={riskLog} />
-              </div>
             </div>
+
+            {/* Key Risks and Team Hotspots sit below the count sub-groups
+                rather than inside .key-metrics-hotspot-groups - that row is a
+                wrapping grid of narrow count columns, and a full-width table
+                or itemized list dropped into it would be squeezed into a
+                200px flex basis. */}
+            <div className="key-metrics-hotspot-detail">
+              <h4 className="key-metrics-subheading">Key Risks</h4>
+              <KeyRisksCard project={project} riskLog={riskLog} issues={issues} />
+            </div>
+
+            <div className="key-metrics-hotspot-detail">
+              <h4 className="key-metrics-subheading">Team Hotspots</h4>
+              <TeamHotspotsCard project={project} tasks={tasks} collaborators={collaborators || []} />
+            </div>
+          </div>
+
+          <div className="key-metrics-panel">
+            <h3 className="key-metrics-panel-heading">Upcoming Milestones</h3>
+            <UpcomingMilestonesCard milestones={milestones} tasks={tasks} />
           </div>
         </div>
       )}

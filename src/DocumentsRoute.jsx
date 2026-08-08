@@ -47,9 +47,10 @@ function DocumentsRoute() {
   const issueFilter = searchParams.get('issueFilter')
   const riskId = searchParams.get('riskId')
 
-  // Arrival from a Key Metrics Dashboard severity badge (see
-  // KeyMetricsDashboard.jsx's RiskSeverityCard) - land straight on the
-  // already-expanded Risk Log row instead of making the PM click it open.
+  // Arrival from an Overview risk link (see KeyMetricsDashboard.jsx's
+  // KeyRisksCard) - land straight on the already-expanded Risk Log row
+  // instead of making the PM click it open. Note this keys off riskFilter,
+  // not riskId, which is why KeyRisksCard sends both.
   useEffect(() => {
     if (riskFilter) setExpandedSection('risk_log')
     // eslint-disable-next-line react-hooks/exhaustive-deps

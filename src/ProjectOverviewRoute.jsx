@@ -9,7 +9,10 @@ import KeyMetricsDashboard from './KeyMetricsDashboard'
 // routes: PlanningTasksRoute.jsx (/planning/tasks) and DocumentsRoute.jsx
 // (/documents).
 function ProjectOverviewRoute() {
-  const { project, tasks, phases, docs } = useOutletContext()
+  // milestones/collaborators were already loaded by ProjectDetailLayout and
+  // sitting unused in outlet context - Upcoming Milestones and Team Hotspots
+  // read them, so neither panel costs a query.
+  const { project, tasks, phases, milestones, collaborators, docs } = useOutletContext()
 
   return (
     <>
@@ -17,6 +20,8 @@ function ProjectOverviewRoute() {
         project={project}
         tasks={tasks}
         phases={phases}
+        milestones={milestones}
+        collaborators={collaborators}
         riskLog={docs.risk_log}
         issueLog={docs.issue_log}
         expanded

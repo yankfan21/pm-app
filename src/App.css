@@ -2877,6 +2877,27 @@
   margin-top: 16px;
 }
 
+/* Overview's four sections (Project Status / Progress & Velocity / Project
+   Hotspots / Upcoming Milestones) used to be bare unstyled divs separated
+   only by .key-metrics-body's gap, with just the heading carrying any
+   styling - which read as one long undifferentiated column once Hotspots
+   grew a risk list and a team table.
+   Reuses --radius-card and --space-card-padding rather than adding a third
+   card variant, but deliberately does NOT take the left-accent bar or the
+   backdrop-filter that .project-list li and .detail-zone carry: this is a
+   panel nested *inside* a .detail-zone, and an accent bar would compete with
+   its parent's while a second blur layer just muddies the surface already
+   blurred underneath it. --row-bg is the existing "surface nested on a
+   surface" token (see index.css) - not a new color. Full four-corner radius,
+   since there's no accent bar owning the left edge here. */
+.key-metrics-panel {
+  padding: var(--space-card-padding);
+  box-sizing: border-box;
+  border: 1px solid var(--border-faint);
+  border-radius: var(--radius-card);
+  background: var(--row-bg);
+}
+
 .key-metrics-panel-heading {
   margin: 0 0 8px;
   font-size: 13px;
@@ -2971,10 +2992,11 @@
 }
 
 /* Project Hotspots' four sub-groups (Issues / Delayed Tasks / Overdue
-   Phases / Risks) - each is just a heading + one of the existing badge
-   cards (IssueSummaryCard/DelayedTaskCard/OverduePhaseCard/
-   RiskSeverityCard), laid out as wrapping columns so they read as one
-   panel rather than four stacked ones. */
+   Phases / Overdue Sprints) - each is just a heading + one of the existing
+   badge cards (IssueSummaryCard/DelayedTaskCard/OverduePhaseCard/
+   OverdueSprintsCard), laid out as wrapping columns so they read as one
+   panel rather than four stacked ones. Risks used to be a fifth column here
+   and is now the full-width Key Risks list below instead. */
 .key-metrics-hotspot-groups {
   display: flex;
   flex-wrap: wrap;
@@ -2986,11 +3008,116 @@
   min-width: 160px;
 }
 
+/* Full-width sub-sections of the Hotspots panel (Key Risks, Team Hotspots),
+   as opposed to the narrow wrapping count columns above. Separated from the
+   count row - and from each other - by a hairline rather than more padding,
+   so the panel doesn't turn into a stack of nested boxes. */
+.key-metrics-hotspot-detail {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-faint);
+}
+
 .key-metrics-subheading {
   margin: 0 0 8px;
   font-size: 12px;
   font-weight: 600;
   color: var(--text-muted);
+}
+
+/* Itemized Critical/High risks (KeyRisksCard). Each row is one link: a band
+   badge + the risk title on the first line, owner and mitigation muted
+   underneath. The whole row is the click target rather than just the title,
+   since the meta line is as likely to be what the eye lands on. */
+.key-risk-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.key-risk-link {
+  display: block;
+  padding: 8px 10px;
+  border: 1px solid var(--border-faint);
+  border-radius: 8px;
+  background: var(--code-bg);
+  color: inherit;
+  text-decoration: none;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.key-risk-link:hover,
+.key-risk-link:focus-visible {
+  border-color: var(--border);
+  background: var(--pill-neutral-bg);
+}
+
+.key-risk-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.key-risk-title {
+  font-size: var(--item-title-size);
+  font-weight: var(--item-title-weight);
+  color: var(--text-h);
+}
+
+/* Owner + mitigation on one muted line. Mitigation text can run long, so it
+   truncates rather than growing the row - the full text lives in the Risk
+   Log, which this row links to. */
+.key-risk-meta {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Trailing "also logged" / "showing N of M" line under a list or table. */
+.key-risk-tail {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.key-risk-tail a {
+  color: var(--link);
+}
+
+/* Overview's tables (Team Hotspots, Upcoming Milestones) borrow .risk-table-wrap
+   and .risk-log-table's chrome so they read identically to the Risk Log's own
+   table, with two adjustments. The wrap's 24px margin-top is meant to clear a
+   section heading, which here is the 8px-margin .key-metrics-subheading right
+   above it. And .risk-log-table's 760px min-width exists to keep the Risk Log's
+   eight columns honest - these tables have three or four, so inheriting it
+   would force a horizontal scrollbar on content that fits comfortably. */
+.key-metrics-table-wrap {
+  margin-top: 0;
+  border-radius: 8px;
+}
+
+.risk-log-table.overview-table {
+  min-width: 380px;
+}
+
+.risk-log-table.overview-table td {
+  padding: 8px 12px;
+  vertical-align: middle;
+}
+
+.overview-table-label {
+  color: var(--text-h);
+  overflow-wrap: anywhere;
 }
 
 /* Shared "you've arrived" flash for a Hotspot click-through landing on its
