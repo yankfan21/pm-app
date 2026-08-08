@@ -60,6 +60,25 @@
   --card-tint-amber: rgba(217, 119, 6, 0.05);
   --card-tint-red: rgba(220, 38, 38, 0.05);
 
+  /* Card geometry - shared by the two left-accent-bar surfaces in the app:
+     All Projects/Dashboard cards (.project-list li) and the project-detail
+     section container (.detail-zone). Both are "flush-left, rounded-right"
+     because a 3px accent bar owns their left edge, so the radius is
+     expressed as the full four-corner shorthand rather than a bare length.
+     These two used to disagree (10px on the cards, 8px on the zone) with no
+     reason behind the split; unified on 10px - the softer of the two, and
+     the larger surface (.detail-zone) shouldn't read as sharper-cornered
+     than the small cards nested conceptually beneath it. Padding stays
+     per-surface (a full-width section needs more breathing room than a
+     list row), just tokenized so the two are edited from one place.
+     Note --space-zone-padding is in rem against :root's 18px base, i.e.
+     27px - kept as 1.5rem so this is a pure extraction with no visual
+     change to .detail-zone's existing spacing. */
+  --radius-card: 10px;
+  --radius-card-accent: 0 var(--radius-card) var(--radius-card) 0;
+  --space-card-padding: 16px 18px;
+  --space-zone-padding: 1.5rem;
+
   /* Header frame and Project Detail row surfaces - a shade between --bg
      and --card-bg. */
   --header-bg: rgba(15, 23, 42, 0.35);
@@ -94,6 +113,11 @@
      --agile-accent above, rather than a semantic remap. */
   --pill-neutral-bg: rgba(255, 255, 255, 0.06);
   --pill-neutral-text: #94a3b8;
+  /* Outline counterpart to the pair above, added when badges gained visible
+     1px borders - the --badge-*-border tokens already covered success/
+     warning/danger, but the neutral tier had no matching outline. Same 0.3
+     alpha convention as those three, over --pill-neutral-text's slate. */
+  --pill-neutral-border: rgba(148, 163, 184, 0.3);
   --alert-red: #f87171;
 
   /* Status badge tiers (on-track/at-risk/off-track health, priority,

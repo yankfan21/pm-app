@@ -79,9 +79,32 @@
   flex-shrink: 0;
 }
 
-.account-menu-email {
-  font-size: 14px;
-  color: var(--text);
+/* Initials circle, replacing the raw email text that used to sit here (the
+   full address is on title/aria-label now - see AppHeader.jsx). Background
+   is --accent-strong rather than --accent: --accent is the light-blue step
+   meant for text and icons *on* a dark surface, and light text on top of it
+   lands around 2:1 contrast. --accent-strong exists in index.css precisely
+   for "solid fill with light text on top" (see its comment there) and gets
+   this over 5:1 while staying the same hue. box-sizing matters here because
+   this file has no global reset - without it the circle would render 32px
+   plus whatever a future border adds and stop being round against the
+   fixed line-height. */
+.account-menu-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent-strong);
+  color: var(--text-h);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  line-height: 1;
+  user-select: none;
 }
 
 /* Sign In/Contact Support/Sign out reuse .btn-secondary's button chrome, but
@@ -1299,10 +1322,10 @@
 
 .project-list li {
   position: relative;
-  padding: 16px 18px;
+  padding: var(--space-card-padding);
   border: none;
   border-left: 3px solid var(--card-accent-purple);
-  border-radius: 0 10px 10px 0;
+  border-radius: var(--radius-card-accent);
   background: var(--card-bg);
   backdrop-filter: var(--card-backdrop-filter);
   box-shadow: var(--card-shadow);
@@ -1372,9 +1395,11 @@
   border-left-color: var(--card-accent-muted);
 }
 
+/* Empty state has no accent bar to sit flush against, so it keeps all four
+   corners rounded - same --radius-card length, different shorthand. */
 .project-list li.empty {
   border: 1px dashed var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-card);
   background: none;
   box-shadow: none;
   color: var(--text);
@@ -1414,11 +1439,11 @@
    makes a card read as a distinct block. */
 .detail-zone {
   margin-top: 2rem;
-  padding: 1.5rem;
+  padding: var(--space-zone-padding);
   box-sizing: border-box;
   border: 1px solid var(--border-faint);
   border-left: 3px solid var(--zone-accent-neutral);
-  border-radius: 0 8px 8px 0;
+  border-radius: var(--radius-card-accent);
   background: var(--surface-1);
   box-shadow: var(--card-shadow);
   transition:
@@ -1648,9 +1673,18 @@
   background: var(--accent);
 }
 
+/* The base badge carries a transparent 1px border rather than leaving the
+   border off entirely, so every modifier lands on identical geometry - the
+   --badge-*-bg tints are low-alpha washes that read as vague smudges on the
+   glass card surfaces without an outline to define their edge, and .archived
+   (below) already carried a border, which quietly made it 2px larger than
+   every badge beside it. There is no global box-sizing reset in this file,
+   so this does grow all badges by 2px in each dimension; they're all
+   flex-shrink: 0 pills in wrapping rows, so nothing reflows on it. */
 .doc-status-badge {
   flex-shrink: 0;
   padding: 3px 10px;
+  border: 1px solid transparent;
   border-radius: 999px;
   font-size: 13px;
   font-weight: 500;
@@ -1659,21 +1693,25 @@
 .doc-status-badge.done {
   background: var(--badge-success-bg);
   color: var(--badge-success-text);
+  border-color: var(--badge-success-border);
 }
 
 .doc-status-badge.pending {
   background: var(--pill-neutral-bg);
   color: var(--pill-neutral-text);
+  border-color: var(--pill-neutral-border);
 }
 
 .doc-status-badge.partial {
   background: var(--badge-warning-bg);
   color: var(--badge-warning-text);
+  border-color: var(--badge-warning-border);
 }
 
 .doc-status-badge.critical {
   background: var(--badge-danger-bg);
   color: var(--badge-danger-text);
+  border-color: var(--badge-danger-border);
 }
 
 /* Critical risk band (score 15-25) - one step up from .critical/danger.
@@ -1687,9 +1725,17 @@
    mode, dark-red-on-dark-red in light mode). --bg (the page background,
    already solid and near-opposite luminance from danger-text in both
    themes) gives real contrast instead. */
+/* Border is --alert-red, not --badge-danger-border like the three tiers
+   above it, for exactly the reason the paragraph above gives about the
+   background: --badge-danger-border is a 0.3-alpha tint meant to sit over a
+   dark page surface, and this badge's own background is a solid pale pink -
+   compositing it there lands within a few RGB values of that background,
+   i.e. no visible outline at all. --alert-red is the same red family,
+   already solid, and reads as a real edge against pale pink. */
 .doc-status-badge.severe {
   background: var(--badge-danger-text);
   color: var(--bg);
+  border-color: var(--alert-red);
 }
 
 .toggle-header-with-badge {
@@ -3072,7 +3118,7 @@
 .doc-status-badge.archived {
   background: var(--code-bg);
   color: var(--text);
-  border: 1px solid var(--border);
+  border-color: var(--border);
 }
 
 .project-goal {
@@ -3136,9 +3182,15 @@
   font-weight: var(--label-badge-weight);
 }
 
+/* Was a hardcoded #e5e7eb/#374151 pair - light-mode residue left behind by
+   the consolidation to the single dark palette, and the only badge in the
+   app not driven by a token. Low is the "nothing to flag here" tier, which
+   is exactly what --pill-neutral-* already means everywhere else (see
+   .doc-status-badge.pending), so it maps onto that rather than onto a new
+   color of its own. */
 .priority-badge.low {
-  background: #e5e7eb;
-  color: #374151;
+  background: var(--pill-neutral-bg);
+  color: var(--pill-neutral-text);
 }
 
 .priority-badge.medium {
