@@ -4964,6 +4964,22 @@ textarea.risk-cell-input {
   line-height: 1;
 }
 
+/* Separates the phase-based categories (Overview/Planning/Execution) from
+   the reference ones (Documents). Rendered by ProjectNav.jsx wherever
+   PRIMARY_CATEGORIES' `group` changes, so it follows the config rather than
+   a named category. Drawn as a background block instead of a border so the
+   same rule flips cleanly to a vertical rule in the 720px row layout below,
+   with no box-sizing dependency. */
+.project-nav-primary-divider {
+  flex: 0 0 auto;
+  align-self: stretch;
+  width: auto;
+  height: 1px;
+  margin: 6px 4px;
+  border: 0;
+  background: var(--border);
+}
+
 .project-nav-secondary {
   display: flex;
   flex-direction: column;
@@ -5125,6 +5141,15 @@ textarea.risk-cell-input {
 
   .project-nav-primary-label {
     font-size: 11px;
+  }
+
+  /* Row layout - same divider becomes a vertical rule between the phase
+     group and Documents. align-self: stretch (base rule) gives it the row's
+     full height. */
+  .project-nav-primary-divider {
+    width: 1px;
+    height: auto;
+    margin: 4px 2px;
   }
 
   .project-nav-secondary {

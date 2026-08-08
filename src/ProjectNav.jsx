@@ -1,3 +1,4 @@
+import { Fragment } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { PRIMARY_CATEGORIES, visibleSectionsForCategory } from './projectSections'
 
@@ -26,18 +27,28 @@ function ProjectNav({ project }) {
   return (
     <div className="project-nav">
       <nav className="project-nav-primary" aria-label="Project sections">
-        {PRIMARY_CATEGORIES.map((c) => (
-          <NavLink
-            key={c.key}
-            to={c.key}
-            className={`project-nav-primary-item ${category === c.key ? 'selected' : ''}`}
-          >
-            <span className="project-nav-primary-icon" aria-hidden="true">
-              {c.icon}
-            </span>
-            <span className="project-nav-primary-label">{c.label}</span>
-          </NavLink>
-        ))}
+        {PRIMARY_CATEGORIES.map((c, i) => {
+          // Divider wherever the `group` value changes between two adjacent
+          // entries (projectSections.js) - no category name is hardcoded
+          // here, so regrouping/reordering is a config-only edit.
+          const prev = PRIMARY_CATEGORIES[i - 1]
+          const startsNewGroup = Boolean(prev) && prev.group !== c.group
+
+          return (
+            <Fragment key={c.key}>
+              {startsNewGroup && <hr className="project-nav-primary-divider" />}
+              <NavLink
+                to={c.key}
+                className={`project-nav-primary-item ${category === c.key ? 'selected' : ''}`}
+              >
+                <span className="project-nav-primary-icon" aria-hidden="true">
+                  {c.icon}
+                </span>
+                <span className="project-nav-primary-label">{c.label}</span>
+              </NavLink>
+            </Fragment>
+          )
+        })}
       </nav>
 
       {sections.length > 0 && (

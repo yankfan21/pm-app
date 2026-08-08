@@ -11,11 +11,18 @@
 // Documents has no entries in SECTIONS_BY_CATEGORY below - it's one flat
 // checklist page (DocumentsRoute.jsx), not broken into further sections, so
 // like Overview it renders no secondary panel.
+//
+// `group` is presentation-only: 'phase' for the three categories that track
+// where a project is in its lifecycle, 'reference' for the ones that don't.
+// ProjectNav.jsx draws a divider wherever the group changes between two
+// consecutive entries, so grouping is expressed here rather than by
+// hardcoding a category name in the nav component. Order is unchanged -
+// entries must stay sorted by group for the divider to read correctly.
 export const PRIMARY_CATEGORIES = [
-  { key: 'overview', label: 'Overview', icon: '◈' },
-  { key: 'planning', label: 'Planning', icon: '▤' },
-  { key: 'execution', label: 'Execution', icon: '▶' },
-  { key: 'documents', label: 'Documents', icon: '▦' },
+  { key: 'overview', label: 'Overview', icon: '◈', group: 'phase' },
+  { key: 'planning', label: 'Planning', icon: '▤', group: 'phase' },
+  { key: 'execution', label: 'Execution', icon: '▶', group: 'phase' },
+  { key: 'documents', label: 'Documents', icon: '▦', group: 'reference' },
 ]
 
 export const SECTIONS_BY_CATEGORY = {
