@@ -1904,6 +1904,28 @@
   font-weight: 400;
 }
 
+/* Doc rows only - group rows deliberately do NOT get this. A doc row has no
+   chevron (it opens a modal, not an inline region - see DocumentsRoute.jsx),
+   but a group row still expands its children inline and keeps one, so the
+   two row types would otherwise start their labels ~20px apart in the same
+   column. This holds the chevron's footprint open by rendering the same
+   glyph invisibly at the same size, rather than by hardcoding a width - the
+   space then stays correct by construction if the glyph or .doc-table-
+   chevron's font-size ever changes. The 8px column gap on
+   .doc-table-name-cell applies to it like any other flex item.
+
+   A ::before rather than an empty placeholder <span> so the reserved space
+   doesn't have to exist as a meaningless node in the markup, and a padding
+   bump is not an option: --indented above already owns padding-left on the
+   grouped rows and the two would overwrite each other rather than add. */
+.doc-table-name-cell--doc::before {
+  content: '\25BE';
+  flex-shrink: 0;
+  font-size: 14px;
+  line-height: 1;
+  visibility: hidden;
+}
+
 .doc-table-chevron {
   font-size: 14px;
 }

@@ -170,7 +170,15 @@ function DocumentsRoute() {
     const isRepeatable = !!docType.repeatable
     const isDone = isDocDone(docType, doc)
     const isLocked = !!docType.available && !docType.available(project) && !isDone
-    const nameCellClass = `doc-table-name-cell ${indented ? 'doc-table-name-cell--indented' : ''}`
+    // --doc reserves the width the chevron used to occupy. The chevron itself
+    // is gone from these rows: it was a disclosure triangle for a disclosure
+    // that no longer happens here (the doc opens in the modal at the bottom of
+    // this file), and its one rotated state was only ever reachable behind the
+    // modal's own scrim, so it read as a permanently-collapsed row. The group
+    // rows below still expand inline and still keep theirs, which is exactly
+    // why the space has to stay reserved - without it these labels would sit
+    // ~20px left of the group label they belong under.
+    const nameCellClass = `doc-table-name-cell doc-table-name-cell--doc ${indented ? 'doc-table-name-cell--indented' : ''}`
 
     if (isLocked) {
       return [
@@ -221,12 +229,7 @@ function DocumentsRoute() {
         tabIndex={0}
         aria-haspopup="dialog"
       >
-        <td className={nameCellClass}>
-          <span className={`chevron doc-table-chevron ${isExpanded ? '' : 'collapsed'}`} aria-hidden="true">
-            ▾
-          </span>
-          {docType.label}
-        </td>
+        <td className={nameCellClass}>{docType.label}</td>
         <td>
           <span className={`status-dot ${badgeColorClass}`} aria-hidden="true" /> {badgeLabel}
         </td>
