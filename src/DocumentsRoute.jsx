@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useOutletContext, useSearchParams } from 'react-router-dom'
 import { supabase } from './supabaseClient'
+import Modal from './components/Modal'
 import { DOCUMENT_TYPES, groupDocumentTypes } from './documentTypes'
 
 // The Documents checklist - Phase 2 extraction out of ProjectOverviewRoute.jsx
@@ -19,6 +20,17 @@ import { DOCUMENT_TYPES, groupDocumentTypes } from './documentTypes'
 // App.css untouched; this file only ever used its own .doc-table* classes.
 // Each doc/group contributes one or more <tr>s via renderDocRow, flattened
 // into a single <tbody> with .flatMap().
+//
+// Opening a doc used to push an extra .doc-table-expand-row <tr> underneath
+// the clicked row, rendering the View/Flow inline in the table. That surface
+// was capped by the table's own width (and by .doc-table-expand-cell's
+// max-width: 0 layout hack), which is a poor fit for the wider doc types -
+// RiskLogView/IssueLogView/BudgetView all render tables, and .risk-log-table
+// alone carries min-width: 760px. Both now render in a portal-backed wide
+// modal (components/Modal.jsx) instead. The state driving it is unchanged:
+// expandedSection/activeFlowKey still mean exactly what they did, only the
+// render target moved, which is what keeps the ?riskFilter / ?issueFilter
+// arrival effects below working untouched.
 
 function isDocDone(docType, doc) {
   return docType.repeatable ? (doc?.length ?? 0) > 0 : doc != null
@@ -149,9 +161,10 @@ function DocumentsRoute() {
     }
   }
 
-  // Returns an array of <tr>s for one doc type: the row itself, plus an
-  // expand row underneath when its View and/or Flow is open. `indented`
-  // marks a row rendered as a group's child (Communications' three items).
+  // Returns an array of <tr>s for one doc type - one row, but still an array
+  // so the .flatMap() below can splice a group's children in alongside it.
+  // `indented` marks a row rendered as a group's child (Communications' three
+  // items). The doc itself opens in the modal at the bottom of this file.
   function renderDocRow(docType, { indented = false } = {}) {
     const doc = docs[docType.key]
     const isRepeatable = !!docType.repeatable
@@ -178,7 +191,6 @@ function DocumentsRoute() {
     const isViewOpen = expandedSection === docType.key
     const isFlowOpen = activeFlowKey === docType.key
     const isExpanded = isViewOpen || isFlowOpen
-    const { ViewComponent, FlowComponent, docProp } = docType
     const customBadge = docType.badgeFor ? docType.badgeFor(doc) : null
     const badgeColorClass = customBadge ? customBadge.colorClass : isDone ? 'done' : 'pending'
     const badgeLabel = customBadge
@@ -197,6 +209,8 @@ function DocumentsRoute() {
       }
     }
 
+    // aria-haspopup rather than the aria-expanded this row used to carry:
+    // clicking it opens a dialog now, it doesn't expand a region below itself.
     const rows = [
       <tr
         key={docType.key}
@@ -205,7 +219,7 @@ function DocumentsRoute() {
         onKeyDown={(e) => rowKeyGuard(e, activateRow)}
         role="button"
         tabIndex={0}
-        aria-expanded={isExpanded}
+        aria-haspopup="dialog"
       >
         <td className={nameCellClass}>
           <span className={`chevron doc-table-chevron ${isExpanded ? '' : 'collapsed'}`} aria-hidden="true">
@@ -233,44 +247,29 @@ function DocumentsRoute() {
       </tr>,
     ]
 
-    if (isViewOpen || isFlowOpen) {
-      rows.push(
-        <tr key={`${docType.key}-expand`} className="doc-table-expand-row">
-          <td colSpan={3} className="doc-table-expand-cell">
-            {isViewOpen && doc && (
-              <ViewComponent
-                project={project}
-                {...{ [docProp]: doc }}
-                {...docType.context(docs, tasks, { sprints, retros, milestones, phases, taskDependencies })}
-                canEdit={canEdit}
-                onUpdate={(updatedRow) => handleDocUpdated(docType, updatedRow)}
-                {...(docType.key === 'risk_log'
-                  ? {
-                      initialSeverityFilter: riskFilter,
-                      onSeverityFilterChange: setRiskFilter,
-                      highlightRiskId: riskId,
-                      onRiskHighlightDone: clearRiskId,
-                    }
-                  : {})}
-                {...(docType.key === 'issue_log'
-                  ? { initialStatusFilter: issueFilter, onStatusFilterChange: setIssueFilter }
-                  : {})}
-              />
-            )}
-            {isFlowOpen && canEdit && (
-              <FlowComponent
-                project={project}
-                {...docType.context(docs, tasks, { sprints, retros, milestones, phases, taskDependencies })}
-                onGenerated={(result, answerList) => handleDocGenerated(docType, result, answerList)}
-                onClose={() => setActiveFlowKey(null)}
-              />
-            )}
-          </td>
-        </tr>
-      )
-    }
-
     return rows
+  }
+
+  // Which doc the modal is showing. Both state vars can point at the same doc
+  // at once (open Status Update's history, then hit "+ Log Status Update") -
+  // that used to stack the View and the Flow in one expand cell, and it still
+  // stacks them in one modal. When they point at *different* docs the Flow
+  // wins, since it's the more recent, mid-task thing.
+  const flowDocType = activeFlowKey ? DOCUMENT_TYPES.find((d) => d.key === activeFlowKey) : null
+  const viewDocType = expandedSection ? DOCUMENT_TYPES.find((d) => d.key === expandedSection) : null
+  const modalDocType = flowDocType || viewDocType
+  const modalDoc = modalDocType ? docs[modalDocType.key] : null
+  const showModalView = modalDocType != null && modalDocType === viewDocType && modalDoc != null
+  const showModalFlow = modalDocType != null && modalDocType === flowDocType && canEdit
+  const ModalViewComponent = modalDocType?.ViewComponent
+  const ModalFlowComponent = modalDocType?.FlowComponent
+
+  // Dismissing the modal clears both, so closing out of a Flow that was
+  // opened on top of an already-open View lands back on the checklist rather
+  // than dropping the PM onto the View underneath it.
+  function closeModal() {
+    setExpandedSection(null)
+    setActiveFlowKey(null)
   }
 
   return (
@@ -335,6 +334,47 @@ function DocumentsRoute() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* Both guards matter, not just modalDocType: the ?riskFilter /
+          ?issueFilter arrival effects set expandedSection before loadDocs()
+          has resolved (and on a project that has no risk/issue log at all,
+          never resolve to a row) - without this the PM would get an empty
+          modal instead of nothing, which is what the old expand row did. */}
+      {(showModalView || showModalFlow) && (
+        <Modal size="wide" onClose={closeModal}>
+          <h3 className="modal-doc-title">{modalDocType.label}</h3>
+
+          {showModalView && (
+            <ModalViewComponent
+              project={project}
+              {...{ [modalDocType.docProp]: modalDoc }}
+              {...modalDocType.context(docs, tasks, { sprints, retros, milestones, phases, taskDependencies })}
+              canEdit={canEdit}
+              onUpdate={(updatedRow) => handleDocUpdated(modalDocType, updatedRow)}
+              {...(modalDocType.key === 'risk_log'
+                ? {
+                    initialSeverityFilter: riskFilter,
+                    onSeverityFilterChange: setRiskFilter,
+                    highlightRiskId: riskId,
+                    onRiskHighlightDone: clearRiskId,
+                  }
+                : {})}
+              {...(modalDocType.key === 'issue_log'
+                ? { initialStatusFilter: issueFilter, onStatusFilterChange: setIssueFilter }
+                : {})}
+            />
+          )}
+
+          {showModalFlow && (
+            <ModalFlowComponent
+              project={project}
+              {...modalDocType.context(docs, tasks, { sprints, retros, milestones, phases, taskDependencies })}
+              onGenerated={(result, answerList) => handleDocGenerated(modalDocType, result, answerList)}
+              onClose={() => setActiveFlowKey(null)}
+            />
+          )}
+        </Modal>
       )}
     </div>
   )

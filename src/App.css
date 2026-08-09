@@ -1856,11 +1856,11 @@
   font-size: 14px;
 }
 
-.doc-table-expand-cell {
-  padding: 20px 16px;
-  background: var(--bg);
-  max-width: 0;
-}
+/* .doc-table-expand-row / .doc-table-expand-cell removed - the Documents
+   checklist no longer expands a doc inline, it opens the View/Flow in a wide
+   modal (DocumentsRoute.jsx + components/Modal.jsx). The cell's max-width: 0
+   was a table-layout hack to stop the expanded content from widening the
+   table; nothing constrains the content now that it renders in a portal. */
 
 .status-update-log-trigger {
   flex-shrink: 0;
@@ -3351,6 +3351,18 @@
   opacity: 0.6;
 }
 
+/* Modal layering. Two named steps rather than bare numbers so the nesting
+   that Documents relies on is explicit: a doc View opened in a wide modal can
+   itself open a follow-up modal (CharterFollowUp, CommsFollowUp,
+   RequirementsFollowUp, PostMortemFollowUp), and that follow-up must paint
+   above the modal that spawned it. Both clear every in-page layer (the tallest
+   is .dependency-picker-results at 10); Gantt's fullscreen overlay stays at
+   1000, above both, since it's a whole-viewport takeover. */
+:root {
+  --z-modal: 100;
+  --z-modal-nested: 200;
+}
+
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -3359,7 +3371,16 @@
   align-items: center;
   justify-content: center;
   padding: 16px;
-  z-index: 10;
+  z-index: var(--z-modal);
+}
+
+/* A follow-up rendered from inside a wide modal's body. Scoped under
+   .modal--wide so it only applies to the nested case - a top-level
+   .modal-overlay keeps --z-modal. The value is resolved inside the outer
+   overlay's stacking context, so it orders against its siblings there
+   (the .modal panel), which is exactly what's needed. */
+.modal--wide .modal-overlay {
+  z-index: var(--z-modal-nested);
 }
 
 .modal {
@@ -3376,6 +3397,32 @@
   box-shadow: var(--shadow);
 }
 
+/* Wide variant - the Documents editor surface. 1080px because
+   .risk-log-table carries min-width: 760px and BudgetView/IssueLogView render
+   at comparable widths; anything near the default 420px would force immediate
+   horizontal scrolling on half the doc types.
+
+   Scrolling moves from the panel to .modal-body: CharterView sizes its
+   textareas by writing scrollHeight onto style.height (autoResize), so the
+   content column has to be a plain, unconstrained block inside a separate
+   scroller rather than the scroller itself. */
+.modal--wide {
+  max-width: 1080px;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal--wide > .modal-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* Top padding clears the absolutely-positioned close button. */
+  padding: 48px 24px 24px;
+}
+
 .modal-close {
   position: absolute;
   top: 12px;
@@ -3386,6 +3433,23 @@
   line-height: 1;
   cursor: pointer;
   color: var(--text);
+}
+
+/* In the wide variant the button floats over a scrolling body, so it needs an
+   opaque backing or content runs visibly underneath it. */
+.modal--wide > .modal-close {
+  z-index: 1;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+}
+
+.modal-doc-title {
+  margin: 0 0 16px;
+  font-size: 20px;
+  color: var(--text-h);
 }
 
 .modal-step h2 {
