@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
-import AppHeader from './AppHeader'
+import AppShell from './AppShell'
 
 function formatDate(iso) {
   if (!iso) return ''
@@ -61,9 +61,7 @@ function AdminPage() {
   )
 
   return (
-    <div className="app">
-      <AppHeader />
-
+    <AppShell>
       <div className="app-body">
         <h2 className="page-title view-title">Admin</h2>
         <p className="dashboard-subtitle">
@@ -141,7 +139,7 @@ function AdminPage() {
           </>
         )}
       </div>
-    </div>
+    </AppShell>
   )
 }
 

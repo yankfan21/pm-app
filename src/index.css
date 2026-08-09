@@ -35,6 +35,19 @@
   --shadow:
     rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
 
+  /* Persistent left rail (AppShell.jsx) and the content cap beside it.
+     272px is set by the rail's widest tenant, the project-mode Admin box
+     (ProjectAdmin.jsx): it was a 220px column before this change and hosts
+     ManageAccess's invite form, so the rail's 16px side padding puts 240px of
+     usable width behind it with room to spare. Global mode (three nav links,
+     avatar row) needs far less, so the rail is sized for the denser of the
+     two rather than splitting the difference and cramping project mode.
+     --content-max-width is the old 1400px page cap minus the rail, keeping
+     the same overall measure on a wide screen now that the rail is real
+     layout rather than an overlay. Both are read by App.css. */
+  --sidebar-width: 272px;
+  --content-max-width: 1128px;
+
   /* Filter tabs (pill) vs. sort controls (plain text) - two distinct
      interaction languages so users don't mistake narrowing the list
      (filter) for reordering it (sort). */
@@ -225,12 +238,15 @@ body {
   overflow-y: auto;
 }
 
+/* Full-bleed since the persistent left rail (AppShell.jsx) is pinned to the
+   viewport edge and has to sit outside the old centered 1400px content box,
+   not inside it. The readability cap that box used to provide moved down to
+   .app-body / .project-nav-content, measured against the space left over
+   after the rail - see --content-max-width below and App.css's .app-body. */
 #root {
-  width: 1400px;
-  max-width: 100%;
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
   text-align: center;
-  border-inline: 1px solid var(--border);
   min-height: 100svh;
   display: flex;
   flex-direction: column;

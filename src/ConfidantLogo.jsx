@@ -1,6 +1,6 @@
 // Brand mark: a rounded-square "app icon" container rotated into a diamond,
 // containing an atom symbol (three overlapping ellipses at 0/60/120 deg
-// around a shared center) - used at small size in AppHeader and larger on
+// around a shared center) - used at small size in the AppShell rail and larger on
 // the Login screen, so it lives here once rather than being duplicated
 // inline in both places.
 //
@@ -17,7 +17,7 @@
 // real brand is a design decision, not a styling one.
 //
 // Gradient ids are fixed strings, not per-instance uniques: two ConfidantLogo
-// instances never render on the same screen (AppHeader and Login are separate
+// instances never render on the same screen (AppShell and Login are separate
 // routes), and even if they did, the duplicate defs are byte-identical, so
 // the first-wins resolution produces the same paint either way.
 function ConfidantLogo({ size = 32 }) {

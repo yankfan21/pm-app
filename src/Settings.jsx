@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import { useAuth } from './AuthContext'
-import AppHeader from './AppHeader'
+import AppShell from './AppShell'
 import ContactSupportForm from './ContactSupportForm'
 import { useDeviceMode } from './hooks/useDeviceMode'
 import { resolveDeviceModeTarget, MOBILE_HOME, DESKTOP_HOME } from './deviceRouteMap'
@@ -23,7 +23,7 @@ function formatHiddenAt(hiddenAt) {
 
 // Own top-level route (like ProjectDetailPage), not nested under
 // ProjectsShell - it doesn't need the projects list or the "New Project"
-// toolbar, just its own AppHeader + page body.
+// toolbar, just the shared AppShell rail + page body.
 function Settings() {
   const { user } = useAuth()
   const { mode, setOverride } = useDeviceMode()
@@ -34,7 +34,7 @@ function Settings() {
   const [error, setError] = useState(null)
   const contactSectionRef = useRef(null)
 
-  // Lets the account-menu "Contact Support" link (AppHeader.jsx) land here and
+  // Lets the account-menu "Contact Support" link (AppShell.jsx) land here and
   // scroll straight to this section, rather than needing its own route/modal.
   useEffect(() => {
     if (location.hash === '#contact-support' && contactSectionRef.current) {
@@ -123,9 +123,7 @@ function Settings() {
   }
 
   return (
-    <div className="app">
-      <AppHeader />
-
+    <AppShell>
       <div className="app-body">
         <h2 className="page-title view-title">Settings</h2>
 
@@ -190,7 +188,7 @@ function Settings() {
         </p>
         <ContactSupportForm />
       </div>
-    </div>
+    </AppShell>
   )
 }
 

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import { useAuth } from './AuthContext'
-import AppHeader from './AppHeader'
+import AppShell from './AppShell'
 import NewProjectFlow from './NewProjectFlow'
 
 function ProjectsShell() {
@@ -69,9 +69,7 @@ function ProjectsShell() {
   }
 
   return (
-    <div className="app">
-      <AppHeader />
-
+    <AppShell>
       <div className="app-body">
         <div className="projects-toolbar">
           <button
@@ -97,7 +95,7 @@ function ProjectsShell() {
           }}
         />
       )}
-    </div>
+    </AppShell>
   )
 }
 

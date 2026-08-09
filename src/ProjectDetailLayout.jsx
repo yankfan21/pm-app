@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, Outlet } from 'react-router-dom'
 import { supabase } from './supabaseClient'
-import AppHeader from './AppHeader'
+import AppShell from './AppShell'
 import ProjectAdmin from './ProjectAdmin'
 import ProjectNav from './ProjectNav'
 import { DOCUMENT_TYPES } from './documentTypes'
@@ -314,10 +314,31 @@ function ProjectDetailLayout({ project, isOwner, canEdit }) {
     setSelectedSprintId,
   }
 
-  return (
-    <div className="app">
-      <AppHeader />
+  // Project mode for the shared rail (AppShell.jsx) - the same
+  // <ProjectNav/> + <ProjectAdmin/> pair that used to sit in this page's own
+  // .project-sidebar column, handed up as a node so it renders in the rail
+  // instead. Nothing about how they're fed changed: `project` is still a
+  // plain prop, and isOwner/canEdit/archiving/toggleArchived are still owned
+  // right here. Null while loading, which puts the rail in global mode rather
+  // than rendering a nav against half-loaded state - matching what
+  // ProjectDetailPage's own loading branch shows a moment earlier.
+  const projectNav = loading ? null : (
+    <>
+      <ProjectNav project={currentProject} />
 
+      {canEdit && (
+        <ProjectAdmin
+          project={currentProject}
+          isOwner={isOwner}
+          archiving={archiving}
+          onToggleArchive={toggleArchived}
+        />
+      )}
+    </>
+  )
+
+  return (
+    <AppShell nav={projectNav}>
       <div className="app-body">
         <Link to="/projects" className="btn-secondary back-link">
           &larr; Back to projects
@@ -386,26 +407,12 @@ function ProjectDetailLayout({ project, isOwner, canEdit }) {
         {loading ? (
           <p className="charter-status">Loading...</p>
         ) : (
-          <div className="project-nav-shell">
-            <div className="project-sidebar">
-              <ProjectNav project={currentProject} />
-
-              {canEdit && (
-                <ProjectAdmin
-                  project={currentProject}
-                  isOwner={isOwner}
-                  archiving={archiving}
-                  onToggleArchive={toggleArchived}
-                />
-              )}
-            </div>
-            <div className="project-nav-content">
-              <Outlet context={outletContext} />
-            </div>
+          <div className="project-nav-content">
+            <Outlet context={outletContext} />
           </div>
         )}
       </div>
-    </div>
+    </AppShell>
   )
 }
 

@@ -1,86 +1,162 @@
-.app {
+/* Page frame - the rail plus the content column beside it (AppShell.jsx).
+   The rail is position: fixed rather than a sticky flex item: html/body both
+   set their own overflow (index.css), which makes which element actually
+   scrolls ambiguous enough that sticky can't be relied on here. Fixed is
+   deterministic, at the cost of .app needing the matching margin below. */
+.app-shell {
   width: 100%;
+}
+
+.app {
+  margin-left: var(--sidebar-width);
+  /* The rail is out of flow, so .app would otherwise be viewport-wide and
+     overflow to the right by exactly the margin above. */
+  width: calc(100% - var(--sidebar-width));
+  min-height: 100svh;
   display: flex;
   flex-direction: column;
   text-align: left;
-}
-
-/* The header frame - full-bleed inside #root's bordered shell, with its
-   own background/border so it reads as a distinct top bar rather than
-   part of the scrolling page content. */
-.app-header {
-  width: 100%;
-  background: var(--header-bg);
-  backdrop-filter: var(--card-backdrop-filter);
-  border-bottom: 1px solid var(--header-border);
-}
-
-.app-header-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px 24px;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 16px 2rem;
   box-sizing: border-box;
 }
 
-.app-header-left {
+/* The persistent left rail, replacing the old horizontal .app-header bar.
+   Three zones stacked: brand, swappable nav body, account footer - the body
+   is the only part that changes between global and project mode, so the
+   frame reads as fixed furniture rather than per-page chrome. Own
+   background/border for the same reason the top bar had them: it has to read
+   as distinct from the scrolling page content beside it.
+
+   z-index sits above the dropdown/typeahead layer (10) so nothing in the
+   content column paints over the rail, and well below --z-modal (100) so
+   modals still cover it - see components/Modal.jsx. */
+.app-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 20;
+  width: var(--sidebar-width);
+  box-sizing: border-box;
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px 36px;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px 16px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  text-align: left;
+  background: var(--header-bg);
+  backdrop-filter: var(--card-backdrop-filter);
+  border-right: 1px solid var(--header-border);
 }
 
-.app-header-brand {
+.app-sidebar-brand {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-shrink: 0;
   color: var(--accent);
   text-decoration: none;
 }
 
-.app-header-brand:hover {
+.app-sidebar-brand:hover {
   opacity: 0.85;
 }
 
-.app-header-brand-mark {
+.app-sidebar-brand-mark {
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 
-.app-header-brand-text {
+.app-sidebar-brand-text {
   display: flex;
   flex-direction: column;
   line-height: 1.25;
+  min-width: 0;
 }
 
-.app-header-brand-name {
+.app-sidebar-brand-name {
   font-size: 19px;
   font-weight: 700;
   letter-spacing: -0.4px;
   color: var(--accent);
 }
 
-.app-header-tagline {
-  font-size: 12px;
+/* 11px rather than the top bar's 12px: the rail leaves this ~200px to wrap
+   into instead of a full-width header row, and 12px pushed it to three lines
+   against the brand name's two. */
+.app-sidebar-tagline {
+  font-size: 11px;
   font-weight: 400;
+  line-height: 1.35;
   color: var(--accent-muted);
 }
 
-.account-menu {
+/* Takes the slack between brand and account footer so the footer sits at the
+   bottom of the rail on a short page and gets pushed down (rail scrolls) on a
+   tall project nav. */
+.app-sidebar-body {
+  flex: 1;
+  min-height: 0;
+}
+
+.app-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Same active-state language as .project-nav-primary-item below - global and
+   project nav now live in the same rail, so they have to read as one system
+   rather than two. */
+.app-sidebar-nav-item {
   display: flex;
   align-items: center;
   gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--text);
+  text-decoration: none;
+  font-weight: var(--nav-label-weight);
+  font-size: var(--nav-label-size);
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.app-sidebar-nav-item:hover {
+  background: var(--code-bg);
+  color: var(--text-h);
+}
+
+.app-sidebar-nav-item.selected {
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-weight: var(--nav-label-weight-selected);
+}
+
+.app-sidebar-nav-icon {
   flex-shrink: 0;
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* Account footer. Was a horizontal row at the right end of the top bar;
+   in a 240px-wide rail the avatar keeps its own line and the two buttons
+   stack full-width under it rather than being squeezed side by side. */
+.account-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  flex-shrink: 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
 }
 
 /* Initials circle, replacing the raw email text that used to sit here (the
-   full address is on title/aria-label now - see AppHeader.jsx). Background
+   full address is on title/aria-label now - see AppShell.jsx). Background
    is --accent-strong rather than --accent: --accent is the light-blue step
    meant for text and icons *on* a dark surface, and light text on top of it
    lands around 2:1 contrast. --accent-strong exists in index.css precisely
@@ -109,12 +185,15 @@
 
 /* Sign In/Contact Support/Sign out reuse .btn-secondary's button chrome, but
    its font-size/weight (no explicit size, weight 500) reads heavier than the
-   Dashboard/All Projects/Settings nav links beside it (.app-nav a: 14px/600) -
-   match that text sizing here without touching .btn-secondary itself, which
-   is shared by unrelated buttons elsewhere in the app. */
+   nav links above them in the rail (.app-sidebar-nav-item) - match that text
+   sizing here without touching .btn-secondary itself, which is shared by
+   unrelated buttons elsewhere in the app. text-align because .btn-secondary
+   centers, and a full-width stacked button in the rail should read left-
+   aligned like everything else in the column. */
 .account-menu .btn-secondary {
   font-size: 14px;
   font-weight: 600;
+  text-align: left;
 }
 
 .page-title {
@@ -127,11 +206,14 @@
   margin-bottom: 32px;
 }
 
-/* Content area below the header - centered and width-capped so text and
-   cards don't stretch edge-to-edge on wide screens. */
+/* Content column beside the rail - centered in whatever's left of the
+   viewport and width-capped so text and cards don't stretch edge-to-edge on
+   wide screens. The cap is --content-max-width (index.css), i.e. measured
+   against the post-rail space rather than the full-viewport 1400px it used
+   to be when the page had no rail taking width out of the flow. */
 .app-body {
   width: 100%;
-  max-width: 1400px;
+  max-width: var(--content-max-width);
   margin: 0 auto;
   padding: 2.5rem 2rem 4rem;
   box-sizing: border-box;
@@ -148,36 +230,6 @@
   display: flex;
   justify-content: flex-end;
   margin-bottom: 24px;
-}
-
-.app-nav {
-  display: flex;
-  gap: 24px;
-}
-
-.app-nav a {
-  padding: 6px 2px;
-  border: none;
-  border-bottom: 2px solid transparent;
-  background: none;
-  font: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text);
-  text-decoration: none;
-  cursor: pointer;
-  transition:
-    color 0.15s ease,
-    border-color 0.15s ease;
-}
-
-.app-nav a:hover {
-  color: var(--text-h);
-}
-
-.app-nav a.selected {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
 }
 
 .dashboard-subtitle {
@@ -2371,11 +2423,13 @@
 
 /* Local-state fullscreen (GanttChart.jsx's isFullscreen), not a route
    change - a position: fixed overlay pinned to the full viewport is enough
-   to cover the app header, project header, and nav sidebar/secondary panel
+   to cover the left rail, the project header, and the section content
    without needing to reach up and coordinate hiding them from
-   ProjectDetailLayout.jsx. z-index comfortably clears every other
-   stacking context in the app (highest existing use is 10, for dropdowns/
-   the dependency picker's results list). */
+   ProjectDetailLayout.jsx. Still true after the rail replaced the top bar:
+   the rail is itself position: fixed at z-index 20, and inset: 0 here spans
+   the viewport including the rail's strip, so 1000 paints straight over it.
+   That 1000 clears every other stacking context in the app - dropdowns at
+   10, the rail at 20, --z-modal/--z-modal-nested at 100/200. */
 .gantt-fullscreen {
   position: fixed;
   inset: 0;
@@ -3792,13 +3846,18 @@
 
 .risk-log-table {
   width: 100%;
-  /* 880px was still wider than .project-nav-content's available width at a
-     common 1280px viewport (~814px, after the 346px sidebar + 1400px
-     .app-body cap) - that's what was forcing the scrollbar at normal
-     desktop widths. 760px clears that with room to spare; overflow-x:auto
-     on .risk-table-wrap (below) is still the intentional fallback for
-     anything narrower than that. */
-  min-width: 760px;
+  /* Re-derived for the left rail. The 346px in-page project sidebar this
+     table used to sit beside is gone, so .project-nav-content is now the
+     full content column: available width is
+     min(--content-max-width, 100vw - 272px rail) - 96px .app-body padding,
+     i.e. ~832px at a 1200px viewport, ~912px at 1280px and ~1020px once the
+     1128px cap bites. 800px clears the 1200px case with enough left over to
+     absorb a classic (space-taking) scrollbar, which 820 did not - measured
+     at exactly 820px of content there, so it would have started scrolling the
+     moment a scrollbar appeared. Same class of headroom the old 760px had
+     against its own ~814px. Narrower viewports still scroll, and overflow-x:
+     auto on .risk-table-wrap (below) is still the intentional fallback. */
+  min-width: 800px;
   border-collapse: collapse;
   font-size: 14px;
 }
@@ -5140,39 +5199,25 @@ textarea.risk-cell-input {
   font-size: 13px;
 }
 
-/* Two-tier project detail nav (ProjectDetailLayout.jsx/ProjectNav.jsx) -
-   primary category strip + secondary section list, sitting beside whichever
-   section route is currently matched. Same active-state language as
-   .app-nav a.selected (var(--accent) text/border) so the project-level nav
-   reads as the same system as the top-level one, just denser. */
-.project-nav-shell {
-  display: flex;
-  align-items: flex-start;
-  gap: 24px;
-  margin-top: 2rem;
-}
-
-/* Column wrapper around <ProjectNav/> (primary+secondary nav, laid out as
-   a row by .project-nav below) plus the Archive Project footer beneath it -
-   ProjectNav itself stays presentation-only/unaware of Archive. */
-.project-sidebar {
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
-}
-
+/* Two-tier project detail nav (ProjectNav.jsx) - primary category list plus
+   the current category's section list. Lives in the shared left rail
+   (AppShell.jsx) now, handed up by ProjectDetailLayout.jsx as the rail's
+   project-mode body; it used to be its own .project-sidebar column inside the
+   page content. The two tiers were side-by-side columns then and stack
+   vertically now, since the rail is one column wide - the secondary list
+   indents under the primary one rather than sitting beside it. Same
+   active-state language as .app-sidebar-nav-item (var(--accent) text on
+   --accent-bg) so global and project nav read as one system in the one rail. */
 .project-nav {
   display: flex;
-  gap: 16px;
-  flex-shrink: 0;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .project-nav-primary {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  width: 140px;
-  flex-shrink: 0;
 }
 
 .project-nav-primary-item {
@@ -5210,9 +5255,8 @@ textarea.risk-cell-input {
 /* Separates the phase-based categories (Overview/Planning/Execution) from
    the reference ones (Documents). Rendered by ProjectNav.jsx wherever
    PRIMARY_CATEGORIES' `group` changes, so it follows the config rather than
-   a named category. Drawn as a background block instead of a border so the
-   same rule flips cleanly to a vertical rule in the 720px row layout below,
-   with no box-sizing dependency. */
+   a named category. Drawn as a background block instead of a border so it
+   carries no box-sizing dependency. */
 .project-nav-primary-divider {
   flex: 0 0 auto;
   align-self: stretch;
@@ -5223,13 +5267,16 @@ textarea.risk-cell-input {
   background: var(--border);
 }
 
+/* Indented directly under the primary item it belongs to (ProjectNav.jsx
+   renders it inline there) rather than being a column beside the whole list -
+   the indent plus the left rule are what carry the "these belong to the
+   category above" relationship now that the two tiers are stacked. */
 .project-nav-secondary {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  width: 190px;
-  flex-shrink: 0;
-  padding-left: 16px;
+  margin: 4px 0 8px 24px;
+  padding-left: 12px;
   border-left: 1px solid var(--border);
 }
 
@@ -5257,23 +5304,28 @@ textarea.risk-cell-input {
   font-weight: var(--nav-label-weight-selected);
 }
 
+/* Wrapper around the section route's <Outlet/>. Was the right-hand column
+   next to the in-page project sidebar; now that the nav lives in the rail
+   this is simply the full content width, and .app-body above it owns the
+   cap. min-width: 0 stays - wide children (Gantt, the risk/issue tables)
+   must not be able to blow the column out. */
 .project-nav-content {
-  flex: 1;
   min-width: 0;
 }
 
 /* Admin box - set apart from the nav links above it (divider + spacing)
-   rather than looking like another nav item. Wider than the 140px primary
-   nav column since it hosts ManageAccess's collaborator rows/invite form,
-   not just nav-item-width buttons; project-sidebar is flex-shrink:0 so this
-   just pushes project-nav-content over, it doesn't overflow. Built as a
-   list so future admin items (transfer ownership, delete project, etc.)
+   rather than looking like another nav item. Full rail width: it was a
+   220px column when the project sidebar lived in the page, and the rail's
+   240px of usable width clears that, so ManageAccess's collaborator rows/
+   invite form get slightly more room than before rather than less. Built as
+   a list so future admin items (transfer ownership, delete project, etc.)
    are just another .project-nav-admin-item, no rebuild needed. */
 .project-nav-admin {
   margin-top: 20px;
   padding-top: 16px;
   border-top: 1px solid var(--border);
-  width: 220px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .project-nav-admin-heading {
@@ -5356,59 +5408,18 @@ textarea.risk-cell-input {
   flex-basis: auto;
 }
 
-@media (max-width: 720px) {
-  .project-nav-shell {
-    flex-direction: column;
-  }
-
-  .project-nav {
-    flex-direction: column;
-    width: 100%;
-    gap: 12px;
-  }
-
-  .project-nav-primary {
-    flex-direction: row;
-    width: 100%;
-  }
-
-  .project-nav-primary-item {
-    flex: 1;
-    min-width: 0;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 2px;
-    text-align: center;
-  }
-
-  .project-nav-primary-label {
-    font-size: 11px;
-  }
-
-  /* Row layout - same divider becomes a vertical rule between the phase
-     group and Documents. align-self: stretch (base rule) gives it the row's
-     full height. */
-  .project-nav-primary-divider {
-    width: 1px;
-    height: auto;
-    margin: 4px 2px;
-  }
-
-  .project-nav-secondary {
-    flex-direction: row;
-    flex-wrap: wrap;
-    width: 100%;
-    padding-left: 12px;
-    box-sizing: border-box;
-  }
-
-  .project-nav-secondary-item {
-    flex: 1 1 120px;
-    min-width: 0;
-    text-align: center;
-  }
-}
+/* The old @media (max-width: 720px) block that lived here is gone rather
+   than being reworked. It re-flowed the in-page project sidebar into a
+   horizontal strip above the content when the page got too narrow to afford
+   a 346px column - a problem the rail doesn't have, since it's fixed-width
+   and out of the content flow, so narrowing the viewport takes width from the
+   content column and never from the nav. The rail is deliberately always-on
+   with no collapse toggle (v1 decision), and the only way to reach these
+   rules at all was a manual desktop-mode override below the 768px device-mode
+   split (useDeviceMode.js) - real phones get /m/* and mobile.css instead.
+   A narrow-desktop fallback can come back as its own thing if that override
+   turns out to matter; a half-alive copy of the old two-column collapse
+   would just be dead weight in the meantime. */
 
 /* Admin page (AdminPage.jsx) - hidden /admin route, users -> projects ->
    AI usage/cost. */

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import { useAuth } from './AuthContext'
-import AppHeader from './AppHeader'
+import AppShell from './AppShell'
 import ProjectDetailLayout from './ProjectDetailLayout'
 
 function ProjectDetailPage() {
@@ -78,26 +78,30 @@ function ProjectDetailPage() {
 
   if (loading) {
     return (
-      <div className="app">
-        <AppHeader />
+      // Global-mode rail deliberately - there's no project loaded yet to
+      // build a project nav from, and a rail that's simply not project-aware
+      // for a moment beats one that pops in after the fetch resolves.
+      <AppShell>
         <div className="app-body">
           <p className="charter-status">Loading...</p>
         </div>
-      </div>
+      </AppShell>
     )
   }
 
   if (error || !project) {
     return (
-      <div className="app">
-        <AppHeader />
+      // Global mode for the same reason as the loading branch above - and
+      // here there genuinely is no project to navigate, so project-mode nav
+      // would have nothing to show anyway.
+      <AppShell>
         <div className="app-body">
           <p className="error">{error || 'Project not found.'}</p>
           <Link to="/projects" className="btn-secondary back-link">
             &larr; Back to projects
           </Link>
         </div>
-      </div>
+      </AppShell>
     )
   }
 

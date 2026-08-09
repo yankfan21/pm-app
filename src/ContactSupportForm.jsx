@@ -3,7 +3,7 @@ import { useAuth } from './AuthContext'
 import { useContactSubmit, CONTACT_REASONS } from './hooks/useContactSubmit'
 
 // Rendered inline as a section of Settings.jsx (id="contact-support", same anchor
-// AppHeader.jsx's account-menu link scrolls to) - not a modal, not its own route.
+// AppShell.jsx's account-menu link scrolls to) - not a modal, not its own route.
 // Mobile equivalent is MobileContactSupport.jsx, sharing only useContactSubmit.
 function ContactSupportForm() {
   const { user } = useAuth()
