@@ -15,12 +15,43 @@
     <meta name="apple-mobile-web-app-title" content="ConfidantPM" />
     <!-- Static, app-wide: nothing sets these per route (no Helmet, no SSR),
          so they describe the public marketing page at "/" - the only route a
-         crawler can actually reach. Placeholder copy pending final wording. -->
+         crawler can actually reach. Copy is the approved hero headline and
+         subheadline from Marketing.jsx; keep the three in sync by hand.
+         FOLLOW-UP: no og:image yet - it needs a real designed 1200x630 asset
+         in public/, and a wrong-sized or placeholder image renders worse in a
+         Slack/LinkedIn unfurl than none at all. Add og:image, og:image:width,
+         og:image:height, og:image:alt (and switch twitter:card to
+         summary_large_image) once that asset exists. -->
     <meta
       name="description"
-      content="ConfidantPM is a project management tool with a built-in assistant."
+      content="ConfidantPM's assistant reads your documents, asks the right questions, and never moves without your sign-off. Built for Waterfall, Agile, and Hybrid teams — no bolted-on AI gimmicks."
     />
     <title>ConfidantPM — AI-assisted project management for PMs</title>
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="ConfidantPM" />
+    <meta property="og:url" content="https://confidantpm.com/" />
+    <meta
+      property="og:title"
+      content="Project management that actually knows your project."
+    />
+    <meta
+      property="og:description"
+      content="ConfidantPM's assistant reads your documents, asks the right questions, and never moves without your sign-off. Built for Waterfall, Agile, and Hybrid teams — no bolted-on AI gimmicks."
+    />
+
+    <!-- summary, not summary_large_image, on purpose: the large-image card
+         degrades to a blank panel without og:image (see the follow-up note
+         above). -->
+    <meta name="twitter:card" content="summary" />
+    <meta
+      name="twitter:title"
+      content="Project management that actually knows your project."
+    />
+    <meta
+      name="twitter:description"
+      content="ConfidantPM's assistant reads your documents, asks the right questions, and never moves without your sign-off. Built for Waterfall, Agile, and Hybrid teams — no bolted-on AI gimmicks."
+    />
     <script>
       document.documentElement.setAttribute('data-theme', 'dark')
     </script>

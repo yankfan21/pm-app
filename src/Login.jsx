@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import ConfidantLogo from './ConfidantLogo'
 
@@ -10,7 +10,16 @@ const PREVIEW_DOTS = 5
 function Login() {
   const navigate = useNavigate()
   const location = useLocation()
-  const [mode, setMode] = useState('sign-in') // 'sign-in' | 'sign-up'
+  const [searchParams] = useSearchParams()
+  // /login?mode=signup opens straight into "create account" - that is where
+  // the marketing page's "Start free" CTAs point (Marketing.jsx), so a
+  // visitor who clicked "sign up" is not shown a sign-in form to dismiss
+  // first. Read once as lazy initial state, not synced to the URL after
+  // mount: the in-page toggle below owns `mode` from then on, and re-reading
+  // the param would fight it.
+  const [mode, setMode] = useState(() =>
+    searchParams.get('mode') === 'signup' ? 'sign-up' : 'sign-in',
+  ) // 'sign-in' | 'sign-up'
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
