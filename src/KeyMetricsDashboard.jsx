@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Bar,
@@ -111,10 +111,10 @@ function useCriticalIssues(project, tasks, phases, riskLog) {
 //
 // `action` (optional) is a control that sits on the label line, right-
 // aligned - only Progress uses it, for its Update Progress button, which
-// refreshes the Sprint Velocity card beside it as well (one metrics object,
-// see useLiveProgressMetrics). The label always renders inside the same head
-// row whether or not one is given, so a card without an action looks exactly
-// as it did before.
+// refreshes the Sprint Velocity card beside it as well (see
+// useProgressRefresh). The label always renders inside the same head row
+// whether or not one is given, so a card without an action looks exactly as
+// it did before.
 function StatCard({ label, action, children }) {
   return (
     <div className="overview-stat-card">
@@ -152,7 +152,11 @@ function ProjectStatusCard({ evaluation, loading }) {
       <span className={`doc-status-badge ${colorClass} project-eval-health-badge overview-stat-badge`}>
         {HEALTH_LABELS[evaluation.health_status] || evaluation.health_status}
       </span>
-      <p className="overview-stat-caption">As of {formatDateTime(evaluation.created_at)}</p>
+      {/* "Evaluated", not the old vague "As of" - the Progress card beside
+          this one can now carry its own, later "Progress updated ..." line
+          (a metrics refresh moves updated_at, never created_at), and the
+          two dates have to read as two different events. */}
+      <p className="overview-stat-caption">Evaluated {formatDateTime(evaluation.created_at)}</p>
     </>
   )
 }
@@ -253,29 +257,67 @@ function velocityEmptyCopy(metrics) {
 // the ordinary empty line. A *live* object missing the key means something
 // else entirely - the deployed project-eval predates the change - so that
 // one stays neutral rather than blaming an evaluation it didn't come from.
-function progressEmptyCopy(methodology, metrics, isLive) {
+// The isLive third argument this used to take is gone with the live-metrics
+// object it described. An unsaved figure can now only come from a project
+// with no evaluation at all, and that object is always computed by the
+// current edge function, so it always carries task_pct_complete on Hybrid -
+// the Hybrid branch below is reachable only from a genuinely old persisted
+// evaluation, which is exactly what its copy says.
+function progressEmptyCopy(methodology, metrics) {
   if (!metrics) {
     return 'This evaluation predates progress metrics — re-run Evaluate Project below to see a figure here.'
   }
   if (methodology === 'agile') return velocityEmptyCopy(metrics)
   if (methodology === 'hybrid' && !('task_pct_complete' in metrics)) {
-    return isLive
-      ? 'No task-completion figure came back for this project.'
-      : 'This evaluation predates task-completion tracking on Hybrid projects — use Update Progress for a current figure.'
+    return 'This evaluation predates task-completion tracking on Hybrid projects — use Update Progress for a current figure.'
   }
   return 'No tasks yet to measure completion against.'
 }
 
-// Marks the figure beside it as a client-side refresh (the Update Progress
-// button) rather than the persisted evaluation snapshot every other reader
-// of this project sees. Deliberately never persisted anywhere - see
-// useLiveProgressMetrics below.
-function LiveTag() {
+// Marks the figure beside it as one that did NOT get saved. Update Progress
+// normally writes its result onto the latest evaluation row, so the number
+// on this card is the same persisted number every other reader of the
+// project sees; this tag is the one case where it isn't - a project with no
+// evaluation yet has no row to write to, so the figure lives in component
+// state and disappears on navigation. See useProgressRefresh below.
+function UnsavedTag() {
   return (
-    <span className="overview-stat-live" title="Recomputed just now from current project data — not saved as an evaluation">
-      Live
+    <span
+      className="overview-stat-live"
+      title="Recomputed just now from current project data — not saved, because this project has no evaluation to attach it to"
+    >
+      Not saved
     </span>
   )
+}
+
+// Says what the Not saved tag means in the only terms a PM can act on.
+// Deliberately names Evaluate Project rather than Update Progress - clicking
+// this button again on the same project reaches the same dead end, because
+// what's missing is the evaluation row to attach the number to.
+const UNSAVED_PROGRESS_COPY = 'Not saved — run Evaluate Project to keep this figure.'
+
+// The Progress figure's own date line, shown only once a metrics refresh
+// has actually moved it. A metrics-only refresh writes updated_at and
+// leaves created_at alone, so the two timestamps now mean different things
+// and each is shown where it applies:
+//   - Project Status card: "Evaluated <created_at>", always. health_status
+//     really is as old as the evaluation no matter what happened to the
+//     metrics.
+//   - this line: "Progress updated <updated_at>", only when newer. Without
+//     it the Progress number would sit under a date belonging to the last
+//     Evaluate Project run, which after a refresh is simply the wrong date.
+// Nothing is duplicated and no date is lost: an unrefreshed evaluation says
+// "Evaluated ..." once, on the card next door, exactly as it did before.
+//
+// Returns null for a row written before add_project_eval_updated_at.sql
+// (updated_at NULL) and for one refreshed within the same instant it was
+// created - neither has anything new to report.
+function progressUpdatedCopy(evaluation) {
+  const { created_at: createdAt, updated_at: updatedAt } = evaluation
+  if (!updatedAt || !createdAt) return null
+  if (new Date(updatedAt) <= new Date(createdAt)) return null
+  return `Progress updated ${formatDateTime(updatedAt)}`
 }
 
 // Not clamped to 100 the way the donut ring this replaced was. That clamp
@@ -283,23 +325,28 @@ function LiveTag() {
 // turned an Agile project that delivered 120% of its committed points into a
 // flat "100%". A number has no such constraint, so the real figure shows.
 //
-// Two possible metric sources, and `liveMetrics` wins whenever it exists:
-// it's a strictly fresher read of the same numbers (project-eval's
-// metrics_only action, computed server-side from current rows), while
-// evaluation.metrics is whatever the last Evaluate Project run froze. The
-// two are the same shape by construction, so everything below this line
-// treats them identically apart from the Live tag.
-function ProgressStatCard({ project, evaluation, loading, liveMetrics }) {
+// Reads the persisted evaluation's metrics in the normal case - Update
+// Progress writes its recomputed object straight onto that row now, so
+// there is no second in-memory source to reconcile against and no "which
+// one is fresher" question to answer.
+//
+// `unsavedMetrics` is the one exception: a project with no evaluation at
+// all has no row to persist onto, so the refresh returns a figure that
+// only this page knows about. It's still a real, server-computed number
+// worth showing - the card just has to say plainly that it won't survive
+// leaving the page.
+//
+// The "Progress updated ..." line under the number is the other half of
+// persistence being real - see progressUpdatedCopy above for why it only
+// appears once a refresh has actually moved the figure.
+function ProgressStatCard({ project, evaluation, loading, unsavedMetrics }) {
   if (loading) {
     return <p className="charter-status">Loading...</p>
   }
 
-  const isLive = liveMetrics != null
+  const isUnsaved = unsavedMetrics != null
 
-  // A live refresh stands on its own - it's computed from current project
-  // data, so it has a real figure to show even on a project that has never
-  // been evaluated, where this copy would otherwise still be asking for one.
-  if (!isLive && !evaluation) {
+  if (!isUnsaved && !evaluation) {
     return (
       <p className="charter-status">
         Not evaluated yet — run Evaluate Project below to see progress here.
@@ -307,14 +354,17 @@ function ProgressStatCard({ project, evaluation, loading, liveMetrics }) {
     )
   }
 
-  const metrics = isLive ? liveMetrics : evaluation.metrics
+  const metrics = isUnsaved ? unsavedMetrics : evaluation.metrics
   const progress = progressFromMetrics(project.methodology, metrics)
+  const updatedLine = !isUnsaved && evaluation ? progressUpdatedCopy(evaluation) : null
 
   if (!progress) {
     return (
       <>
-        <p className="charter-status">{progressEmptyCopy(project.methodology, metrics, isLive)}</p>
-        {isLive && <LiveTag />}
+        <p className="charter-status">{progressEmptyCopy(project.methodology, metrics)}</p>
+        {isUnsaved && <UnsavedTag />}
+        {isUnsaved && <p className="overview-stat-caption">{UNSAVED_PROGRESS_COPY}</p>}
+        {updatedLine && <p className="overview-stat-caption">{updatedLine}</p>}
       </>
     )
   }
@@ -323,45 +373,51 @@ function ProgressStatCard({ project, evaluation, loading, liveMetrics }) {
     <>
       <div className="overview-stat-value-row">
         <span className="overview-stat-value">{progress.pct}%</span>
-        {isLive && <LiveTag />}
+        {isUnsaved && <UnsavedTag />}
       </div>
       <p className="overview-stat-caption">{progress.caption}</p>
+      {isUnsaved && <p className="overview-stat-caption">{UNSAVED_PROGRESS_COPY}</p>}
+      {asOf && <p className="overview-stat-caption">{asOf}</p>}
     </>
   )
 }
 
 // The Update Progress button's state. Calls project-eval's metrics_only
 // action, which runs the same arithmetic Evaluate Project does and skips
-// everything else about it - no Anthropic call, no ai_usage_log row, no
-// project_evaluations write - so this costs nothing and produces no
-// document.
+// everything else about it - no Anthropic call, no ai_usage_log row, no new
+// evaluation document - so this still costs nothing.
 //
-// One hook, one request, one metrics object, feeding every card that reads
-// one - Progress on all three methodologies, and Sprint Velocity on Hybrid.
-// That object is whole-project by construction (the edge function computes
-// every key its methodology defines, not just the one the caller asked
-// about), so a second button per card would buy nothing but a second
-// identical round trip and the chance for two cards to sit at two different
-// instants.
+// What it no longer skips is the write. The edge function persists the
+// computed object onto the latest evaluation row's `metrics` column, so the
+// refreshed figure survives navigation and a page refresh and reaches every
+// other reader of that row (All Projects' badge, mobile). This hook's job
+// on success is therefore mostly to hand the new values up via
+// onPersisted() so the one copy of that row on this page - the
+// docs.project_evaluation array both the metric cards and the Project
+// Evaluation section render from - matches what's now in the database,
+// without a re-fetch.
 //
-// The result lives here and nowhere else: no context, no store, no URL
-// param, and explicitly not written back into docs.project_evaluation.
-// Navigating away from Overview unmounts this and the cards fall back to the
-// persisted snapshot. That's the intended contract, not a bug - the snapshot
-// is what every other reader of this project (dashboard cards, mobile,
-// exports) sees, and a refresh that only this PM's current page knows about
-// has no business outliving the page.
+// `unsavedMetrics` is the narrow fallback for the case the edge function
+// reports persisted: false - a project with no evaluation row to write to.
+// The number is still real and still worth showing, so it's held in
+// component state exactly the way every refresh used to be, and the card
+// labels it Not saved. It clears the moment a real evaluation lands (keyed
+// off the latest evaluation's id), so running Evaluate Project after an
+// unsaved refresh can't leave the older figure sitting on top of the
+// fresher snapshot.
 //
-// It also drops the moment a newer evaluation lands (keyed off the latest
-// evaluation's id), so running Evaluate Project after a refresh doesn't
-// leave the older live figure sitting on top of the fresher snapshot.
-function useLiveProgressMetrics(project, latestEvaluationId) {
-  const [liveMetrics, setLiveMetrics] = useState(null)
+// onVelocityRefresh is the Sprint Velocity card's half of the same click.
+// That card reads its own live query rather than this metrics object (it
+// carries the point counts the metrics object can't), so keeping the two
+// cards at one instant means re-running that query here rather than
+// forwarding a second copy of the numbers into it.
+function useProgressRefresh(project, latestEvaluationId, onPersisted, onVelocityRefresh) {
+  const [unsavedMetrics, setUnsavedMetrics] = useState(null)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    setLiveMetrics(null)
+    setUnsavedMetrics(null)
     setError(null)
   }, [latestEvaluationId])
 
@@ -390,10 +446,19 @@ function useLiveProgressMetrics(project, latestEvaluationId) {
       return
     }
 
-    setLiveMetrics(data.metrics ?? null)
+    if (data.persisted) {
+      // Patch, don't re-fetch: these are the only two columns the edge
+      // function touched, and they're exactly what it just wrote.
+      onPersisted({ metrics: data.metrics ?? null, updated_at: data.updated_at ?? null })
+      setUnsavedMetrics(null)
+    } else {
+      setUnsavedMetrics(data.metrics ?? null)
+    }
+
+    onVelocityRefresh()
   }
 
-  return { liveMetrics, refreshing, error, refresh }
+  return { unsavedMetrics, refreshing, error, refresh }
 }
 
 // Hybrid-only third metric. Agile doesn't get one because its Progress card
@@ -402,56 +467,29 @@ function useLiveProgressMetrics(project, latestEvaluationId) {
 // Hybrid, where Progress carries Waterfall-side task completion and velocity
 // is the genuinely separate second signal for the Agile side.
 //
-// Two sources, same rule. By default it reads useSprintVelocity's
-// completedSprint - a live client query, so this card is never tied to the
-// last Evaluate Project run the way Progress is. After Update Progress it
-// switches to that refresh's metrics instead, so one click moves both cards
-// to the same instant rather than leaving them describing two different
-// moments. The two agree by construction: pickCompletedSprint and the edge
+// One source now: useSprintVelocity's completedSprint, a live client query,
+// so this card is never tied to the last Evaluate Project run the way
+// Progress is. It used to take a second source - the Update Progress
+// refresh's metrics object - purely so one click could move both cards to
+// the same instant. That's now done by re-running this card's own query on
+// the same click (useProgressRefresh's onVelocityRefresh), which reaches the
+// same instant without the second source: pickCompletedSprint and the edge
 // function's mostRecentCompletedSprint are the same rule (see the note on
-// pickCompletedSprint below).
-//
-// What the metrics path can't carry is the point counts - velocity_ratio is
-// a ratio, and committed/completed aren't in that object - so the live
-// caption drops the "34/40 pts" tail the query path shows. The percentage,
-// the sprint name and the completion date are identical either way.
+// pickCompletedSprint below), and the query path additionally carries the
+// point counts - velocity_ratio is a ratio, and committed/completed aren't
+// in the metrics object - so the "34/40 pts" tail survives a refresh now
+// instead of dropping off it.
 //
 // completedSprint reads useSprintVelocity's own field rather than the last
 // entry of its `sprints` trend array. Those disagree on purpose: the trend's
 // last entry is whatever starts latest, including a sprint nobody has touched
 // yet, which is the bug this card used to display.
-function VelocityStatCard({ completedSprint, loading, error, liveMetrics }) {
-  const isLive = liveMetrics != null
-
-  if (loading && !isLive) {
+function VelocityStatCard({ completedSprint, loading, error }) {
+  if (loading) {
     return <p className="charter-status">Loading...</p>
   }
-  // A live refresh stands on its own - it's a server-side recompute from
-  // current rows, so it has a real figure even when this component's own
-  // query came back empty or failed.
-  if (error && !isLive) {
+  if (error) {
     return <p className="charter-status">{error}</p>
-  }
-
-  if (isLive) {
-    if (liveMetrics.velocity_ratio == null) {
-      return (
-        <>
-          <p className="charter-status">{velocityEmptyCopy(liveMetrics)}</p>
-          <LiveTag />
-        </>
-      )
-    }
-
-    return (
-      <>
-        <div className="overview-stat-value-row">
-          <span className="overview-stat-value">{Math.round(liveMetrics.velocity_ratio * 100)}%</span>
-          <LiveTag />
-        </div>
-        <p className="overview-stat-caption">{velocityCaption(liveMetrics)}</p>
-      </>
-    )
   }
 
   if (!completedSprint) {
@@ -803,6 +841,16 @@ function pickCompletedSprint(sprints, bySprintId, retros) {
 // story-pointed tasks at all... though isSprintOverdue itself then reads it
 // as not overdue (no linked tasks to be incomplete), so in practice this
 // only ever contains sprints that do have linked tasks.
+//
+// The load is a useCallback rather than a plain function inside the effect
+// so the Update Progress button can re-run it (see useProgressRefresh's
+// onVelocityRefresh). Without that, refreshing Progress would leave the
+// Sprint Velocity card beside it describing an older instant - which is
+// what the old liveMetrics prop on VelocityStatCard existed to paper over.
+//
+// No cancellation flag here: unlike the mount effect, a refresh triggered by
+// a click has no unmount race worth guarding, and React drops setState on an
+// unmounted component harmlessly. The effect below still guards its own run.
 function useSprintVelocity(projectId, enabled) {
   const [sprints, setSprints] = useState([])
   const [completedSprint, setCompletedSprint] = useState(null)
@@ -810,11 +858,8 @@ function useSprintVelocity(projectId, enabled) {
   const [loading, setLoading] = useState(enabled)
   const [error, setError] = useState(null)
 
-  useEffect(() => {
-    if (!enabled) return
-    let cancelled = false
-
-    async function load() {
+  const load = useCallback(
+    async function load(isCancelled = () => false) {
       setLoading(true)
       setError(null)
 
@@ -827,7 +872,7 @@ function useSprintVelocity(projectId, enabled) {
           .not('sprint_id', 'is', null),
       ])
 
-      if (cancelled) return
+      if (isCancelled()) return
 
       const firstError = sprintRes.error || taskRes.error
       if (firstError) {
@@ -849,7 +894,7 @@ function useSprintVelocity(projectId, enabled) {
           .select('sprint_id, is_locked, updated_at')
           .in('sprint_id', sprintIds)
 
-        if (cancelled) return
+        if (isCancelled()) return
 
         if (retroRes.error) {
           setError(retroRes.error.message)
@@ -888,15 +933,30 @@ function useSprintVelocity(projectId, enabled) {
 
       setOverdueSprints(overdue)
       setLoading(false)
-    }
+    },
+    [projectId]
+  )
 
-    load()
+  useEffect(() => {
+    if (!enabled) return
+    let cancelled = false
+
+    load(() => cancelled)
+
     return () => {
       cancelled = true
     }
-  }, [projectId, enabled])
+  }, [enabled, load])
 
-  return { sprints, completedSprint, overdueSprints, loading, error }
+  // Guarded rather than handed out raw: on Waterfall this hook never runs
+  // (enabled is false) and its state is permanently empty, so re-running the
+  // query on an Update Progress click there would issue two pointless
+  // requests and flip `loading` on a card that isn't rendered.
+  const refresh = useCallback(() => {
+    if (enabled) load()
+  }, [enabled, load])
+
+  return { sprints, completedSprint, overdueSprints, loading, error, refresh }
 }
 
 // Committed = the sprint's planned points (neutral gray, a "plan" tone);
@@ -1125,8 +1185,9 @@ function UpcomingMilestonesCard({ milestones, tasks }) {
 //   1. Metric row - Status / Progress / (Hybrid only) Sprint Velocity /
 //      Hotspots, as compact one-number stat cards. Status and Progress are a
 //      snapshot of the last Evaluate Project run; the other two are live.
-//      Progress and Sprint Velocity both also accept a live recompute from
-//      the Update Progress button (see useLiveProgressMetrics).
+//      Progress and Sprint Velocity are both moved by the Update Progress
+//      button (see useProgressRefresh), which persists its result onto the
+//      latest evaluation row rather than holding it in component state.
 //   2. Sprint Velocity chart beside the hotspot breakdown - the metric row's
 //      Hotspots number is the sum of that breakdown, and the velocity chart
 //      is the trend behind the metric row's velocity figure, so each half of
@@ -1145,6 +1206,7 @@ function UpcomingMilestonesCard({ milestones, tasks }) {
 // Key Risks list and two of the breakdown rows.
 function KeyMetricsDashboard({
   project,
+  canEdit,
   tasks,
   phases,
   milestones,
@@ -1153,6 +1215,7 @@ function KeyMetricsDashboard({
   issueLog,
   evaluations,
   evaluationsLoading,
+  onMetricsPersisted,
   expanded,
 }) {
   const issues = useCriticalIssues(project, tasks, phases, riskLog)
@@ -1162,14 +1225,12 @@ function KeyMetricsDashboard({
   // own. That query duplicated work the layout had already done, and - now
   // that Evaluate Project runs from Overview itself - would have left these two
   // cards showing a stale snapshot until the next remount.
+  //
+  // It's also what Update Progress writes back through: onMetricsPersisted
+  // patches this same array upstream, so a refreshed metrics object lands
+  // here on the next render with no re-fetch.
   const evaluation = evaluations && evaluations.length > 0 ? evaluations[0] : null
   const evalLoading = evaluationsLoading
-  const {
-    liveMetrics,
-    refreshing: metricsRefreshing,
-    error: metricsError,
-    refresh: refreshMetrics,
-  } = useLiveProgressMetrics(project, evaluation?.id ?? null)
   const showVelocity = visibleSides(project.methodology).agile
   const {
     sprints: velocitySprints,
@@ -1177,7 +1238,14 @@ function KeyMetricsDashboard({
     overdueSprints,
     loading: velocityLoading,
     error: velocityError,
+    refresh: refreshVelocity,
   } = useSprintVelocity(project.id, showVelocity)
+  const {
+    unsavedMetrics,
+    refreshing: metricsRefreshing,
+    error: metricsError,
+    refresh: refreshMetrics,
+  } = useProgressRefresh(project, evaluation?.id ?? null, onMetricsPersisted, refreshVelocity)
   // Phases don't exist as a concept for pure Agile (see useCriticalIssues'
   // own methodology gate above) - hide the sub-group entirely there rather
   // than showing a permanent, meaningless "0 overdue".
@@ -1242,51 +1310,54 @@ function KeyMetricsDashboard({
               <ProjectStatusCard evaluation={evaluation} loading={evalLoading} />
             </StatCard>
 
-            {/* Update Progress is a read-only recompute - it writes nothing,
-                so it isn't gated on canEdit the way the Evaluate Project
-                button below is. */}
+            {/* Gated on canEdit: Update Progress writes now (it persists the
+                recomputed metrics onto the latest evaluation row), so it's
+                an edit action like the Evaluate Project button below, and
+                RLS would refuse it for a viewer anyway. */}
             <StatCard
               label="Progress"
               action={
-                <LoadingButton
-                  className="stat-action-btn"
-                  loading={metricsRefreshing}
-                  loadingLabel="Updating"
-                  onClick={refreshMetrics}
-                  title={
-                    showLatestVelocity
-                      ? 'Recompute Progress and Sprint Velocity from current project data. Does not create an evaluation.'
-                      : 'Recompute this figure from current project data. Does not create an evaluation.'
-                  }
-                >
-                  <span className="stat-action-icon" aria-hidden="true">
-                    ↻
-                  </span>
-                  Update Progress
-                </LoadingButton>
+                canEdit ? (
+                  <LoadingButton
+                    className="stat-action-btn"
+                    loading={metricsRefreshing}
+                    loadingLabel="Updating"
+                    onClick={refreshMetrics}
+                    title={
+                      showLatestVelocity
+                        ? 'Recompute and save Progress and Sprint Velocity from current project data. Does not create a new evaluation.'
+                        : 'Recompute and save this figure from current project data. Does not create a new evaluation.'
+                    }
+                  >
+                    <span className="stat-action-icon" aria-hidden="true">
+                      ↻
+                    </span>
+                    Update Progress
+                  </LoadingButton>
+                ) : null
               }
             >
               <ProgressStatCard
                 project={project}
                 evaluation={evaluation}
                 loading={evalLoading}
-                liveMetrics={liveMetrics}
+                unsavedMetrics={unsavedMetrics}
               />
               {metricsError && <p className="overview-stat-error">{metricsError}</p>}
             </StatCard>
 
             {showLatestVelocity && (
               <StatCard label="Sprint Velocity">
-                {/* Same liveMetrics object the Progress card reads, so the
-                    single Update Progress button above moves both cards in
-                    one click and one request. Only rendered on Hybrid, which
-                    is the only methodology whose metrics object carries both
-                    a task figure and the velocity_* keys. */}
+                {/* Reads its own live query, which the Update Progress button
+                    above re-runs on the same click - so both cards still move
+                    together, and this one keeps the point counts the metrics
+                    object can't carry. Only rendered on Hybrid, where Progress
+                    carries Waterfall-side task completion and velocity is the
+                    genuinely separate second signal. */}
                 <VelocityStatCard
                   completedSprint={completedSprint}
                   loading={velocityLoading}
                   error={velocityError}
-                  liveMetrics={liveMetrics}
                 />
               </StatCard>
             )}

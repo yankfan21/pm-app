@@ -697,12 +697,65 @@ async function fetchMetricsInputs(req, projectId) {
   }
 
   return {
+    // Handed back so the persist step below can reuse the caller's own
+    // client rather than building a second one - the UPDATE has to run
+    // under the same RLS identity as these reads did.
+    client,
     project,
     tasks: taskRes.data || [],
     milestones: milestoneRes.data || [],
     sprints: sprintRes.data || [],
     retros,
   }
+}
+
+// Writes a freshly computed metrics object onto the project's LATEST
+// evaluation row - the same row (created_at desc, first) every reader of
+// this table already treats as current: Overview's Progress/Status cards,
+// All Projects' badge, mobile's metrics screen, ProjectEvalView's headline
+// card.
+//
+// Only `metrics` and `updated_at` are touched. health_status, rationale,
+// recommendations and created_at are LLM output plus the original
+// timestamp, and none of them are recomputed here - the whole point of
+// this action is that it costs no Anthropic call. That does leave a
+// refreshed number sitting beside a narrative written against the older
+// one; that staleness is a known, accepted tradeoff of this button, not an
+// oversight.
+//
+// Returns null - and writes nothing - when the project has no evaluation
+// yet. There is no row to update, and inventing one would mean minting a
+// health_status this function never computed. The caller returns the
+// metrics anyway and the frontend shows them as an unsaved figure, which
+// is exactly how this button behaved for every project before it persisted
+// anything.
+//
+// A zero-row UPDATE is treated the same way. RLS can legitimately block
+// this (a viewer without can_edit_project on a claimed project), and the
+// honest answer there is "not saved", not a silent success.
+async function persistMetricsOnLatestEvaluation(client, projectId, metrics) {
+  const { data: latest, error: readError } = await client
+    .from("project_evaluations")
+    .select("id")
+    .eq("project_id", projectId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (readError) throw new Error(readError.message)
+  if (!latest) return null
+
+  const updatedAt = new Date().toISOString()
+
+  const { data, error } = await client
+    .from("project_evaluations")
+    .update({ metrics, updated_at: updatedAt })
+    .eq("id", latest.id)
+    .select("id, updated_at")
+    .maybeSingle()
+
+  if (error) throw new Error(error.message)
+  return data ?? null
 }
 
 Deno.serve(async (req) => {
@@ -720,10 +773,17 @@ Deno.serve(async (req) => {
     // The Overview "Update Progress" button's path: the same arithmetic the
     // evaluate branch below runs, and deliberately nothing else. No context
     // text assembly, no Claude call, no ai_usage_log row, no
-    // project_evaluations insert or update. It returns { metrics } for the
-    // client to hold in component state and render over the last persisted
-    // snapshot, so a PM can refresh the number on the card without minting an
-    // evaluation document to go with it.
+    // project_evaluations INSERT - so this still mints no evaluation
+    // document and still costs nothing.
+    //
+    // What it does now do is persist: the computed object is written onto
+    // the latest evaluation row's `metrics` column (see
+    // persistMetricsOnLatestEvaluation above), so the refreshed figure
+    // survives navigation, a page refresh, and shows up in every other
+    // reader of that row. The response reports whether that landed -
+    // `persisted: false` means there was no row to write to (or RLS
+    // refused), and the frontend renders the figure as unsaved rather than
+    // pretending it stuck.
     //
     // The per-methodology metrics shapes here are the same three
     // add_project_eval_metrics.sql documents and formatEvalMetric()/
@@ -770,9 +830,19 @@ Deno.serve(async (req) => {
         metrics = { task_pct_complete: taskStats(waterfallTasks, todayStr, null).pctComplete }
       }
 
-      return new Response(JSON.stringify({ metrics }), {
-        headers: { ...corsHeaders, "content-type": "application/json" },
-      })
+      // One write, methodology-agnostic - the three branches above differ
+      // only in which keys the object carries, and the column takes the
+      // whole object either way.
+      const persisted = await persistMetricsOnLatestEvaluation(inputs.client, projectId, metrics)
+
+      return new Response(
+        JSON.stringify({
+          metrics,
+          persisted: persisted != null,
+          updated_at: persisted?.updated_at ?? null,
+        }),
+        { headers: { ...corsHeaders, "content-type": "application/json" } }
+      )
     }
 
     if (action !== "evaluate") {

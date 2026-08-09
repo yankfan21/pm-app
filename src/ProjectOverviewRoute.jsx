@@ -26,12 +26,32 @@ function ProjectOverviewRoute() {
   // KeyMetricsDashboard reads [0] for its Project Status/Progress cards
   // instead of issuing its own latest-evaluation query, so running an
   // evaluation down there updates them immediately.
-  const { project, tasks, phases, milestones, collaborators, docs, docsLoading } = useOutletContext()
+  const { project, canEdit, tasks, phases, milestones, collaborators, docs, setDocs, docsLoading } =
+    useOutletContext()
+
+  // Update Progress rewrites the latest evaluation's metrics/updated_at in
+  // place (project-eval's metrics_only action). Patching the array here
+  // rather than re-fetching keeps this the single copy of that row on the
+  // page: the metric cards above and ProjectEvalSection below both render
+  // from docs.project_evaluation, so one setDocs moves both.
+  //
+  // Deliberately a no-op on an empty array. The edge function only ever
+  // persists when a row already exists, so "nothing to patch" and "nothing
+  // was written" are the same case - the button falls back to showing an
+  // unsaved figure instead.
+  function patchLatestEvaluation(patch) {
+    setDocs((prev) => {
+      const list = prev.project_evaluation || []
+      if (list.length === 0) return prev
+      return { ...prev, project_evaluation: [{ ...list[0], ...patch }, ...list.slice(1)] }
+    })
+  }
 
   return (
     <>
       <KeyMetricsDashboard
         project={project}
+        canEdit={canEdit}
         tasks={tasks}
         phases={phases}
         milestones={milestones}
@@ -40,6 +60,7 @@ function ProjectOverviewRoute() {
         issueLog={docs.issue_log}
         evaluations={docs.project_evaluation}
         evaluationsLoading={docsLoading}
+        onMetricsPersisted={patchLatestEvaluation}
         expanded
       />
 
