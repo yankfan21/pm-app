@@ -11,6 +11,7 @@ import {
   YAxis,
 } from 'recharts'
 import { supabase } from './supabaseClient'
+import LoadingButton from './LoadingButton'
 import { HEALTH_LABELS, HEALTH_COLOR_CLASS } from './projectEvalHealth'
 import { visibleSides } from './projectSections'
 import { getRiskBand, getRiskScore } from './riskScale'
@@ -107,10 +108,18 @@ function useCriticalIssues(project, tasks, phases, riskLog) {
 // "one word of context plus one number", so the only thing shared is the
 // box and the label, and each card component below supplies its own value
 // and its own empty state.
-function StatCard({ label, children }) {
+//
+// `action` (optional) is a control that sits on the label line, right-
+// aligned - only Progress uses it, for its Update Progress button. The
+// label always renders inside the same head row whether or not one is
+// given, so a card without an action looks exactly as it did before.
+function StatCard({ label, action, children }) {
   return (
     <div className="overview-stat-card">
-      <span className="overview-stat-label">{label}</span>
+      <div className="overview-stat-head">
+        <span className="overview-stat-label">{label}</span>
+        {action}
+      </div>
       {children}
     </div>
   )
@@ -222,16 +231,40 @@ function progressEmptyCopy(methodology, metrics) {
   return 'No tasks yet to measure completion against.'
 }
 
+// Marks the figure beside it as a client-side refresh (the Update Progress
+// button) rather than the persisted evaluation snapshot every other reader
+// of this project sees. Deliberately never persisted anywhere - see
+// useLiveProgressMetrics below.
+function LiveTag() {
+  return (
+    <span className="overview-stat-live" title="Recomputed just now from current project data — not saved as an evaluation">
+      Live
+    </span>
+  )
+}
+
 // Not clamped to 100 the way the donut ring this replaced was. That clamp
 // existed because a ring can't draw past a full circle, and it silently
 // turned an Agile project that delivered 120% of its committed points into a
 // flat "100%". A number has no such constraint, so the real figure shows.
-function ProgressStatCard({ project, evaluation, loading }) {
+//
+// Two possible metric sources, and `liveMetrics` wins whenever it exists:
+// it's a strictly fresher read of the same numbers (project-eval's
+// metrics_only action, computed server-side from current rows), while
+// evaluation.metrics is whatever the last Evaluate Project run froze. The
+// two are the same shape by construction, so everything below this line
+// treats them identically apart from the Live tag.
+function ProgressStatCard({ project, evaluation, loading, liveMetrics }) {
   if (loading) {
     return <p className="charter-status">Loading...</p>
   }
 
-  if (!evaluation) {
+  const isLive = liveMetrics != null
+
+  // A live refresh stands on its own - it's computed from current project
+  // data, so it has a real figure to show even on a project that has never
+  // been evaluated, where this copy would otherwise still be asking for one.
+  if (!isLive && !evaluation) {
     return (
       <p className="charter-status">
         Not evaluated yet — run Evaluate Project below to see progress here.
@@ -239,18 +272,85 @@ function ProgressStatCard({ project, evaluation, loading }) {
     )
   }
 
-  const progress = progressFromMetrics(project.methodology, evaluation.metrics)
+  const metrics = isLive ? liveMetrics : evaluation.metrics
+  const progress = progressFromMetrics(project.methodology, metrics)
 
   if (!progress) {
-    return <p className="charter-status">{progressEmptyCopy(project.methodology, evaluation.metrics)}</p>
+    return (
+      <>
+        <p className="charter-status">{progressEmptyCopy(project.methodology, metrics)}</p>
+        {isLive && <LiveTag />}
+      </>
+    )
   }
 
   return (
     <>
-      <span className="overview-stat-value">{progress.pct}%</span>
+      <div className="overview-stat-value-row">
+        <span className="overview-stat-value">{progress.pct}%</span>
+        {isLive && <LiveTag />}
+      </div>
       <p className="overview-stat-caption">{progress.caption}</p>
     </>
   )
+}
+
+// The Update Progress button's state. Calls project-eval's metrics_only
+// action, which runs the same arithmetic Evaluate Project does and skips
+// everything else about it - no Anthropic call, no ai_usage_log row, no
+// project_evaluations write - so this costs nothing and produces no
+// document.
+//
+// The result lives here and nowhere else: no context, no store, no URL
+// param, and explicitly not written back into docs.project_evaluation.
+// Navigating away from Overview unmounts this and the card falls back to the
+// persisted snapshot. That's the intended contract, not a bug - the snapshot
+// is what every other reader of this project (dashboard cards, mobile,
+// exports) sees, and a refresh that only this PM's current page knows about
+// has no business outliving the page.
+//
+// It also drops the moment a newer evaluation lands (keyed off the latest
+// evaluation's id), so running Evaluate Project after a refresh doesn't
+// leave the older live figure sitting on top of the fresher snapshot.
+function useLiveProgressMetrics(project, latestEvaluationId) {
+  const [liveMetrics, setLiveMetrics] = useState(null)
+  const [refreshing, setRefreshing] = useState(false)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    setLiveMetrics(null)
+    setError(null)
+  }, [latestEvaluationId])
+
+  async function refresh() {
+    setRefreshing(true)
+    setError(null)
+
+    // Mirrors ProjectEvalFlow's invoke shape, minus the payload: this action
+    // reads the rows it needs server-side from projectId, so the figure comes
+    // from current database state rather than arrays this page loaded on
+    // mount. `today` is computed locally for the same reason ProjectEvalFlow
+    // does it - the viewer's calendar day, not the edge function's.
+    const { data, error: invokeError } = await supabase.functions.invoke('project-eval', {
+      body: {
+        action: 'metrics_only',
+        projectId: project.id,
+        methodology: project.methodology,
+        today: todayLocalDateString(),
+      },
+    })
+
+    setRefreshing(false)
+
+    if (invokeError || data?.error) {
+      setError(invokeError?.message || data.error)
+      return
+    }
+
+    setLiveMetrics(data.metrics ?? null)
+  }
+
+  return { liveMetrics, refreshing, error, refresh }
 }
 
 // Hybrid-only third metric. Agile doesn't get one because its Progress card
@@ -983,6 +1083,12 @@ function KeyMetricsDashboard({
   // cards showing a stale snapshot until the next remount.
   const evaluation = evaluations && evaluations.length > 0 ? evaluations[0] : null
   const evalLoading = evaluationsLoading
+  const {
+    liveMetrics,
+    refreshing: metricsRefreshing,
+    error: metricsError,
+    refresh: refreshMetrics,
+  } = useLiveProgressMetrics(project, evaluation?.id ?? null)
   const showVelocity = visibleSides(project.methodology).agile
   const {
     sprints: velocitySprints,
@@ -1055,8 +1161,33 @@ function KeyMetricsDashboard({
               <ProjectStatusCard evaluation={evaluation} loading={evalLoading} />
             </StatCard>
 
-            <StatCard label="Progress">
-              <ProgressStatCard project={project} evaluation={evaluation} loading={evalLoading} />
+            {/* Update Progress is a read-only recompute - it writes nothing,
+                so it isn't gated on canEdit the way the Evaluate Project
+                button below is. */}
+            <StatCard
+              label="Progress"
+              action={
+                <LoadingButton
+                  className="stat-action-btn"
+                  loading={metricsRefreshing}
+                  loadingLabel="Updating"
+                  onClick={refreshMetrics}
+                  title="Recompute this figure from current project data. Does not create an evaluation."
+                >
+                  <span className="stat-action-icon" aria-hidden="true">
+                    ↻
+                  </span>
+                  Update Progress
+                </LoadingButton>
+              }
+            >
+              <ProgressStatCard
+                project={project}
+                evaluation={evaluation}
+                loading={evalLoading}
+                liveMetrics={liveMetrics}
+              />
+              {metricsError && <p className="overview-stat-error">{metricsError}</p>}
             </StatCard>
 
             {showLatestVelocity && (

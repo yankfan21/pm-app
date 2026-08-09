@@ -630,13 +630,143 @@ function methodologyInstructions(methodology) {
 
 const HEALTH_VALUES = ["on_track", "at_risk", "off_track"]
 
+// Row reader for the "metrics_only" action below. The "evaluate" action is
+// handed a full payload the project detail page has already loaded in the
+// browser; this one deliberately reads its own rows from projectId alone,
+// because the whole point of the Update Progress button is that the figure
+// comes from current database state rather than from arrays the page
+// happened to load on mount.
+//
+// Reads go through an anon-key client carrying the caller's own JWT, so RLS
+// decides what's visible exactly as it would in the browser. The
+// service-role client stays reserved for logUsage's default-deny insert -
+// nothing here needs to see past a policy.
+//
+// Only the columns the metric arithmetic actually touches are selected. The
+// narrative side of this function needs far more (titles, dates, phases,
+// risks, budget); none of that reaches a number on the Progress card.
+async function fetchMetricsInputs(req, projectId) {
+  if (!projectId) throw new Error("projectId is required for the metrics_only action")
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")
+  const client = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY"), {
+    global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } },
+  })
+
+  // Without this the reads below would run as bare anon and come back empty
+  // under RLS, which taskStats/milestoneStats would happily turn into a
+  // confident 0% rather than an error.
+  const { data: { user } } = await client.auth.getUser()
+  if (!user) throw new Error("Not signed in")
+
+  const { data: project, error: projectError } = await client
+    .from("projects")
+    .select("id, methodology")
+    .eq("id", projectId)
+    .maybeSingle()
+
+  if (projectError) throw new Error(projectError.message)
+  if (!project) throw new Error("Project not found, or you do not have access to it")
+
+  const [taskRes, milestoneRes, sprintRes] = await Promise.all([
+    client
+      .from("tasks")
+      .select("id, completed, due_date, start_date, backlog_status, milestone_id, sprint_id, story_points, board_status")
+      .eq("project_id", projectId),
+    client.from("milestones").select("id, name").eq("project_id", projectId),
+    client.from("sprints").select("id, name").eq("project_id", projectId),
+  ])
+
+  const readError = taskRes.error || milestoneRes.error || sprintRes.error
+  if (readError) throw new Error(readError.message)
+
+  // sprint_retros has no project_id - it hangs off sprint_id only (see
+  // sprint_retros_schema.sql), so it can't join the parallel batch above; it
+  // needs the sprint ids first. Same two-step useSprintVelocity in
+  // src/KeyMetricsDashboard.jsx already does, skipped entirely when the
+  // project has no sprints.
+  const sprintIds = (sprintRes.data || []).map((s) => s.id)
+  let retros = []
+  if (sprintIds.length > 0) {
+    const retroRes = await client
+      .from("sprint_retros")
+      .select("sprint_id, is_locked, updated_at")
+      .in("sprint_id", sprintIds)
+    if (retroRes.error) throw new Error(retroRes.error.message)
+    retros = retroRes.data || []
+  }
+
+  return {
+    project,
+    tasks: taskRes.data || [],
+    milestones: milestoneRes.data || [],
+    sprints: sprintRes.data || [],
+    retros,
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders })
   }
 
   try {
-    const { action, project, charter, riskLog, budget, tasks, taskDependencies, statusUpdates, sprints, retros, milestones, phases, today } = await req.json()
+    // `methodology` and `projectId` belong to the metrics_only action only -
+    // the evaluate action carries the whole project object and reads
+    // project.methodology off it, so the request-body one is aliased out of
+    // the way of that local further down.
+    const { action, projectId, methodology: requestMethodology, project, charter, riskLog, budget, tasks, taskDependencies, statusUpdates, sprints, retros, milestones, phases, today } = await req.json()
+
+    // The Overview "Update Progress" button's path: the same arithmetic the
+    // evaluate branch below runs, and deliberately nothing else. No context
+    // text assembly, no Claude call, no ai_usage_log row, no
+    // project_evaluations insert or update. It returns { metrics } for the
+    // client to hold in component state and render over the last persisted
+    // snapshot, so a PM can refresh the number on the card without minting an
+    // evaluation document to go with it.
+    //
+    // The per-methodology metrics shapes here are the same three
+    // add_project_eval_metrics.sql documents and formatEvalMetric()/
+    // progressFromMetrics() already know how to read - they have to be, since
+    // the card renders a live object and a persisted one through the same
+    // code path.
+    if (action === "metrics_only") {
+      const inputs = await fetchMetricsInputs(req, projectId)
+      // The stored methodology wins over the request's - the client's copy is
+      // only a fallback for the (impossible in practice) case of a project
+      // row with none set.
+      const method = inputs.project.methodology || requestMethodology
+      const todayStr = today || new Date().toISOString().slice(0, 10)
+
+      // Identical splits to the evaluate branch below - see the module
+      // comment for why backlog_status is what separates a Waterfall task
+      // from a backlog item, and why the sprint aggregate takes both.
+      const waterfallTasks = inputs.tasks.filter((t) => t.backlog_status == null)
+      const backlogItems = inputs.tasks.filter((t) => t.backlog_status != null)
+      const sprintTasks = inputs.tasks.filter((t) => t.sprint_id)
+
+      let metrics
+      if (method === "agile") {
+        metrics = velocityMetrics(mostRecentCompletedSprint(inputs.sprints, sprintTasks, inputs.retros))
+      } else if (method === "hybrid") {
+        const mStats = milestoneStats(inputs.milestones, waterfallTasks, backlogItems)
+        const totalLinked = mStats.reduce((sum, s) => sum + s.linkedTotal, 0)
+        const totalLinkedCompleted = mStats.reduce((sum, s) => sum + s.linkedCompleted, 0)
+        metrics = {
+          milestone_pct_complete: totalLinked > 0 ? totalLinkedCompleted / totalLinked : null,
+          ...velocityMetrics(mostRecentCompletedSprint(inputs.sprints, sprintTasks, inputs.retros)),
+        }
+      } else {
+        // dependsOnByTaskId is null rather than a built map: it only feeds
+        // taskStats' `blockers` output, which is narrative evidence for
+        // Claude and reaches no metric. taskStats already guards it with ?.
+        metrics = { task_pct_complete: taskStats(waterfallTasks, todayStr, null).pctComplete }
+      }
+
+      return new Response(JSON.stringify({ metrics }), {
+        headers: { ...corsHeaders, "content-type": "application/json" },
+      })
+    }
 
     if (action !== "evaluate") {
       return new Response(JSON.stringify({ error: "invalid action" }), {

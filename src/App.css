@@ -3060,6 +3060,113 @@
   margin: 2px 0;
 }
 
+/* Label line of a stat card. Only Progress puts a control up here (its
+   Update Progress button); every other card is just the label, which sits
+   exactly where it did before this row existed. Wraps rather than squeezing
+   the button - the stat grid's tracks bottom out at 180px, which isn't
+   always enough for a label and a button side by side. */
+.overview-stat-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  width: 100%;
+}
+
+/* The Progress card's Update Progress button. Deliberately not
+   .btn-primary/.btn-secondary: those are page-level calls to action (the
+   "+ Evaluate Project" button below is one), and this is a cheap in-place
+   refresh of the number directly under it. A quiet outlined pill that only
+   picks up accent color on hover reads as the lighter action it is. */
+.stat-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border: 1px solid var(--border-faint);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.stat-action-btn:hover:not(:disabled) {
+  border-color: var(--accent-border);
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+.stat-action-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.stat-action-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* The glyph is decorative - it doesn't rotate while loading, because the
+   label swaps to LoadingButton's spinner and running two spinning things in
+   one 11px pill is noise. */
+.stat-action-icon {
+  font-size: 12px;
+  line-height: 1;
+}
+
+/* Holds the percentage and the Live tag on one line. Baseline alignment so
+   the 10px tag sits on the 26px number's baseline rather than floating at
+   its optical center. */
+.overview-stat-value-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  min-width: 0;
+}
+
+/* "Live" - this figure came from the Update Progress button, not from the
+   last saved evaluation. Green because it means fresh, not because it means
+   good; the number beside it is deliberately colorless (see
+   .overview-stat-value.critical above). */
+.overview-stat-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border: 1px solid var(--badge-success-border);
+  border-radius: 999px;
+  background: var(--badge-success-bg);
+  color: var(--badge-success-text);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.overview-stat-live::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.overview-stat-error {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--badge-danger-text);
+}
+
 /* .charter-status is the app-wide empty/loading line and carries a 24px
    top margin meant to clear a section heading. Inside a 12px-padded stat
    card that margin is most of the card, so it's zeroed here and the text
