@@ -284,16 +284,17 @@ function useRiskSeverityCounts(riskLog) {
 // the rows that matter) but aren't dropped either - the tail line below keeps
 // their counts and their deep links, which is all the old badge row gave them.
 //
-// Each row links to Documents > Risk Log with both riskFilter and riskId:
-// DocumentsRoute.jsx only auto-expands the Risk Log section when riskFilter is
-// present, while riskId is what RiskLogView.jsx flashes on arrival - a riskId
-// on its own would land on a collapsed section.
+// Each row links to the Risk Log section (its own top-level nav destination
+// now - ProjectDocSectionRoutes.jsx's RiskLogRoute, which was Documents >
+// Risk Log before the IA restructure) with both riskFilter and riskId:
+// riskFilter is the severity view to land on, riskId is the row
+// RiskLogView.jsx flashes on arrival.
 const RISK_BAND_ORDER = { Critical: 0, High: 1 }
 
 function riskLinkTo(projectId, risk) {
   const params = new URLSearchParams({ riskFilter: risk.band })
   if (risk.id) params.set('riskId', risk.id)
-  return `/projects/${projectId}/documents?${params}`
+  return `/projects/${projectId}/risk-log?${params}`
 }
 
 function KeyRisksCard({ project, riskLog, issues }) {
@@ -348,7 +349,7 @@ function KeyRisksCard({ project, riskLog, issues }) {
           {lowerBands.map((level, i) => (
             <span key={level}>
               {i > 0 && ', '}
-              <Link to={`/projects/${project.id}/documents?riskFilter=${level}`}>
+              <Link to={`/projects/${project.id}/risk-log?riskFilter=${level}`}>
                 {countFor(level)} {level}
               </Link>
             </span>
@@ -368,11 +369,11 @@ function useIssueStatusCounts(issueLog) {
   return useMemo(() => getIssueStatusCounts(issueLog?.issues), [issueLog])
 }
 
-// Mirrors KeyRisksCard's deep-link pattern: each badge links to
-// Documents > Issues Log pre-filtered (DocumentsRoute.jsx reads the
-// issueFilter param and expands the Issue Log row; IssueLogView.jsx applies
-// the actual filter - 'OpenGroup' is a deep-link-only value combining
-// Open/In Progress/Blocked, not one of its visible tabs).
+// Mirrors KeyRisksCard's deep-link pattern: each badge links to the Issues Log
+// section pre-filtered (ProjectDocSectionRoutes.jsx's IssuesLogRoute reads the
+// issueFilter param off the URL; IssueLogView.jsx applies the actual filter -
+// 'OpenGroup' is a deep-link-only value combining Open/In Progress/Blocked,
+// not one of its visible tabs).
 function IssueSummaryCard({ project, issueLog }) {
   const { open, closed } = useIssueStatusCounts(issueLog)
 
@@ -383,13 +384,13 @@ function IssueSummaryCard({ project, issueLog }) {
   return (
     <div className="key-metrics-severity-badges">
       <Link
-        to={`/projects/${project.id}/documents?issueFilter=OpenGroup`}
+        to={`/projects/${project.id}/issues-log?issueFilter=OpenGroup`}
         className="doc-status-badge key-metrics-severity-badge-link critical"
       >
         {open} Open
       </Link>
       <Link
-        to={`/projects/${project.id}/documents?issueFilter=Closed`}
+        to={`/projects/${project.id}/issues-log?issueFilter=Closed`}
         className="doc-status-badge key-metrics-severity-badge-link done"
       >
         {closed} Closed
