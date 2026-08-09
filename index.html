@@ -28,6 +28,13 @@
     />
     <title>ConfidantPM — AI-assisted project management for PMs</title>
 
+    <!-- Static like everything else in this <head>: every route is served the
+         same index.html (see vercel.json's catch-all rewrite), so /login,
+         /dashboard and /admin ship this canonical too. That is the intent -
+         it points every duplicate of the marketing HTML back at "/" so a
+         crawler consolidates them instead of indexing an app route. -->
+    <link rel="canonical" href="https://confidantpm.com/" />
+
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="ConfidantPM" />
     <meta property="og:url" content="https://confidantpm.com/" />

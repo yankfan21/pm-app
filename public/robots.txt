@@ -1,4 +1,7 @@
 User-agent: *
 Allow: /
+Disallow: /login
+Disallow: /dashboard
+Disallow: /admin
 
 Sitemap: https://confidantpm.com/sitemap.xml
