@@ -6,7 +6,7 @@ function NotFound() {
     <AppShell>
       <div className="app-body">
         <p className="charter-status">Page not found.</p>
-        <Link to="/" className="btn-secondary back-link">
+        <Link to="/dashboard" className="btn-secondary back-link">
           &larr; Back to Dashboard
         </Link>
       </div>

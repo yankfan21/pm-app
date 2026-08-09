@@ -8,8 +8,13 @@
 // they hard-redirect to the project home (/m/projects/:id) rather than
 // attempting to render at mobile width. Mobile-only pages (task detail w/
 // comments, /m/notifications, the mobile project index stub, /m/more) have
-// no desktop equivalent - they fall back to the project's Overview (or "/"
-// outside a project).
+// no desktop equivalent - they fall back to the project's Overview (or
+// /dashboard outside a project).
+//
+// Note the desktop home is /dashboard, not "/" - "/" is the public marketing
+// page (Marketing.jsx) and is mounted outside DeviceModeGate entirely, so it
+// never reaches this map and must never be a redirect target from the mobile
+// tree.
 //
 // /settings <-> /m/settings is a mapped pair like any other (see
 // MobileSettings.jsx) - no longer a SHARED_PATHS bypass now that a
@@ -25,7 +30,7 @@ function table(pairs) {
 }
 
 const DESKTOP_TO_MOBILE = table([
-  ['^/$', () => '/m/dashboard'],
+  ['^/dashboard$', () => '/m/dashboard'],
   ['^/projects$', () => '/m/dashboard'],
   ['^/settings$', () => '/m/settings'],
   [`^/projects/${ID}/overview$`, (id) => `/m/projects/${id}`],
@@ -39,9 +44,9 @@ const DESKTOP_TO_MOBILE = table([
 ])
 
 const MOBILE_TO_DESKTOP = table([
-  ['^/m/dashboard$', () => '/'],
-  ['^/m/notifications$', () => '/'],
-  ['^/m/more$', () => '/'],
+  ['^/m/dashboard$', () => '/dashboard'],
+  ['^/m/notifications$', () => '/dashboard'],
+  ['^/m/more$', () => '/dashboard'],
   ['^/m/settings$', () => '/settings'],
   [`^/m/projects/${ID}/tasks$`, (id) => `/projects/${id}/planning/tasks`],
   [`^/m/projects/${ID}/tasks/[^/]+$`, (id) => `/projects/${id}/overview`],
@@ -69,12 +74,12 @@ export function isMobilePath(pathname) {
   return pathname === '/m' || pathname.startsWith('/m/')
 }
 
-// Locked-in "/" <-> "/m/dashboard" home/home pairing (role match, not
-// content match) - used as the fallback landing target whenever a toggle
+// Locked-in "/dashboard" <-> "/m/dashboard" home/home pairing (role match,
+// not content match) - used as the fallback landing target whenever a toggle
 // isn't leaving from a page with a more specific mapped equivalent (e.g.
 // toggling from the shared /settings page).
 export const MOBILE_HOME = '/m/dashboard'
-export const DESKTOP_HOME = '/'
+export const DESKTOP_HOME = '/dashboard'
 
 // Returns the path to redirect to for `pathname` under `mode`, or null if
 // no redirect is needed (already consistent, or a shared path).

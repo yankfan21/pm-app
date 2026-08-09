@@ -3,7 +3,7 @@ import { useAuth } from './AuthContext'
 import ConfidantLogo from './ConfidantLogo'
 
 const NAV_VIEWS = [
-  { to: '/', label: 'Dashboard', icon: '▦', end: true },
+  { to: '/dashboard', label: 'Dashboard', icon: '▦', end: true },
   { to: '/projects', label: 'All Projects', icon: '▤', end: false },
   { to: '/settings', label: 'Settings', icon: '⚙', end: false },
 ]
@@ -55,7 +55,7 @@ function AppSidebar({ nav }) {
 
   return (
     <aside className="app-sidebar">
-      <Link to="/" className="app-sidebar-brand">
+      <Link to="/dashboard" className="app-sidebar-brand">
         <span className="app-sidebar-brand-mark">
           <ConfidantLogo size={28} />
         </span>

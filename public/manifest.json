@@ -1,7 +1,7 @@
 {
   "name": "ConfidantPM",
   "short_name": "ConfidantPM",
-  "start_url": "/",
+  "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#e0e4ec",
   "theme_color": "#2563eb",

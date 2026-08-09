@@ -13,7 +13,14 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="ConfidantPM" />
-    <title>ConfidantPM</title>
+    <!-- Static, app-wide: nothing sets these per route (no Helmet, no SSR),
+         so they describe the public marketing page at "/" - the only route a
+         crawler can actually reach. Placeholder copy pending final wording. -->
+    <meta
+      name="description"
+      content="ConfidantPM is a project management tool with a built-in assistant."
+    />
+    <title>ConfidantPM — AI-assisted project management for PMs</title>
     <script>
       document.documentElement.setAttribute('data-theme', 'dark')
     </script>

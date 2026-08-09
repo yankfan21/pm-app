@@ -32,6 +32,7 @@ import Settings from './Settings'
 import AdminPage from './AdminPage'
 import NotFound from './NotFound'
 import Login from './Login'
+import Marketing from './Marketing'
 import ForgotPassword from './ForgotPassword'
 import ResetPassword from './ResetPassword'
 import RequireAuth from './RequireAuth'
@@ -58,11 +59,18 @@ import MobileProjectExecComms from './mobile/MobileProjectExecComms'
 import MobileProjectNewsletter from './mobile/MobileProjectNewsletter'
 import './App.css'
 
-// Phase 4 cutover: every route other than /login requires a signed-in
-// session - see supabase/migrations/phase4_full_lockdown_no_anon.sql for
-// the matching RLS side of this. RequireAuth bounces an unauthenticated
-// visitor to /login and stashes the page they wanted so Login can send them
-// back afterward.
+// Phase 4 cutover: every route other than the public pre-auth ones below
+// requires a signed-in session - see
+// supabase/migrations/phase4_full_lockdown_no_anon.sql for the matching RLS
+// side of this. RequireAuth bounces an unauthenticated visitor to /login and
+// stashes the page they wanted so Login can send them back afterward.
+//
+// "/" is the public marketing page (Marketing.jsx), NOT the Dashboard - the
+// signed-in home moved to /dashboard when the front door became public.
+// Anything that used to point at "/" as "the app's home" now points at
+// /dashboard (AppShell's nav + brand, NotFound, AdminRoute, Login's
+// post-sign-in default and OAuth redirect, deviceRouteMap's DESKTOP_HOME,
+// and manifest.json's start_url).
 //
 // The /projects/:projectId subtree is a two-tier sidebar (see
 // ProjectDetailLayout.jsx + ProjectNav.jsx): a persistent layout owns the
@@ -91,7 +99,10 @@ function App() {
           deviceRouteMap entry either: these render identically at any width
           off the same CSS as /login, rather than splitting into desktop and
           mobile trees). /reset-password is where the recovery email lands,
-          so it must stay reachable with no session. */}
+          so it must stay reachable with no session; "/" is the public
+          marketing page and has to survive a phone-width viewport without
+          being redirected into the app's /m tree. */}
+      <Route path="/" element={<Marketing />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
 
@@ -103,7 +114,7 @@ function App() {
             which subtree below actually renders. */}
         <Route element={<DeviceModeGate />}>
           <Route element={<ProjectsShell />}>
-            <Route index element={<Dashboard />} />
+            <Route path="dashboard" element={<Dashboard />} />
             <Route path="projects" element={<AllProjects />} />
           </Route>
 

@@ -19,7 +19,10 @@ function Login() {
   const [error, setError] = useState(null)
   const [info, setInfo] = useState(null)
 
-  const redirectTo = location.state?.from?.pathname || '/'
+  // Falls back to the signed-in home (/dashboard), not "/" - "/" is the
+  // public marketing page now, so defaulting there would bounce a user who
+  // just signed in straight back out to the front door.
+  const redirectTo = location.state?.from?.pathname || '/dashboard'
 
   // The rest of the app renders inside a centered, width-capped, bordered
   // #root (see index.css) - this is the one screen meant to bleed full
@@ -77,7 +80,10 @@ function Login() {
     setError(null)
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin },
+      // Same reasoning as `redirectTo` above - window.location.origin alone
+      // is "/", which would land a freshly authenticated user on the public
+      // marketing page instead of the app.
+      options: { redirectTo: `${window.location.origin}/dashboard` },
     })
     if (error) setError(error.message)
   }
