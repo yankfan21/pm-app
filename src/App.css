@@ -3325,12 +3325,32 @@
   gap: 10px 12px;
 }
 
+/* No flex-shrink: 0 here. It pinned this item at its max-content width, so a
+   long project name could neither wrap nor shrink - it overflowed
+   .project-header-bar and got silently clipped by the app's
+   overflow-x: hidden (index.css). flex-wrap on the bar didn't save it: that
+   only moves the badges and date to a second line, never the title itself.
+   min-width: 0 is the other half - a flex item's automatic minimum size is
+   its min-content width, which would still floor this above the ~432px of
+   content the 272px rail leaves at a 768px viewport. Project names have no
+   maxLength anywhere (see NewProjectFlow.jsx), so overflow-wrap is the
+   backstop for the single-unbroken-word case that word wrapping can't help.
+
+   Font size steps down below 1024px for the same reason every other h2 does
+   (index.css) - the class selector here outweighs that element rule, so this
+   heading was the only one in the app still sitting at its full desktop size
+   on a narrow desktop viewport. Same nested-@media shape and same 20px as
+   the h2 block it's matching. */
 .project-header-name {
-  flex-shrink: 0;
+  min-width: 0;
   margin: 0;
   font-size: var(--heading-project-title-size);
   font-weight: var(--heading-project-title-weight);
   letter-spacing: var(--heading-project-title-tracking);
+  overflow-wrap: break-word;
+  @media (max-width: 1024px) {
+    font-size: 20px;
+  }
 }
 
 .project-header-badges {
