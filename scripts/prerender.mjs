@@ -29,6 +29,31 @@ import { dirname, join } from 'node:path'
 const require = createRequire(import.meta.url)
 const { run } = require('react-snap')
 
+// A Chromium built for Amazon Linux, which is what a Vercel build container
+// runs. This exists because Playwright's Chromium downloads fine there but
+// will not start: "error while loading shared libraries: libnspr4.so". The
+// usual fix, `playwright install --with-deps`, shells out to apt as root and
+// so is not an option on that image. @sparticuz/chromium ships those libraries
+// inside its own bundle and points LD_LIBRARY_PATH at them.
+//
+// Linux-only by construction (there is no Windows/macOS binary in the
+// package), hence the platform check - on a dev machine this is skipped and a
+// system Chrome is used instead. Returns { executablePath, args }: the args
+// are the flags that build needs to run in a sandboxless container, and the
+// caller has to pass them through to puppeteer.
+async function resolveSparticuzChromium() {
+  if (process.platform !== 'linux') return undefined
+  try {
+    const { default: chromium } = await import('@sparticuz/chromium')
+    const executablePath = await chromium.executablePath()
+    if (!executablePath || !existsSync(executablePath)) return undefined
+    return { executablePath, args: chromium.args }
+  } catch (error) {
+    console.warn(`Prerender: @sparticuz/chromium unavailable (${error.message}); trying others.`)
+    return undefined
+  }
+}
+
 // Downloads Playwright's pinned Chromium into its usual cache if it is not
 // already there, and returns the path. Needed because a Vercel build container
 // has no system Chrome AND no Playwright browser: `playwright` is a
@@ -77,7 +102,9 @@ const CHROME_CANDIDATES = [
   '/usr/bin/chromium',
 ]
 
-function resolveChromePath() {
+// Resolves to { executablePath, args }, where args are extra puppeteer flags
+// the chosen browser needs (only @sparticuz/chromium asks for any).
+async function resolveChrome() {
   const fromEnv = process.env.PUPPETEER_EXECUTABLE_PATH || process.env.CHROME_PATH
   if (fromEnv) {
     if (!existsSync(fromEnv)) {
@@ -85,17 +112,24 @@ function resolveChromePath() {
         `Prerender: PUPPETEER_EXECUTABLE_PATH/CHROME_PATH points at "${fromEnv}", which does not exist.`,
       )
     }
-    return fromEnv
+    return { executablePath: fromEnv, args: [] }
   }
 
-  // A system Chrome, if this is a dev machine. Checked before Playwright's so
-  // a local build does not pay for a browser download it does not need.
+  // A system Chrome, if this is a dev machine. Checked first so a local build
+  // does not pay for a browser download it does not need.
   const found = CHROME_CANDIDATES.find((candidate) => existsSync(candidate))
-  if (found) return found
+  if (found) return { executablePath: found, args: [] }
 
-  // Playwright's pinned Chromium, fetched on demand - the CI/Vercel path.
+  // The CI/Vercel path. Ranked above Playwright's because on the one platform
+  // where both are candidates - Linux - Playwright's is the one that cannot
+  // start, and trying it first wastes a 114MB download before failing.
+  const sparticuz = await resolveSparticuzChromium()
+  if (sparticuz) return sparticuz
+
+  // Playwright's pinned Chromium, fetched on demand. Covers a Linux CI image
+  // that does have the shared libraries, and any non-Vercel runner.
   const playwrightChromium = resolvePlaywrightChromium()
-  if (playwrightChromium) return playwrightChromium
+  if (playwrightChromium) return { executablePath: playwrightChromium, args: [] }
 
   // Last resort: puppeteer 1.x's own bundled Chromium, if its install script
   // did get to run. Deliberately ranked *below* a system Chrome - that build
@@ -105,7 +139,7 @@ function resolveChromePath() {
   // catches that if it ever happens again.
   try {
     const bundled = require('puppeteer').executablePath()
-    if (bundled && existsSync(bundled)) return bundled
+    if (bundled && existsSync(bundled)) return { executablePath: bundled, args: [] }
   } catch {
     // puppeteer unresolvable or a version without executablePath().
   }
@@ -122,7 +156,7 @@ if (process.env.SKIP_PRERENDER === '1') {
   process.exit(0)
 }
 
-const puppeteerExecutablePath = resolveChromePath()
+const { executablePath: puppeteerExecutablePath, args: browserArgs } = await resolveChrome()
 console.log(`Prerender: driving ${puppeteerExecutablePath}`)
 
 // A string that only exists in Marketing.jsx's rendered output. react-snap
@@ -144,7 +178,7 @@ await run({
   // Vite does not emit sourcemaps in this project's build, so there is nothing
   // for react-snap's sourcemapped stack traces to read.
   sourceMaps: false,
-  puppeteerArgs: ['--no-sandbox', '--disable-setuid-sandbox'],
+  puppeteerArgs: ['--no-sandbox', '--disable-setuid-sandbox', ...browserArgs],
   puppeteerExecutablePath,
 }).catch((error) => {
   console.error(error)
