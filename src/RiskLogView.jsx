@@ -163,6 +163,15 @@ function RiskLogView({
     const next = [...rows, row]
     setRows(next)
     persist(next)
+    // A brand-new row is unscored, so getRiskBand() returns null for it -
+    // which matches none of the Critical/High/Medium/Low filter tabs. Adding
+    // one while a filter is active would therefore create it in the DB but
+    // render it nowhere, looking like nothing happened. Reset to All as part
+    // of the same action so it lands on screen ready to fill in.
+    // handleFilterChange (not a bare setSeverityFilter) so the parent's
+    // ?riskFilter= URL param is cleared too - otherwise the URL would keep
+    // claiming a filter the list is no longer applying.
+    handleFilterChange('All')
     // Opens already expanded so the PM can fill in Likelihood/Severity/
     // Mitigation/Owner immediately, rather than having to click it open
     // right after creating it.

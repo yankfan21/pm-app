@@ -124,6 +124,13 @@ function IssueLogView({
     const next = [...rows, createIssueObject()]
     setRows(next)
     persist(next)
+    // createIssueObject() defaults to status 'Open', so adding under an
+    // In Progress/Blocked/Closed filter would create the row in the DB but
+    // render it nowhere - same trap as RiskLogView.jsx's addRow(). Reset to
+    // All so it's on screen immediately. handleFilterChange (not a bare
+    // setStatusFilter) so the parent's ?issueFilter= URL param is cleared
+    // too, rather than pointing at a filter the list no longer applies.
+    handleFilterChange('All')
   }
 
   function deleteRow(id) {
