@@ -20,12 +20,49 @@
 // touches an authenticated route (which has no content without a session
 // anyway, and must not have a session baked into a static file).
 
+import { spawnSync } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
+import { dirname, join } from 'node:path'
 
 // react-snap and puppeteer are both CommonJS with no ESM export map.
 const require = createRequire(import.meta.url)
 const { run } = require('react-snap')
+
+// Downloads Playwright's pinned Chromium into its usual cache if it is not
+// already there, and returns the path. Needed because a Vercel build container
+// has no system Chrome AND no Playwright browser: `playwright` is a
+// devDependency so its postinstall does not reliably run there (a restored
+// node_modules cache skips install scripts entirely), which failed the first
+// deploy of this script with "no Chrome/Chromium binary found". Returns
+// undefined rather than throwing so the caller can keep looking.
+function resolvePlaywrightChromium() {
+  let chromium
+  let packageDir
+  try {
+    chromium = require('playwright').chromium
+    // playwright's "exports" map does not expose ./cli.js, so resolve the
+    // package entry point and walk up to the directory instead.
+    packageDir = dirname(require.resolve('playwright'))
+  } catch {
+    return undefined // playwright not installed at all
+  }
+
+  const existing = chromium.executablePath()
+  if (existing && existsSync(existing)) return existing
+
+  console.log('Prerender: Playwright Chromium missing - downloading it...')
+  const result = spawnSync(process.execPath, [join(packageDir, 'cli.js'), 'install', 'chromium'], {
+    stdio: 'inherit',
+  })
+  if (result.status !== 0) {
+    console.warn('Prerender: `playwright install chromium` failed; trying other browsers.')
+    return undefined
+  }
+
+  const installed = chromium.executablePath()
+  return installed && existsSync(installed) ? installed : undefined
+}
 
 // Checked in order. An explicit env var wins so CI (or a Vercel build with a
 // Chrome layer) can point at whatever it has without editing this file.
@@ -51,21 +88,14 @@ function resolveChromePath() {
     return fromEnv
   }
 
-  // Playwright's pinned Chromium, downloaded by the `playwright` devDependency's
-  // own postinstall. Ranked first because it is the only option that exists on
-  // a CI/Vercel builder as well as on a dev machine - a Vercel build container
-  // has no system Chrome, so without this the resolver would fall through to
-  // the Chromium 71 case below and fail every deploy. Returns a path even when
-  // the browser was never downloaded, hence the existsSync guard.
-  try {
-    const playwrightChromium = require('playwright').chromium.executablePath()
-    if (playwrightChromium && existsSync(playwrightChromium)) return playwrightChromium
-  } catch {
-    // playwright not installed (it is a devDependency) - keep looking.
-  }
-
+  // A system Chrome, if this is a dev machine. Checked before Playwright's so
+  // a local build does not pay for a browser download it does not need.
   const found = CHROME_CANDIDATES.find((candidate) => existsSync(candidate))
   if (found) return found
+
+  // Playwright's pinned Chromium, fetched on demand - the CI/Vercel path.
+  const playwrightChromium = resolvePlaywrightChromium()
+  if (playwrightChromium) return playwrightChromium
 
   // Last resort: puppeteer 1.x's own bundled Chromium, if its install script
   // did get to run. Deliberately ranked *below* a system Chrome - that build
