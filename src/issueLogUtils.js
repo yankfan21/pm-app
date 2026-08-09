@@ -1,6 +1,6 @@
 // Shared shape/logic for Issues Log, used by IssueLogView.jsx (desktop),
-// MobileProjectIssues.jsx, and ProjectSectionRoutes.jsx's
-// ExecutionIssueLogRoute - previously each had its own inline
+// MobileProjectIssues.jsx, and IssueLogFlow.jsx (the blank-row starter the
+// Issues Log section uses) - previously each had its own inline
 // newRow()/newIssueObject()/newIssueLogRow() that had to be kept in sync by
 // hand. Status Notes is append-only (status_notes: [{note, created_at}],
 // newest first) with last_update auto-stamped on append - no manually

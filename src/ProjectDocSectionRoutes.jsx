@@ -45,7 +45,7 @@ function newRiskLogRow() {
 // buildInsert(build()) directly and lands the PM straight in the View. Only
 // Risk Log uses it - it's how the old Execution > "Log a Risk" entry point
 // let a PM flag something without going through RiskLogFlow's Q&A first.
-function DocSection({ docKey, title, viewProps, seed }) {
+function DocSection({ docKey, title, startLabel, viewProps, seed }) {
   const {
     project,
     canEdit,
@@ -111,7 +111,10 @@ function DocSection({ docKey, title, viewProps, seed }) {
 
   const ViewComponent = docType.ViewComponent
   const FlowComponent = docType.FlowComponent
-  const startLabel = isRepeatable ? `+ ${docType.actionLabel}` : `+ Generate ${docType.label}`
+  // `startLabel` is an override for a doc type whose "Flow" isn't an AI
+  // generate step at all (Issues Log's is a one-button blank-row starter).
+  const flowButtonLabel =
+    startLabel || (isRepeatable ? `+ ${docType.actionLabel}` : `+ Generate ${docType.label}`)
   // Repeatable types can always add another; single-row types only offer the
   // Flow until one exists (the PM-acceptance guardrail - see CLAUDE.md - is
   // why a generated doc has no regenerate-over-it button here).
@@ -145,7 +148,7 @@ function DocSection({ docKey, title, viewProps, seed }) {
                 </button>
               )}
               <button type="button" className={flowButtonClass} onClick={() => setFlowOpen(true)}>
-                {showSeedButton ? 'Generate with AI' : startLabel}
+                {showSeedButton ? 'Generate with AI' : flowButtonLabel}
               </button>
             </div>
           )}
@@ -247,7 +250,7 @@ export function IssuesLogRoute() {
   return (
     <DocSection
       docKey="issue_log"
-      title="Issues Log"
+      startLabel="+ Log an Issue"
       viewProps={{ initialStatusFilter: issueFilter, onStatusFilterChange: setIssueFilter }}
     />
   )

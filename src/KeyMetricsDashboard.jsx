@@ -105,41 +105,6 @@ function useCriticalIssues(project, tasks, phases, riskLog) {
   }, [project.methodology, tasks, phases, riskLog])
 }
 
-// Lifted out of ProjectStatusCard so ProgressRingCard can read the same
-// project_evaluations row without a second query - both cards show facets
-// of one snapshot (see the module comment above KeyMetricsDashboard).
-function useLatestEvaluation(projectId) {
-  const [evaluation, setEvaluation] = useState(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    let cancelled = false
-
-    async function loadLatestEvaluation() {
-      setLoading(true)
-      // Same query ProjectList.jsx uses for its dashboard badges - latest
-      // project_evaluations row for this project, newest first, capped to 1.
-      const { data, error } = await supabase
-        .from('project_evaluations')
-        .select('health_status, metrics, created_at')
-        .eq('project_id', projectId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-
-      if (cancelled) return
-      setEvaluation(!error && data && data.length > 0 ? data[0] : null)
-      setLoading(false)
-    }
-
-    loadLatestEvaluation()
-    return () => {
-      cancelled = true
-    }
-  }, [projectId])
-
-  return { evaluation, loading }
-}
-
 function ProjectStatusCard({ evaluation, loading }) {
   if (loading) {
     return <p className="charter-status">Loading...</p>
@@ -148,7 +113,7 @@ function ProjectStatusCard({ evaluation, loading }) {
   if (!evaluation) {
     return (
       <p className="charter-status">
-        Not evaluated yet — run Evaluate Project (under Documents) to see status and progress here.
+        Not evaluated yet — run Evaluate Project below to see status and progress here.
       </p>
     )
   }
@@ -243,7 +208,7 @@ function ProgressRingCard({ project, evaluation, loading }) {
   if (!progress) {
     return (
       <p className="charter-status">
-        Not evaluated yet — run Evaluate Project (under Documents) to see progress here.
+        Not evaluated yet — run Evaluate Project below to see progress here.
       </p>
     )
   }
@@ -801,10 +766,19 @@ function KeyMetricsDashboard({
   collaborators,
   riskLog,
   issueLog,
+  evaluations,
+  evaluationsLoading,
   expanded,
 }) {
   const issues = useCriticalIssues(project, tasks, phases, riskLog)
-  const { evaluation, loading: evalLoading } = useLatestEvaluation(project.id)
+  // Latest project_evaluations row, off the same docs.project_evaluation array
+  // the Project Evaluation section on this page renders (loaded newest-first by
+  // ProjectDetailLayout's loadDocs) rather than a query of this component's
+  // own. That query duplicated work the layout had already done, and - now
+  // that Evaluate Project runs from Overview itself - would have left these two
+  // cards showing a stale snapshot until the next remount.
+  const evaluation = evaluations && evaluations.length > 0 ? evaluations[0] : null
+  const evalLoading = evaluationsLoading
   const showVelocity = visibleSides(project.methodology).agile
   const {
     sprints: velocitySprints,

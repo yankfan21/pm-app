@@ -3,11 +3,11 @@ import { createIssueObject } from './issueLogUtils'
 
 // Issues Log has no AI Q&A generation path (unlike RiskLogFlow.jsx) - issues
 // are things that DID/ARE happening, not something worth speculatively
-// brainstorming from Charter/Brief context. This "Flow" is just the
-// Documents checklist's not-yet-started entry point: one button that seeds
-// a blank row and hands off straight to IssueLogView, matching how
-// ExecutionRiskLogRoute already bypasses RiskLogFlow's AI Q&A for the same
-// "flag it now" reasoning.
+// brainstorming from Charter/Brief context. This "Flow" is just the Issues Log
+// section's not-yet-started entry point: one button that seeds a blank row and
+// hands off straight to IssueLogView, the same "flag it now" shortcut Risk
+// Log's manual seed path gives (see RiskLogRoute in
+// ProjectDocSectionRoutes.jsx, which bypasses RiskLogFlow's AI Q&A).
 
 function IssueLogFlow({ onGenerated, onClose }) {
   const [starting, setStarting] = useState(false)
