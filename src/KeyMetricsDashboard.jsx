@@ -377,7 +377,7 @@ function ProgressStatCard({ project, evaluation, loading, unsavedMetrics }) {
       </div>
       <p className="overview-stat-caption">{progress.caption}</p>
       {isUnsaved && <p className="overview-stat-caption">{UNSAVED_PROGRESS_COPY}</p>}
-      {asOf && <p className="overview-stat-caption">{asOf}</p>}
+      {updatedLine && <p className="overview-stat-caption">{updatedLine}</p>}
     </>
   )
 }
