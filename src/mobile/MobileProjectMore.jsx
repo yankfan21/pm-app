@@ -1,4 +1,5 @@
 import { Link, useParams } from 'react-router-dom'
+import { useAuth } from '../AuthContext'
 
 // Project-scoped overflow (/m/projects/:projectId/more) - houses the
 // sections that don't fit the tab bar: read-only Documents, Status Update
@@ -14,6 +15,7 @@ import { Link, useParams } from 'react-router-dom'
 // MobileProjectLayout.jsx) - read as just another project section.
 function MobileProjectMore() {
   const { projectId } = useParams()
+  const { signOut } = useAuth()
   const base = `/m/projects/${projectId}`
 
   const projectItems = [
@@ -50,6 +52,12 @@ function MobileProjectMore() {
             {label}
           </Link>
         ))}
+        {/* Sibling rather than a globalItems entry - that array maps to
+            <Link>s, and this is a <button>. Same signOut from AuthContext
+            that MobileMore.jsx's root-level Sign out calls. */}
+        <button type="button" className="mobile-more-list-item" onClick={signOut}>
+          Sign out
+        </button>
       </div>
     </div>
   )

@@ -197,10 +197,11 @@
 
 .mobile-more-list-item {
   display: block;
-  /* Rendered as both <Link> and <button> (MobileMore.jsx's Sign out). The
-     anchors take the .mobile-app text-align: left reset, but a <button> gets
-     text-align: center from the UA stylesheet, which inheritance can't
-     override - without this the list would left-align every row except Sign
+  /* Rendered as both <Link> and <button> - the Sign out rows in both
+     MobileMore.jsx (root More) and MobileProjectMore.jsx (in-project More).
+     The anchors take the .mobile-app text-align: left reset, but a <button>
+     gets text-align: center from the UA stylesheet, which inheritance can't
+     override - without this the lists would left-align every row except Sign
      out. */
   text-align: left;
   padding: 14px 16px;
