@@ -459,6 +459,94 @@ function velocityStatsText(stats) {
     .join("\n")
 }
 
+// "Most recent completed sprint" for the velocity_ratio metric - a
+// deliberately stricter notion than velocityStats' trend above, which is
+// ordered by start_date and happily includes sprints that haven't started
+// yet. That ordering is right for a 5-sprint trend line but wrong for a
+// single headline figure: a sprint created and pointed for next month is
+// "latest by start_date" while showing 0 completed, so the metric read 0%
+// on projects with a perfectly healthy delivery history.
+//
+// A sprint counts as completed only when BOTH hold:
+//   1. every task linked to it is board_status 'done' - and it has at
+//      least one linked task, since an empty sprint satisfies "all done"
+//      vacuously; and
+//   2. its retro is locked (sprint_retros.is_locked).
+// Neither signal alone survives contact with the real data: retros get
+// locked early, before the work lands, and "all items done" carries no
+// timestamp to order by. Locking is also the one explicit "this sprint is
+// closed" act a PM performs, which is what makes its timestamp meaningful
+// as the sort key - a locked retro is read-only (see SprintRetroView's
+// effectiveCanEdit), so updated_at stops moving at the moment of the lock.
+//
+// Returns null when nothing qualifies. That is a distinct state from a
+// qualifying sprint that has no story points on it - see velocityMetrics().
+function mostRecentCompletedSprint(sprints, sprintTasks, retros) {
+  const bySprintId = new Map()
+  ;(sprintTasks || []).forEach((t) => {
+    if (!t.sprint_id) return
+    const entry = bySprintId.get(t.sprint_id) || { total: 0, done: 0, committed: 0, completed: 0 }
+    entry.total += 1
+    entry.committed += t.story_points ?? 0
+    if (t.board_status === "done") {
+      entry.done += 1
+      entry.completed += t.story_points ?? 0
+    }
+    bySprintId.set(t.sprint_id, entry)
+  })
+
+  const lockedRetroBySprintId = new Map()
+  ;(retros || []).forEach((r) => {
+    if (r.is_locked) lockedRetroBySprintId.set(r.sprint_id, r)
+  })
+
+  const qualifying = (sprints || [])
+    .map((s) => ({ sprint: s, agg: bySprintId.get(s.id), retro: lockedRetroBySprintId.get(s.id) }))
+    .filter(({ agg, retro }) => agg && agg.total > 0 && agg.done === agg.total && retro)
+    .sort((a, b) => (b.retro.updated_at || "").localeCompare(a.retro.updated_at || ""))
+
+  if (qualifying.length === 0) return null
+
+  const { sprint, agg, retro } = qualifying[0]
+  return { name: sprint.name, completedAt: retro.updated_at || null, committed: agg.committed, completed: agg.completed }
+}
+
+// Shared shape for the three velocity_* keys so Agile and Hybrid can't
+// drift apart. velocity_sprint_name is what separates "no sprint qualifies"
+// (all three null) from "a completed sprint carrying no story-point
+// estimates" (name/date set, ratio null) - those read differently on the
+// card, and a bare null ratio can't carry the difference. A qualifying
+// sprint that genuinely finished 0 of its committed points stays 0, not
+// null, same as before.
+function velocityMetrics(completedSprint) {
+  if (!completedSprint) {
+    return { velocity_ratio: null, velocity_sprint_name: null, velocity_sprint_completed_at: null }
+  }
+  return {
+    velocity_ratio: completedSprint.committed > 0 ? completedSprint.completed / completedSprint.committed : null,
+    velocity_sprint_name: completedSprint.name,
+    velocity_sprint_completed_at: completedSprint.completedAt,
+  }
+}
+
+// Stated explicitly in the prompt context so Claude's rationale can't
+// contradict the number on the card beside it - without this the trend
+// block above is the only velocity evidence, and its last line is whatever
+// sprint starts latest, which is exactly the sprint this metric now
+// deliberately refuses to use.
+function completedSprintText(completedSprint) {
+  if (!completedSprint) {
+    return "Most recent completed sprint: none yet - no sprint has both finished all its linked items and had its retro locked. Do not describe velocity as 0%; there is simply no completed sprint to measure."
+  }
+  const pct = completedSprint.committed > 0 ? Math.round((completedSprint.completed / completedSprint.committed) * 100) : null
+  const points =
+    completedSprint.committed > 0
+      ? `committed ${completedSprint.committed} pt(s), completed ${completedSprint.completed} pt(s) (${pct}%)`
+      : "no story-point estimates on its items, so no velocity percentage can be computed for it"
+  const when = completedSprint.completedAt ? ` (retro locked ${completedSprint.completedAt.slice(0, 10)})` : ""
+  return `Most recent completed sprint - all linked items done and retro locked - is "${completedSprint.name}"${when}: ${points}. This is the sprint the Progress/Velocity figure on the dashboard reports; later sprints that are still in flight are deliberately excluded.`
+}
+
 // Backlog pipeline health: counts by backlog_status, plus an "ungroomed"
 // proxy (sitting in plain backlog status with no story-point estimate yet
 // - the concrete sign nobody's triaged it). Optionally scoped to a
@@ -563,6 +651,14 @@ Deno.serve(async (req) => {
     const allTasks = tasks || []
     const waterfallTasks = allTasks.filter((t) => t.backlog_status == null)
     const backlogItems = allTasks.filter((t) => t.backlog_status != null)
+    // Everything sitting in a sprint, regardless of which side of the
+    // methodology split it came from - the completion gate in
+    // mostRecentCompletedSprint() asks "is every linked item done", and a
+    // linked item left undone still blocks that whether or not it carries a
+    // backlog_status. Same set isSprintOverdue() (sprintStats.js) already
+    // reasons over, and the same set the live hook in KeyMetricsDashboard.jsx
+    // queries, so both paths select the same sprint.
+    const sprintTasks = allTasks.filter((t) => t.sprint_id)
 
     // task_dependencies supports multiple predecessors per task (one row
     // per task_id/depends_on_id pair) - collect every depends_on_id per
@@ -611,13 +707,9 @@ Deno.serve(async (req) => {
       const rtText = retroThemesText(retros, sprints, null)
       if (rtText) contextParts.push(`Locked Sprint Retro themes, oldest first:\n${rtText}`)
 
-      // Most recent sprint with committed points, same definition
-      // velocityStats/velocityStatsText already use (last entry - the
-      // array is chronological, oldest first).
-      const latest = vStats[vStats.length - 1] || null
-      metrics = {
-        velocity_ratio: latest && latest.committed > 0 ? latest.completed / latest.committed : null,
-      }
+      const completedSprint = mostRecentCompletedSprint(sprints, sprintTasks, retros)
+      contextParts.push(completedSprintText(completedSprint))
+      metrics = velocityMetrics(completedSprint)
     } else {
       const mStats = milestoneStats(milestones, waterfallTasks, backlogItems)
       const mText = milestoneStatsText(mStats)
@@ -672,17 +764,16 @@ Deno.serve(async (req) => {
         // per Epic, just summed). Velocity is the secondary signal -
         // Epics are dateless now so there's no single "currently active"
         // one left to anchor a sprint choice to, so this uses the most
-        // recent sprint project-wide instead, same computation Agile's
-        // velocity_ratio already uses.
+        // recent completed sprint project-wide instead, same computation
+        // Agile's velocity_ratio already uses.
         const totalLinked = mStats.reduce((sum, s) => sum + s.linkedTotal, 0)
         const totalLinkedCompleted = mStats.reduce((sum, s) => sum + s.linkedCompleted, 0)
         const milestonePctComplete = totalLinked > 0 ? totalLinkedCompleted / totalLinked : null
 
-        const vStats = velocityStats(sprints, backlogItems, null)
-        const latest = vStats[vStats.length - 1] || null
-        const velocityRatio = latest && latest.committed > 0 ? latest.completed / latest.committed : null
+        const completedSprint = mostRecentCompletedSprint(sprints, sprintTasks, retros)
+        contextParts.push(completedSprintText(completedSprint))
 
-        metrics = { milestone_pct_complete: milestonePctComplete, velocity_ratio: velocityRatio }
+        metrics = { milestone_pct_complete: milestonePctComplete, ...velocityMetrics(completedSprint) }
       } else {
         metrics = { task_pct_complete: tStats.pctComplete }
       }
