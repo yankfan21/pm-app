@@ -36,7 +36,7 @@ import MobileShell from './mobile/MobileShell'
 import MobileDashboard from './mobile/MobileDashboard'
 import MobileNotifications from './mobile/MobileNotifications'
 import MobileMore from './mobile/MobileMore'
-import MobileProjectSettings from './mobile/MobileProjectSettings'
+import MobileSettings from './mobile/MobileSettings'
 import MobileProjectLayout from './mobile/MobileProjectLayout'
 import MobileProjectTasks from './mobile/MobileProjectTasks'
 import MobileTaskDetail from './mobile/MobileTaskDetail'
@@ -145,7 +145,7 @@ function App() {
             <Route path="/m/dashboard" element={<MobileDashboard />} />
             <Route path="/m/notifications" element={<MobileNotifications />} />
             <Route path="/m/more" element={<MobileMore />} />
-            <Route path="/m/settings" element={<MobileProjectSettings />} />
+            <Route path="/m/settings" element={<MobileSettings />} />
           </Route>
 
           <Route path="/m/projects/:projectId" element={<MobileProjectLayout />}>

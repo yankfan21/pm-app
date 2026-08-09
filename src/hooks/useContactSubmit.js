@@ -7,7 +7,7 @@ export const CONTACT_REASONS = ['Technical Issue', 'Subscription', 'General Inqu
 // Shared submit logic for the Contact Support form - desktop (ContactSupportForm.jsx)
 // and mobile (MobileContactSupport.jsx) each render their own purpose-built markup
 // around this, same split as every other desktop/mobile pair in this app (see
-// MobileProjectSettings.jsx's comment on that convention).
+// MobileSettings.jsx's comment on that convention).
 export function useContactSubmit() {
   const { user } = useAuth()
   const [submitting, setSubmitting] = useState(false)

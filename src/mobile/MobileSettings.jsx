@@ -29,7 +29,7 @@ function formatHiddenAt(hiddenAt) {
   })
 }
 
-function MobileProjectSettings() {
+function MobileSettings() {
   const { user } = useAuth()
   const { mode, setOverride } = useDeviceMode()
   const location = useLocation()
@@ -196,4 +196,4 @@ function MobileProjectSettings() {
   )
 }
 
-export default MobileProjectSettings
+export default MobileSettings

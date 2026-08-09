@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useAuth } from '../AuthContext'
 import { useContactSubmit, CONTACT_REASONS } from '../hooks/useContactSubmit'
 
-// Rendered inline as a section of MobileProjectSettings.jsx (id="contact-support",
+// Rendered inline as a section of MobileSettings.jsx (id="contact-support",
 // same anchor MobileMore.jsx's list item scrolls to). Mirrors ContactSupportForm.jsx's
 // fields/logic (shared via useContactSubmit) with mobile-* markup instead of desktop's.
 function MobileContactSupport() {

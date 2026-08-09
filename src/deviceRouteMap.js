@@ -12,7 +12,7 @@
 // outside a project).
 //
 // /settings <-> /m/settings is a mapped pair like any other (see
-// MobileProjectSettings.jsx) - no longer a SHARED_PATHS bypass now that a
+// MobileSettings.jsx) - no longer a SHARED_PATHS bypass now that a
 // purpose-built mobile component exists (was previously a shared,
 // non-prefixed route rendering Settings.jsx's desktop chrome at any width).
 
