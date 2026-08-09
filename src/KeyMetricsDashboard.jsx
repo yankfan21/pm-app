@@ -4,17 +4,14 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  Cell,
   Legend,
-  Pie,
-  PieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from 'recharts'
 import { supabase } from './supabaseClient'
-import { HEALTH_LABELS, HEALTH_COLOR_CLASS, formatEvalMetric } from './projectEvalHealth'
+import { HEALTH_LABELS, HEALTH_COLOR_CLASS } from './projectEvalHealth'
 import { visibleSides } from './projectSections'
 import { getRiskBand, getRiskScore } from './riskScale'
 import { getIssueStatusCounts } from './issueLogUtils'
@@ -105,6 +102,25 @@ function useCriticalIssues(project, tasks, phases, riskLog) {
   }, [project.methodology, tasks, phases, riskLog])
 }
 
+// Shell for the top metric row's cards - a label, then whatever single
+// figure the card owns. Deliberately dumb: every card in that row is
+// "one word of context plus one number", so the only thing shared is the
+// box and the label, and each card component below supplies its own value
+// and its own empty state.
+function StatCard({ label, children }) {
+  return (
+    <div className="overview-stat-card">
+      <span className="overview-stat-label">{label}</span>
+      {children}
+    </div>
+  )
+}
+
+// The numeric metric badge that used to sit beside the health badge here is
+// gone - the Progress card immediately to the right in the metric row now
+// carries that exact same figure (both come off evaluation.metrics), and two
+// copies of one number inside a four-card row is noise. The health badge and
+// the snapshot timestamp are all this card owes.
 function ProjectStatusCard({ evaluation, loading }) {
   if (loading) {
     return <p className="charter-status">Loading...</p>
@@ -119,60 +135,14 @@ function ProjectStatusCard({ evaluation, loading }) {
   }
 
   const colorClass = HEALTH_COLOR_CLASS[evaluation.health_status] || 'pending'
-  const metricText = formatEvalMetric(evaluation.metrics, { longer: true })
 
   return (
-    <div className="project-eval-card key-metrics-status-card">
-      <div className="project-eval-card-header">
-        <span className={`doc-status-badge ${colorClass} project-eval-health-badge`}>
-          {HEALTH_LABELS[evaluation.health_status] || evaluation.health_status}
-        </span>
-        {metricText && (
-          <span className={`doc-status-badge ${colorClass} project-eval-metric-badge`}>{metricText}</span>
-        )}
-      </div>
-      <p className="key-metrics-as-of">As of {formatDateTime(evaluation.created_at)}</p>
-    </div>
-  )
-}
-
-// Circular meter (donut ring) for a single 0-100 value - Pie with two
-// slices (value + remainder), full circle via startAngle 90 -> -270. Fill
-// is --accent; track is --code-bg, a lighter neutral step of the same
-// surface family (mirrors the "meter" contract: fill carries state,
-// unfilled track is a lighter step so state reads across the whole ring).
-function ProgressRing({ pct, caption }) {
-  const clamped = Math.max(0, Math.min(100, pct))
-  const data = [
-    { name: 'complete', value: clamped },
-    { name: 'remaining', value: 100 - clamped },
-  ]
-
-  return (
-    <div className="key-metrics-ring-wrap">
-      <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
-          <Pie
-            data={data}
-            dataKey="value"
-            startAngle={90}
-            endAngle={-270}
-            innerRadius="72%"
-            outerRadius="100%"
-            cornerRadius={4}
-            stroke="none"
-            isAnimationActive={false}
-          >
-            <Cell fill="var(--accent)" />
-            <Cell fill="var(--code-bg)" />
-          </Pie>
-        </PieChart>
-      </ResponsiveContainer>
-      <div className="key-metrics-ring-label">
-        <span className="key-metrics-ring-pct">{clamped}%</span>
-        <span className="key-metrics-ring-caption">{caption}</span>
-      </div>
-    </div>
+    <>
+      <span className={`doc-status-badge ${colorClass} project-eval-health-badge overview-stat-badge`}>
+        {HEALTH_LABELS[evaluation.health_status] || evaluation.health_status}
+      </span>
+      <p className="overview-stat-caption">As of {formatDateTime(evaluation.created_at)}</p>
+    </>
   )
 }
 
@@ -198,14 +168,36 @@ function progressFromMetrics(methodology, metrics) {
   return { pct: Math.round(metrics.task_pct_complete * 100), caption: 'Tasks complete' }
 }
 
-function ProgressRingCard({ project, evaluation, loading }) {
+// Copy for the case an evaluation exists but its progress metric came back
+// null - previously indistinguishable from "never evaluated", which read as
+// a flat lie on a project that had just been evaluated. Each methodology can
+// reach a null metric for its own reason (see project-eval/index.ts): Hybrid
+// when nothing is linked to an Epic at all (totalLinked === 0), Agile when no
+// sprint has committed points, Waterfall when there are no Waterfall-side
+// tasks to compute a completion fraction from.
+//
+// The metrics column itself being null is a fourth case: evaluations written
+// before add_project_eval_metrics.sql have no metrics object at all, so
+// there's nothing to compute from until the PM re-runs the evaluation.
+function progressEmptyCopy(methodology, metrics) {
+  if (!metrics) {
+    return 'This evaluation predates progress metrics — re-run Evaluate Project below to see a figure here.'
+  }
+  if (methodology === 'agile') return 'No sprint has committed story points yet.'
+  if (methodology === 'hybrid') return 'No epics with linked work yet.'
+  return 'No tasks yet to measure completion against.'
+}
+
+// Not clamped to 100 the way the donut ring this replaced was. That clamp
+// existed because a ring can't draw past a full circle, and it silently
+// turned an Agile project that delivered 120% of its committed points into a
+// flat "100%". A number has no such constraint, so the real figure shows.
+function ProgressStatCard({ project, evaluation, loading }) {
   if (loading) {
     return <p className="charter-status">Loading...</p>
   }
 
-  const progress = evaluation ? progressFromMetrics(project.methodology, evaluation.metrics) : null
-
-  if (!progress) {
+  if (!evaluation) {
     return (
       <p className="charter-status">
         Not evaluated yet — run Evaluate Project below to see progress here.
@@ -213,10 +205,62 @@ function ProgressRingCard({ project, evaluation, loading }) {
     )
   }
 
+  const progress = progressFromMetrics(project.methodology, evaluation.metrics)
+
+  if (!progress) {
+    return <p className="charter-status">{progressEmptyCopy(project.methodology, evaluation.metrics)}</p>
+  }
+
   return (
     <>
-      <ProgressRing pct={progress.pct} caption={progress.caption} />
-      <p className="key-metrics-as-of">As of {formatDateTime(evaluation.created_at)}</p>
+      <span className="overview-stat-value">{progress.pct}%</span>
+      <p className="overview-stat-caption">{progress.caption}</p>
+    </>
+  )
+}
+
+// Hybrid-only third metric. Agile doesn't get one because its Progress card
+// is already velocity (progressFromMetrics' agile branch reads velocity_ratio),
+// and Waterfall has no sprints at all - so this card only earns its slot on
+// Hybrid, where Progress carries Epic completion and velocity is the genuinely
+// separate second signal. Reads the last entry of useSprintVelocity's existing
+// `sprints` array (chronological, oldest first) rather than issuing a query.
+function VelocityStatCard({ sprints, loading, error }) {
+  if (loading) {
+    return <p className="charter-status">Loading...</p>
+  }
+  if (error) {
+    return <p className="charter-status">{error}</p>
+  }
+
+  const latest = sprints[sprints.length - 1]
+  if (!latest || !latest.committed) {
+    return <p className="charter-status">No sprint has committed points yet.</p>
+  }
+
+  return (
+    <>
+      <span className="overview-stat-value">{Math.round((latest.completed / latest.committed) * 100)}%</span>
+      <p className="overview-stat-caption">
+        {latest.name} — {latest.completed}/{latest.committed} pts
+      </p>
+    </>
+  )
+}
+
+// The headline count, and the same number the section heading badge shows.
+// It's the sum of the hotspot breakdown rows rendered beside it (see
+// buildHotspotRows) - not useCriticalIssues' `issues.length`, which counts a
+// different set entirely.
+function HotspotCountStatCard({ total, pending }) {
+  return (
+    <>
+      <span className={`overview-stat-value ${total > 0 ? 'critical' : 'done'}`}>{total}</span>
+      <p className="overview-stat-caption">
+        {pending
+          ? 'Sprint data still loading — not counted yet'
+          : `Open hotspot${total === 1 ? '' : 's'} across the categories below`}
+      </p>
     </>
   )
 }
@@ -254,7 +298,13 @@ function useRiskSeverityCounts(riskLog) {
 // Risk Log before the IA restructure) with both riskFilter and riskId:
 // riskFilter is the severity view to land on, riskId is the row
 // RiskLogView.jsx flashes on arrival.
+//
+// Capped at KEY_RISK_LIMIT rows. The list used to be unbounded, so a project
+// with fifteen High risks rendered fifteen cards and pushed everything under
+// it off the fold - the point of this panel is the worst few, and the sort
+// above already guarantees those are the ones at the top.
 const RISK_BAND_ORDER = { Critical: 0, High: 1 }
+const KEY_RISK_LIMIT = 4
 
 function riskLinkTo(projectId, risk) {
   const params = new URLSearchParams({ riskFilter: risk.band })
@@ -282,13 +332,16 @@ function KeyRisksCard({ project, riskLog, issues }) {
     return <p className="charter-status">No risks logged yet.</p>
   }
 
+  const shown = keyRisks.slice(0, KEY_RISK_LIMIT)
+  const hidden = keyRisks.length - shown.length
+
   return (
     <>
       {keyRisks.length === 0 ? (
         <p className="charter-status">No Critical or High risks — nothing above the Medium band.</p>
       ) : (
         <ul className="key-risk-list">
-          {keyRisks.map((risk) => (
+          {shown.map((risk) => (
             <li key={risk.key} className="key-risk-item">
               <Link to={riskLinkTo(project.id, risk)} className="key-risk-link">
                 <span className="key-risk-head">
@@ -306,6 +359,21 @@ function KeyRisksCard({ project, riskLog, issues }) {
             </li>
           ))}
         </ul>
+      )}
+
+      {/* Deliberately not the plain "showing X of Y" tail Team Hotspots and
+          Upcoming Milestones use - those tails are a footnote about a table
+          that's already telling the whole story, whereas hidden Critical/High
+          risks are themselves the thing a PM needs to go look at. Reads as a
+          continuation of the list (same row shape, dashed edge) and links to
+          the unfiltered Risk Log so every band is visible on arrival. */}
+      {hidden > 0 && (
+        <Link to={`/projects/${project.id}/risk-log`} className="key-risk-more">
+          <span className="key-risk-more-ellipsis" aria-hidden="true">
+            •••
+          </span>
+          +{hidden} more Critical/High risk{hidden === 1 ? '' : 's'} in the Risk Log
+        </Link>
       )}
 
       {lowerBands.length > 0 && (
@@ -334,109 +402,103 @@ function useIssueStatusCounts(issueLog) {
   return useMemo(() => getIssueStatusCounts(issueLog?.issues), [issueLog])
 }
 
-// Mirrors KeyRisksCard's deep-link pattern: each badge links to the Issues Log
-// section pre-filtered (ProjectDocSectionRoutes.jsx's IssuesLogRoute reads the
-// issueFilter param off the URL; IssueLogView.jsx applies the actual filter -
-// 'OpenGroup' is a deep-link-only value combining Open/In Progress/Blocked,
-// not one of its visible tabs).
-function IssueSummaryCard({ project, issueLog }) {
-  const { open, closed } = useIssueStatusCounts(issueLog)
+// The four hotspot categories as one data array rather than four separate
+// badge cards, so the breakdown that renders them and the "N Hotspots" count
+// in the section heading are computed from the same source and can't disagree
+// - which is exactly what they used to do (the heading read
+// useCriticalIssues' issues.length, which counts every High/Critical risk but
+// no Issue Log entries and no overdue sprints at all).
+//
+// Which rows exist is methodology-gated, same gates the old cards carried:
+// Delayed Tasks and Overdue Phases are Waterfall-side concepts (every Agile
+// task has backlog_status set, and phases don't exist for pure Agile), and
+// Overdue Sprints only exists where sprints do. Issues are universal.
+//
+// Delayed Task / Overdue Phase counts come off useCriticalIssues' `issues`
+// array rather than recomputing from tasks/phases, so those two rows stay
+// consistent with the Key Risks list, which reads the same array.
+//
+// `pending` carries the sprint query's loading/error state - a row with it set
+// renders that text instead of a number and is left out of the total, since
+// counting an unknown as zero would quietly understate the headline figure.
+//
+// Deep links are unchanged: IssuesLogRoute's 'OpenGroup' (a deep-link-only
+// value combining Open/In Progress/Blocked - see IssueLogView.jsx),
+// PlanningTasksRoute's ?taskFilter=delayed, PlanningPhasesRoute's
+// ?phaseFilter=overdue, and Sprint Board's ?sprintFilter=overdue.
+function buildHotspotRows({
+  project,
+  issues,
+  openIssues,
+  overdueSprints,
+  velocityLoading,
+  velocityError,
+  showDelayedTasks,
+  showPhases,
+  showVelocity,
+}) {
+  const rows = [
+    {
+      key: 'issues',
+      label: 'Open issues',
+      count: openIssues,
+      to: `/projects/${project.id}/issues-log?issueFilter=OpenGroup`,
+    },
+  ]
 
-  if (open + closed === 0) {
-    return <p className="charter-status">No issues logged yet.</p>
+  if (showDelayedTasks) {
+    rows.push({
+      key: 'delayed-tasks',
+      label: 'Delayed tasks',
+      count: issues.filter((i) => i.type === 'Delayed Task').length,
+      to: `/projects/${project.id}/planning/tasks?taskFilter=delayed`,
+    })
   }
 
-  return (
-    <div className="key-metrics-severity-badges">
-      <Link
-        to={`/projects/${project.id}/issues-log?issueFilter=OpenGroup`}
-        className="doc-status-badge key-metrics-severity-badge-link critical"
-      >
-        {open} Open
-      </Link>
-      <Link
-        to={`/projects/${project.id}/issues-log?issueFilter=Closed`}
-        className="doc-status-badge key-metrics-severity-badge-link done"
-      >
-        {closed} Closed
-      </Link>
-    </div>
-  )
+  if (showPhases) {
+    rows.push({
+      key: 'overdue-phases',
+      label: 'Overdue phases',
+      count: issues.filter((i) => i.type === 'Overdue Phase').length,
+      to: `/projects/${project.id}/planning/phases?phaseFilter=overdue`,
+    })
+  }
+
+  if (showVelocity) {
+    rows.push({
+      key: 'overdue-sprints',
+      label: 'Overdue sprints',
+      count: overdueSprints.length,
+      to: `/projects/${project.id}/execution/sprint-board?sprintFilter=overdue`,
+      pending: velocityLoading ? 'Loading...' : velocityError ? 'Unavailable' : null,
+    })
+  }
+
+  return rows
 }
 
-// Delayed Task / Overdue Phase counts both come straight off useCriticalIssues'
-// `issues` array instead of recomputing from tasks/phases a second time -
-// that array already carries one entry per delayed task / overdue phase
-// (see useCriticalIssues above), so filtering by `type` here can't drift
-// from the top-level "N Hotspots" count.
-function DelayedTaskCard({ project, issues }) {
-  const count = issues.filter((i) => i.type === 'Delayed Task').length
-
-  if (count === 0) {
-    return <p className="charter-status">No delayed tasks.</p>
-  }
-
+// Label/value rows rather than the pill cards this replaces - the pills were
+// sized for a full-width row of their own, and this panel is now half the
+// page beside the velocity chart. A zero stays plain text: only a non-zero
+// count is a link, since there's nothing to look at behind a zero.
+function HotspotBreakdown({ rows }) {
   return (
-    <div className="key-metrics-severity-badges">
-      <Link
-        to={`/projects/${project.id}/planning/tasks?taskFilter=delayed`}
-        className="doc-status-badge key-metrics-severity-badge-link critical"
-      >
-        {count} Delayed
-      </Link>
-    </div>
-  )
-}
-
-// Overdue Phases has no PM-facing "Issue" or "Risk" concept to fold into -
-// it's its own sub-group rather than merged into one of the other three
-// (see redesign discussion). Links into PlanningPhasesRoute's new
-// ?phaseFilter=overdue view (ProjectSectionRoutes.jsx/PhaseDetailView.jsx).
-function OverduePhaseCard({ project, issues }) {
-  const count = issues.filter((i) => i.type === 'Overdue Phase').length
-
-  if (count === 0) {
-    return <p className="charter-status">No overdue phases.</p>
-  }
-
-  return (
-    <div className="key-metrics-severity-badges">
-      <Link
-        to={`/projects/${project.id}/planning/phases?phaseFilter=overdue`}
-        className="doc-status-badge key-metrics-severity-badge-link critical"
-      >
-        {count} Overdue
-      </Link>
-    </div>
-  )
-}
-
-// Agile/Hybrid only (methodology !== 'waterfall' - same side useSprintVelocity
-// is gated on, since Waterfall has no sprints concept at all). Data comes
-// from useSprintVelocity's overdueSprints, computed alongside the velocity
-// chart's own query rather than a separate fetch. Links into Sprint Board's
-// ?sprintFilter=overdue deep link (ProjectSectionRoutes.jsx's
-// ExecutionSprintBoardRoute), which auto-selects the earliest overdue sprint.
-function OverdueSprintsCard({ project, overdueSprints, loading, error }) {
-  if (loading) {
-    return <p className="charter-status">Loading sprint data...</p>
-  }
-  if (error) {
-    return <p className="charter-status">{error}</p>
-  }
-  if (overdueSprints.length === 0) {
-    return <p className="charter-status">No overdue sprints.</p>
-  }
-
-  return (
-    <div className="key-metrics-severity-badges">
-      <Link
-        to={`/projects/${project.id}/execution/sprint-board?sprintFilter=overdue`}
-        className="doc-status-badge key-metrics-severity-badge-link critical"
-      >
-        {overdueSprints.length} Overdue
-      </Link>
-    </div>
+    <ul className="overview-hotspot-rows">
+      {rows.map((row) => (
+        <li key={row.key} className="overview-hotspot-row">
+          <span className="overview-hotspot-row-label">{row.label}</span>
+          {row.pending ? (
+            <span className="overview-hotspot-row-pending">{row.pending}</span>
+          ) : row.count > 0 ? (
+            <Link to={row.to} className="overview-hotspot-row-count critical">
+              {row.count}
+            </Link>
+          ) : (
+            <span className="overview-hotspot-row-count done">0</span>
+          )}
+        </li>
+      ))}
+    </ul>
   )
 }
 
@@ -747,17 +809,27 @@ function UpcomingMilestonesCard({ milestones, tasks }) {
 }
 
 // New top-level section, same level as Tasks and Milestones / Backlog /
-// Sprint Board / Gantt Chart - Project Status + Progress % is a snapshot of
-// the latest Evaluate Project run (see ProjectStatusCard/ProgressRingCard);
-// Project Hotspots is a live recomputation from already-loaded
-// tasks/phases/riskLog/issueLog props, not tied to that snapshot at all.
-// Progress and Sprint Velocity share one panel/row - the donut is the
-// current velocity_ratio snapshot, the bar chart is the trend behind it
-// (own live query, see useSprintVelocity) - pairing them makes that
-// relationship visible at a glance. Waterfall has no Sprint Velocity (see
-// visibleSides().agile), so the row falls back to just the donut,
-// left-aligned at its normal size - .key-metrics-progress-col's fixed
-// width means it never stretches to fill the row on its own.
+// Sprint Board / Gantt Chart. Laid out as four bands, top to bottom:
+//
+//   1. Metric row - Status / Progress / (Hybrid only) Latest Sprint Velocity
+//      / Hotspots, as compact one-number stat cards. Status and Progress are
+//      a snapshot of the last Evaluate Project run; the other two are live.
+//   2. Sprint Velocity chart beside the hotspot breakdown - the metric row's
+//      Hotspots number is the sum of that breakdown, and the velocity chart
+//      is the trend behind the metric row's velocity figure, so each half of
+//      this row is the detail behind a card directly above it. Waterfall has
+//      no velocity at all (visibleSides().agile), and the breakdown then
+//      takes the full width on its own - .overview-split-row is an auto-fit
+//      grid, so a single child fills the row rather than sitting half-empty.
+//   3. Key Risks, full width - itemized rows that need the horizontal space.
+//   4. Team Hotspots beside Upcoming Milestones - two narrow tables that fit
+//      side by side and used to burn a full page-width row each.
+//
+// The section heading's hotspot badge reads hotspotTotal, NOT
+// useCriticalIssues' issues.length. Those two count different things (see
+// buildHotspotRows) and the old heading disagreed with the breakdown right
+// underneath it. useCriticalIssues is untouched - `issues` still feeds the
+// Key Risks list and two of the breakdown rows.
 function KeyMetricsDashboard({
   project,
   tasks,
@@ -795,92 +867,113 @@ function KeyMetricsDashboard({
   // every Agile task has backlog_status set) - Agile gets Overdue Sprints
   // in its place instead, Hybrid keeps both.
   const showDelayedTasks = project.methodology !== 'agile'
+  // Hybrid only. Agile's Progress card is already a velocity figure
+  // (progressFromMetrics reads velocity_ratio there), so a second velocity
+  // card would be the same measurement twice; Waterfall has no sprints.
+  const showLatestVelocity = showVelocity && project.methodology === 'hybrid'
+
+  const { open: openIssues, closed: closedIssues } = useIssueStatusCounts(issueLog)
+
+  const hotspotRows = useMemo(
+    () =>
+      buildHotspotRows({
+        project,
+        issues,
+        openIssues,
+        overdueSprints,
+        velocityLoading,
+        velocityError,
+        showDelayedTasks,
+        showPhases,
+        showVelocity,
+      }),
+    [
+      project,
+      issues,
+      openIssues,
+      overdueSprints,
+      velocityLoading,
+      velocityError,
+      showDelayedTasks,
+      showPhases,
+      showVelocity,
+    ]
+  )
+
+  // Rows still waiting on (or failing) the sprint query contribute nothing
+  // rather than a zero - see buildHotspotRows. hotspotPending is what tells
+  // the count card to say so instead of presenting a partial sum as final.
+  const hotspotTotal = hotspotRows.reduce((sum, row) => sum + (row.pending ? 0 : row.count), 0)
+  const hotspotPending = hotspotRows.some((row) => row.pending)
 
   return (
     <div className="detail-zone key-metrics-dashboard">
       <h2 className="tasks-heading section-heading-static">
         <span className="toggle-header-main">Overview</span>
-        <span className={`doc-status-badge ${issues.length > 0 ? 'critical' : 'done'}`}>
-          {issues.length > 0 ? `${issues.length} Hotspot${issues.length === 1 ? '' : 's'}` : 'All Clear'}
+        <span className={`doc-status-badge ${hotspotTotal > 0 ? 'critical' : 'done'}`}>
+          {hotspotTotal > 0 ? `${hotspotTotal} Hotspot${hotspotTotal === 1 ? '' : 's'}` : 'All Clear'}
         </span>
       </h2>
 
       {expanded && (
         <div className="key-metrics-body">
-          <div className="key-metrics-panel">
-            <h3 className="key-metrics-panel-heading">Project Status</h3>
-            <ProjectStatusCard evaluation={evaluation} loading={evalLoading} />
+          <div className="overview-stat-grid">
+            <StatCard label="Project Status">
+              <ProjectStatusCard evaluation={evaluation} loading={evalLoading} />
+            </StatCard>
+
+            <StatCard label="Progress">
+              <ProgressStatCard project={project} evaluation={evaluation} loading={evalLoading} />
+            </StatCard>
+
+            {showLatestVelocity && (
+              <StatCard label="Sprint Velocity">
+                <VelocityStatCard sprints={velocitySprints} loading={velocityLoading} error={velocityError} />
+              </StatCard>
+            )}
+
+            <StatCard label="Hotspots">
+              <HotspotCountStatCard total={hotspotTotal} pending={hotspotPending} />
+            </StatCard>
+          </div>
+
+          <div className="overview-split-row">
+            {showVelocity && (
+              <div className="key-metrics-panel">
+                <h3 className="key-metrics-panel-heading">Sprint Velocity</h3>
+                <SprintVelocityCard sprints={velocitySprints} loading={velocityLoading} error={velocityError} />
+              </div>
+            )}
+
+            <div className="key-metrics-panel">
+              <h3 className="key-metrics-panel-heading">Project Hotspots</h3>
+              <HotspotBreakdown rows={hotspotRows} />
+              {closedIssues > 0 && (
+                <p className="key-risk-tail">
+                  <Link to={`/projects/${project.id}/issues-log?issueFilter=Closed`}>
+                    {closedIssues} closed issue{closedIssues === 1 ? '' : 's'}
+                  </Link>{' '}
+                  — not counted as a hotspot.
+                </p>
+              )}
+            </div>
           </div>
 
           <div className="key-metrics-panel">
-            <h3 className="key-metrics-panel-heading">Progress &amp; Velocity</h3>
-            <div className="key-metrics-progress-velocity-row">
-              <div className="key-metrics-progress-col">
-                <ProgressRingCard project={project} evaluation={evaluation} loading={evalLoading} />
-              </div>
-              {showVelocity && (
-                <div className="key-metrics-velocity-col">
-                  <SprintVelocityCard sprints={velocitySprints} loading={velocityLoading} error={velocityError} />
-                </div>
-              )}
-            </div>
+            <h3 className="key-metrics-panel-heading">Key Risks</h3>
+            <KeyRisksCard project={project} riskLog={riskLog} issues={issues} />
           </div>
 
-          <div className="key-metrics-panel">
-            <h3 className="key-metrics-panel-heading">Project Hotspots</h3>
-            <div className="key-metrics-hotspot-groups">
-              <div className="key-metrics-hotspot-group">
-                <h4 className="key-metrics-subheading">Issues</h4>
-                <IssueSummaryCard project={project} issueLog={issueLog} />
-              </div>
-
-              {showDelayedTasks && (
-                <div className="key-metrics-hotspot-group">
-                  <h4 className="key-metrics-subheading">Delayed Tasks</h4>
-                  <DelayedTaskCard project={project} issues={issues} />
-                </div>
-              )}
-
-              {showPhases && (
-                <div className="key-metrics-hotspot-group">
-                  <h4 className="key-metrics-subheading">Overdue Phases</h4>
-                  <OverduePhaseCard project={project} issues={issues} />
-                </div>
-              )}
-
-              {showVelocity && (
-                <div className="key-metrics-hotspot-group">
-                  <h4 className="key-metrics-subheading">Overdue Sprints</h4>
-                  <OverdueSprintsCard
-                    project={project}
-                    overdueSprints={overdueSprints}
-                    loading={velocityLoading}
-                    error={velocityError}
-                  />
-                </div>
-              )}
-
-            </div>
-
-            {/* Key Risks and Team Hotspots sit below the count sub-groups
-                rather than inside .key-metrics-hotspot-groups - that row is a
-                wrapping grid of narrow count columns, and a full-width table
-                or itemized list dropped into it would be squeezed into a
-                200px flex basis. */}
-            <div className="key-metrics-hotspot-detail">
-              <h4 className="key-metrics-subheading">Key Risks</h4>
-              <KeyRisksCard project={project} riskLog={riskLog} issues={issues} />
-            </div>
-
-            <div className="key-metrics-hotspot-detail">
-              <h4 className="key-metrics-subheading">Team Hotspots</h4>
+          <div className="overview-split-row">
+            <div className="key-metrics-panel">
+              <h3 className="key-metrics-panel-heading">Team Hotspots</h3>
               <TeamHotspotsCard project={project} tasks={tasks} collaborators={collaborators || []} />
             </div>
-          </div>
 
-          <div className="key-metrics-panel">
-            <h3 className="key-metrics-panel-heading">Upcoming Milestones</h3>
-            <UpcomingMilestonesCard milestones={milestones} tasks={tasks} />
+            <div className="key-metrics-panel">
+              <h3 className="key-metrics-panel-heading">Upcoming Milestones</h3>
+              <UpcomingMilestonesCard milestones={milestones} tasks={tasks} />
+            </div>
           </div>
         </div>
       )}
