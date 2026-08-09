@@ -18,9 +18,16 @@ import {
   ExecutionSprintRetroRoute,
   ExecutionListAgileRoute,
   ExecutionTeamAgileRoute,
-  ExecutionRiskLogRoute,
-  ExecutionIssueLogRoute,
 } from './ProjectSectionRoutes'
+import {
+  RiskLogRoute,
+  IssuesLogRoute,
+  BudgetTrackerRoute,
+  CommunicationsIndexRoute,
+  ExecCommsRoute,
+  TeamNewsletterRoute,
+  StatusUpdateRoute,
+} from './ProjectDocSectionRoutes'
 import Settings from './Settings'
 import AdminPage from './AdminPage'
 import NotFound from './NotFound'
@@ -120,8 +127,22 @@ function App() {
               <Route path="sprint-retro" element={<ExecutionSprintRetroRoute />} />
               <Route path="list-agile" element={<ExecutionListAgileRoute />} />
               <Route path="team-agile" element={<ExecutionTeamAgileRoute />} />
-              <Route path="risk-log" element={<ExecutionRiskLogRoute />} />
-              <Route path="issue-log" element={<ExecutionIssueLogRoute />} />
+            </Route>
+
+            {/* The tracking group (see PRIMARY_CATEGORIES in
+                projectSections.js) - doc types that came off the Documents
+                checklist to become destinations of their own. All rendered by
+                ProjectDocSectionRoutes.jsx off the same DOCUMENT_TYPES
+                entries the checklist used. */}
+            <Route path="risk-log" element={<RiskLogRoute />} />
+            <Route path="issues-log" element={<IssuesLogRoute />} />
+            <Route path="budget-tracker" element={<BudgetTrackerRoute />} />
+
+            <Route path="communications">
+              <Route index element={<CommunicationsIndexRoute />} />
+              <Route path="exec-comms" element={<ExecCommsRoute />} />
+              <Route path="newsletter" element={<TeamNewsletterRoute />} />
+              <Route path="status-update" element={<StatusUpdateRoute />} />
             </Route>
 
             <Route path="documents" element={<DocumentsRoute />} />

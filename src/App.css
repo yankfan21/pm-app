@@ -2710,6 +2710,17 @@
   gap: 8px;
 }
 
+/* Start-a-doc buttons on the tracking-group pages (Risk Log, Issues Log,
+   Communications, Budget Tracker - see ProjectDocSectionRoutes.jsx). Same
+   row shape as .charter-actions, plus the bottom margin those don't need
+   because they sit inside a .section-header rather than above a View. */
+.doc-page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
 /* Deliberate "paper" surface for generated-document previews (Charter,
    Post-Mortem, ...): a light, warm card that reads as an export/print
    preview rather than another dark app panel. See design/gap-analysis.md

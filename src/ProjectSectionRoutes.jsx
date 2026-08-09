@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { Navigate, useOutletContext, useSearchParams } from 'react-router-dom'
-import { supabase } from './supabaseClient'
 import PhaseDetailView from './PhaseDetailView'
 import GanttChart from './GanttChart'
 import BacklogView from './BacklogView'
@@ -9,9 +8,6 @@ import SprintBoardView from './SprintBoardView'
 import SprintRetroView from './SprintRetroView'
 import TaskListView from './TaskListView'
 import TeamView from './TeamView'
-import RiskLogView from './RiskLogView'
-import IssueLogView from './IssueLogView'
-import { createIssueObject } from './issueLogUtils'
 import { isSprintOverdue } from './sprintStats'
 import { visibleSides, visibleSectionsForCategory } from './projectSections'
 
@@ -319,149 +315,5 @@ export function ExecutionTeamAgileRoute() {
         expanded
       />
     </MethodologySection>
-  )
-}
-
-// Blank risk row shape matching RiskLogView.jsx's own newRow() (not
-// exported from there) - kept in sync manually since this is the only
-// other place that needs to originate a row rather than edit one.
-function newRiskLogRow() {
-  return {
-    id: crypto.randomUUID(),
-    risk: '',
-    likelihood: null,
-    severity: null,
-    mitigation: '',
-    owner: '',
-  }
-}
-
-// Execution's "Log a Risk" entry point - no `side` gate in
-// projectSections.js, so this is reachable regardless of methodology.
-// Reuses RiskLogView.jsx as-is once a risk_logs row exists (identical to
-// how DocumentsRoute.jsx renders it). The one thing Documents' flow
-// doesn't give a PM is a way to create that first row without going
-// through RiskLogFlow's AI Q&A (Evaluate Project) - so when docs.risk_log
-// is still null, this route does its own direct .insert() instead,
-// mirroring MobileProjectRisks.jsx's null-riskLog insert path. It seeds
-// one blank row (rather than an empty array) so the click lands the PM
-// straight into an editable RiskLogView row, matching the one-action
-// "flag it now" mobile gives, rather than requiring a second "+ Add Risk"
-// click. RiskLogFlow.jsx itself is untouched - this is a second, additive
-// creation path, not a replacement.
-export function ExecutionRiskLogRoute() {
-  const { project, docs, setDocs, canEdit } = useOutletContext()
-  const [creating, setCreating] = useState(false)
-  const [error, setError] = useState(null)
-  const riskLog = docs.risk_log
-
-  async function handleStart() {
-    setCreating(true)
-    setError(null)
-
-    const { data, error } = await supabase
-      .from('risk_logs')
-      .insert({ project_id: project.id, risks: [newRiskLogRow()] })
-      .select()
-      .single()
-
-    setCreating(false)
-
-    if (error) {
-      setError(error.message)
-      return
-    }
-
-    setDocs((prev) => ({ ...prev, risk_log: data }))
-  }
-
-  if (!riskLog) {
-    return (
-      <div className="detail-zone">
-        <h2 className="tasks-heading">Log a Risk</h2>
-        {error && <p className="error">{error}</p>}
-        {canEdit ? (
-          <button type="button" className="btn-primary" onClick={handleStart} disabled={creating}>
-            {creating ? 'Starting...' : '+ Log a Risk'}
-          </button>
-        ) : (
-          <p className="charter-status">No risks logged yet.</p>
-        )}
-      </div>
-    )
-  }
-
-  return (
-    <div className="detail-zone">
-      <h2 className="tasks-heading">Log a Risk</h2>
-      <RiskLogView
-        project={project}
-        charter={docs.charter}
-        brief={docs.requirements_brief}
-        riskLog={riskLog}
-        canEdit={canEdit}
-        onUpdate={(updatedRow) => setDocs((prev) => ({ ...prev, risk_log: updatedRow }))}
-      />
-    </div>
-  )
-}
-
-// Execution's "Log an Issue" entry point - mirrors ExecutionRiskLogRoute
-// above exactly, including the direct .insert() bypass for a project's
-// first issue_logs row (Issues Log has no AI Q&A flow at all - see
-// IssueLogFlow.jsx - so this is the same "flag it now" shortcut applied to
-// a doc type that's manual-only everywhere, not just from this entry point).
-export function ExecutionIssueLogRoute() {
-  const { project, docs, setDocs, canEdit } = useOutletContext()
-  const [creating, setCreating] = useState(false)
-  const [error, setError] = useState(null)
-  const issueLog = docs.issue_log
-
-  async function handleStart() {
-    setCreating(true)
-    setError(null)
-
-    const { data, error } = await supabase
-      .from('issue_logs')
-      .insert({ project_id: project.id, issues: [createIssueObject()] })
-      .select()
-      .single()
-
-    setCreating(false)
-
-    if (error) {
-      setError(error.message)
-      return
-    }
-
-    setDocs((prev) => ({ ...prev, issue_log: data }))
-  }
-
-  if (!issueLog) {
-    return (
-      <div className="detail-zone">
-        <h2 className="tasks-heading">Log an Issue</h2>
-        {error && <p className="error">{error}</p>}
-        {canEdit ? (
-          <button type="button" className="btn-primary" onClick={handleStart} disabled={creating}>
-            {creating ? 'Starting...' : '+ Log an Issue'}
-          </button>
-        ) : (
-          <p className="charter-status">No issues logged yet.</p>
-        )}
-      </div>
-    )
-  }
-
-  return (
-    <div className="detail-zone">
-      <h2 className="tasks-heading">Log an Issue</h2>
-      <IssueLogView
-        project={project}
-        issueLog={issueLog}
-        canEdit={canEdit}
-        onUpdate={(updatedRow) => setDocs((prev) => ({ ...prev, issue_log: updatedRow }))}
-      />
-    </div>
   )
 }

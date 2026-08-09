@@ -10,18 +10,32 @@
 //
 // Documents has no entries in SECTIONS_BY_CATEGORY below - it's one flat
 // checklist page (DocumentsRoute.jsx), not broken into further sections, so
-// like Overview it renders no secondary panel.
+// like Overview it renders no secondary panel. Same for Risk Log, Issues Log
+// and Budget Tracker, which are single pages; Communications is the one
+// tracking category with children.
 //
-// `group` is presentation-only: 'phase' for the three categories that track
-// where a project is in its lifecycle, 'reference' for the ones that don't.
-// ProjectNav.jsx draws a divider wherever the group changes between two
-// consecutive entries, so grouping is expressed here rather than by
-// hardcoding a category name in the nav component. Order is unchanged -
-// entries must stay sorted by group for the divider to read correctly.
+// `group` is presentation-only: 'phase' for the categories that track where a
+// project is in its lifecycle, 'tracking' for the live logs a PM works out of
+// continuously (no lifecycle position of their own), 'reference' for the ones
+// that don't fit either. ProjectNav.jsx draws a divider wherever the group
+// changes between two consecutive entries, so grouping is expressed here
+// rather than by hardcoding a category name in the nav component. Entries
+// must stay sorted by group for the divider to read correctly.
+//
+// The 'tracking' group is where the Documents checklist's non-checklist rows
+// went: Risk Log, Issues Log, Communications and Budget Tracker are things a
+// PM returns to over the life of a project, not documents that get generated
+// once and read later, so they're top-level destinations now (see
+// ProjectDocSectionRoutes.jsx). Documents is left holding only the three
+// generate-once-and-read docs: Charter, Requirements Brief, Post-Mortem.
 export const PRIMARY_CATEGORIES = [
   { key: 'overview', label: 'Overview', icon: '◈', group: 'phase' },
   { key: 'planning', label: 'Planning', icon: '▤', group: 'phase' },
   { key: 'execution', label: 'Execution', icon: '▶', group: 'phase' },
+  { key: 'risk-log', label: 'Risk Log', icon: '△', group: 'tracking' },
+  { key: 'issues-log', label: 'Issues Log', icon: '◎', group: 'tracking' },
+  { key: 'communications', label: 'Communications', icon: '▧', group: 'tracking' },
+  { key: 'budget-tracker', label: 'Budget Tracker', icon: '◫', group: 'tracking' },
   { key: 'documents', label: 'Documents', icon: '▦', group: 'reference' },
 ]
 
@@ -39,9 +53,17 @@ export const SECTIONS_BY_CATEGORY = {
     { key: 'sprint-retro', label: 'Sprint Retro', path: 'sprint-retro', side: 'agile' },
     { key: 'list-agile', label: 'List (Backlog)', path: 'list-agile', side: 'agile' },
     { key: 'team-agile', label: 'Team (Backlog)', path: 'team-agile', side: 'agile' },
-    { key: 'risk-log', label: 'Log a Risk', path: 'risk-log' },
-    { key: 'issue-log', label: 'Log an Issue', path: 'issue-log' },
   ],
+  // No `side` on any of these - none of the tracking categories are
+  // methodology-gated, same as Documents.
+  communications: [
+    { key: 'exec-comms', label: 'Exec Comms Plan', path: 'exec-comms' },
+    { key: 'newsletter', label: 'Team Newsletter', path: 'newsletter' },
+    { key: 'status-update', label: 'Status Update', path: 'status-update' },
+  ],
+  'risk-log': [],
+  'issues-log': [],
+  'budget-tracker': [],
   documents: [],
 }
 
