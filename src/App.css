@@ -2903,6 +2903,16 @@
   margin-bottom: 14px;
 }
 
+/* Collapsible header on the latest evaluation card (ProjectEvalView.jsx) -
+   the whole row is the toggle, chevron pinned to the right edge. */
+.project-eval-card-header[role='button'] {
+  cursor: pointer;
+}
+
+.project-eval-chevron {
+  margin-left: auto;
+}
+
 .project-eval-health-badge {
   font-size: 14px;
   padding: 4px 12px;
