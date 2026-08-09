@@ -10,7 +10,7 @@ import './mobile.css'
 function MobileShell() {
   return (
     <div className="mobile-app">
-      <div className="mobile-app-body">
+      <div className="mobile-app-body mobile-app-body--root">
         <Outlet />
         <MobileDesktopLink />
       </div>

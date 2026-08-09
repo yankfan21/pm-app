@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Outlet, useParams } from 'react-router-dom'
+import { Link, Outlet, useParams } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { useAuth } from '../AuthContext'
 import { METHODOLOGY_LABELS } from '../methodology'
@@ -101,6 +101,12 @@ function MobileProjectLayout() {
   return (
     <div className="mobile-app">
       <div className="mobile-topbar">
+        {/* Leading slot in the topbar's existing flex row - the only
+            one-tap route back to the project list. Before this it was two
+            taps (More tab -> Projects Dashboard, MobileProjectMore.jsx). */}
+        <Link to="/m/dashboard" className="mobile-topbar-back" aria-label="All Projects">
+          <span aria-hidden="true">&#8592;</span>
+        </Link>
         <div className="mobile-topbar-title">
           <p className="mobile-topbar-line">
             {project.is_demo && <span className="mobile-demo-badge">✦ Demo</span>}

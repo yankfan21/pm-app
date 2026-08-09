@@ -11,12 +11,28 @@
   min-height: 100dvh;
   background: var(--bg, #f5f6f8);
   color: var(--text, #1a1a1a);
+  /* index.css's #root sets text-align: center for the desktop tree, and /m/
+     routes mount directly under #root (App.jsx) rather than inside .app -
+     which is where the desktop side resets it (App.css's `.app`). Without
+     this every mobile screen title, stub and <p> inherits centering. Reset
+     once here rather than per-component. */
+  text-align: left;
 }
 
 .mobile-app-body {
   flex: 1;
   overflow-y: auto;
   padding: 12px 16px calc(64px + env(safe-area-inset-bottom));
+}
+
+/* Root-level screens only (MobileShell). MobileProjectLayout renders
+   .mobile-topbar above the body and that already absorbs the notch (see its
+   own padding-top below), so the inset must NOT be applied to
+   .mobile-app-body globally - inside a project it would pad twice. Root
+   screens have no top chrome at all, so their <h1> is the first painted
+   element and runs under the status bar without this. */
+.mobile-app-body--root {
+  padding-top: calc(12px + env(safe-area-inset-top));
 }
 
 /* Manual device-mode override (MobileDesktopLink) - deliberately
@@ -52,6 +68,25 @@
   z-index: 10;
 }
 
+/* Leading back affordance (MobileProjectLayout) - one tap to the project
+   list. Deliberately bare: no border, no fill, muted colour, so it reads as
+   chrome rather than a button competing with the project name beside it.
+   Sized to the 44px touch minimum; the topbar's own padding means this only
+   grows the bar when the title block is a single short line. */
+.mobile-topbar-back {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  margin-left: -10px;
+  color: var(--text-muted, #666);
+  font-size: 20px;
+  line-height: 1;
+  text-decoration: none;
+}
+
 .mobile-topbar-title {
   display: flex;
   flex-direction: column;
@@ -67,9 +102,15 @@
   font-size: 15px;
 }
 
+/* No margin of its own. It previously carried margin-right: 6px, which is
+   right in the topbar (where it precedes the name inside a plain <p>) but
+   wrong in MobileDashboard, where it FOLLOWS the name inside a gap: 6px
+   flex row - there it doubled up as 6px gap plus 6px trailing margin and
+   pushed the pill off the row's right edge. The topbar case gets the
+   spacing back via the scoped rule below rather than globally, since
+   .mobile-topbar-line is not a flex container and has no gap to rely on. */
 .mobile-demo-badge {
   display: inline-block;
-  margin-right: 6px;
   padding: 1px 7px;
   border-radius: 999px;
   font-size: 10px;
@@ -78,6 +119,10 @@
   background: var(--demo-accent-bg);
   color: var(--demo-accent);
   border: 1px solid var(--demo-accent-border);
+}
+
+.mobile-topbar-line .mobile-demo-badge {
+  margin-right: 6px;
 }
 
 .mobile-topbar-meta {
@@ -152,6 +197,12 @@
 
 .mobile-more-list-item {
   display: block;
+  /* Rendered as both <Link> and <button> (MobileMore.jsx's Sign out). The
+     anchors take the .mobile-app text-align: left reset, but a <button> gets
+     text-align: center from the UA stylesheet, which inheritance can't
+     override - without this the list would left-align every row except Sign
+     out. */
+  text-align: left;
   padding: 14px 16px;
   border-radius: 10px;
   border: 1px solid var(--border, #e2e2e2);
@@ -161,6 +212,14 @@
   text-decoration: none;
   font-size: 14px;
   font-weight: 500;
+}
+
+/* Separates the two .mobile-more-list groups in MobileProjectMore - items
+   that act on this project above, items that leave it below. */
+.mobile-more-group-divider {
+  height: 1px;
+  margin: 16px 0;
+  background: var(--border, #e2e2e2);
 }
 
 .mobile-error {
@@ -493,28 +552,66 @@
   margin-bottom: 12px;
 }
 
-.mobile-select-field select {
-  font: inherit;
-  padding: 8px;
+/* One rule for every control in every mobile form (Log an Issue, Flag a
+   Risk, Status Update, Contact Support). <input> previously had no selector
+   anywhere in this file at all, so the Owner field and Contact Support's
+   name/email rendered at full UA default beside styled siblings.
+   background/color are explicit for the same reason: without them the
+   controls fall back to the UA's light chrome on a permanently dark page.
+
+   font-size is 16px, NOT `font: inherit`. Inheriting pulled 12px off
+   .mobile-select-field's label, and iOS Safari auto-zooms the viewport on
+   focusing any field under 16px - which would land in the Capacitor build.
+   The 12px label size is unaffected. */
+.mobile-select-field input,
+.mobile-select-field select,
+.mobile-select-field textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
   border-radius: 8px;
   border: 1px solid var(--border, #e2e2e2);
+  font-family: inherit;
+  font-size: 16px;
+  color: var(--text-h);
+  background: var(--bg);
+  box-sizing: border-box;
+}
+
+/* The select's own background/color paints the closed box only - the native
+   popup rows stay UA-light without this. Same neutral token pair desktop
+   uses for the equivalent case (App.css's .contact-support-form option). */
+.mobile-select-field select option {
+  background: var(--option-pending-bg);
+  color: var(--option-pending-text);
 }
 
 /* Flag a Risk form (MobileProjectRisks) --------------------------------- */
 
+/* Everything else this rule used to set now lives in the shared
+   input/select/textarea rule above - only the textarea-specific bit is
+   left. */
 .mobile-select-field textarea {
-  font: inherit;
-  padding: 8px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
   resize: vertical;
-  box-sizing: border-box;
 }
 
+/* Spacing moves from each .mobile-select-field's margin-bottom onto the
+   form's own gap, so a future field wrapper that isn't .mobile-select-field
+   can't collapse flush against its neighbour. The margin is zeroed inside
+   these two forms only (below) - .mobile-select-field is also used
+   standalone, e.g. the Sprint picker in MobileProjectSprintBoard, where
+   there is no flex parent to supply a gap and the margin still does the
+   work. */
 .mobile-risk-form {
   display: flex;
   flex-direction: column;
+  gap: 12px;
   margin-bottom: 20px;
+}
+
+.mobile-risk-form .mobile-select-field,
+.mobile-status-form .mobile-select-field {
+  margin-bottom: 0;
 }
 
 .mobile-risk-form button[type='submit'] {
@@ -535,6 +632,7 @@
 .mobile-status-form {
   display: flex;
   flex-direction: column;
+  gap: 12px;
   margin-bottom: 20px;
 }
 
@@ -616,15 +714,35 @@
   gap: 6px;
 }
 
+/* Deliberately quieter than the card title above it: no fill, muted text,
+   and a border that only tints the existing --border token rather than
+   adding contrast. Two of these render on every card, so at the previous
+   card-bg fill + inherited text colour they read as the loudest thing on
+   the board and the titles came second.
+
+   min-height is the 44px touch minimum; the horizontal padding stays at
+   10px so the pair still fits one line at 320px ("Move to In Progress" +
+   "Move to Done" measure ~235px into a 264px content box). */
 .mobile-board-card-targets button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
   font-size: 11px;
   padding: 5px 10px;
   border-radius: 6px;
   border: 1px solid var(--border, #e2e2e2);
-  background: var(--card-bg, #fff);
-  backdrop-filter: var(--card-backdrop-filter);
-  color: inherit;
+  background: transparent;
+  color: var(--text-muted, #666);
   cursor: pointer;
+}
+
+/* Matches the opacity: 0.5 disabled convention used by the comment form and
+   both quick-log form submits. movingId gates the whole card's buttons
+   while the board_status write is in flight - without this the control
+   looked fully live mid-write. */
+.mobile-board-card-targets button:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 /* Key Metrics Dashboard (MobileProjectMetrics) -------------------------- */
@@ -664,12 +782,13 @@
   border-radius: 999px;
   font-size: 12px;
   font-weight: 600;
-  background: var(--surface-1-solid, #eee);
+  background: var(--pill-neutral-bg);
+  color: var(--pill-neutral-text);
 }
 
-.mobile-health-badge.mobile-health-on_track { background: #d1fae5; color: #065f46; }
-.mobile-health-badge.mobile-health-at_risk { background: #fef3c7; color: #92400e; }
-.mobile-health-badge.mobile-health-off_track { background: #fee2e2; color: #991b1b; }
+.mobile-health-badge.mobile-health-on_track { background: var(--badge-success-bg); color: var(--badge-success-text); }
+.mobile-health-badge.mobile-health-at_risk { background: var(--badge-warning-bg); color: var(--badge-warning-text); }
+.mobile-health-badge.mobile-health-off_track { background: var(--badge-danger-bg); color: var(--badge-danger-text); }
 
 .mobile-metrics-progress {
   font-size: 13px;
@@ -687,13 +806,13 @@
   font-weight: 600;
   padding: 2px 9px;
   border-radius: 999px;
-  background: #d1fae5;
-  color: #065f46;
+  background: var(--badge-success-bg);
+  color: var(--badge-success-text);
 }
 
 .mobile-issues-count.has-issues {
-  background: #fee2e2;
-  color: #991b1b;
+  background: var(--badge-danger-bg);
+  color: var(--badge-danger-text);
 }
 
 /* Shared "you've arrived" flash for a Hotspot tap landing on its source
@@ -715,12 +834,18 @@
 
 .mobile-issue-summary-row {
   display: flex;
+  align-items: center;
   gap: 8px;
   margin-top: 10px;
 }
 
+/* row-gap has to clear the 11px the .mobile-badge-link hit areas extend
+   above and below each pill - without it a wrapped second row (the four
+   Risk severity badges at narrow widths) would have its touch targets
+   overlapping the row above. */
 .mobile-issue-summary-row-wrap {
   flex-wrap: wrap;
+  row-gap: 24px;
 }
 
 /* Project Hotspots' three sub-groups (Issues / Delayed Tasks / Risks) -
@@ -745,9 +870,27 @@
 
 /* A badge that's also a Link (Issues Open/Closed, Delayed Tasks, Risk
    severity) - .mobile-doc-badge's color variants already win on
-   specificity, this just strips the anchor's default underline. */
+   specificity, this strips the anchor's default underline and extends the
+   touch area.
+
+   The pill paints at 22px tall, well under the 44px touch minimum, and
+   these are the Overview Hotspots' navigation targets. The hit area is
+   extended with a transparent pseudo-element rather than by growing the
+   badge, because .mobile-doc-badge is shared with two contexts that must
+   not get taller: the Documents rows (inside an already-padded 48px flex
+   button) and the Issues/Risks meta lines (inline inside a <p>). Only the
+   Hotspots badges carry .mobile-badge-link, so only they are affected.
+   -11px vertical takes 22px to 44px; -4px horizontal is half the parent's
+   8px gap, so neighbouring hit areas meet without overlapping. */
 .mobile-badge-link {
+  position: relative;
   text-decoration: none;
+}
+
+.mobile-badge-link::after {
+  content: '';
+  position: absolute;
+  inset: -11px -4px;
 }
 
 /* Documents (MobileProjectDocuments) ------------------------------------ */
@@ -809,20 +952,40 @@
   color: var(--text-muted, #666);
 }
 
+/* line-height is explicit so the painted height is deterministic (18 + 2*2
+   padding = 22px) - .mobile-badge-link's touch-area pseudo-element below is
+   sized against it. */
 .mobile-doc-badge {
   flex-shrink: 0;
+  display: inline-block;
   font-size: 11px;
   font-weight: 600;
+  line-height: 18px;
   padding: 2px 9px;
   border-radius: 999px;
-  background: var(--surface-1-solid, #eee);
+  background: var(--pill-neutral-bg);
+  color: var(--pill-neutral-text);
 }
 
-.mobile-doc-badge.pending { background: #e5e7eb; color: #374151; }
-.mobile-doc-badge.done { background: #d1fae5; color: #065f46; }
-.mobile-doc-badge.partial { background: #fef3c7; color: #92400e; }
-.mobile-doc-badge.critical { background: #fee2e2; color: #991b1b; }
-.mobile-doc-badge.severe { background: #7f1d1d; color: #fee2e2; }
+/* Same four token pairs .mobile-status-badge already uses. Previously
+   hardcoded light pastels (#d1fae5 / #fef3c7 / #fee2e2 ...) - the app is a
+   single permanent dark palette (index.css), so those painted light chips
+   on dark navy everywhere they appeared. */
+.mobile-doc-badge.pending { background: var(--pill-neutral-bg); color: var(--pill-neutral-text); }
+.mobile-doc-badge.done { background: var(--badge-success-bg); color: var(--badge-success-text); }
+.mobile-doc-badge.partial { background: var(--badge-warning-bg); color: var(--badge-warning-text); }
+.mobile-doc-badge.critical { background: var(--badge-danger-bg); color: var(--badge-danger-text); }
+
+/* severe (Critical risk band) has to out-weigh critical (High band), but
+   there's no fifth token tier and this pass isn't inventing one - it takes
+   the same danger fill plus the existing danger border token to separate
+   the two. */
+.mobile-doc-badge.severe {
+  background: var(--badge-danger-bg);
+  color: var(--badge-danger-text);
+  border: 1px solid var(--badge-danger-border);
+  padding: 1px 8px;
+}
 
 .mobile-doc-chevron {
   flex-shrink: 0;
