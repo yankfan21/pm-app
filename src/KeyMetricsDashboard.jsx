@@ -146,6 +146,29 @@ function ProjectStatusCard({ evaluation, loading }) {
   )
 }
 
+function formatDayMonth(iso) {
+  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+}
+
+// Evaluations written before velocity moved onto the most-recent-COMPLETED
+// sprint have a metrics object with velocity_ratio but no velocity_sprint_*
+// keys at all. Those figures are still real numbers from a real sprint, just
+// chosen by the old start_date rule, so they keep the old caption rather
+// than claiming a sprint name this snapshot never recorded. Absent key, not
+// null value, is the tell - a current evaluation with nothing qualifying
+// writes the key explicitly as null.
+function isLegacyVelocityMetrics(metrics) {
+  return !('velocity_sprint_name' in metrics)
+}
+
+function velocityCaption(metrics) {
+  if (isLegacyVelocityMetrics(metrics)) return 'Velocity, most recent sprint'
+  const when = metrics.velocity_sprint_completed_at
+    ? `, completed ${formatDayMonth(metrics.velocity_sprint_completed_at)}`
+    : ''
+  return `${metrics.velocity_sprint_name}${when}`
+}
+
 // Which metric reads as "Progress %" depends on methodology - same fields
 // formatEvalMetric() already knows how to format, see projectEvalHealth.js.
 // Agile has no task/milestone completion figure at all (no dates, no fixed
@@ -158,7 +181,7 @@ function progressFromMetrics(methodology, metrics) {
   if (!metrics) return null
   if (methodology === 'agile') {
     if (metrics.velocity_ratio == null) return null
-    return { pct: Math.round(metrics.velocity_ratio * 100), caption: 'Velocity, most recent sprint' }
+    return { pct: Math.round(metrics.velocity_ratio * 100), caption: velocityCaption(metrics) }
   }
   if (methodology === 'hybrid') {
     if (metrics.milestone_pct_complete == null) return null
@@ -172,18 +195,29 @@ function progressFromMetrics(methodology, metrics) {
 // null - previously indistinguishable from "never evaluated", which read as
 // a flat lie on a project that had just been evaluated. Each methodology can
 // reach a null metric for its own reason (see project-eval/index.ts): Hybrid
-// when nothing is linked to an Epic at all (totalLinked === 0), Agile when no
-// sprint has committed points, Waterfall when there are no Waterfall-side
-// tasks to compute a completion fraction from.
+// when nothing is linked to an Epic at all (totalLinked === 0), Waterfall
+// when there are no Waterfall-side tasks to compute a completion fraction
+// from, and Agile in either of two distinct ways that used to share one
+// (wrong) sentence:
+//   - no sprint qualifies as completed at all, or
+//   - one does, but carries no story-point estimates to compute a ratio from.
+// The old copy said "no sprint has committed story points yet" for both,
+// which on a project with several closed-out sprints is simply false.
 //
-// The metrics column itself being null is a fourth case: evaluations written
-// before add_project_eval_metrics.sql have no metrics object at all, so
-// there's nothing to compute from until the PM re-runs the evaluation.
+// The metrics column itself being null is a further case: evaluations
+// written before add_project_eval_metrics.sql have no metrics object at all,
+// so there's nothing to compute from until the PM re-runs the evaluation.
 function progressEmptyCopy(methodology, metrics) {
   if (!metrics) {
     return 'This evaluation predates progress metrics — re-run Evaluate Project below to see a figure here.'
   }
-  if (methodology === 'agile') return 'No sprint has committed story points yet.'
+  if (methodology === 'agile') {
+    if (isLegacyVelocityMetrics(metrics)) return 'No sprint has committed story points yet.'
+    if (metrics.velocity_sprint_name) {
+      return `${metrics.velocity_sprint_name} is the most recent completed sprint, but its items carry no story-point estimates — nothing to measure velocity against.`
+    }
+    return 'No completed sprint yet — a sprint counts once all its items are done and its retro is locked.'
+  }
   if (methodology === 'hybrid') return 'No epics with linked work yet.'
   return 'No tasks yet to measure completion against.'
 }
@@ -223,9 +257,13 @@ function ProgressStatCard({ project, evaluation, loading }) {
 // is already velocity (progressFromMetrics' agile branch reads velocity_ratio),
 // and Waterfall has no sprints at all - so this card only earns its slot on
 // Hybrid, where Progress carries Epic completion and velocity is the genuinely
-// separate second signal. Reads the last entry of useSprintVelocity's existing
-// `sprints` array (chronological, oldest first) rather than issuing a query.
-function VelocityStatCard({ sprints, loading, error }) {
+// separate second signal.
+//
+// Reads useSprintVelocity's completedSprint rather than the last entry of its
+// `sprints` trend array. Those disagree on purpose: the trend's last entry is
+// whatever starts latest, including a sprint nobody has touched yet, which is
+// the bug this card used to display.
+function VelocityStatCard({ completedSprint, loading, error }) {
   if (loading) {
     return <p className="charter-status">Loading...</p>
   }
@@ -233,16 +271,35 @@ function VelocityStatCard({ sprints, loading, error }) {
     return <p className="charter-status">{error}</p>
   }
 
-  const latest = sprints[sprints.length - 1]
-  if (!latest || !latest.committed) {
-    return <p className="charter-status">No sprint has committed points yet.</p>
+  if (!completedSprint) {
+    return (
+      <p className="charter-status">
+        No completed sprint yet — a sprint counts once all its items are done and its retro is locked.
+      </p>
+    )
+  }
+
+  const { name, completedAt, committed, completed } = completedSprint
+  const when = completedAt ? `, completed ${formatDayMonth(completedAt)}` : ''
+
+  // A closed-out sprint whose items were never pointed has no ratio to show,
+  // but it is still a real completed sprint - saying so beats falling back to
+  // the "nothing qualifies" copy above, which would be wrong.
+  if (!committed) {
+    return (
+      <p className="charter-status">
+        {name}
+        {when} — no story-point estimates to measure velocity against.
+      </p>
+    )
   }
 
   return (
     <>
-      <span className="overview-stat-value">{Math.round((latest.completed / latest.committed) * 100)}%</span>
+      <span className="overview-stat-value">{Math.round((completed / committed) * 100)}%</span>
       <p className="overview-stat-caption">
-        {latest.name} — {latest.completed}/{latest.committed} pts
+        {name}
+        {when} — {completed}/{committed} pts
       </p>
     </>
   )
@@ -504,13 +561,59 @@ function HotspotBreakdown({ rows }) {
 
 const VELOCITY_SPRINT_LIMIT = 5
 
+// The single-sprint headline figure, deliberately stricter than the trend
+// below it. A sprint counts as completed only when every linked item is
+// board_status 'done' - and it has at least one linked item, since an empty
+// sprint satisfies "all done" vacuously - AND its retro is locked. Most
+// recent = newest retro lock time, not the latest start_date the trend uses:
+// a sprint created and pointed for next month is "latest by start_date"
+// while showing nothing done, which is exactly how this figure came to read
+// 0% on projects delivering perfectly well.
+//
+// Neither signal alone holds up in the real data: retros get locked early,
+// before the work lands, and "all items done" carries no timestamp to order
+// by. Locking is the one explicit "this sprint is closed" act a PM performs,
+// and a locked retro is read-only (SprintRetroView's effectiveCanEdit), so
+// its updated_at stops moving at the lock.
+//
+// Byte-for-byte the same rule as project-eval/index.ts's
+// mostRecentCompletedSprint(), duplicated rather than shared because Edge
+// Functions are self-contained single files here with no import path back
+// into src/. Change one, change the other.
+//
+// Returns null when nothing qualifies - the caller must render that as its
+// own state, never as 0%.
+function pickCompletedSprint(sprints, bySprintId, retros) {
+  const lockedRetroBySprintId = new Map()
+  ;(retros || []).forEach((r) => {
+    if (r.is_locked) lockedRetroBySprintId.set(r.sprint_id, r)
+  })
+
+  const qualifying = (sprints || [])
+    .map((s) => ({ sprint: s, agg: bySprintId.get(s.id), retro: lockedRetroBySprintId.get(s.id) }))
+    .filter(({ agg, retro }) => agg && agg.total > 0 && agg.done === agg.total && retro)
+    .sort((a, b) => (b.retro.updated_at || '').localeCompare(a.retro.updated_at || ''))
+
+  if (qualifying.length === 0) return null
+
+  const { sprint, agg, retro } = qualifying[0]
+  return {
+    name: sprint.name,
+    completedAt: retro.updated_at || null,
+    committed: agg.committed,
+    completed: agg.completed,
+  }
+}
+
 // Mirrors project-eval/index.ts's velocityStats() (committed-vs-completed
 // story points per sprint, chronological, capped to the most recent 5
 // sprints with committed points) but as a live client query instead of
 // text fed to Claude - that function's output never gets persisted as
 // structured data, so there's nothing to read it back from. Project-wide
-// (no milestone_id scoping), matching what velocity_ratio in the
-// project_evaluations snapshot already uses for its single-sprint figure.
+// (no milestone_id scoping). This `sprints` array is the trend the chart
+// draws; the separate completedSprint below is the headline figure, and the
+// two answer different questions - an unstarted sprint belongs in a trend
+// line and doesn't belong in a velocity percentage.
 //
 // Also derives overdueSprints (Project Hotspots' Overdue Sprints count) off
 // this same sprints+tasks query rather than issuing a second one - id/name/
@@ -523,6 +626,7 @@ const VELOCITY_SPRINT_LIMIT = 5
 // only ever contains sprints that do have linked tasks.
 function useSprintVelocity(projectId, enabled) {
   const [sprints, setSprints] = useState([])
+  const [completedSprint, setCompletedSprint] = useState(null)
   const [overdueSprints, setOverdueSprints] = useState([])
   const [loading, setLoading] = useState(enabled)
   const [error, setError] = useState(null)
@@ -553,11 +657,38 @@ function useSprintVelocity(projectId, enabled) {
         return
       }
 
+      // sprint_retros has no project_id - it hangs off sprint_id only (see
+      // sprint_retros_schema.sql), so this can't join the parallel batch
+      // above; it needs the sprint ids first. Same two-step
+      // ProjectDetailLayout's loadSprints/retro fetch already does. Skipped
+      // entirely when the project has no sprints.
+      const sprintIds = (sprintRes.data || []).map((s) => s.id)
+      let retroData = []
+      if (sprintIds.length > 0) {
+        const retroRes = await supabase
+          .from('sprint_retros')
+          .select('sprint_id, is_locked, updated_at')
+          .in('sprint_id', sprintIds)
+
+        if (cancelled) return
+
+        if (retroRes.error) {
+          setError(retroRes.error.message)
+          setLoading(false)
+          return
+        }
+        retroData = retroRes.data || []
+      }
+
       const bySprintId = new Map()
       ;(taskRes.data || []).forEach((t) => {
-        const entry = bySprintId.get(t.sprint_id) || { committed: 0, completed: 0 }
+        const entry = bySprintId.get(t.sprint_id) || { total: 0, done: 0, committed: 0, completed: 0 }
+        entry.total += 1
         entry.committed += t.story_points ?? 0
-        if (t.board_status === 'done') entry.completed += t.story_points ?? 0
+        if (t.board_status === 'done') {
+          entry.done += 1
+          entry.completed += t.story_points ?? 0
+        }
         bySprintId.set(t.sprint_id, entry)
       })
 
@@ -568,6 +699,7 @@ function useSprintVelocity(projectId, enabled) {
         .map((s) => ({ name: s.name, ...bySprintId.get(s.id) }))
 
       setSprints(relevant)
+      setCompletedSprint(pickCompletedSprint(sprintRes.data || [], bySprintId, retroData))
 
       const todayStr = new Date().toISOString().slice(0, 10)
       const overdue = (sprintRes.data || [])
@@ -585,7 +717,7 @@ function useSprintVelocity(projectId, enabled) {
     }
   }, [projectId, enabled])
 
-  return { sprints, overdueSprints, loading, error }
+  return { sprints, completedSprint, overdueSprints, loading, error }
 }
 
 // Committed = the sprint's planned points (neutral gray, a "plan" tone);
@@ -854,6 +986,7 @@ function KeyMetricsDashboard({
   const showVelocity = visibleSides(project.methodology).agile
   const {
     sprints: velocitySprints,
+    completedSprint,
     overdueSprints,
     loading: velocityLoading,
     error: velocityError,
@@ -928,7 +1061,11 @@ function KeyMetricsDashboard({
 
             {showLatestVelocity && (
               <StatCard label="Sprint Velocity">
-                <VelocityStatCard sprints={velocitySprints} loading={velocityLoading} error={velocityError} />
+                <VelocityStatCard
+                  completedSprint={completedSprint}
+                  loading={velocityLoading}
+                  error={velocityError}
+                />
               </StatCard>
             )}
 
