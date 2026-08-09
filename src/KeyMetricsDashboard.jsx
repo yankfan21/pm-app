@@ -110,9 +110,11 @@ function useCriticalIssues(project, tasks, phases, riskLog) {
 // and its own empty state.
 //
 // `action` (optional) is a control that sits on the label line, right-
-// aligned - only Progress uses it, for its Update Progress button. The
-// label always renders inside the same head row whether or not one is
-// given, so a card without an action looks exactly as it did before.
+// aligned - only Progress uses it, for its Update Progress button, which
+// refreshes the Sprint Velocity card beside it as well (one metrics object,
+// see useLiveProgressMetrics). The label always renders inside the same head
+// row whether or not one is given, so a card without an action looks exactly
+// as it did before.
 function StatCard({ label, action, children }) {
   return (
     <div className="overview-stat-card">
@@ -186,48 +188,81 @@ function velocityCaption(metrics) {
 // sprint) is used as the closest available progress proxy - it's a
 // per-sprint snapshot, not cumulative project completion, so the caption
 // says so rather than passing it off as the same thing Waterfall/Hybrid show.
+//
+// Hybrid reads task_pct_complete, exactly as Waterfall does - it used to
+// have its own branch showing milestone_pct_complete ("Epic work complete"),
+// a blend of Waterfall-side tasks and backlog items linked to an Epic. That
+// blend answered a question nobody was asking on a summary card: the two
+// halves of a Hybrid project move at different speeds and for different
+// reasons, which is why the Sprint Velocity card beside this one exists.
+// Splitting them means each card is one measurement of one thing.
+// milestone_pct_complete is still written and still read elsewhere (see
+// project-eval/index.ts) - it just isn't what this card shows.
 function progressFromMetrics(methodology, metrics) {
   if (!metrics) return null
   if (methodology === 'agile') {
     if (metrics.velocity_ratio == null) return null
     return { pct: Math.round(metrics.velocity_ratio * 100), caption: velocityCaption(metrics) }
   }
-  if (methodology === 'hybrid') {
-    if (metrics.milestone_pct_complete == null) return null
-    return { pct: Math.round(metrics.milestone_pct_complete * 100), caption: 'Epic work complete' }
-  }
   if (metrics.task_pct_complete == null) return null
   return { pct: Math.round(metrics.task_pct_complete * 100), caption: 'Tasks complete' }
+}
+
+// What a sprint has to do to count as "completed" here is a rule a PM can't
+// infer from a blank card, so the copy states it. Shared by both cards that
+// can end up with no velocity figure to show - the metrics-fed one below and
+// VelocityStatCard's own live query - which reach that state independently
+// but mean exactly the same thing by it.
+const NO_COMPLETED_SPRINT_COPY =
+  'No completed sprint yet — a sprint counts once all its items are done and its retro is locked.'
+
+// Why a velocity_ratio came back null, for the two distinct reasons that
+// used to share one (wrong) sentence:
+//   - no sprint qualifies as completed at all, or
+//   - one does, but carries no story-point estimates to compute a ratio from.
+// The old copy said "no sprint has committed story points yet" for both,
+// which on a project with several closed-out sprints is simply false. That
+// wording survives only for legacy metrics objects, which genuinely can't
+// tell the two apart (no velocity_sprint_name key to check).
+function velocityEmptyCopy(metrics) {
+  if (isLegacyVelocityMetrics(metrics)) return 'No sprint has committed story points yet.'
+  if (metrics.velocity_sprint_name) {
+    return `${metrics.velocity_sprint_name} is the most recent completed sprint, but its items carry no story-point estimates — nothing to measure velocity against.`
+  }
+  return NO_COMPLETED_SPRINT_COPY
 }
 
 // Copy for the case an evaluation exists but its progress metric came back
 // null - previously indistinguishable from "never evaluated", which read as
 // a flat lie on a project that had just been evaluated. Each methodology can
-// reach a null metric for its own reason (see project-eval/index.ts): Hybrid
-// when nothing is linked to an Epic at all (totalLinked === 0), Waterfall
-// when there are no Waterfall-side tasks to compute a completion fraction
-// from, and Agile in either of two distinct ways that used to share one
-// (wrong) sentence:
-//   - no sprint qualifies as completed at all, or
-//   - one does, but carries no story-point estimates to compute a ratio from.
-// The old copy said "no sprint has committed story points yet" for both,
-// which on a project with several closed-out sprints is simply false.
+// reach a null metric for its own reason (see project-eval/index.ts):
+// Waterfall and Hybrid when there are no Waterfall-side tasks to compute a
+// completion fraction from (both read task_pct_complete now - see
+// progressFromMetrics above), and Agile per velocityEmptyCopy.
 //
 // The metrics column itself being null is a further case: evaluations
 // written before add_project_eval_metrics.sql have no metrics object at all,
 // so there's nothing to compute from until the PM re-runs the evaluation.
-function progressEmptyCopy(methodology, metrics) {
+//
+// Hybrid evaluations saved before task_pct_complete was added to that object
+// land in their own case - they have metrics, just not this key - and the
+// "no tasks yet" line would be a flat lie on a Hybrid project that has
+// plenty. Absent key, not null value, is the tell (same distinction
+// isLegacyVelocityMetrics draws): a Hybrid project genuinely holding no
+// Waterfall-side tasks gets the key written as an explicit null and reads
+// the ordinary empty line. A *live* object missing the key means something
+// else entirely - the deployed project-eval predates the change - so that
+// one stays neutral rather than blaming an evaluation it didn't come from.
+function progressEmptyCopy(methodology, metrics, isLive) {
   if (!metrics) {
     return 'This evaluation predates progress metrics — re-run Evaluate Project below to see a figure here.'
   }
-  if (methodology === 'agile') {
-    if (isLegacyVelocityMetrics(metrics)) return 'No sprint has committed story points yet.'
-    if (metrics.velocity_sprint_name) {
-      return `${metrics.velocity_sprint_name} is the most recent completed sprint, but its items carry no story-point estimates — nothing to measure velocity against.`
-    }
-    return 'No completed sprint yet — a sprint counts once all its items are done and its retro is locked.'
+  if (methodology === 'agile') return velocityEmptyCopy(metrics)
+  if (methodology === 'hybrid' && !('task_pct_complete' in metrics)) {
+    return isLive
+      ? 'No task-completion figure came back for this project.'
+      : 'This evaluation predates task-completion tracking on Hybrid projects — use Update Progress for a current figure.'
   }
-  if (methodology === 'hybrid') return 'No epics with linked work yet.'
   return 'No tasks yet to measure completion against.'
 }
 
@@ -278,7 +313,7 @@ function ProgressStatCard({ project, evaluation, loading, liveMetrics }) {
   if (!progress) {
     return (
       <>
-        <p className="charter-status">{progressEmptyCopy(project.methodology, metrics)}</p>
+        <p className="charter-status">{progressEmptyCopy(project.methodology, metrics, isLive)}</p>
         {isLive && <LiveTag />}
       </>
     )
@@ -301,9 +336,17 @@ function ProgressStatCard({ project, evaluation, loading, liveMetrics }) {
 // project_evaluations write - so this costs nothing and produces no
 // document.
 //
+// One hook, one request, one metrics object, feeding every card that reads
+// one - Progress on all three methodologies, and Sprint Velocity on Hybrid.
+// That object is whole-project by construction (the edge function computes
+// every key its methodology defines, not just the one the caller asked
+// about), so a second button per card would buy nothing but a second
+// identical round trip and the chance for two cards to sit at two different
+// instants.
+//
 // The result lives here and nowhere else: no context, no store, no URL
 // param, and explicitly not written back into docs.project_evaluation.
-// Navigating away from Overview unmounts this and the card falls back to the
+// Navigating away from Overview unmounts this and the cards fall back to the
 // persisted snapshot. That's the intended contract, not a bug - the snapshot
 // is what every other reader of this project (dashboard cards, mobile,
 // exports) sees, and a refresh that only this PM's current page knows about
@@ -356,27 +399,63 @@ function useLiveProgressMetrics(project, latestEvaluationId) {
 // Hybrid-only third metric. Agile doesn't get one because its Progress card
 // is already velocity (progressFromMetrics' agile branch reads velocity_ratio),
 // and Waterfall has no sprints at all - so this card only earns its slot on
-// Hybrid, where Progress carries Epic completion and velocity is the genuinely
-// separate second signal.
+// Hybrid, where Progress carries Waterfall-side task completion and velocity
+// is the genuinely separate second signal for the Agile side.
 //
-// Reads useSprintVelocity's completedSprint rather than the last entry of its
-// `sprints` trend array. Those disagree on purpose: the trend's last entry is
-// whatever starts latest, including a sprint nobody has touched yet, which is
-// the bug this card used to display.
-function VelocityStatCard({ completedSprint, loading, error }) {
-  if (loading) {
+// Two sources, same rule. By default it reads useSprintVelocity's
+// completedSprint - a live client query, so this card is never tied to the
+// last Evaluate Project run the way Progress is. After Update Progress it
+// switches to that refresh's metrics instead, so one click moves both cards
+// to the same instant rather than leaving them describing two different
+// moments. The two agree by construction: pickCompletedSprint and the edge
+// function's mostRecentCompletedSprint are the same rule (see the note on
+// pickCompletedSprint below).
+//
+// What the metrics path can't carry is the point counts - velocity_ratio is
+// a ratio, and committed/completed aren't in that object - so the live
+// caption drops the "34/40 pts" tail the query path shows. The percentage,
+// the sprint name and the completion date are identical either way.
+//
+// completedSprint reads useSprintVelocity's own field rather than the last
+// entry of its `sprints` trend array. Those disagree on purpose: the trend's
+// last entry is whatever starts latest, including a sprint nobody has touched
+// yet, which is the bug this card used to display.
+function VelocityStatCard({ completedSprint, loading, error, liveMetrics }) {
+  const isLive = liveMetrics != null
+
+  if (loading && !isLive) {
     return <p className="charter-status">Loading...</p>
   }
-  if (error) {
+  // A live refresh stands on its own - it's a server-side recompute from
+  // current rows, so it has a real figure even when this component's own
+  // query came back empty or failed.
+  if (error && !isLive) {
     return <p className="charter-status">{error}</p>
   }
 
-  if (!completedSprint) {
+  if (isLive) {
+    if (liveMetrics.velocity_ratio == null) {
+      return (
+        <>
+          <p className="charter-status">{velocityEmptyCopy(liveMetrics)}</p>
+          <LiveTag />
+        </>
+      )
+    }
+
     return (
-      <p className="charter-status">
-        No completed sprint yet — a sprint counts once all its items are done and its retro is locked.
-      </p>
+      <>
+        <div className="overview-stat-value-row">
+          <span className="overview-stat-value">{Math.round(liveMetrics.velocity_ratio * 100)}%</span>
+          <LiveTag />
+        </div>
+        <p className="overview-stat-caption">{velocityCaption(liveMetrics)}</p>
+      </>
     )
+  }
+
+  if (!completedSprint) {
+    return <p className="charter-status">{NO_COMPLETED_SPRINT_COPY}</p>
   }
 
   const { name, completedAt, committed, completed } = completedSprint
@@ -1043,9 +1122,11 @@ function UpcomingMilestonesCard({ milestones, tasks }) {
 // New top-level section, same level as Tasks and Milestones / Backlog /
 // Sprint Board / Gantt Chart. Laid out as four bands, top to bottom:
 //
-//   1. Metric row - Status / Progress / (Hybrid only) Latest Sprint Velocity
-//      / Hotspots, as compact one-number stat cards. Status and Progress are
-//      a snapshot of the last Evaluate Project run; the other two are live.
+//   1. Metric row - Status / Progress / (Hybrid only) Sprint Velocity /
+//      Hotspots, as compact one-number stat cards. Status and Progress are a
+//      snapshot of the last Evaluate Project run; the other two are live.
+//      Progress and Sprint Velocity both also accept a live recompute from
+//      the Update Progress button (see useLiveProgressMetrics).
 //   2. Sprint Velocity chart beside the hotspot breakdown - the metric row's
 //      Hotspots number is the sum of that breakdown, and the velocity chart
 //      is the trend behind the metric row's velocity figure, so each half of
@@ -1172,7 +1253,11 @@ function KeyMetricsDashboard({
                   loading={metricsRefreshing}
                   loadingLabel="Updating"
                   onClick={refreshMetrics}
-                  title="Recompute this figure from current project data. Does not create an evaluation."
+                  title={
+                    showLatestVelocity
+                      ? 'Recompute Progress and Sprint Velocity from current project data. Does not create an evaluation.'
+                      : 'Recompute this figure from current project data. Does not create an evaluation.'
+                  }
                 >
                   <span className="stat-action-icon" aria-hidden="true">
                     ↻
@@ -1192,10 +1277,16 @@ function KeyMetricsDashboard({
 
             {showLatestVelocity && (
               <StatCard label="Sprint Velocity">
+                {/* Same liveMetrics object the Progress card reads, so the
+                    single Update Progress button above moves both cards in
+                    one click and one request. Only rendered on Hybrid, which
+                    is the only methodology whose metrics object carries both
+                    a task figure and the velocity_* keys. */}
                 <VelocityStatCard
                   completedSprint={completedSprint}
                   loading={velocityLoading}
                   error={velocityError}
+                  liveMetrics={liveMetrics}
                 />
               </StatCard>
             )}

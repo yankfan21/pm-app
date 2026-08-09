@@ -754,6 +754,13 @@ Deno.serve(async (req) => {
         const totalLinkedCompleted = mStats.reduce((sum, s) => sum + s.linkedCompleted, 0)
         metrics = {
           milestone_pct_complete: totalLinked > 0 ? totalLinkedCompleted / totalLinked : null,
+          // Same Waterfall-side figure the else-branch below computes, and
+          // for the same reason it passes null for dependsOnByTaskId. This
+          // is what Overview's Progress card reads on Hybrid now;
+          // milestone_pct_complete above stays for every other reader of
+          // this object (formatEvalMetric's badge copy, and the evaluate
+          // branch's own Epic evidence).
+          task_pct_complete: taskStats(waterfallTasks, todayStr, null).pctComplete,
           ...velocityMetrics(mostRecentCompletedSprint(inputs.sprints, sprintTasks, inputs.retros)),
         }
       } else {
@@ -888,14 +895,19 @@ Deno.serve(async (req) => {
           }
         })
 
-        // Metrics for Hybrid: Epic completion is the primary signal,
-        // computed project-wide across every Epic's linked work (the same
-        // linkedCompleted/linkedTotal milestoneStats() already computes
-        // per Epic, just summed). Velocity is the secondary signal -
-        // Epics are dateless now so there's no single "currently active"
-        // one left to anchor a sprint choice to, so this uses the most
-        // recent completed sprint project-wide instead, same computation
-        // Agile's velocity_ratio already uses.
+        // Metrics for Hybrid: three signals, one per card Overview shows.
+        // Waterfall-side task completion (tStats above, the same figure a
+        // pure Waterfall project's Progress card reads) is what Overview's
+        // Progress card displays. Epic completion is computed project-wide
+        // across every Epic's linked work (the same linkedCompleted/
+        // linkedTotal milestoneStats() already computes per Epic, just
+        // summed) - Overview no longer displays it, but it still reaches
+        // formatEvalMetric's badge copy and is the honest Hybrid-specific
+        // signal to keep on the record. Velocity is the third - Epics are
+        // dateless now so there's no single "currently active" one left to
+        // anchor a sprint choice to, so this uses the most recent completed
+        // sprint project-wide instead, same computation Agile's
+        // velocity_ratio already uses.
         const totalLinked = mStats.reduce((sum, s) => sum + s.linkedTotal, 0)
         const totalLinkedCompleted = mStats.reduce((sum, s) => sum + s.linkedCompleted, 0)
         const milestonePctComplete = totalLinked > 0 ? totalLinkedCompleted / totalLinked : null
@@ -903,7 +915,11 @@ Deno.serve(async (req) => {
         const completedSprint = mostRecentCompletedSprint(sprints, sprintTasks, retros)
         contextParts.push(completedSprintText(completedSprint))
 
-        metrics = { milestone_pct_complete: milestonePctComplete, ...velocityMetrics(completedSprint) }
+        metrics = {
+          milestone_pct_complete: milestonePctComplete,
+          task_pct_complete: tStats.pctComplete,
+          ...velocityMetrics(completedSprint),
+        }
       } else {
         metrics = { task_pct_complete: tStats.pctComplete }
       }
