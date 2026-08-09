@@ -61,7 +61,7 @@ export function PlanningPhasesRoute() {
   // "Overdue Phases" badge (KeyMetricsDashboard.jsx's OverduePhaseCard).
   const phaseFilter = searchParams.get('phaseFilter')
 
-  // Same clear-after-flash contract as DocumentsRoute's clearRiskId /
+  // Same clear-after-flash contract as RiskLogRoute's clearRiskId /
   // PlanningTasksRoute's taskId handling - see PhaseDetailView's
   // highlightPhaseId effect for the arrival side.
   function clearPhaseId() {

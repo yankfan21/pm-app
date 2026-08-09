@@ -29,7 +29,8 @@ const PRIORITIES = ['Low', 'Medium', 'High']
 const STATUSES = ['Open', 'In Progress', 'Blocked', 'Closed']
 const STATUS_FILTERS = ['All', ...STATUSES]
 // 'OpenGroup' is a deep-link-only filter value (Key Metrics Dashboard's
-// Issue Summary card - see KeyMetricsDashboard.jsx/DocumentsRoute.jsx),
+// Issue Summary card, wired through ProjectDocSectionRoutes.jsx's
+// IssuesLogRoute - see KeyMetricsDashboard.jsx),
 // combining Open/In Progress/Blocked - not a visible tab, since none of the
 // literal-status tabs above map 1:1 to it.
 const VALID_FILTER_VALUES = ['All', 'OpenGroup', ...STATUSES]

@@ -16,13 +16,22 @@ import PostMortemFlow from './PostMortemFlow'
 import PostMortemView from './PostMortemView'
 import ProjectEvalFlow from './ProjectEvalFlow'
 import ProjectEvalView from './ProjectEvalView'
-import { HEALTH_LABELS, HEALTH_COLOR_CLASS } from './projectEvalHealth'
 
 // Single source of truth for every AI-generated project document type.
-// The Documents checklist, generate flow, and view on the project detail
-// page are all driven from this list - add a new entry (plus its own
+// The Documents checklist, the tracking-group nav sections (Risk Log, Issues
+// Log, Communications, Budget Tracker - see ProjectDocSectionRoutes.jsx),
+// Overview's Project Evaluation section, and ProjectDetailLayout's docs
+// loading are all driven from this list - add a new entry (plus its own
 // Flow/View components) to add a document type, nothing else needs to
 // hardcode the list of doc types.
+//
+// This stays the full registry of doc types even though the Documents page
+// now shows only three of them. It's what ProjectDetailLayout.jsx's
+// loadDocs() iterates to populate `docs` (which every consumer, including
+// Overview's risk/issue cards and each tracking route, reads out of), so
+// dropping an entry here would stop that doc type loading at all rather than
+// just removing it from a page. Which entries the Documents page renders is
+// the `documentsPage` flag below / DOCUMENTS_PAGE_TYPES at the bottom.
 //
 // - table: the Supabase table (one row per project, project_id column)
 // - docProp: the prop name the View/Flow components use for "this document"
@@ -33,9 +42,9 @@ import { HEALTH_LABELS, HEALTH_COLOR_CLASS } from './projectEvalHealth'
 //   the third arg.
 // - buildInsert(result): maps what the Flow's onGenerated callback receives
 //   into the column(s) to insert
-// - group (optional): key into DOCUMENT_GROUPS below - entries sharing a
-//   group are nested under one collapsible group row instead of rendering
-//   as flat top-level checklist rows
+// - documentsPage (optional): true for the doc types that render as rows on
+//   the Documents checklist (DocumentsRoute.jsx). Everything else here is
+//   reached through its own nav section or Overview instead
 // - repeatable (optional): true for doc types with many rows per project
 //   (e.g. a dated log) rather than the default one-row-per-project/upsert
 //   shape - ProjectDetail.jsx loads/appends these as an array instead of
@@ -47,16 +56,13 @@ import { HEALTH_LABELS, HEALTH_COLOR_CLASS } from './projectEvalHealth'
 //   of what available() returns later (e.g. if the project gets unarchived)
 // - actionLabel (repeatable types only): the text after "+ " on the
 //   always-visible trigger button (e.g. "Log Status Update")
-// - badgeFor(doc) (optional): overrides the checklist row's default status
-//   pill - returns { label, colorClass } (colorClass matches a status-dot/
-//   doc-status-badge modifier: done/pending/partial/critical), or null to
-//   fall back to the default Generated/Not started (or "N logged") badge
 export const DOCUMENT_TYPES = [
   {
     key: 'charter',
     label: 'Charter',
     table: 'charters',
     docProp: 'charter',
+    documentsPage: true,
     FlowComponent: CharterFlow,
     ViewComponent: CharterView,
     context: () => ({}),
@@ -67,6 +73,7 @@ export const DOCUMENT_TYPES = [
     label: 'Requirements Brief',
     table: 'requirements_briefs',
     docProp: 'brief',
+    documentsPage: true,
     FlowComponent: RequirementsFlow,
     ViewComponent: RequirementsView,
     context: (docs) => ({ charter: docs.charter }),
@@ -97,7 +104,6 @@ export const DOCUMENT_TYPES = [
     label: 'Exec Comms Plan',
     table: 'exec_comms_plans',
     docProp: 'doc',
-    group: 'communications',
     FlowComponent: (props) => <CommsFlow variant="exec" {...props} />,
     ViewComponent: (props) => <CommsView variant="exec" {...props} />,
     context: (docs) => ({
@@ -114,7 +120,6 @@ export const DOCUMENT_TYPES = [
     label: 'Team Newsletter',
     table: 'team_newsletters',
     docProp: 'doc',
-    group: 'communications',
     FlowComponent: (props) => <CommsFlow variant="newsletter" {...props} />,
     ViewComponent: (props) => <CommsView variant="newsletter" {...props} />,
     context: (docs) => ({
@@ -131,7 +136,6 @@ export const DOCUMENT_TYPES = [
     label: 'Status Update',
     table: 'status_updates',
     docProp: 'entries',
-    group: 'communications',
     // Many rows per project, no upsert/replace semantics - the checklist
     // and ProjectDetail.jsx branch on this flag to load/append an array
     // instead of loading/replacing a single row.
@@ -163,17 +167,10 @@ export const DOCUMENT_TYPES = [
     docProp: 'evaluations',
     repeatable: true,
     actionLabel: 'Evaluate Project',
-    // The checklist row shows the latest evaluation's health status
-    // (color-coded) instead of a generic count, since at-a-glance health is
-    // more useful here than activity volume.
-    badgeFor: (doc) => {
-      if (!doc || doc.length === 0) return { label: 'Not started', colorClass: 'pending' }
-      const status = doc[0].health_status
-      return {
-        label: HEALTH_LABELS[status] || 'Evaluated',
-        colorClass: HEALTH_COLOR_CLASS[status] || 'pending',
-      }
-    },
+    // Had a badgeFor() here (latest evaluation's health status as the
+    // checklist row's pill) - dropped along with the checklist row itself now
+    // that this renders as a section on Overview, where ProjectEvalView's own
+    // health badge is right there in the card.
     FlowComponent: ProjectEvalFlow,
     ViewComponent: ProjectEvalView,
     context: (docs, tasks, extra) => ({
@@ -195,6 +192,7 @@ export const DOCUMENT_TYPES = [
     label: 'Post-Mortem',
     table: 'post_mortems',
     docProp: 'postMortem',
+    documentsPage: true,
     // Only worth writing once the project is done - starting one on an
     // active project would mean reflecting on a story that isn't over yet.
     available: (project) => project.status === 'Archived',
@@ -210,41 +208,16 @@ export const DOCUMENT_TYPES = [
   },
 ]
 
-// Labels for the groups referenced by DOCUMENT_TYPES entries' `group` field.
-// A doc type with no `group` renders as a flat top-level checklist row.
-export const DOCUMENT_GROUPS = {
-  communications: { label: 'Communications' },
-}
-
-// Reduces the flat DOCUMENT_TYPES list into the ordered rows the checklist
-// renders: ungrouped entries pass through as-is, and consecutive entries
-// sharing a `group` are collected under one group row (in DOCUMENT_TYPES'
-// order, so where a group's items are declared controls where the group
-// header appears). Keeps DOCUMENT_TYPES itself flat - a single source of
-// truth - while ProjectDetail.jsx does one grouping pass before rendering.
-export function groupDocumentTypes(types) {
-  const rows = []
-  const groupRowByKey = {}
-
-  types.forEach((docType) => {
-    if (!docType.group) {
-      rows.push({ type: 'doc', docType })
-      return
-    }
-
-    let groupRow = groupRowByKey[docType.group]
-    if (!groupRow) {
-      groupRow = {
-        type: 'group',
-        key: docType.group,
-        label: DOCUMENT_GROUPS[docType.group]?.label || docType.group,
-        items: [],
-      }
-      groupRowByKey[docType.group] = groupRow
-      rows.push(groupRow)
-    }
-    groupRow.items.push(docType)
-  })
-
-  return rows
-}
+// The three doc types the Documents checklist renders, in DOCUMENT_TYPES
+// order: Charter, Requirements Brief, Post-Mortem. Everything else in the
+// registry above is reached through its own nav section (Risk Log, Issues
+// Log, Communications' three items, Budget Tracker) or through Overview
+// (Project Evaluation) instead of being a row here.
+//
+// DOCUMENT_GROUPS/groupDocumentTypes() are gone with the same change - the
+// only group that ever existed was Communications, which is a nav category
+// with real children now (SECTIONS_BY_CATEGORY in projectSections.js) rather
+// than a collapsible row nesting three checklist items. Nothing consumed
+// either export besides DocumentsRoute.jsx; mobile/MobileProjectDocuments.jsx
+// has always had its own local copy of the grouping pass.
+export const DOCUMENTS_PAGE_TYPES = DOCUMENT_TYPES.filter((d) => d.documentsPage)
