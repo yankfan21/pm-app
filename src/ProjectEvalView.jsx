@@ -55,15 +55,18 @@ function EvalCard({ project, evaluation, exportable, collapsible = false }) {
         >
           &#9432;
         </span>
-        <span className="project-eval-date">{formatDate(evaluation.created_at)}</span>
-        {collapsible && (
-          <span
-            className={`chevron project-eval-chevron ${expanded ? '' : 'collapsed'}`}
-            aria-hidden="true"
-          >
-            ▾
-          </span>
-        )}
+        {/* Date and chevron travel as one block pinned to the right edge.
+            Wrapped rather than laid out as two siblings so that when the
+            metric badge is long enough to wrap the row, the date can't end
+            up stranded on a different line from its chevron. */}
+        <span className="project-eval-header-meta">
+          <span className="project-eval-date">{formatDate(evaluation.created_at)}</span>
+          {collapsible && (
+            <span className={`chevron ${expanded ? '' : 'collapsed'}`} aria-hidden="true">
+              ▾
+            </span>
+          )}
+        </span>
       </div>
 
       {showBody && (

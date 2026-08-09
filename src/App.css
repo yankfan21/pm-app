@@ -2896,11 +2896,18 @@
   background: var(--bg);
 }
 
+/* Wraps rather than overflowing: the metric badge carries the long-form
+   metric text (formatEvalMetric's `longer` wording - three clauses joined
+   with "; "), and .doc-status-badge's flex-shrink: 0 held it at max-content
+   width, shoving the date/chevron out past the card's right border on any
+   viewport narrower than that one line. */
 .project-eval-card-header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 12px;
   margin-bottom: 14px;
+  min-width: 0;
 }
 
 /* Collapsible header on the latest evaluation card (ProjectEvalView.jsx) -
@@ -2909,8 +2916,32 @@
   cursor: pointer;
 }
 
-.project-eval-chevron {
+/* Overrides .doc-status-badge's flex-shrink: 0 for this one badge - it's the
+   only status pill holding a sentence rather than a word, so it's the one
+   that has to give. The max-width is what keeps the row a single line: flex
+   line-breaking measures an item at its *hypothetical* size (max-content
+   here, ~820px of metric copy), so without a cap the badge alone consumes
+   the row and shoves the date/chevron onto a line of their own even at full
+   desktop width. Capping it clamps that hypothetical size, so everything
+   still fits on one line and the badge wraps its own text instead. Stays
+   auto-width when the copy is short (Waterfall projects, early evaluations),
+   since there's no flex-grow. */
+.project-eval-metric-badge {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 60%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+/* Date + chevron: one right-pinned, non-shrinking block, so they stay
+   together and stay inside the card padding at every width. */
+.project-eval-header-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   margin-left: auto;
+  flex-shrink: 0;
 }
 
 .project-eval-health-badge {
