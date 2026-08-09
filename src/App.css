@@ -94,11 +94,29 @@
 }
 
 /* Takes the slack between brand and account footer so the footer sits at the
-   bottom of the rail on a short page and gets pushed down (rail scrolls) on a
-   tall project nav. */
+   bottom of the rail on a short page, and scrolls on its own when the project
+   nav is taller than the space left over.
+
+   Its own scroll container, not just flex slack: flex-basis 0 plus
+   min-height: 0 means this box gets exactly the leftover height with no
+   min-content floor, so without overflow here a tall nav (project mode -
+   ProjectNav + ProjectAdmin) simply overflowed *visible* straight down over
+   .account-menu, which is flex-shrink: 0 and stays parked at the bottom of
+   the rail's viewport-height flex line. That put Archive Project on top of
+   the avatar/Contact Support/Sign out at viewport heights under ~900px -
+   never on a desktop monitor, always on an iPad getting the desktop layout.
+   Clipping the overflow here keeps the footer pinned and gives the nav its
+   own scrollbar instead.
+
+   overflow-x: hidden because overflow-y: auto computes overflow-x from
+   visible to auto, and ManageAccess's invite input inside .project-nav-admin
+   would otherwise put a horizontal scrollbar under the nav. */
 .app-sidebar-body {
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
 }
 
 .app-sidebar-nav {
