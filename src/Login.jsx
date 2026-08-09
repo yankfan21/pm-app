@@ -12,7 +12,7 @@ function Login() {
   const location = useLocation()
   const [searchParams] = useSearchParams()
   // /login?mode=signup opens straight into "create account" - that is where
-  // the marketing page's "Start free" CTAs point (Marketing.jsx), so a
+  // the marketing page's "Try ConfidantPM free" CTAs point (Marketing.jsx), so a
   // visitor who clicked "sign up" is not shown a sign-in form to dismiss
   // first. Read once as lazy initial state, not synced to the URL after
   // mount: the in-page toggle below owns `mode` from then on, and re-reading

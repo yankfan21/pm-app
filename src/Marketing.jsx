@@ -93,7 +93,7 @@ function Marketing() {
             no bolted-on AI gimmicks.
           </p>
           <Link to={SIGN_UP_PATH} className="marketing-cta">
-            Start free — no credit card
+            Try ConfidantPM free
           </Link>
         </section>
 
@@ -131,7 +131,7 @@ function Marketing() {
       <footer className="marketing-footer">
         <p className="marketing-footer-tagline">Structure the chaos. One step at a time.</p>
         <Link to={SIGN_UP_PATH} className="marketing-cta">
-          Start free
+          Try ConfidantPM free
         </Link>
         <p className="marketing-copyright">{COPYRIGHT_LINE}</p>
       </footer>
