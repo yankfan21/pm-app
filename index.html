@@ -59,6 +59,34 @@
       name="twitter:description"
       content="ConfidantPM's assistant reads your documents, asks the right questions, and never moves without your sign-off. Built for Waterfall, Agile, and Hybrid teams — it adapts to how you already work."
     />
+    <!-- Static like the rest of this <head>, and for the same reason: "/" is
+         the only route a crawler reaches, so this describes the marketing
+         page. description is kept byte-identical to the meta description and
+         og:description above - keep all three in sync by hand.
+         No "offers" node on purpose: pricing is not finalized, and a guessed
+         price in structured data is worse than an absent one. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "SoftwareApplication",
+            "name": "ConfidantPM",
+            "description": "ConfidantPM's assistant reads your documents, asks the right questions, and never moves without your sign-off. Built for Waterfall, Agile, and Hybrid teams — it adapts to how you already work.",
+            "url": "https://confidantpm.com/",
+            "applicationCategory": "BusinessApplication",
+            "operatingSystem": "Web"
+          },
+          {
+            "@type": "Organization",
+            "name": "ConfidantPM",
+            "url": "https://confidantpm.com/",
+            "logo": "https://confidantpm.com/icon-512.png"
+          }
+        ]
+      }
+    </script>
+
     <script>
       document.documentElement.setAttribute('data-theme', 'dark')
     </script>
