@@ -80,7 +80,15 @@
   font-size: 19px;
   font-weight: 700;
   letter-spacing: -0.4px;
-  color: var(--accent);
+  color: #f1f5f9;
+}
+
+/* Shared by all five wordmark sites (sidebar rail, the three
+   login/password screens, marketing nav): the name renders as a light
+   "Confidant" with only "PM" carrying the brand blue, so the accent lives
+   on this one inner span rather than tinting the whole string. */
+.brand-name-accent {
+  color: var(--accent-strong);
 }
 
 /* 11px rather than the top bar's 12px: the rail leaves this ~200px to wrap
@@ -5006,8 +5014,9 @@ textarea.risk-cell-input {
 
 .login-brand-name {
   font-size: 20px;
-  font-weight: 500;
-  color: #e2e8f0;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: #f1f5f9;
 }
 
 .login-brand-tagline {
@@ -5855,8 +5864,9 @@ textarea.risk-cell-input {
 
 .marketing-nav-name {
   font-size: 18px;
-  font-weight: 600;
-  letter-spacing: -0.2px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: #f1f5f9;
 }
 
 .marketing-nav-signin {

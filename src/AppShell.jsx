@@ -60,7 +60,7 @@ function AppSidebar({ nav }) {
           <ConfidantLogo size={28} />
         </span>
         <span className="app-sidebar-brand-text">
-          <span className="app-sidebar-brand-name">ConfidantPM</span>
+          <span className="app-sidebar-brand-name">Confidant<span className="brand-name-accent">PM</span></span>
           <span className="app-sidebar-tagline">Structure the chaos. One step at a time.</span>
         </span>
       </Link>

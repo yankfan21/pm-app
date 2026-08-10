@@ -75,7 +75,7 @@ function Marketing() {
       <header className="marketing-nav">
         <Link to="/" className="marketing-nav-brand">
           <ConfidantLogo size={32} />
-          <span className="marketing-nav-name">ConfidantPM</span>
+          <span className="marketing-nav-name">Confidant<span className="brand-name-accent">PM</span></span>
         </Link>
         <Link to="/login" className="marketing-nav-signin">
           Sign in

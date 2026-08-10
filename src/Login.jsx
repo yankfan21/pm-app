@@ -103,7 +103,7 @@ function Login() {
         <div className="login-panel-form-inner">
           <div className="login-brand">
             <ConfidantLogo size={40} />
-            <span className="login-brand-name">ConfidantPM</span>
+            <span className="login-brand-name">Confidant<span className="brand-name-accent">PM</span></span>
             <p className="login-brand-tagline">Structure the chaos. One step at a time.</p>
           </div>
 
