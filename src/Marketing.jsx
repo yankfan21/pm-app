@@ -90,7 +90,7 @@ function Marketing() {
           <p className="marketing-hero-sub">
             ConfidantPM&apos;s assistant reads your documents, asks the right questions, and
             never moves without your sign-off. Built for Waterfall, Agile, and Hybrid teams —
-            no bolted-on AI gimmicks.
+            it adapts to how you already work.
           </p>
           <Link to={SIGN_UP_PATH} className="marketing-cta">
             Try ConfidantPM free
@@ -109,12 +109,12 @@ function Marketing() {
           </ul>
         </section>
 
-        <section className="marketing-section marketing-boutique">
-          <h2 className="marketing-section-heading">Built for boutique teams</h2>
-          <p className="marketing-boutique-body">
-            ConfidantPM is built for boutique shops and independent PMs — not enterprise
-            procurement cycles. One flat price per account, not per seat. No SSO paperwork, no
-            admin bloat. Just a tool that works the way a small, sharp team actually works.
+        <section className="marketing-section marketing-real-teams">
+          <h2 className="marketing-section-heading">Built for how real teams work</h2>
+          <p className="marketing-real-teams-body">
+            ConfidantPM is built for teams who want a tool that keeps up with them — no
+            enterprise procurement cycles, no SSO paperwork, no admin bloat. Just a tool that
+            works the way a sharp team actually works.
           </p>
         </section>
 
