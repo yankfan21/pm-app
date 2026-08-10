@@ -1350,6 +1350,18 @@
   border-color: var(--accent-border);
 }
 
+/* Suspense fallback for the lazily-loaded route chunks (see App.jsx). Fills
+   the viewport so the spinner lands centre-screen no matter which route is
+   in flight, and sizes/colours the inherited .btn-spinner below. */
+.route-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-size: 32px;
+  color: var(--text-muted);
+}
+
 .btn-spinner {
   display: inline-block;
   width: 0.85em;

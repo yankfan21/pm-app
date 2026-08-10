@@ -1,63 +1,136 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
-import ProjectsShell from './ProjectsShell'
-import Dashboard from './Dashboard'
-import AllProjects from './AllProjects'
-import ProjectDetailPage from './ProjectDetailPage'
-import ProjectOverviewRoute from './ProjectOverviewRoute'
-import PlanningTasksRoute from './PlanningTasksRoute'
-import DocumentsRoute from './DocumentsRoute'
-import {
-  PlanningIndexRoute,
-  PlanningPhasesRoute,
-  PlanningBacklogRoute,
-  ExecutionIndexRoute,
-  ExecutionGanttRoute,
-  ExecutionListWaterfallRoute,
-  ExecutionTeamWaterfallRoute,
-  ExecutionSprintBoardRoute,
-  ExecutionSprintRetroRoute,
-  ExecutionListAgileRoute,
-  ExecutionTeamAgileRoute,
-} from './ProjectSectionRoutes'
-import {
-  RiskLogRoute,
-  IssuesLogRoute,
-  BudgetTrackerRoute,
-  CommunicationsIndexRoute,
-  ExecCommsRoute,
-  TeamNewsletterRoute,
-  StatusUpdateRoute,
-} from './ProjectDocSectionRoutes'
-import Settings from './Settings'
-import AdminPage from './AdminPage'
-import NotFound from './NotFound'
-import Login from './Login'
+import { lazy, Suspense } from 'react'
+import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import Marketing from './Marketing'
-import ForgotPassword from './ForgotPassword'
-import ResetPassword from './ResetPassword'
-import RequireAuth from './RequireAuth'
-import AdminRoute from './AdminRoute'
-import DeviceModeGate from './DeviceModeGate'
+import Spinner from './Spinner'
 import { useTheme } from './hooks/useTheme'
 import { useDeviceMode } from './hooks/useDeviceMode'
-import MobileShell from './mobile/MobileShell'
-import MobileDashboard from './mobile/MobileDashboard'
-import MobileNotifications from './mobile/MobileNotifications'
-import MobileMore from './mobile/MobileMore'
-import MobileSettings from './mobile/MobileSettings'
-import MobileProjectLayout from './mobile/MobileProjectLayout'
-import MobileProjectTasks from './mobile/MobileProjectTasks'
-import MobileTaskDetail from './mobile/MobileTaskDetail'
-import MobileProjectSprintBoard from './mobile/MobileProjectSprintBoard'
-import MobileProjectMetrics from './mobile/MobileProjectMetrics'
-import MobileProjectMore from './mobile/MobileProjectMore'
-import MobileProjectDocuments from './mobile/MobileProjectDocuments'
-import MobileProjectRisks from './mobile/MobileProjectRisks'
-import MobileProjectIssues from './mobile/MobileProjectIssues'
-import MobileProjectStatusUpdate from './mobile/MobileProjectStatusUpdate'
-import MobileProjectExecComms from './mobile/MobileProjectExecComms'
-import MobileProjectNewsletter from './mobile/MobileProjectNewsletter'
 import './App.css'
+
+// Every route below is code-split with React.lazy so the public marketing
+// page ("/") - the one route a logged-out visitor actually lands on - no
+// longer drags the whole authenticated app (plus exceljs/jsPDF/html2canvas
+// pulled in transitively by the export helpers) into the entry chunk.
+// Marketing itself stays a static import for that reason: it's the entry
+// point, so deferring it would only add a round trip.
+//
+// The named-export route modules (ProjectSectionRoutes /
+// ProjectDocSectionRoutes) need the .then() unwrap because React.lazy takes
+// a module whose *default* is the component. Each named route from the same
+// file resolves to the same chunk, so this is one network fetch per module,
+// not one per route.
+const ProjectsShell = lazy(() => import('./ProjectsShell'))
+const Dashboard = lazy(() => import('./Dashboard'))
+const AllProjects = lazy(() => import('./AllProjects'))
+const ProjectDetailPage = lazy(() => import('./ProjectDetailPage'))
+const ProjectOverviewRoute = lazy(() => import('./ProjectOverviewRoute'))
+const PlanningTasksRoute = lazy(() => import('./PlanningTasksRoute'))
+const DocumentsRoute = lazy(() => import('./DocumentsRoute'))
+
+const PlanningIndexRoute = lazy(() =>
+  import('./ProjectSectionRoutes').then((m) => ({ default: m.PlanningIndexRoute })),
+)
+const PlanningPhasesRoute = lazy(() =>
+  import('./ProjectSectionRoutes').then((m) => ({ default: m.PlanningPhasesRoute })),
+)
+const PlanningBacklogRoute = lazy(() =>
+  import('./ProjectSectionRoutes').then((m) => ({ default: m.PlanningBacklogRoute })),
+)
+const ExecutionIndexRoute = lazy(() =>
+  import('./ProjectSectionRoutes').then((m) => ({ default: m.ExecutionIndexRoute })),
+)
+const ExecutionGanttRoute = lazy(() =>
+  import('./ProjectSectionRoutes').then((m) => ({ default: m.ExecutionGanttRoute })),
+)
+const ExecutionListWaterfallRoute = lazy(() =>
+  import('./ProjectSectionRoutes').then((m) => ({ default: m.ExecutionListWaterfallRoute })),
+)
+const ExecutionTeamWaterfallRoute = lazy(() =>
+  import('./ProjectSectionRoutes').then((m) => ({ default: m.ExecutionTeamWaterfallRoute })),
+)
+const ExecutionSprintBoardRoute = lazy(() =>
+  import('./ProjectSectionRoutes').then((m) => ({ default: m.ExecutionSprintBoardRoute })),
+)
+const ExecutionSprintRetroRoute = lazy(() =>
+  import('./ProjectSectionRoutes').then((m) => ({ default: m.ExecutionSprintRetroRoute })),
+)
+const ExecutionListAgileRoute = lazy(() =>
+  import('./ProjectSectionRoutes').then((m) => ({ default: m.ExecutionListAgileRoute })),
+)
+const ExecutionTeamAgileRoute = lazy(() =>
+  import('./ProjectSectionRoutes').then((m) => ({ default: m.ExecutionTeamAgileRoute })),
+)
+
+const RiskLogRoute = lazy(() =>
+  import('./ProjectDocSectionRoutes').then((m) => ({ default: m.RiskLogRoute })),
+)
+const IssuesLogRoute = lazy(() =>
+  import('./ProjectDocSectionRoutes').then((m) => ({ default: m.IssuesLogRoute })),
+)
+const BudgetTrackerRoute = lazy(() =>
+  import('./ProjectDocSectionRoutes').then((m) => ({ default: m.BudgetTrackerRoute })),
+)
+const CommunicationsIndexRoute = lazy(() =>
+  import('./ProjectDocSectionRoutes').then((m) => ({ default: m.CommunicationsIndexRoute })),
+)
+const ExecCommsRoute = lazy(() =>
+  import('./ProjectDocSectionRoutes').then((m) => ({ default: m.ExecCommsRoute })),
+)
+const TeamNewsletterRoute = lazy(() =>
+  import('./ProjectDocSectionRoutes').then((m) => ({ default: m.TeamNewsletterRoute })),
+)
+const StatusUpdateRoute = lazy(() =>
+  import('./ProjectDocSectionRoutes').then((m) => ({ default: m.StatusUpdateRoute })),
+)
+
+const Settings = lazy(() => import('./Settings'))
+const AdminPage = lazy(() => import('./AdminPage'))
+const NotFound = lazy(() => import('./NotFound'))
+const Login = lazy(() => import('./Login'))
+const ForgotPassword = lazy(() => import('./ForgotPassword'))
+const ResetPassword = lazy(() => import('./ResetPassword'))
+const RequireAuth = lazy(() => import('./RequireAuth'))
+const AdminRoute = lazy(() => import('./AdminRoute'))
+const DeviceModeGate = lazy(() => import('./DeviceModeGate'))
+
+const MobileShell = lazy(() => import('./mobile/MobileShell'))
+const MobileDashboard = lazy(() => import('./mobile/MobileDashboard'))
+const MobileNotifications = lazy(() => import('./mobile/MobileNotifications'))
+const MobileMore = lazy(() => import('./mobile/MobileMore'))
+const MobileSettings = lazy(() => import('./mobile/MobileSettings'))
+const MobileProjectLayout = lazy(() => import('./mobile/MobileProjectLayout'))
+const MobileProjectTasks = lazy(() => import('./mobile/MobileProjectTasks'))
+const MobileTaskDetail = lazy(() => import('./mobile/MobileTaskDetail'))
+const MobileProjectSprintBoard = lazy(() => import('./mobile/MobileProjectSprintBoard'))
+const MobileProjectMetrics = lazy(() => import('./mobile/MobileProjectMetrics'))
+const MobileProjectMore = lazy(() => import('./mobile/MobileProjectMore'))
+const MobileProjectDocuments = lazy(() => import('./mobile/MobileProjectDocuments'))
+const MobileProjectRisks = lazy(() => import('./mobile/MobileProjectRisks'))
+const MobileProjectIssues = lazy(() => import('./mobile/MobileProjectIssues'))
+const MobileProjectStatusUpdate = lazy(() => import('./mobile/MobileProjectStatusUpdate'))
+const MobileProjectExecComms = lazy(() => import('./mobile/MobileProjectExecComms'))
+const MobileProjectNewsletter = lazy(() => import('./mobile/MobileProjectNewsletter'))
+
+// Shown only while a lazy route chunk is in flight - deliberately minimal so
+// it reads as a momentary pause rather than a screen of its own. Reuses the
+// same Spinner/.btn-spinner as the rest of the app.
+function RouteFallback() {
+  return (
+    <div className="route-fallback" role="status" aria-live="polite">
+      <Spinner />
+    </div>
+  )
+}
+
+// Pathless layout route that owns the Suspense boundary for every lazy route.
+// See the comment on "/" in App below for why the boundary is here rather
+// than wrapped around <Routes>.
+function SuspenseBoundary() {
+  return (
+    <Suspense fallback={<RouteFallback />}>
+      <Outlet />
+    </Suspense>
+  )
+}
 
 // Phase 4 cutover: every route other than the public pre-auth ones below
 // requires a signed-in session - see
@@ -92,8 +165,6 @@ function App() {
 
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
-
       {/* Pre-auth siblings of /login - deliberately outside both RequireAuth
           (a locked-out user has no session to guard) and DeviceModeGate (no
           deviceRouteMap entry either: these render identically at any width
@@ -101,104 +172,119 @@ function App() {
           mobile trees). /reset-password is where the recovery email lands,
           so it must stay reachable with no session; "/" is the public
           marketing page and has to survive a phone-width viewport without
-          being redirected into the app's /m tree. */}
+          being redirected into the app's /m tree.
+
+          "/" also sits OUTSIDE SuspenseBoundary below, and not just because
+          Marketing is eagerly imported and so would never suspend: the
+          prerender step (scripts/prerender.mjs) snapshots this page's DOM
+          and main.jsx hydrates that markup. A client-serialized snapshot
+          carries none of the <!--$--> comment markers React writes around a
+          real SSR Suspense boundary, so having one anywhere in "/"'s
+          rendered tree fails hydration with React error #418. */}
       <Route path="/" element={<Marketing />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/reset-password" element={<ResetPassword />} />
 
-      <Route element={<RequireAuth />}>
-        {/* Viewport-width auto-detection (<768px -> mobile) plus the
-            session-only manual override - see DeviceModeGate.jsx and
-            deviceRouteMap.js. Wraps every authenticated route so it can
-            redirect either direction (desktop <-> mobile) regardless of
-            which subtree below actually renders. */}
-        <Route element={<DeviceModeGate />}>
-          <Route element={<ProjectsShell />}>
-            <Route path="dashboard" element={<Dashboard />} />
-            <Route path="projects" element={<AllProjects />} />
-          </Route>
+      {/* Everything below is lazily loaded, so it all needs a Suspense
+          boundary. It lives in a pathless layout route rather than around
+          <Routes> for the hydration reason above. */}
+      <Route element={<SuspenseBoundary />}>
+        <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
-          <Route path="/projects/:projectId" element={<ProjectDetailPage />}>
-            <Route index element={<Navigate to="overview" replace />} />
-            <Route path="overview" element={<ProjectOverviewRoute />} />
-
-            <Route path="planning">
-              <Route index element={<PlanningIndexRoute />} />
-              <Route path="phases" element={<PlanningPhasesRoute />} />
-              <Route path="tasks" element={<PlanningTasksRoute />} />
-              <Route path="backlog" element={<PlanningBacklogRoute />} />
+        <Route element={<RequireAuth />}>
+          {/* Viewport-width auto-detection (<768px -> mobile) plus the
+              session-only manual override - see DeviceModeGate.jsx and
+              deviceRouteMap.js. Wraps every authenticated route so it can
+              redirect either direction (desktop <-> mobile) regardless of
+              which subtree below actually renders. */}
+          <Route element={<DeviceModeGate />}>
+            <Route element={<ProjectsShell />}>
+              <Route path="dashboard" element={<Dashboard />} />
+              <Route path="projects" element={<AllProjects />} />
             </Route>
 
-            <Route path="execution">
-              <Route index element={<ExecutionIndexRoute />} />
-              <Route path="gantt" element={<ExecutionGanttRoute />} />
-              <Route path="list-waterfall" element={<ExecutionListWaterfallRoute />} />
-              <Route path="team-waterfall" element={<ExecutionTeamWaterfallRoute />} />
-              <Route path="sprint-board" element={<ExecutionSprintBoardRoute />} />
-              <Route path="sprint-retro" element={<ExecutionSprintRetroRoute />} />
-              <Route path="list-agile" element={<ExecutionListAgileRoute />} />
-              <Route path="team-agile" element={<ExecutionTeamAgileRoute />} />
+            <Route path="/projects/:projectId" element={<ProjectDetailPage />}>
+              <Route index element={<Navigate to="overview" replace />} />
+              <Route path="overview" element={<ProjectOverviewRoute />} />
+
+              <Route path="planning">
+                <Route index element={<PlanningIndexRoute />} />
+                <Route path="phases" element={<PlanningPhasesRoute />} />
+                <Route path="tasks" element={<PlanningTasksRoute />} />
+                <Route path="backlog" element={<PlanningBacklogRoute />} />
+              </Route>
+
+              <Route path="execution">
+                <Route index element={<ExecutionIndexRoute />} />
+                <Route path="gantt" element={<ExecutionGanttRoute />} />
+                <Route path="list-waterfall" element={<ExecutionListWaterfallRoute />} />
+                <Route path="team-waterfall" element={<ExecutionTeamWaterfallRoute />} />
+                <Route path="sprint-board" element={<ExecutionSprintBoardRoute />} />
+                <Route path="sprint-retro" element={<ExecutionSprintRetroRoute />} />
+                <Route path="list-agile" element={<ExecutionListAgileRoute />} />
+                <Route path="team-agile" element={<ExecutionTeamAgileRoute />} />
+              </Route>
+
+              {/* The tracking group (see PRIMARY_CATEGORIES in
+                  projectSections.js) - doc types that came off the Documents
+                  checklist to become destinations of their own. All rendered by
+                  ProjectDocSectionRoutes.jsx off the same DOCUMENT_TYPES
+                  entries the checklist used. */}
+              <Route path="risk-log" element={<RiskLogRoute />} />
+              <Route path="issues-log" element={<IssuesLogRoute />} />
+              <Route path="budget-tracker" element={<BudgetTrackerRoute />} />
+
+              <Route path="communications">
+                <Route index element={<CommunicationsIndexRoute />} />
+                <Route path="exec-comms" element={<ExecCommsRoute />} />
+                <Route path="newsletter" element={<TeamNewsletterRoute />} />
+                <Route path="status-update" element={<StatusUpdateRoute />} />
+              </Route>
+
+              <Route path="documents" element={<DocumentsRoute />} />
+              <Route path="*" element={<Navigate to="overview" replace />} />
             </Route>
 
-            {/* The tracking group (see PRIMARY_CATEGORIES in
-                projectSections.js) - doc types that came off the Documents
-                checklist to become destinations of their own. All rendered by
-                ProjectDocSectionRoutes.jsx off the same DOCUMENT_TYPES
-                entries the checklist used. */}
-            <Route path="risk-log" element={<RiskLogRoute />} />
-            <Route path="issues-log" element={<IssuesLogRoute />} />
-            <Route path="budget-tracker" element={<BudgetTrackerRoute />} />
+            <Route path="/settings" element={<Settings />} />
 
-            <Route path="communications">
-              <Route index element={<CommunicationsIndexRoute />} />
-              <Route path="exec-comms" element={<ExecCommsRoute />} />
-              <Route path="newsletter" element={<TeamNewsletterRoute />} />
-              <Route path="status-update" element={<StatusUpdateRoute />} />
+            {/* Hidden - no nav link anywhere. AdminRoute gates on ADMIN_EMAIL. */}
+            <Route element={<AdminRoute />}>
+              <Route path="/admin" element={<AdminPage />} />
             </Route>
 
-            <Route path="documents" element={<DocumentsRoute />} />
-            <Route path="*" element={<Navigate to="overview" replace />} />
+            {/* Phone mode - purpose-built components under src/mobile/, own
+                route tree entirely separate from the desktop /projects/:id
+                subtree above. See CLAUDE.md Phone-Mode architecture note: this
+                exists so desktop layout/CSS changes can never silently regress
+                phone mode, and vice versa. */}
+            <Route path="/m" element={<Navigate to="/m/dashboard" replace />} />
+            <Route element={<MobileShell />}>
+              <Route path="/m/dashboard" element={<MobileDashboard />} />
+              <Route path="/m/notifications" element={<MobileNotifications />} />
+              <Route path="/m/more" element={<MobileMore />} />
+              <Route path="/m/settings" element={<MobileSettings />} />
+            </Route>
+
+            <Route path="/m/projects/:projectId" element={<MobileProjectLayout />}>
+              {/* Overview - single destination, project goal + Key Metrics
+                  Dashboard content (see MobileProjectMetrics.jsx). No
+                  separate /metrics route - collapsed into this index route. */}
+              <Route index element={<MobileProjectMetrics />} />
+              <Route path="tasks" element={<MobileProjectTasks />} />
+              <Route path="tasks/:taskId" element={<MobileTaskDetail />} />
+              <Route path="sprint-board" element={<MobileProjectSprintBoard />} />
+              <Route path="more" element={<MobileProjectMore />} />
+              <Route path="more/documents" element={<MobileProjectDocuments />} />
+              <Route path="more/risks" element={<MobileProjectRisks />} />
+              <Route path="more/issues" element={<MobileProjectIssues />} />
+              <Route path="more/status-update" element={<MobileProjectStatusUpdate />} />
+              <Route path="more/exec-comms" element={<MobileProjectExecComms />} />
+              <Route path="more/newsletter" element={<MobileProjectNewsletter />} />
+              <Route path="*" element={<Navigate to="." replace />} />
+            </Route>
+
+            <Route path="*" element={<NotFound />} />
           </Route>
-
-          <Route path="/settings" element={<Settings />} />
-
-          {/* Hidden - no nav link anywhere. AdminRoute gates on ADMIN_EMAIL. */}
-          <Route element={<AdminRoute />}>
-            <Route path="/admin" element={<AdminPage />} />
-          </Route>
-
-          {/* Phone mode - purpose-built components under src/mobile/, own
-              route tree entirely separate from the desktop /projects/:id
-              subtree above. See CLAUDE.md Phone-Mode architecture note: this
-              exists so desktop layout/CSS changes can never silently regress
-              phone mode, and vice versa. */}
-          <Route path="/m" element={<Navigate to="/m/dashboard" replace />} />
-          <Route element={<MobileShell />}>
-            <Route path="/m/dashboard" element={<MobileDashboard />} />
-            <Route path="/m/notifications" element={<MobileNotifications />} />
-            <Route path="/m/more" element={<MobileMore />} />
-            <Route path="/m/settings" element={<MobileSettings />} />
-          </Route>
-
-          <Route path="/m/projects/:projectId" element={<MobileProjectLayout />}>
-            {/* Overview - single destination, project goal + Key Metrics
-                Dashboard content (see MobileProjectMetrics.jsx). No
-                separate /metrics route - collapsed into this index route. */}
-            <Route index element={<MobileProjectMetrics />} />
-            <Route path="tasks" element={<MobileProjectTasks />} />
-            <Route path="tasks/:taskId" element={<MobileTaskDetail />} />
-            <Route path="sprint-board" element={<MobileProjectSprintBoard />} />
-            <Route path="more" element={<MobileProjectMore />} />
-            <Route path="more/documents" element={<MobileProjectDocuments />} />
-            <Route path="more/risks" element={<MobileProjectRisks />} />
-            <Route path="more/issues" element={<MobileProjectIssues />} />
-            <Route path="more/status-update" element={<MobileProjectStatusUpdate />} />
-            <Route path="more/exec-comms" element={<MobileProjectExecComms />} />
-            <Route path="more/newsletter" element={<MobileProjectNewsletter />} />
-            <Route path="*" element={<Navigate to="." replace />} />
-          </Route>
-
-          <Route path="*" element={<NotFound />} />
         </Route>
       </Route>
     </Routes>
