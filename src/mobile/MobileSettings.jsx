@@ -192,6 +192,18 @@ function MobileSettings() {
         Have a question or ran into a problem? Send us a message and we&rsquo;ll get back to you.
       </p>
       <MobileContactSupport />
+
+      <h2 className="mobile-section-title">Legal</h2>
+      <div className="mobile-more-list">
+        <a
+          href="https://confidantpm.com/privacy"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mobile-more-list-item"
+        >
+          Privacy Policy
+        </a>
+      </div>
     </div>
   )
 }
