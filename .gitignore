@@ -30,3 +30,6 @@ supabase/.temp/
 
 # Local screenshot harness (untracked dev tooling)
 .harness/
+
+# Local secrets (repo is public)
+.env
