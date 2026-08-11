@@ -27,3 +27,6 @@ supabase/.temp/
 *.sw?
 
 .vercel
+
+# Local screenshot harness (untracked dev tooling)
+.harness/
