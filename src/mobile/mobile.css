@@ -35,26 +35,31 @@
   padding-top: calc(12px + env(safe-area-inset-top));
 }
 
-/* Icon-only brand mark on root screens (MobileShell). Sits as the first
+/* Stacked brand block on root screens (MobileShell), mirroring the sign-in
+   page's centered mark-over-wordmark. Sits as the first
    child of .mobile-app-body--root, so it inherits that safe-area padding
    and needs no inset of its own. No border: the screen <h1> directly below
    already reads as a separate block, and a rule here would be the only
    horizontal line on an otherwise chromeless screen. */
 .mobile-brand-row {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
+  text-align: center;
+  gap: 10px;
+  margin-bottom: 16px;
 }
 
-/* Wordmark beside the mark. Same convention as every other brand site
+/* Wordmark below the mark. Same convention as every other brand site
    (desktop rail, login screens, marketing nav): a plain "Confidant" with
-   only "PM" carrying the accent. Deliberately its own classes rather than
-   App.css's .app-sidebar-brand-* - phone sizing is smaller (15px vs 19px,
-   no tagline), and nothing in App.css may reach into phone mode. */
+   only "PM" carrying the accent. Sizing matches App.css's .login-brand-name
+   (20px/700), but this stays its own class - App.css hardcodes dark-panel
+   hexes there, phone mode is light and token-driven, and nothing in App.css
+   may reach into phone mode. No tagline: root screens put the screen <h1>
+   directly below this, so a tagline would crowd it. */
 .mobile-brand-name {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 700;
   letter-spacing: -0.2px;
   color: var(--text, #1a1a1a);
 }
@@ -231,6 +236,15 @@
   font-size: 18px;
   font-weight: 600;
   margin: 4px 0 12px;
+}
+
+/* Root screens only. The class is shared with project screens (Tasks,
+   Overview, Documents...), which render inside MobileProjectLayout's plain
+   .mobile-app-body and must stay left-aligned under the topbar. Only the
+   root tree sits in --root, where the title reads as part of the centered
+   brand block above it. */
+.mobile-app-body--root .mobile-screen-title {
+  text-align: center;
 }
 
 .mobile-screen-stub {
