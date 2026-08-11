@@ -35,6 +35,17 @@
   padding-top: calc(12px + env(safe-area-inset-top));
 }
 
+/* Icon-only brand mark on root screens (MobileShell). Sits as the first
+   child of .mobile-app-body--root, so it inherits that safe-area padding
+   and needs no inset of its own. No border: the screen <h1> directly below
+   already reads as a separate block, and a rule here would be the only
+   horizontal line on an otherwise chromeless screen. */
+.mobile-brand-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
 /* Manual device-mode override (MobileDesktopLink) - deliberately
    low-prominence, sits at the bottom of scrollable content rather than
    living in the topbar or tab bar so it never competes with primary nav. */
@@ -72,11 +83,19 @@
    list. Deliberately bare: no border, no fill, muted colour, so it reads as
    chrome rather than a button competing with the project name beside it.
    Sized to the 44px touch minimum; the topbar's own padding means this only
-   grows the bar when the title block is a single short line. */
+   grows the bar when the title block is a single short line.
+   align-self/align-items are both flex-start rather than inheriting the
+   topbar's align-items: center: centring is against the TALLEST child (the
+   title block - badge line, meta line, then a goal that wraps to two or
+   more), which dropped the arrow to roughly mid-height, far from the first
+   line it belongs to. flex-start on the box tops it in the row; flex-start
+   inside keeps the 44px touch target while putting the glyph itself on the
+   first line, level with .mobile-topbar-mark's icon. */
 .mobile-topbar-back {
   flex-shrink: 0;
   display: flex;
-  align-items: center;
+  align-self: flex-start;
+  align-items: flex-start;
   justify-content: center;
   min-width: 44px;
   min-height: 44px;
@@ -95,6 +114,19 @@
 
 .mobile-topbar-line {
   margin: 0;
+}
+
+/* Trailing brand mark in the topbar (MobileProjectLayout). margin-left:
+   auto pins it to the right edge - .mobile-topbar-title sizes to content
+   rather than growing, so without it the icon would sit against the title
+   instead of the edge. flex-shrink: 0 keeps it intact while the title
+   block (min-width: 0) takes the squeeze on long project names. */
+.mobile-topbar-mark {
+  flex-shrink: 0;
+  display: flex;
+  align-self: flex-start;
+  align-items: flex-start;
+  margin-left: auto;
 }
 
 .mobile-topbar-name-text {

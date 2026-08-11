@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, Outlet, useParams } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { useAuth } from '../AuthContext'
+import ConfidantLogo from '../ConfidantLogo'
 import { METHODOLOGY_LABELS } from '../methodology'
 import MobileProjectTabBar from './MobileProjectTabBar'
 import MobileDesktopLink from './MobileDesktopLink'
@@ -120,6 +121,11 @@ function MobileProjectLayout() {
           </p>
           {project.goal && <p className="mobile-topbar-goal">{project.goal}</p>}
         </div>
+        {/* Trailing brand mark - icon only, no wordmark. flex-shrink: 0 so
+            the title block absorbs every squeeze before the icon does. */}
+        <span className="mobile-topbar-mark">
+          <ConfidantLogo size={20} />
+        </span>
       </div>
 
       <div className="mobile-app-body">
