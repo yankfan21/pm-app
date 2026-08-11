@@ -187,6 +187,13 @@ function Settings() {
           Have a question or ran into a problem? Send us a message and we&rsquo;ll get back to you.
         </p>
         <ContactSupportForm />
+
+        <h3 className="settings-section-title">Legal</h3>
+        <p className="dashboard-subtitle">
+          <a href="https://confidantpm.com/privacy" target="_blank" rel="noopener noreferrer">
+            Privacy Policy
+          </a>
+        </p>
       </div>
     </AppShell>
   )
