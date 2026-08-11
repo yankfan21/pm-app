@@ -134,7 +134,7 @@
   min-width: 0;
 }
 
-.mobile-topbar-line {
+.mobile-topbar-name-line {
   margin: 0;
 }
 
@@ -151,9 +151,23 @@
   margin-left: auto;
 }
 
+/* display: block so overflow/text-overflow apply - they are no-ops on the
+   default inline box. Relies on .mobile-topbar-title keeping min-width: 0
+   above, without which the flex item never shrinks below its text and
+   there is nothing to ellipsise. */
 .mobile-topbar-name-text {
+  display: block;
   font-weight: 600;
   font-size: 15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobile-topbar-meta-line {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
 }
 
 /* No margin of its own. It previously carried margin-right: 6px, which is
@@ -162,7 +176,8 @@
    flex row - there it doubled up as 6px gap plus 6px trailing margin and
    pushed the pill off the row's right edge. The topbar case gets the
    spacing back via the scoped rule below rather than globally, since
-   .mobile-topbar-line is not a flex container and has no gap to rely on. */
+   .mobile-topbar-meta-line is not a flex container and has no gap to rely
+   on. */
 .mobile-demo-badge {
   display: inline-block;
   padding: 1px 7px;
@@ -175,14 +190,8 @@
   border: 1px solid var(--demo-accent-border);
 }
 
-.mobile-topbar-line .mobile-demo-badge {
+.mobile-topbar-meta-line .mobile-demo-badge {
   margin-right: 6px;
-}
-
-.mobile-topbar-meta {
-  display: inline;
-  font-size: 12px;
-  color: var(--text-muted, #666);
 }
 
 /* Full goal text, no truncation - wraps to as many lines as needed. */

@@ -108,16 +108,21 @@ function MobileProjectLayout() {
         <Link to="/m/dashboard" className="mobile-topbar-back" aria-label="All Projects">
           <span aria-hidden="true">&#8592;</span>
         </Link>
+        {/* Name and meta are separate <p>s rather than one inline run: on a
+            long project name the shared line let the name push the
+            methodology/date text out past the title block, over the back
+            arrow and brand mark. Split, the name owns its own line and
+            truncates there (see .mobile-topbar-name-text) while the meta
+            line keeps its position regardless of name length. */}
         <div className="mobile-topbar-title">
-          <p className="mobile-topbar-line">
-            {project.is_demo && <span className="mobile-demo-badge">✦ Demo</span>}
+          <p className="mobile-topbar-name-line">
             <span className="mobile-topbar-name-text">{project.name}</span>
-            <span className="mobile-topbar-meta">
-              {' | '}
-              {METHODOLOGY_LABELS[project.methodology] ?? project.methodology}
-              {' | Target Go Live: '}
-              {project.deadline ?? 'TBD'}
-            </span>
+          </p>
+          <p className="mobile-topbar-meta-line">
+            {project.is_demo && <span className="mobile-demo-badge">✦ Demo</span>}
+            {METHODOLOGY_LABELS[project.methodology] ?? project.methodology}
+            {' | Target Go Live: '}
+            {project.deadline ?? 'TBD'}
           </p>
           {project.goal && <p className="mobile-topbar-goal">{project.goal}</p>}
         </div>
