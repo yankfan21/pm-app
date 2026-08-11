@@ -5145,6 +5145,24 @@ textarea.risk-cell-input {
   text-decoration: none;
 }
 
+/* Last line in the form panel, under .login-footer-link's mode toggle.
+   Deliberately quieter than that link (muted, not accent) - it is a legal
+   reference, not a next step. */
+.login-legal-link {
+  margin: 16px 0 0;
+  text-align: center;
+  font-size: 13px;
+}
+
+.login-legal-link a {
+  color: #94a3b8;
+  text-decoration: none;
+}
+
+.login-legal-link a:hover {
+  color: var(--accent);
+}
+
 /* Sits between the password field and the submit button, so it pulls up
    against the field's own 16px bottom margin rather than stacking on it. */
 .login-forgot-link {
@@ -6041,6 +6059,101 @@ textarea.risk-cell-input {
   color: #94a3b8;
 }
 
+/* Footer link row shared by the marketing page and the legal pages
+   (PrivacyPolicy.jsx). Sits above .marketing-copyright, which supplies its
+   own top margin, so this only needs to space itself off whatever precedes
+   it. */
+.marketing-footer-links {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin: 24px 0 0;
+  font-size: 14px;
+}
+
+.marketing-footer-links a {
+  color: #94a3b8;
+  text-decoration: none;
+}
+
+.marketing-footer-links a:hover {
+  color: var(--accent);
+}
+
+/* --- Legal pages (PrivacyPolicy.jsx) ------------------------------------
+   Body-copy layout dropped inside Marketing's page chrome. Narrower measure
+   than .marketing-main's 1080px (long prose at that width is unreadable),
+   and left-aligned rather than the hero's centering. */
+
+.legal-main {
+  max-width: 720px;
+  padding-top: 48px;
+  padding-bottom: 72px;
+}
+
+/* Overrides index.css's global h1 (56px), same reason as
+   .marketing-hero-headline: that scale is set against the app's 18px root
+   font and reads oversized here. */
+.legal-title {
+  margin: 0 0 8px;
+  font-size: 38px;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -1px;
+  color: #f1f5f9;
+}
+
+.legal-updated {
+  margin: 0 0 32px;
+  font-size: 14px;
+  color: #94a3b8;
+}
+
+.legal-section {
+  margin-top: 36px;
+}
+
+.legal-heading {
+  margin: 0 0 12px;
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  color: #f1f5f9;
+}
+
+.legal-body {
+  margin: 0 0 14px;
+  font-size: 16px;
+  line-height: 1.6;
+  color: #cbd5e1;
+}
+
+.legal-term {
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.legal-list {
+  margin: 0 0 14px;
+  padding-left: 22px;
+  font-size: 16px;
+  line-height: 1.6;
+  color: #cbd5e1;
+}
+
+.legal-list li {
+  margin-bottom: 6px;
+}
+
+.legal-link {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.legal-link:hover {
+  text-decoration: underline;
+}
+
 @media (max-width: 860px) {
   .marketing-cards {
     grid-template-columns: minmax(0, 1fr);
@@ -6090,5 +6203,15 @@ textarea.risk-cell-input {
 
   .marketing-footer-tagline {
     font-size: 20px;
+  }
+
+  .legal-main {
+    padding-top: 32px;
+    padding-bottom: 48px;
+  }
+
+  .legal-title {
+    font-size: 30px;
+    letter-spacing: -0.6px;
   }
 }

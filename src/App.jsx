@@ -87,6 +87,7 @@ const AdminPage = lazy(() => import('./AdminPage'))
 const NotFound = lazy(() => import('./NotFound'))
 const Login = lazy(() => import('./Login'))
 const ForgotPassword = lazy(() => import('./ForgotPassword'))
+const PrivacyPolicy = lazy(() => import('./PrivacyPolicy'))
 const ResetPassword = lazy(() => import('./ResetPassword'))
 const RequireAuth = lazy(() => import('./RequireAuth'))
 const AdminRoute = lazy(() => import('./AdminRoute'))
@@ -190,6 +191,12 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+
+        {/* Public legal page - linked from the marketing footer and the
+            sign-up form, and reachable with no session for the same reason
+            the routes above are. Unlike "/" it has no Capacitor redirect:
+            app-store review expects to find it inside the native build. */}
+        <Route path="/privacy" element={<PrivacyPolicy />} />
 
         <Route element={<RequireAuth />}>
           {/* Viewport-width auto-detection (<768px -> mobile) plus the

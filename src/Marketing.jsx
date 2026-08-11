@@ -133,6 +133,9 @@ function Marketing() {
         <Link to={SIGN_UP_PATH} className="marketing-cta">
           Try ConfidantPM free
         </Link>
+        <p className="marketing-footer-links">
+          <Link to="/privacy">Privacy Policy</Link>
+        </p>
         <p className="marketing-copyright">{COPYRIGHT_LINE}</p>
       </footer>
     </div>

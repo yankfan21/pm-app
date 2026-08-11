@@ -196,6 +196,10 @@ function Login() {
               </>
             )}
           </p>
+
+          <p className="login-legal-link">
+            <Link to="/privacy">Privacy Policy</Link>
+          </p>
         </div>
       </div>
 
