@@ -32,4 +32,5 @@ supabase/.temp/
 .harness/
 
 # Local secrets (repo is public)
-.env
+.env*
+!.env.example
