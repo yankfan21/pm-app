@@ -20,6 +20,9 @@ function MobileShell() {
             the inset (which would then pad twice). */}
         <div className="mobile-brand-row">
           <ConfidantLogo size={24} />
+          <span className="mobile-brand-name">
+            Confidant<span className="mobile-brand-name-accent">PM</span>
+          </span>
         </div>
         <Outlet />
         <MobileDesktopLink />

@@ -43,7 +43,24 @@
 .mobile-brand-row {
   display: flex;
   align-items: center;
+  gap: 8px;
   margin-bottom: 4px;
+}
+
+/* Wordmark beside the mark. Same convention as every other brand site
+   (desktop rail, login screens, marketing nav): a plain "Confidant" with
+   only "PM" carrying the accent. Deliberately its own classes rather than
+   App.css's .app-sidebar-brand-* - phone sizing is smaller (15px vs 19px,
+   no tagline), and nothing in App.css may reach into phone mode. */
+.mobile-brand-name {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  color: var(--text, #1a1a1a);
+}
+
+.mobile-brand-name-accent {
+  color: var(--accent-strong, #2f6fc4);
 }
 
 /* Manual device-mode override (MobileDesktopLink) - deliberately
