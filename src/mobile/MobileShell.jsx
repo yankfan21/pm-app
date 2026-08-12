@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router-dom'
 import ConfidantLogo from '../ConfidantLogo'
+import AppStoreBadges from '../components/AppStoreBadges'
 import MobileGlobalTabBar from './MobileGlobalTabBar'
 import MobileDesktopLink from './MobileDesktopLink'
 import './mobile.css'
@@ -27,6 +28,10 @@ function MobileShell() {
         </div>
         <Outlet />
         <MobileDesktopLink />
+        {/* Foot of the scrollable body, below the desktop-site link and above
+            the tab bar - the same slot MobileProjectLayout puts it in, so the
+            footer zone reads identically on root and project screens. */}
+        <AppStoreBadges />
       </div>
       <MobileGlobalTabBar />
     </div>

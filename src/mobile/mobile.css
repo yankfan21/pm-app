@@ -113,6 +113,50 @@ html:has(.mobile-app) body {
   cursor: pointer;
 }
 
+/* Phone sizing for the shared "Coming soon" badges (AppStoreBadges.jsx),
+   mounted at the foot of both /m/ layouts directly below .mobile-desktop-link.
+   Overrides only - App.css still supplies the base .app-store-badges rules
+   (grayscale, opacity, flex column), and this is the one direction of reach
+   that's allowed: phone mode overriding a component it shares with desktop,
+   never App.css reaching in the other way.
+   Two things change at phone width. Alignment: the rail and marketing mounts
+   sit in left-aligned columns, but here the badges are the last thing on a
+   centered-footer screen, so the row AND the component's own flex column both
+   centre (centring just the wrapper would leave the label hard left over a
+   centered row - same trap .marketing-badges hit). Scale: desktop renders the
+   Apple badge at 28px, which is roughly a third of a phone's width once the
+   pair is side by side; 22px keeps both buttons on one line at 320px with the
+   surrounding 16px body padding intact. */
+.mobile-app .app-store-badges {
+  align-items: center;
+  margin: 12px 0 4px;
+}
+
+.mobile-app .app-store-badges-label {
+  font-size: 10px;
+}
+
+.mobile-app .app-store-badges-row {
+  justify-content: center;
+  gap: 14px;
+}
+
+.mobile-app .app-store-badge-apple {
+  height: 22px;
+}
+
+/* Same transparent-padding correction as App.css, re-derived for the smaller
+   box - the ratios are properties of the source PNG, so they don't scale away.
+   Height 22 / 0.423 = 52 renders a 22px visible button matching Apple. The box
+   is then 52 tall x 80 wide, of which 28.8% vertical and 3.9% horizontal is
+   empty: 52 * 0.288 = 15, 80 * 0.039 = 3. Without these the row would reserve
+   52px and open ~30px of dead space above the tab bar. */
+.mobile-app .app-store-badge-google {
+  height: 52px;
+  margin-block: -15px;
+  margin-inline: -3px;
+}
+
 /* Top app bar - only rendered inside a project (MobileProjectLayout). The
    root shell (MobileShell) has no top bar; global tabs are the only chrome
    there.
