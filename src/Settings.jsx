@@ -4,7 +4,6 @@ import { supabase } from './supabaseClient'
 import { useAuth } from './AuthContext'
 import AppShell from './AppShell'
 import ContactSupportForm from './ContactSupportForm'
-import AppStoreBadges from './components/AppStoreBadges'
 import { useDeviceMode } from './hooks/useDeviceMode'
 import { resolveDeviceModeTarget, MOBILE_HOME, DESKTOP_HOME } from './deviceRouteMap'
 
@@ -195,14 +194,6 @@ function Settings() {
             Privacy Policy
           </a>
         </p>
-
-        {/* Last thing on the page, under every settings section - a footer
-            note rather than a settings control, which is why it gets no
-            .settings-section-title heading. The component supplies its own
-            "Coming soon" label. */}
-        <div className="settings-badges-footer">
-          <AppStoreBadges />
-        </div>
       </div>
     </AppShell>
   )

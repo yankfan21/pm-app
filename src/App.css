@@ -6319,12 +6319,6 @@ textarea.risk-cell-input {
   border-top: 1px solid var(--border);
 }
 
-.settings-badges-footer {
-  margin-top: 32px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border-faint);
-}
-
 /* ---------------------------------------------------------------------------
    Dashboard mobile-app teaser (MobileAppTeaserCard.jsx). Matches the
    .overview-stat-card family - same --radius-card, faint border, translucent
