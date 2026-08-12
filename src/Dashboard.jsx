@@ -1,5 +1,6 @@
 import { useOutletContext } from 'react-router-dom'
 import ProjectList from './ProjectList'
+import MobileAppTeaserCard from './components/MobileAppTeaserCard'
 
 function byDeadlineSoonestFirst(a, b) {
   if (a.deadline == null && b.deadline == null) return 0
@@ -20,6 +21,7 @@ function Dashboard() {
       <p className="dashboard-subtitle">
         Active projects, soonest deadline first.
       </p>
+      <MobileAppTeaserCard />
       <ProjectList
         projects={active}
         loading={loading}

@@ -6236,3 +6236,113 @@ textarea.risk-cell-input {
     letter-spacing: -0.6px;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   App store badges (AppStoreBadges.jsx) - desktop rail footer + Settings
+   footer. Deliberately quiet: these advertise something that doesn't exist
+   yet, so grayscale + reduced opacity keeps two loud, high-contrast brand
+   marks from outranking the actual navigation. Full colour when the listings
+   go live is a one-line change to the filter.
+   --------------------------------------------------------------------------- */
+.app-store-badges {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.app-store-badges-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  opacity: 0.75;
+}
+
+.app-store-badges-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Height-driven rather than width-driven: the two source images have
+   different aspect ratios and different built-in padding, so matching them on
+   height is what makes them look like a pair. */
+.app-store-badge {
+  height: 28px;
+  width: auto;
+  max-width: 100%;
+  filter: grayscale(1);
+  opacity: 0.55;
+}
+
+/* The rail's badges sit above .account-menu, which owns the border-top
+   separating the footer zone - so these get their own rule rather than
+   inheriting one. */
+.app-sidebar .app-store-badges {
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.settings-badges-footer {
+  margin-top: 32px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-faint);
+}
+
+/* ---------------------------------------------------------------------------
+   Dashboard mobile-app teaser (MobileAppTeaserCard.jsx). Matches the
+   .overview-stat-card family - same --radius-card, faint border, translucent
+   fill - so it reads as part of the existing card system rather than a banner
+   bolted on top of the Dashboard.
+   --------------------------------------------------------------------------- */
+.mobile-teaser-card {
+  position: relative;
+  margin: 0 0 20px;
+  padding: var(--space-card-padding);
+  padding-right: 44px; /* clears the absolutely-positioned dismiss button */
+  box-sizing: border-box;
+  border: 1px solid var(--border-faint);
+  border-radius: var(--radius-card);
+  background: var(--card-bg);
+  backdrop-filter: var(--card-backdrop-filter);
+}
+
+.mobile-teaser-heading {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.mobile-teaser-body {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.mobile-teaser-dismiss {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.mobile-teaser-dismiss:hover {
+  background: var(--row-bg);
+  color: var(--text-h);
+}

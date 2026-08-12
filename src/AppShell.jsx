@@ -1,6 +1,7 @@
 import { Link, NavLink } from 'react-router-dom'
 import { useAuth } from './AuthContext'
 import ConfidantLogo from './ConfidantLogo'
+import AppStoreBadges from './components/AppStoreBadges'
 
 const NAV_VIEWS = [
   { to: '/dashboard', label: 'Dashboard', icon: '▦', end: true },
@@ -87,6 +88,12 @@ function AppSidebar({ nav }) {
             </nav>
           ))}
       </div>
+
+      {/* Outside .app-sidebar-body on purpose: the body is the flex-grow,
+          own-scroll zone, so anything inside it scrolls away with a long
+          project nav. Sitting between the body and the account footer pins
+          the badges to the bottom of the rail in both nav modes. */}
+      <AppStoreBadges />
 
       {user ? (
         <div className="account-menu">
