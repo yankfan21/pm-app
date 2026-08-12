@@ -6379,3 +6379,18 @@ textarea.risk-cell-input {
   background: var(--row-bg);
   color: var(--text-h);
 }
+
+/* Marketing-page mount of AppStoreBadges. The rail and Settings mounts are
+   left-aligned in a column of left-aligned content; this section's closer
+   line is centered, so the badges centre with it. Centring has to reach the
+   component's own flex column too, not just this wrapper - otherwise the
+   "Coming soon" label stays hard left over a centered badge row. */
+.marketing-badges {
+  display: flex;
+  justify-content: center;
+  margin-top: 28px;
+}
+
+.marketing-badges .app-store-badges {
+  align-items: center;
+}

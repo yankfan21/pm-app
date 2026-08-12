@@ -1,6 +1,7 @@
 import { Link, Navigate } from 'react-router-dom'
 import { Capacitor } from '@capacitor/core'
 import ConfidantLogo from './ConfidantLogo'
+import AppStoreBadges from './components/AppStoreBadges'
 
 // Where both CTAs land. There is no /signup route in App.jsx - the Login
 // screen's "Create an account" is an in-page mode toggle - so this is the
@@ -155,6 +156,20 @@ function Marketing() {
           <p className="marketing-surfaces-closer">
             Same project, same data, whichever screen is in front of you.
           </p>
+          {/* Closes the "wherever the work happens" section rather than
+              sitting in the footer: this is the one section actually about
+              surfaces, so the "Coming soon" store badges are the evidence for
+              the claim above them. Same component as the app rail and
+              Settings - no links until the listings exist.
+
+              Note this page is prerendered (scripts/prerender.mjs), so the
+              badges land in the static HTML. That's fine and stable: both of
+              the component's early-returns evaluate the same at build time as
+              they do in a visitor's browser (headless Chrome is not a native
+              platform, and this page is always "/"). */}
+          <div className="marketing-badges">
+            <AppStoreBadges />
+          </div>
         </section>
       </main>
 
