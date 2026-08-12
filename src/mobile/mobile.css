@@ -297,6 +297,17 @@ html:has(.mobile-app) body {
   font-size: 14px;
 }
 
+/* Self-retiring mobile-vs-desktop nudge (MobileScreenHint.jsx). Same muted
+   token and one step below .mobile-screen-stub's size - it sits under a
+   screen title as an aside, so it should read quieter than the screen's own
+   empty-state copy, never as a warning or a callout. */
+.mobile-screen-hint {
+  margin: 0 0 14px;
+  color: var(--text-muted, #666);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
 .mobile-more-list {
   display: flex;
   flex-direction: column;

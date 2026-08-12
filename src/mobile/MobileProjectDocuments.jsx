@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useOutletContext, useParams } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { HEALTH_LABELS, HEALTH_COLOR_CLASS, formatEvalMetric } from '../projectEvalHealth'
+import MobileScreenHint from './MobileScreenHint'
 
 // Read-only Documents (/m/projects/:projectId/more/documents). Purpose-built
 // mobile component - does NOT import documentTypes.jsx (that file's
@@ -420,6 +421,12 @@ function MobileProjectDocuments() {
   return (
     <div>
       <h1 className="mobile-screen-title">Documents</h1>
+
+      {/* Own storage key, so this fades on its own schedule rather than
+          sharing the Overview hint's count. */}
+      <MobileScreenHint storageKey="cpm_documents_hint_count">
+        The mobile app has today&apos;s chapter. The desktop app is where the next one gets written.
+      </MobileScreenHint>
 
       <div className="mobile-doc-list">
         {groupDocTypes(MOBILE_DOC_TYPES).map((row) => {

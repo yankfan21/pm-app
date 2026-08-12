@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient'
 import { HEALTH_LABELS, formatEvalMetric } from '../projectEvalHealth'
 import { getRiskBand } from '../riskScale'
 import { getIssueStatusCounts } from '../issueLogUtils'
+import MobileScreenHint from './MobileScreenHint'
 import { getEasternTodayStr, isTaskDelayed } from '../taskUtils'
 import { isSprintOverdue } from '../sprintStats'
 
@@ -211,6 +212,13 @@ function MobileProjectMetrics() {
   return (
     <div>
       <h1 className="mobile-screen-title">Overview</h1>
+
+      {/* Mounted only on the loaded branch (the loading and error returns
+          above render their own bare title), so the visit counter ticks once
+          the screen has actually shown something worth reading. */}
+      <MobileScreenHint storageKey="cpm_overview_hint_count">
+        The mobile app gives you the pulse-check. The desktop app is where the full story unfolds.
+      </MobileScreenHint>
 
       <div className="mobile-metrics-card">
         <h2 className="mobile-section-title">Project Status</h2>

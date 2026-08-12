@@ -36,6 +36,21 @@ const DIFFERENTIATORS = [
   },
 ]
 
+// Two halves of one product rather than a feature comparison: neither column
+// is the lesser one, so both cards get the same weight and the same card
+// treatment the differentiators above use (just 2-up - see
+// .marketing-cards-2up).
+const SURFACES = [
+  {
+    title: 'Desktop',
+    body: "Use desktop when you're planning — Gantt charts, full documents, budget tracking, all your assistant's deep work.",
+  },
+  {
+    title: 'Mobile',
+    body: "Use mobile when you're in the field — check status, move tasks, flag a risk before you forget it.",
+  },
+]
+
 const CAPABILITIES = [
   'Project charters & requirements briefs',
   'Risk & issue logs',
@@ -125,6 +140,21 @@ function Marketing() {
               <li key={item}>{item}</li>
             ))}
           </ul>
+        </section>
+
+        <section className="marketing-section">
+          <h2 className="marketing-section-heading">Built for wherever the work happens.</h2>
+          <ul className="marketing-cards marketing-cards-2up">
+            {SURFACES.map((item) => (
+              <li key={item.title} className="marketing-card">
+                <h3 className="marketing-card-title">{item.title}</h3>
+                <p className="marketing-card-body">{item.body}</p>
+              </li>
+            ))}
+          </ul>
+          <p className="marketing-surfaces-closer">
+            Same project, same data, whichever screen is in front of you.
+          </p>
         </section>
       </main>
 

@@ -6000,6 +6000,27 @@ textarea.risk-cell-input {
   color: #94a3b8;
 }
 
+/* Desktop/Mobile pair, applied alongside .marketing-cards rather than
+   instead of it - it inherits the gap, list reset and card treatment and
+   only overrides the track count, so the 3-up differentiators above are
+   untouched. Same specificity as .marketing-cards, so it has to stay below
+   it here; the max-width:860px override further down is later still and
+   collapses this to one column too. */
+.marketing-cards-2up {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* Closing line under the two cards. Centered against the section's
+   left-aligned heading on purpose - it's a summary of the pair above, not
+   another body paragraph. */
+.marketing-surfaces-closer {
+  margin: 24px 0 0;
+  font-size: 16px;
+  line-height: 1.6;
+  color: #94a3b8;
+  text-align: center;
+}
+
 .marketing-real-teams-body {
   max-width: 720px;
   margin: 0;
