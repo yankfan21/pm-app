@@ -6260,10 +6260,15 @@ textarea.risk-cell-input {
   opacity: 0.75;
 }
 
+/* 18px gap, but the gap property is not the whole story: the Google badge
+   below carries margin-inline: -4px against ~4px of built-in side padding in
+   its source PNG, and those two very nearly cancel. So the declared gap and
+   the gap you actually see are within ~0.1px of each other here - change this
+   number and the visual separation tracks it directly. */
 .app-store-badges-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 18px;
   flex-wrap: wrap;
 }
 
