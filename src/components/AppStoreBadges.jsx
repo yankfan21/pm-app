@@ -41,12 +41,15 @@ function AppStoreBadges() {
             are recognisable store marks, and "Download on the App Store" is
             the badge's own wording. */}
         <img
-          className="app-store-badge"
+          className="app-store-badge app-store-badge-apple"
           src={appStoreBadge}
           alt="Download on the App Store"
         />
+        {/* Per-badge class rather than one shared size: the two source files
+            carry very different amounts of built-in padding, so equal
+            rendered heights do NOT mean equal visual size. See App.css. */}
         <img
-          className="app-store-badge"
+          className="app-store-badge app-store-badge-google"
           src={googlePlayBadge}
           alt="Get it on Google Play"
         />

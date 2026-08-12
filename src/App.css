@@ -6267,15 +6267,43 @@ textarea.risk-cell-input {
   flex-wrap: wrap;
 }
 
-/* Height-driven rather than width-driven: the two source images have
-   different aspect ratios and different built-in padding, so matching them on
-   height is what makes them look like a pair. */
+/* The two badges are sized INDEPENDENTLY on purpose - equal rendered heights
+   made the Google one look noticeably smaller.
+
+   Measured artwork bounding boxes (headless Chrome, alpha bbox of each
+   source file):
+
+     Apple SVG   119.66 x 40    artwork fills 100% of the height, edge to edge
+     Google PNG  880 x 572      artwork fills 42.3% of the height
+                                (28.8% transparent padding top, 28.9% bottom)
+
+   So a shared `height` sized the Apple button against the Google button PLUS
+   its clear-space margin, and the Google button came out 2.36x too small.
+   Rendered height is therefore set per badge at that ratio: 28 / 0.423 = 66. */
 .app-store-badge {
-  height: 28px;
   width: auto;
   max-width: 100%;
+  flex-shrink: 0;
   filter: grayscale(1);
   opacity: 0.55;
+}
+
+.app-store-badge-apple {
+  height: 28px;
+}
+
+.app-store-badge-google {
+  height: 66px;
+  /* The 66px box is mostly transparent - the visible button inside it is 28px,
+     matching Apple. Without this the row would reserve all 66px and open ~38px
+     of dead vertical space. Negative margins collapse the box back to the
+     visible artwork, so the row is 28px tall and the two buttons centre on the
+     same axis (padding is symmetric top/bottom, 28.8 vs 28.9%, so no offset
+     correction is needed). 66 * 0.288 = 19. Same idea horizontally: 3.9%
+     side padding on a ~101px-wide box is ~4px, which would otherwise show up
+     as extra gap. */
+  margin-block: -19px;
+  margin-inline: -4px;
 }
 
 /* The rail's badges sit above .account-menu, which owns the border-top
