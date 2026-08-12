@@ -12,7 +12,9 @@ questions, and never acting autonomously without PM confirmation.
 - AI: Anthropic API (Claude) via Edge Functions
 - Deployment: Vercel (auto-deploy on push to main)
 - Local path: E:\pm-app
-- Live URL: pm-app-tau-seven.vercel.app
+- Live URL: confidantpm.com (canonical). The old
+  pm-app-tau-seven.vercel.app 308-redirects here, so it still works but
+  should not be used in new links, docs, or deploy checks.
 - Email: Resend (signed up, not yet integrated)
 - Document parsing: mammoth (for .docx Charter uploads)
 
