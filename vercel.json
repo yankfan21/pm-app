@@ -5,12 +5,19 @@
   "functions": {
     "api/drain-task-reminders.js": {
       "maxDuration": 60
+    },
+    "api/keep-alive.js": {
+      "maxDuration": 10
     }
   },
   "crons": [
     {
       "path": "/api/drain-task-reminders",
       "schedule": "0 13 * * *"
+    },
+    {
+      "path": "/api/keep-alive",
+      "schedule": "0 7 * * *"
     }
   ]
 }
