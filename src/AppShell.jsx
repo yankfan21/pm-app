@@ -110,7 +110,7 @@ function AppSidebar({ nav }) {
             <span aria-hidden="true">{initialsFromEmail(user.email)}</span>
           </span>
           <Link to="/settings#contact-support" className="btn-secondary">
-            Contact Support
+            Support & Settings
           </Link>
           <button type="button" className="btn-secondary" onClick={signOut}>
             Sign out

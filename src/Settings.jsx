@@ -125,7 +125,7 @@ function Settings() {
   return (
     <AppShell>
       <div className="app-body">
-        <h2 className="page-title view-title">Settings</h2>
+        <h2 className="page-title view-title">Support & Settings</h2>
 
         <h3 className="settings-section-title">View Mode</h3>
         <p className="dashboard-subtitle">
