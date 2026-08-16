@@ -350,8 +350,8 @@ function ProjectDetailLayout({ project, isOwner, canEdit }) {
               ✦
             </span>
             <p>
-              You&rsquo;re exploring a shared demo project &mdash; it resets nightly so everyone gets a
-              fresh look. Try generating a document or two!
+              You&rsquo;re exploring a shared demo project &mdash; it resets nightly. Dig in and
+              see what ConfidantPM can do.
             </p>
           </div>
         )}
