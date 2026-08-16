@@ -6,7 +6,6 @@ import AppStoreBadges from './components/AppStoreBadges'
 const NAV_VIEWS = [
   { to: '/dashboard', label: 'Dashboard', icon: '▦', end: true },
   { to: '/projects', label: 'All Projects', icon: '▤', end: false },
-  { to: '/settings', label: 'Settings', icon: '⚙', end: false },
 ]
 
 // Initials for the sidebar avatar. Moved here verbatim from the old
@@ -37,7 +36,7 @@ function initialsFromEmail(email) {
 // account footer - so the frame never moves between routes and only the
 // middle changes:
 //
-//   global mode  (no `nav` passed): Dashboard / All Projects / Settings
+//   global mode  (no `nav` passed): Dashboard / All Projects
 //   project mode (`nav` passed):    ProjectNav + ProjectAdmin, handed in by
 //                                   ProjectDetailLayout
 //
