@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { useAuth } from '../AuthContext'
 import { METHODOLOGY_LABELS } from '../methodology'
+import MobileScreenHint from './MobileScreenHint'
 
 // Phone-mode home (/m/dashboard) - also doubles as the project switcher:
 // "active project" in phone mode is just whichever project is in the URL
@@ -77,6 +78,10 @@ function MobileDashboard() {
   return (
     <div>
       <h1 className="mobile-screen-title">Home</h1>
+
+      <MobileScreenHint storageKey="cpm_home_hint_count">
+        The mobile app gives you the pulse-check. The desktop app is where the full story unfolds.
+      </MobileScreenHint>
 
       <div className="mobile-filter-row">
         <button

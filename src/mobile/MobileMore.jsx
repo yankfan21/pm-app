@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../AuthContext'
+import MobileScreenHint from './MobileScreenHint'
 
 // Root-level overflow (/m/more) - account-level actions only. Project-scoped
 // overflow (Documents/Risks/Status Update/Comms) lives at
@@ -11,6 +12,11 @@ function MobileMore() {
   return (
     <div>
       <h1 className="mobile-screen-title">More</h1>
+
+      <MobileScreenHint storageKey="cpm_more_hint_count">
+        The mobile app covers the essentials. The desktop app has the rest — Gantt, backlog, settings, and more.
+      </MobileScreenHint>
+
       <div className="mobile-more-list">
         <span className="mobile-screen-stub">{user?.email}</span>
         <Link to="/m/settings" className="mobile-more-list-item">

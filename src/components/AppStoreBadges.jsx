@@ -27,7 +27,7 @@ function AppStoreBadges() {
 
   return (
     <div className="app-store-badges">
-      <span className="app-store-badges-label">Coming soon</span>
+      <span className="app-store-badges-label">Take ConfidantPM anywhere.</span>
       <div className="app-store-badges-row">
         {/* Alt text describes the destination rather than the artwork - these
             are recognisable store marks, and "Download on the App Store" is
