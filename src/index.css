@@ -46,7 +46,7 @@
      the same overall measure on a wide screen now that the rail is real
      layout rather than an overlay. Both are read by App.css. */
   --sidebar-width: 272px;
-  --content-max-width: 1128px;
+  --content-max-width: min(1800px, 96vw);
 
   /* Filter tabs (pill) vs. sort controls (plain text) - two distinct
      interaction languages so users don't mistake narrowing the list
