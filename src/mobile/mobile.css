@@ -31,8 +31,8 @@ html:has(.mobile-app) body {
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
-  background: var(--bg, #f5f6f8);
-  color: var(--text, #1a1a1a);
+  background: var(--bg);
+  color: var(--text);
   /* index.css's #root sets text-align: center for the desktop tree, and /m/
      routes mount directly under #root (App.jsx) rather than inside .app -
      which is where the desktop side resets it (App.css's `.app`). Without
@@ -82,18 +82,19 @@ html:has(.mobile-app) body {
    (desktop rail, login screens, marketing nav): a plain "Confidant" with
    only "PM" carrying the accent. Sizing matches App.css's .login-brand-name
    (20px/700), but this stays its own class - App.css hardcodes dark-panel
-   hexes there, phone mode is light and token-driven, and nothing in App.css
-   may reach into phone mode. No tagline: root screens put the screen <h1>
-   directly below this, so a tagline would crowd it. */
+   hexes there, phone mode is token-driven off the same shared dark palette
+   (index.css) and nothing in App.css may reach into phone mode. No
+   tagline: root screens put the screen <h1> directly below this, so a
+   tagline would crowd it. */
 .mobile-brand-name {
   font-size: 20px;
   font-weight: 700;
   letter-spacing: -0.2px;
-  color: var(--text, #1a1a1a);
+  color: var(--text);
 }
 
 .mobile-brand-name-accent {
-  color: var(--accent-strong, #2f6fc4);
+  color: var(--accent-strong);
 }
 
 /* Manual device-mode override (MobileDesktopLink) - deliberately
@@ -106,7 +107,7 @@ html:has(.mobile-app) body {
   padding: 10px;
   border: none;
   background: transparent;
-  color: var(--text-muted, #666);
+  color: var(--text-muted);
   font-size: 12px;
   text-decoration: underline;
   text-align: center;
@@ -176,8 +177,8 @@ html:has(.mobile-app) body {
   gap: 10px;
   padding: 10px 12px;
   padding-top: calc(10px + env(safe-area-inset-top));
-  border-bottom: 1px solid var(--border, #e2e2e2);
-  background: var(--surface-1-solid, #fff);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-1-solid);
   z-index: 10;
 }
 
@@ -202,7 +203,7 @@ html:has(.mobile-app) body {
   min-width: 44px;
   min-height: 44px;
   margin-left: -10px;
-  color: var(--text-muted, #666);
+  color: var(--text-muted);
   font-size: 20px;
   line-height: 1;
   text-decoration: none;
@@ -278,7 +279,7 @@ html:has(.mobile-app) body {
 .mobile-topbar-goal {
   margin: 4px 0 0;
   font-size: 12px;
-  color: var(--text-muted, #666);
+  color: var(--text-muted);
   white-space: pre-wrap;
 }
 
@@ -291,8 +292,8 @@ html:has(.mobile-app) body {
   left: 0;
   right: 0;
   display: flex;
-  border-top: 1px solid var(--border, #e2e2e2);
-  background: var(--surface-1-solid, #fff);
+  border-top: 1px solid var(--border);
+  background: var(--surface-1-solid);
   padding-bottom: env(safe-area-inset-bottom);
   z-index: 20;
 }
@@ -306,7 +307,7 @@ html:has(.mobile-app) body {
   gap: 2px;
   padding: 8px 4px 6px;
   font-size: 11px;
-  color: var(--text-muted, #666);
+  color: var(--text-muted);
   text-decoration: none;
   border: none;
   background: transparent;
@@ -318,7 +319,7 @@ html:has(.mobile-app) body {
 }
 
 .mobile-tabbar-item.selected {
-  color: var(--accent, #74ade7);
+  color: var(--accent);
 }
 
 .mobile-screen-title {
@@ -337,7 +338,7 @@ html:has(.mobile-app) body {
 }
 
 .mobile-screen-stub {
-  color: var(--text-muted, #666);
+  color: var(--text-muted);
   font-size: 14px;
 }
 
@@ -347,7 +348,7 @@ html:has(.mobile-app) body {
    empty-state copy, never as a warning or a callout. */
 .mobile-screen-hint {
   margin: 0 0 14px;
-  color: var(--text-muted, #666);
+  color: var(--text-muted);
   font-size: 13px;
   line-height: 1.45;
 }
@@ -369,8 +370,8 @@ html:has(.mobile-app) body {
   text-align: left;
   padding: 14px 16px;
   border-radius: 10px;
-  border: 1px solid var(--border, #e2e2e2);
-  background: var(--card-bg, #fff);
+  border: 1px solid var(--border);
+  background: var(--card-bg);
   backdrop-filter: var(--card-backdrop-filter);
   color: inherit;
   text-decoration: none;
@@ -383,11 +384,11 @@ html:has(.mobile-app) body {
 .mobile-more-group-divider {
   height: 1px;
   margin: 16px 0;
-  background: var(--border, #e2e2e2);
+  background: var(--border);
 }
 
 .mobile-error {
-  color: var(--danger, #c0392b);
+  color: var(--mobile-danger);
   font-size: 14px;
 }
 
@@ -409,8 +410,8 @@ html:has(.mobile-app) body {
   gap: 8px;
   padding: 14px 16px;
   border-radius: 10px;
-  border: 1px solid var(--border, #e2e2e2);
-  background: var(--card-bg, #fff);
+  border: 1px solid var(--border);
+  background: var(--card-bg);
   color: inherit;
   text-decoration: none;
 }
@@ -425,7 +426,7 @@ html:has(.mobile-app) body {
 
 .mobile-project-list-meta {
   font-size: 12px;
-  color: var(--accent, #74ade7);
+  color: var(--accent);
 }
 
 /* Task list (MobileProjectTasks) -------------------------------------- */
@@ -446,8 +447,8 @@ html:has(.mobile-app) body {
   min-height: 32px;
   padding: 5px 7px;
   border-radius: 999px;
-  border: 1px solid var(--border, #e2e2e2);
-  background: var(--card-bg, #fff);
+  border: 1px solid var(--border);
+  background: var(--card-bg);
   backdrop-filter: var(--card-backdrop-filter);
   color: inherit;
   font-size: 11px;
@@ -456,8 +457,8 @@ html:has(.mobile-app) body {
 }
 
 .mobile-filter-chip.selected {
-  background: var(--accent, #74ade7);
-  border-color: var(--accent, #74ade7);
+  background: var(--accent);
+  border-color: var(--accent);
   color: #fff;
 }
 
@@ -476,8 +477,8 @@ html:has(.mobile-app) body {
   gap: 10px;
   padding: 12px;
   border-radius: 10px;
-  border: 1px solid var(--border, #e2e2e2);
-  background: var(--card-bg, #fff);
+  border: 1px solid var(--border);
+  background: var(--card-bg);
   backdrop-filter: var(--card-backdrop-filter);
 }
 
@@ -486,7 +487,7 @@ html:has(.mobile-app) body {
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  border: 2px solid var(--border, #ccc);
+  border: 2px solid var(--border);
   background: transparent;
   color: #fff;
   font-size: 14px;
@@ -496,8 +497,8 @@ html:has(.mobile-app) body {
 }
 
 .mobile-task-mark-done.done {
-  background: var(--accent, #74ade7);
-  border-color: var(--accent, #74ade7);
+  background: var(--accent);
+  border-color: var(--accent);
 }
 
 .mobile-task-row-body {
@@ -519,7 +520,7 @@ html:has(.mobile-app) body {
 }
 
 .mobile-milestone-badge {
-  color: var(--accent, #74ade7);
+  color: var(--accent);
   margin-right: 4px;
 }
 
@@ -528,7 +529,7 @@ html:has(.mobile-app) body {
   gap: 8px;
   align-items: center;
   font-size: 11px;
-  color: var(--text-muted, #666);
+  color: var(--text-muted);
 }
 
 .mobile-status-badge {
@@ -548,19 +549,19 @@ html:has(.mobile-app) body {
   display: inline-block;
   margin-bottom: 8px;
   font-size: 13px;
-  color: var(--accent, #74ade7);
+  color: var(--accent);
   text-decoration: none;
 }
 
 .mobile-task-description {
   font-size: 14px;
-  color: var(--text-muted, #666);
+  color: var(--text-muted);
   margin: 0 0 6px;
 }
 
 .mobile-task-due {
   font-size: 12px;
-  color: var(--text-muted, #666);
+  color: var(--text-muted);
   margin: 0 0 12px;
 }
 
@@ -574,8 +575,8 @@ html:has(.mobile-app) body {
 .mobile-status-option {
   padding: 8px 12px;
   border-radius: 8px;
-  border: 1px solid var(--border, #e2e2e2);
-  background: var(--card-bg, #fff);
+  border: 1px solid var(--border);
+  background: var(--card-bg);
   backdrop-filter: var(--card-backdrop-filter);
   color: inherit;
   font-size: 12px;
@@ -585,9 +586,9 @@ html:has(.mobile-app) body {
 /* Same bg/text token pairs as desktop's .task-status-select
    (pending/partial/done/critical, App.css) - not_started/in_progress/
    completed/delayed map onto them 1:1. Previously hardcoded light-pastel
-   hex with no paired text color (relied on inherited --text), which is
-   dark in light mode (readable) but light in dark mode (unreadable on
-   the same light pastel bg). */
+   hex with no paired text color (relied on inherited --text), which read
+   fine against that pastel but is unreadable against this app's permanent
+   dark palette. */
 .mobile-status-option.selected.status-not_started {
   background: var(--code-bg);
   color: var(--text);
@@ -627,8 +628,8 @@ html:has(.mobile-app) body {
 .mobile-comment {
   padding: 10px 12px;
   border-radius: 10px;
-  border: 1px solid var(--border, #e2e2e2);
-  background: var(--card-bg, #fff);
+  border: 1px solid var(--border);
+  background: var(--card-bg);
   backdrop-filter: var(--card-backdrop-filter);
 }
 
@@ -637,7 +638,7 @@ html:has(.mobile-app) body {
   justify-content: space-between;
   gap: 8px;
   font-size: 11px;
-  color: var(--text-muted, #666);
+  color: var(--text-muted);
   margin-bottom: 4px;
 }
 
@@ -660,23 +661,23 @@ html:has(.mobile-app) body {
   font-size: 12px;
   padding: 4px 10px;
   border-radius: 6px;
-  border: 1px solid var(--border, #e2e2e2);
-  background: var(--card-bg, #fff);
+  border: 1px solid var(--border);
+  background: var(--card-bg);
   backdrop-filter: var(--card-backdrop-filter);
   color: inherit;
   cursor: pointer;
 }
 
 .mobile-btn-danger {
-  color: #c0392b !important;
-  border-color: #c0392b !important;
+  color: var(--mobile-danger) !important;
+  border-color: var(--mobile-danger) !important;
 }
 
 .mobile-comment-edit textarea,
 .mobile-comment-form textarea {
   width: 100%;
   border-radius: 8px;
-  border: 1px solid var(--border, #e2e2e2);
+  border: 1px solid var(--border);
   padding: 8px;
   font: inherit;
   resize: vertical;
@@ -695,7 +696,7 @@ html:has(.mobile-app) body {
   padding: 8px 16px;
   border-radius: 8px;
   border: none;
-  background: var(--accent, #74ade7);
+  background: var(--accent);
   color: #fff;
   font-size: 13px;
   cursor: pointer;
@@ -712,7 +713,7 @@ html:has(.mobile-app) body {
   flex-direction: column;
   gap: 4px;
   font-size: 12px;
-  color: var(--text-muted, #666);
+  color: var(--text-muted);
   margin-bottom: 12px;
 }
 
@@ -734,7 +735,7 @@ html:has(.mobile-app) body {
   min-height: 44px;
   padding: 10px 12px;
   border-radius: 8px;
-  border: 1px solid var(--border, #e2e2e2);
+  border: 1px solid var(--border);
   font-family: inherit;
   font-size: 16px;
   color: var(--text-h);
@@ -819,7 +820,7 @@ html:has(.mobile-app) body {
   display: flex;
   gap: 16px;
   font-size: 12px;
-  color: var(--text-muted, #666);
+  color: var(--text-muted);
   margin-bottom: 16px;
 }
 
@@ -839,7 +840,7 @@ html:has(.mobile-app) body {
 .mobile-board-column-count {
   font-size: 11px;
   font-weight: 400;
-  color: var(--text-muted, #666);
+  color: var(--text-muted);
 }
 
 .mobile-board-card-list {
@@ -854,8 +855,8 @@ html:has(.mobile-app) body {
 .mobile-board-card {
   padding: 10px 12px;
   border-radius: 10px;
-  border: 1px solid var(--border, #e2e2e2);
-  background: var(--card-bg, #fff);
+  border: 1px solid var(--border);
+  background: var(--card-bg);
   backdrop-filter: var(--card-backdrop-filter);
 }
 
@@ -869,7 +870,7 @@ html:has(.mobile-app) body {
 
 .mobile-points-badge {
   font-size: 11px;
-  color: var(--text-muted, #666);
+  color: var(--text-muted);
 }
 
 .mobile-board-card-targets {
@@ -894,9 +895,9 @@ html:has(.mobile-app) body {
   font-size: 11px;
   padding: 5px 10px;
   border-radius: 6px;
-  border: 1px solid var(--border, #e2e2e2);
+  border: 1px solid var(--border);
   background: transparent;
-  color: var(--text-muted, #666);
+  color: var(--text-muted);
   cursor: pointer;
 }
 
@@ -914,8 +915,8 @@ html:has(.mobile-app) body {
 .mobile-metrics-card {
   padding: 14px 16px;
   border-radius: 10px;
-  border: 1px solid var(--border, #e2e2e2);
-  background: var(--card-bg, #fff);
+  border: 1px solid var(--border);
+  background: var(--card-bg);
   backdrop-filter: var(--card-backdrop-filter);
   margin-bottom: 12px;
 }
@@ -923,13 +924,19 @@ html:has(.mobile-app) body {
 /* Dark mode only: desktop gets this card's contrast for free (it nests
    var(--bg) inside a var(--surface-1)/--card-bg zone - two distinct dark
    tones). Mobile's page background IS --bg directly, so --card-bg's
-   translucent dark fill (rgba(22,28,39,0.35)) composites to almost the
-   exact same pixel as the page behind it - no existing token pairing
-   separates them. Solid, deliberately lighter fill + a visible slate
-   border (matching --zone-accent-neutral's hue, used for the same "this
-   is a distinct zone" job on desktop's .detail-zone) instead. */
+   translucent fill composites to almost the exact same pixel as the page
+   behind it - no existing token pairing separates them. Solid, deliberately
+   lighter fill + a visible slate border (matching --zone-accent-neutral's
+   hue, used for the same "this is a distinct zone" job on desktop's
+   .detail-zone) instead. Selector kept as :root[data-theme='dark'] even
+   though that's now the only theme (see index.css) - not restructuring it,
+   just carrying its color forward. background is --bg's old-to-new delta
+   (+9,+11,+16) re-applied on top of the new --bg, keeping the same
+   lighter-than-page-by-one-step relationship the original hex had; border
+   left as-is since it's pinned to --zone-accent-neutral, which didn't
+   change. */
 :root[data-theme='dark'] .mobile-metrics-card {
-  background: #232c40;
+  background: #2a354d;
   border-color: rgba(148, 163, 184, 0.3);
 }
 
@@ -961,7 +968,7 @@ html:has(.mobile-app) body {
 
 .mobile-metrics-asof {
   font-size: 11px;
-  color: var(--text-muted, #666);
+  color: var(--text-muted);
   margin: 6px 0 0;
 }
 
@@ -1029,7 +1036,7 @@ html:has(.mobile-app) body {
   margin: 0;
   font-size: 12px;
   font-weight: 600;
-  color: var(--text-muted, #666);
+  color: var(--text-muted);
 }
 
 /* A badge that's also a Link (Issues Open/Closed, Delayed Tasks, Risk
@@ -1067,8 +1074,8 @@ html:has(.mobile-app) body {
 
 .mobile-doc-card {
   border-radius: 10px;
-  border: 1px solid var(--border, #e2e2e2);
-  background: var(--card-bg, #fff);
+  border: 1px solid var(--border);
+  background: var(--card-bg);
   backdrop-filter: var(--card-backdrop-filter);
   overflow: hidden;
 }
@@ -1113,7 +1120,7 @@ html:has(.mobile-app) body {
 
 .mobile-doc-row-meta {
   font-size: 11px;
-  color: var(--text-muted, #666);
+  color: var(--text-muted);
 }
 
 /* line-height is explicit so the painted height is deterministic (18 + 2*2
@@ -1163,7 +1170,7 @@ html:has(.mobile-app) body {
 
 .mobile-doc-detail {
   padding: 0 16px 16px;
-  border-top: 1px solid var(--border, #e2e2e2);
+  border-top: 1px solid var(--border);
 }
 
 .mobile-doc-detail > *:first-child {
@@ -1178,7 +1185,7 @@ html:has(.mobile-app) body {
   font-size: 12px;
   font-weight: 600;
   margin: 0 0 4px;
-  color: var(--text-muted, #666);
+  color: var(--text-muted);
 }
 
 .mobile-doc-section-body {
@@ -1197,13 +1204,13 @@ html:has(.mobile-app) body {
 .mobile-doc-risk-card {
   padding: 10px 12px;
   border-radius: 8px;
-  border: 1px solid var(--border, #e2e2e2);
-  background: var(--surface-1-solid, #f9f9f9);
+  border: 1px solid var(--border);
+  background: var(--surface-1-solid);
 }
 
 .mobile-doc-risk-meta {
   font-size: 11px;
-  color: var(--text-muted, #666);
+  color: var(--text-muted);
   margin: 4px 0;
 }
 
@@ -1222,7 +1229,7 @@ html:has(.mobile-app) body {
 
 .mobile-doc-budget-stat-label {
   font-size: 11px;
-  color: var(--text-muted, #666);
+  color: var(--text-muted);
 }
 
 .mobile-doc-budget-stat-value {
@@ -1233,8 +1240,8 @@ html:has(.mobile-app) body {
 .mobile-doc-status-entry {
   padding: 10px 12px;
   border-radius: 8px;
-  border: 1px solid var(--border, #e2e2e2);
-  background: var(--surface-1-solid, #f9f9f9);
+  border: 1px solid var(--border);
+  background: var(--surface-1-solid);
 }
 
 .mobile-doc-recs-list {
@@ -1255,8 +1262,8 @@ html:has(.mobile-app) body {
 .mobile-settings-option {
   padding: 8px 14px;
   border-radius: 8px;
-  border: 1px solid var(--border, #e2e2e2);
-  background: var(--card-bg, #fff);
+  border: 1px solid var(--border);
+  background: var(--card-bg);
   backdrop-filter: var(--card-backdrop-filter);
   color: inherit;
   font-size: 13px;
@@ -1264,8 +1271,8 @@ html:has(.mobile-app) body {
 }
 
 .mobile-settings-option.selected {
-  background: var(--accent, #74ade7);
-  border-color: var(--accent, #74ade7);
+  background: var(--accent);
+  border-color: var(--accent);
   color: #fff;
 }
 
@@ -1276,8 +1283,8 @@ html:has(.mobile-app) body {
   gap: 8px;
   padding: 12px;
   border-radius: 10px;
-  border: 1px solid var(--border, #e2e2e2);
-  background: var(--card-bg, #fff);
+  border: 1px solid var(--border);
+  background: var(--card-bg);
   backdrop-filter: var(--card-backdrop-filter);
 }
 
@@ -1300,8 +1307,8 @@ html:has(.mobile-app) body {
   font-size: 12px;
   padding: 6px 12px;
   border-radius: 6px;
-  border: 1px solid var(--border, #e2e2e2);
-  background: var(--card-bg, #fff);
+  border: 1px solid var(--border);
+  background: var(--card-bg);
   backdrop-filter: var(--card-backdrop-filter);
   color: inherit;
   cursor: pointer;

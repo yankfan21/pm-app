@@ -9,15 +9,15 @@
   color-scheme: dark;
   --text: #e2e8f0;
   --text-h: #f1f5f9;
-  --text-muted: #94a3b8;
-  --bg: #1a2130;
-  --border: rgba(255, 255, 255, 0.08);
+  --text-muted: #a3b2c7;
+  --bg: #212a3d;
+  --border: rgba(255, 255, 255, 0.12);
   --code-bg: rgba(15, 23, 42, 0.5);
   /* Accent blue, in the spirit of #378ADD - --accent-bg/--accent-border
      are that base hue at low alpha (tint/outline use), while --accent and
      --accent-muted are lighter same-hue steps for text/icon use, same
      structure the previous accent family used. */
-  --accent: #74ade7;
+  --accent: #87b8ec;
   --accent-bg: rgba(55, 138, 221, 0.15);
   --accent-border: rgba(55, 138, 221, 0.4);
   --accent-muted: #4894e0;
@@ -61,7 +61,7 @@
      cardAccentTier in ProjectList.jsx). Dark cards are a frosted glass
      surface over the page background rather than a solid lift - see
      --card-backdrop-filter. */
-  --card-bg: rgba(22, 28, 39, 0.35);
+  --card-bg: rgba(41, 51, 73, 0.4);
   --card-backdrop-filter: blur(12px);
   --card-shadow: none;
   --card-hover-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
@@ -111,7 +111,7 @@
      --option-pending-bg below. A solid approximation of the glass card's
      color (dark charcoal at low alpha over --bg), so the Gantt frozen
      column stays opaque instead of inheriting the blur. */
-  --surface-1-solid: #1b2233;
+  --surface-1-solid: #293349;
   --border-faint: color-mix(in srgb, var(--border) 10%, transparent);
   --agile-accent: #818cf8;
   --agile-tint: rgba(129, 140, 248, 0.08);
@@ -132,6 +132,9 @@
      alpha convention as those three, over --pill-neutral-text's slate. */
   --pill-neutral-border: rgba(148, 163, 184, 0.3);
   --alert-red: #f87171;
+  /* Tokenized out of mobile.css's hardcoded #c0392b (mobile-error text,
+     mobile-btn-danger) - same value, just named. */
+  --mobile-danger: #c0392b;
 
   /* Status badge tiers (on-track/at-risk/off-track health, priority,
      doc-status, etc. all share these three). */
