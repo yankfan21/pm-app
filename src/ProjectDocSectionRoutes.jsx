@@ -180,8 +180,10 @@ function DocSection({ docKey, title, startLabel, viewProps, seed }) {
   )
 }
 
-// Scoping - plain start-then-view page, no seed/filter wiring since
-// ScopingView is read-only (see ScopingView.jsx's own thin-answer nudge).
+// Scoping - plain start-then-view page, no seed/filter wiring: editing goes
+// through ScopingView's own "Update Answers" button (which reopens
+// ScopingFlow and updates in place) rather than DocSection's flowOpen/insert
+// path.
 export function ScopingRoute() {
   return <DocSection docKey="scoping" />
 }

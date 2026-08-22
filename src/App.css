@@ -3691,6 +3691,22 @@ a.overview-hotspot-row-count:focus-visible {
   color: var(--text);
 }
 
+/* Marks a scoping question as vital, next to its question text (see
+   ScopingView.jsx). Same pill shape as .priority-badge/.status-badge, on the
+   warning tint since a vital question is a "pay attention" flag rather than
+   a straight severity tier. */
+.qa-vital-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: var(--label-badge-size);
+  font-weight: var(--label-badge-weight);
+  background: var(--badge-warning-bg);
+  color: var(--badge-warning-text);
+  vertical-align: middle;
+}
+
 .project-list li.archived {
   opacity: 0.6;
 }

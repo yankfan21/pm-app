@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
 import Spinner from './Spinner'
+import ScopingFlow from './ScopingFlow'
 
 // Scoping has no narrative sections (unlike Charter) and no structured row
 // table (unlike Risk Log) - just a flat list of Q&A pairs plus the
@@ -9,13 +10,19 @@ import Spinner from './Spinner'
 // thin scoping doc re-runs the same 'evaluate' action on mount to show which
 // vital answers were flagged, reusing ScopingFlow's own followup shape
 // rather than re-deriving "thin" with separate client-side logic.
-function ScopingView({ project, scoping }) {
+function ScopingView({ project, scoping, canEdit, onUpdate }) {
   const [followups, setFollowups] = useState(null)
   const [error, setError] = useState(null)
+  const [editing, setEditing] = useState(false)
 
   const answers = scoping.qa_answers || []
 
   useEffect(() => {
+    // Reset on every scoping change (not just mount) so an edit that flips
+    // sufficient true<->false clears a stale nudge/error from the answers it
+    // replaced.
+    setFollowups(null)
+    setError(null)
     if (scoping.sufficient !== false) return
 
     let cancelled = false
@@ -47,10 +54,46 @@ function ScopingView({ project, scoping }) {
       cancelled = true
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scoping.id])
+  }, [scoping.id, scoping.sufficient, scoping.qa_answers])
+
+  async function handleUpdateSubmit(answerList, sufficient) {
+    const { data, error: updateError } = await supabase
+      .from('scopings')
+      .update({ qa_answers: answerList, sufficient })
+      .eq('id', scoping.id)
+      .select()
+      .single()
+
+    if (updateError) return updateError.message
+
+    onUpdate(data)
+    setEditing(false)
+    return null
+  }
+
+  if (editing) {
+    return (
+      <ScopingFlow
+        project={project}
+        initialAnswers={answers}
+        onGenerated={handleUpdateSubmit}
+        onClose={() => setEditing(false)}
+      />
+    )
+  }
 
   return (
     <div className="charter">
+      {canEdit && (
+        <div className="section-header">
+          <div className="charter-actions">
+            <button type="button" className="btn-secondary" onClick={() => setEditing(true)}>
+              Update Answers
+            </button>
+          </div>
+        </div>
+      )}
+
       <ul className="qa-list">
         {answers.map((a, i) => (
           <li className="qa-item" key={i}>

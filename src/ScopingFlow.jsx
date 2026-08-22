@@ -16,15 +16,30 @@ import Spinner from './Spinner'
 // than looping back through evaluate again - the PM either edits and saves,
 // or explicitly continues anyway, and either way this is the end of the
 // session either way.
-function ScopingFlow({ project, onGenerated, onClose }) {
-  const [phase, setPhase] = useState('loading-questions')
-  const [questions, setQuestions] = useState([])
-  const [answers, setAnswers] = useState({})
+function ScopingFlow({ project, initialAnswers, onGenerated, onClose }) {
+  // initialAnswers (ScopingView's "Update Answers" path) reuses the PM's own
+  // previously-recorded questions instead of re-fetching from the 'questions'
+  // action - that call regenerates via Claude on every invoke, so a second
+  // call here isn't guaranteed to return the same question set (or even the
+  // same count) to prefill against. Saved qa_answers only kept
+  // question/answer/vital (see buildAnswerList), not the original id/type/
+  // choices, so choice-type questions fall back to freeform text on edit.
+  const isEditing = !!initialAnswers
+  const [phase, setPhase] = useState(isEditing ? 'answering' : 'loading-questions')
+  const [questions, setQuestions] = useState(() =>
+    isEditing
+      ? initialAnswers.map((a, i) => ({ id: String(i), text: a.question, type: 'text', vital: !!a.vital }))
+      : []
+  )
+  const [answers, setAnswers] = useState(() =>
+    isEditing ? Object.fromEntries(initialAnswers.map((a, i) => [String(i), a.answer || ''])) : {}
+  )
   const [followups, setFollowups] = useState([])
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    loadQuestions()
+    if (!isEditing) loadQuestions()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   async function loadQuestions() {
