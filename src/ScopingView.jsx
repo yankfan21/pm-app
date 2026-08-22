@@ -101,6 +101,7 @@ function ScopingView({ project, scoping, canEdit, onUpdate }) {
               {a.question}
               {a.vital && <span className="qa-vital-badge">Vital</span>}
             </p>
+            <p className="qa-answer-label">Your answer:</p>
             <p className="qa-answer">{a.answer || <em>No answer given</em>}</p>
           </li>
         ))}

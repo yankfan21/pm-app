@@ -3707,6 +3707,91 @@ a.overview-hotspot-row-count:focus-visible {
   vertical-align: middle;
 }
 
+/* Scoping's Q&A list (ScopingView.jsx) - card/gap treatment mirrors
+   .risk-row's border/radius and .backlog-list's item gap. */
+.qa-list {
+  list-style: none;
+  margin: 24px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.qa-item {
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.qa-question {
+  margin: 0;
+  color: var(--text-h);
+}
+
+/* Same small-caps muted label as .status-update-field-label. */
+.qa-answer-label {
+  margin: 10px 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--text);
+  opacity: 0.7;
+}
+
+/* Left-border-accent block, same recipe as .version-history-entry, sized
+   down for an inline answer rather than a whole card. */
+.qa-answer {
+  margin: 0;
+  padding: 8px 12px;
+  border-left: 3px solid var(--border);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.03);
+  color: var(--text);
+}
+
+.qa-list li.empty {
+  text-align: center;
+  color: var(--text);
+  padding: 24px 12px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+}
+
+/* "Thin answers flagged" block (ScopingView.jsx) - warning-tint card using
+   the same --badge-warning-* triad as .qa-vital-badge, so it reads as
+   "needs your attention" against the plain Q&A list above it. */
+.scoping-thin-section {
+  margin-top: 24px;
+  padding: 16px;
+  border: 1px solid var(--badge-warning-border);
+  border-radius: 8px;
+  background: var(--badge-warning-bg);
+}
+
+.scoping-thin-section > .charter-status:first-child {
+  margin-top: 0;
+}
+
+.scoping-followup {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--badge-warning-border);
+}
+
+.scoping-followup:first-of-type {
+  margin-top: 12px;
+  padding-top: 0;
+  border-top: none;
+}
+
+.scoping-nudge {
+  margin: 0 0 8px;
+  font-weight: 600;
+  color: var(--badge-warning-text);
+}
+
 .project-list li.archived {
   opacity: 0.6;
 }
