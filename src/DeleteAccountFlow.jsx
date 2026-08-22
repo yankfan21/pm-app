@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { FunctionsHttpError } from '@supabase/supabase-js'
 import { supabase } from './supabaseClient'
 import Modal from './components/Modal'
@@ -33,6 +33,8 @@ async function describeFunctionError(error, data) {
 
 function DeleteAccountFlow() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const dangerZoneRef = useRef(null)
   // idle | loading-preview | preview-error | pick-successors | confirm | executing | execute-error
   const [step, setStep] = useState('idle')
   const [preview, setPreview] = useState(null)
@@ -40,6 +42,18 @@ function DeleteAccountFlow() {
   const [confirmText, setConfirmText] = useState('')
   const [previewError, setPreviewError] = useState(null)
   const [executeError, setExecuteError] = useState(null)
+
+  // Same pattern as Settings.jsx's own #contact-support effect - a plain
+  // #danger-zone id alone doesn't reliably scroll on load in this app: this
+  // is a client-rendered SPA and Settings is a lazy-loaded route (App.jsx),
+  // so the browser's native on-load hash scroll fires before this element
+  // exists in the DOM. Re-checking on mount/hash-change covers both a fresh
+  // load at /settings#danger-zone and an in-app Link to the same hash.
+  useEffect(() => {
+    if (location.hash === '#danger-zone' && dangerZoneRef.current) {
+      dangerZoneRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [location.hash])
 
   function reset() {
     setStep('idle')
@@ -102,7 +116,7 @@ function DeleteAccountFlow() {
   return (
     <>
       <h3 className="settings-section-title settings-section-title--danger">Danger Zone</h3>
-      <div className="danger-zone">
+      <div className="danger-zone" id="danger-zone" ref={dangerZoneRef}>
         <p className="danger-zone-text">
           Permanently delete your account. Projects only you own are deleted; projects you share
           with others are handed to a collaborator you pick first. This cannot be undone.

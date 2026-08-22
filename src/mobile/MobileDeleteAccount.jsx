@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { FunctionsHttpError } from '@supabase/supabase-js'
 import { supabase } from '../supabaseClient'
 
@@ -29,6 +29,8 @@ async function describeFunctionError(error, data) {
 
 function MobileDeleteAccount() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const dangerZoneRef = useRef(null)
   // idle | loading-preview | preview-error | pick-successors | confirm | executing | execute-error
   const [step, setStep] = useState('idle')
   const [preview, setPreview] = useState(null)
@@ -36,6 +38,16 @@ function MobileDeleteAccount() {
   const [confirmText, setConfirmText] = useState('')
   const [previewError, setPreviewError] = useState(null)
   const [executeError, setExecuteError] = useState(null)
+
+  // Same pattern as MobileSettings.jsx's own #contact-support effect - a
+  // plain #danger-zone id alone doesn't reliably scroll on load in this app
+  // (client-rendered SPA, lazy-loaded route), so re-check on mount/hash-
+  // change and scroll manually instead of relying on native anchor scroll.
+  useEffect(() => {
+    if (location.hash === '#danger-zone' && dangerZoneRef.current) {
+      dangerZoneRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [location.hash])
 
   function reset() {
     setStep('idle')
@@ -98,7 +110,7 @@ function MobileDeleteAccount() {
   return (
     <>
       <h2 className="mobile-section-title">Danger Zone</h2>
-      <div className="mobile-danger-zone">
+      <div className="mobile-danger-zone" id="danger-zone" ref={dangerZoneRef}>
         <p className="mobile-screen-stub">
           Permanently delete your account. Projects only you own are deleted; projects you share
           with others are handed to a collaborator you pick first. This cannot be undone.
