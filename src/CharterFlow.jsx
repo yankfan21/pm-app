@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
 import QaStepper from './QaStepper'
 import Spinner from './Spinner'
@@ -35,8 +35,12 @@ async function extractDocumentText(file) {
 // identical either way (qa_answers just records what informed it), so the
 // existing Ask Follow-up Questions/Regenerate/Revise flows work on it
 // afterward exactly as if it had come from the Q&A path.
-function CharterFlow({ project, onGenerated, onClose }) {
-  const [phase, setPhase] = useState('choose-method')
+// autoStart skips the choose-method screen and lands directly in the Q&A
+// path - used by the guided project-creation wizard (NewProjectFlow.jsx),
+// which only offers the Q&A entry point inline (Upload Existing Document
+// stays reachable from the regular Documents page after creation).
+function CharterFlow({ project, onGenerated, onClose, autoStart = false }) {
+  const [phase, setPhase] = useState(autoStart ? 'loading-questions' : 'choose-method')
   const [questions, setQuestions] = useState([])
   const [answers, setAnswers] = useState({})
   const [error, setError] = useState(null)
@@ -44,6 +48,10 @@ function CharterFlow({ project, onGenerated, onClose }) {
   const [fileName, setFileName] = useState(null)
   const [docSections, setDocSections] = useState(null)
   const [savingDoc, setSavingDoc] = useState(false)
+
+  useEffect(() => {
+    if (autoStart) loadQuestions()
+  }, [])
 
   async function loadQuestions() {
     setPhase('loading-questions')

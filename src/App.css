@@ -1306,6 +1306,14 @@
   border-bottom: 1px solid var(--border);
 }
 
+/* Zeroes out .step-label's own bottom margin when it's the heading half of
+   a .section-header row (the guided project-creation steps in
+   NewProjectFlow.jsx) - .section-header already supplies the spacing below
+   via its own padding/border. */
+.section-header .step-label {
+  margin: 0;
+}
+
 @media (max-width: 720px) {
   .section-header {
     flex-wrap: wrap;
@@ -6369,6 +6377,57 @@ textarea.risk-cell-input {
 }
 
 .mobile-teaser-dismiss:hover {
+  background: var(--row-bg);
+  color: var(--text-h);
+}
+
+/* Overview's "no charter/risk log yet" nudge cards (DocReminderCard.jsx) -
+   same shape as .mobile-teaser-card above, plus a CTA button. */
+.doc-reminder-card {
+  position: relative;
+  margin: 0 0 20px;
+  padding: var(--space-card-padding);
+  padding-right: 44px; /* clears the absolutely-positioned dismiss button */
+  box-sizing: border-box;
+  border: 1px solid var(--border-faint);
+  border-radius: var(--radius-card);
+  background: var(--card-bg);
+  backdrop-filter: var(--card-backdrop-filter);
+}
+
+.doc-reminder-heading {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.doc-reminder-body {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.doc-reminder-dismiss {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.doc-reminder-dismiss:hover {
   background: var(--row-bg);
   color: var(--text-h);
 }

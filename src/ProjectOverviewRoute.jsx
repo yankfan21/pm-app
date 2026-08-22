@@ -1,6 +1,7 @@
 import { useOutletContext } from 'react-router-dom'
 import KeyMetricsDashboard from './KeyMetricsDashboard'
 import { ProjectEvalSection } from './ProjectDocSectionRoutes'
+import DocReminderCard from './components/DocReminderCard'
 
 // Overview - project goal/purpose (as entered at creation) plus the Key
 // Metrics Dashboard content (Project Status/Progress %/Critical Issues) as
@@ -49,6 +50,26 @@ function ProjectOverviewRoute() {
 
   return (
     <>
+      {!docsLoading && !docs.charter && (
+        <DocReminderCard
+          storageKey="cpm_overview_charter_reminder_dismissed_at"
+          heading="No charter yet"
+          body="Want the assistant to help you draft one?"
+          ctaLabel="Generate Charter"
+          ctaTo="../documents"
+        />
+      )}
+
+      {!docsLoading && !docs.risk_log && (
+        <DocReminderCard
+          storageKey="cpm_overview_riskLog_reminder_dismissed_at"
+          heading="No risk log yet"
+          body="Want the assistant to help you identify risks?"
+          ctaLabel="Generate Risk Log"
+          ctaTo="../risk-log"
+        />
+      )}
+
       <KeyMetricsDashboard
         project={project}
         canEdit={canEdit}

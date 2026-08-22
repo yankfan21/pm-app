@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { supabase } from './supabaseClient'
 import { useAuth } from './AuthContext'
 import { DEFAULT_PHASES } from './phases'
+import CharterFlow from './CharterFlow'
+import RiskLogFlow from './RiskLogFlow'
 
 const PRIORITIES = ['Low', 'Medium', 'High', 'Critical']
 
@@ -9,6 +11,19 @@ const METHODOLOGIES = [
   { value: 'waterfall', label: 'Waterfall', description: 'Sequential phases, fixed plan up front' },
   { value: 'agile', label: 'Agile', description: 'Iterative sprints, evolving backlog' },
   { value: 'hybrid', label: 'Hybrid', description: 'Waterfall structure with agile execution' },
+]
+
+const CREATION_MODES = [
+  {
+    value: 'guided',
+    label: 'Guided setup',
+    description: 'Answer a few AI questions to draft a Charter and Risk Log right after creating',
+  },
+  {
+    value: 'quick',
+    label: 'Quick create',
+    description: 'Skip straight to the project - draft these later from Documents/Risk Log',
+  },
 ]
 
 function NewProjectFlow({ onCreated, onClose }) {
@@ -20,8 +35,20 @@ function NewProjectFlow({ onCreated, onClose }) {
   const [priority, setPriority] = useState(null)
   const [deadline, setDeadline] = useState('')
   const [tbd, setTbd] = useState(false)
+  const [creationMode, setCreationMode] = useState('guided')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
+
+  // Set once the projects-row insert (step 4) succeeds in guided mode -
+  // steps 5/6 need the real row (id, name, goal, priority, deadline) to pass
+  // to CharterFlow/RiskLogFlow, same as any other post-creation caller of
+  // those components. Quick create never sets these; it calls onCreated
+  // immediately instead of visiting steps 5/6.
+  const [createdProject, setCreatedProject] = useState(null)
+  // The just-generated charter (or null if step 5 was skipped) - passed to
+  // RiskLogFlow as context so its "questions" call can skip anything the
+  // charter already covers, same as it would post-creation.
+  const [charterRow, setCharterRow] = useState(null)
 
   const step2Valid = name.trim() !== '' && goal.trim() !== ''
   const step3Valid = priority !== null && (tbd || deadline !== '')
@@ -66,7 +93,50 @@ function NewProjectFlow({ onCreated, onClose }) {
     }
 
     setSubmitting(false)
-    onCreated(data)
+
+    if (creationMode === 'quick') {
+      onCreated(data)
+      return
+    }
+
+    setCreatedProject(data)
+    setStep(5)
+  }
+
+  // Mirrors DocSection's insertDoc (ProjectDocSectionRoutes.jsx) for these
+  // two doc types - duplicated rather than shared since every other caller
+  // of CharterFlow/RiskLogFlow already inserts inline the same way.
+  async function handleCharterGenerated(result, answerList) {
+    const { data, error: insertError } = await supabase
+      .from('charters')
+      .insert({ project_id: createdProject.id, ...result, qa_answers: answerList })
+      .select()
+      .single()
+
+    if (insertError) return insertError.message
+
+    setCharterRow(data)
+    setStep(6)
+    return null
+  }
+
+  function handleSkipCharter() {
+    setStep(6)
+  }
+
+  async function handleRiskLogGenerated(risks, answerList) {
+    const { error: insertError } = await supabase
+      .from('risk_logs')
+      .insert({ project_id: createdProject.id, risks, qa_answers: answerList })
+
+    if (insertError) return insertError.message
+
+    onCreated(createdProject)
+    return null
+  }
+
+  function handleSkipRiskLog() {
+    onCreated(createdProject)
   }
 
   return (
@@ -219,6 +289,21 @@ function NewProjectFlow({ onCreated, onClose }) {
             <h2>New Project</h2>
             <p className="step-label">Step 4 of 4 &mdash; Review</p>
 
+            <label>After creating</label>
+            <div className="methodology-buttons">
+              {CREATION_MODES.map((m) => (
+                <button
+                  type="button"
+                  key={m.value}
+                  className={creationMode === m.value ? 'selected' : ''}
+                  onClick={() => setCreationMode(m.value)}
+                >
+                  <span className="methodology-name">{m.label}</span>
+                  <span className="methodology-description">{m.description}</span>
+                </button>
+              ))}
+            </div>
+
             <dl className="review-list">
               <dt>Methodology</dt>
               <dd>{METHODOLOGIES.find((m) => m.value === methodology)?.label}</dd>
@@ -251,6 +336,41 @@ function NewProjectFlow({ onCreated, onClose }) {
                 {submitting ? 'Creating...' : 'Create Project'}
               </button>
             </div>
+          </div>
+        )}
+
+        {step === 5 && createdProject && (
+          <div className="modal-step">
+            <div className="section-header">
+              <p className="step-label">Step 5 of 6 &mdash; Charter (optional)</p>
+              <button type="button" className="btn-secondary" onClick={handleSkipCharter}>
+                Skip for now
+              </button>
+            </div>
+            <CharterFlow
+              project={createdProject}
+              autoStart
+              onGenerated={handleCharterGenerated}
+              onClose={handleSkipCharter}
+            />
+          </div>
+        )}
+
+        {step === 6 && createdProject && (
+          <div className="modal-step">
+            <div className="section-header">
+              <p className="step-label">Step 6 of 6 &mdash; Risk Log (optional)</p>
+              <button type="button" className="btn-secondary" onClick={handleSkipRiskLog}>
+                Skip for now
+              </button>
+            </div>
+            <RiskLogFlow
+              project={createdProject}
+              charter={charterRow}
+              brief={null}
+              onGenerated={handleRiskLogGenerated}
+              onClose={handleSkipRiskLog}
+            />
           </div>
         )}
       </div>
