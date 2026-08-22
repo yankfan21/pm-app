@@ -3,7 +3,7 @@ import { supabase } from './supabaseClient'
 import QaStepper from './QaStepper'
 import Spinner from './Spinner'
 
-function RiskLogFlow({ project, charter, brief, onGenerated, onClose }) {
+function RiskLogFlow({ project, charter, brief, scoping, onGenerated, onClose }) {
   const [phase, setPhase] = useState('loading-questions')
   const [questions, setQuestions] = useState([])
   const [answers, setAnswers] = useState({})
@@ -18,7 +18,7 @@ function RiskLogFlow({ project, charter, brief, onGenerated, onClose }) {
     setError(null)
 
     const { data, error } = await supabase.functions.invoke('risk-log', {
-      body: { action: 'questions', project, charter, brief },
+      body: { action: 'questions', project, charter, brief, scoping },
     })
 
     if (error || data?.error) {
@@ -43,7 +43,7 @@ function RiskLogFlow({ project, charter, brief, onGenerated, onClose }) {
       }))
 
     const { data, error } = await supabase.functions.invoke('risk-log', {
-      body: { action: 'generate', project, charter, brief, answers: answerList },
+      body: { action: 'generate', project, charter, brief, scoping, answers: answerList },
     })
 
     if (error || data?.error) {

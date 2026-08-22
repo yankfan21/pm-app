@@ -151,10 +151,20 @@ function briefText(brief) {
     .join("\n")
 }
 
-function establishedContext(charter, brief) {
+function scopingText(scoping) {
+  const answers = scoping?.qa_answers
+  if (!answers || answers.length === 0) return null
+  return answers
+    .map((a) => `${a.vital ? "[vital] " : ""}Q: ${a.question}\nA: ${a.answer}`)
+    .join("\n\n")
+}
+
+function establishedContext(charter, brief, scoping) {
   const parts = []
+  const s = scopingText(scoping)
   const c = charterText(charter)
   const b = briefText(brief)
+  if (s) parts.push(`Scoping session Q&A:\n${s}`)
   if (c) parts.push(`Existing project charter:\n${c}`)
   if (b) parts.push(`Existing requirements brief:\n${b}`)
   return parts.length > 0 ? parts.join("\n\n") : null
@@ -186,10 +196,10 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { action, project, charter, brief, answers, risks } = await req.json()
+    const { action, project, charter, brief, scoping, answers, risks } = await req.json()
 
     if (action === "questions") {
-      const context = establishedContext(charter, brief)
+      const context = establishedContext(charter, brief, scoping)
 
       const system =
         "You are a project management assistant preparing a Risk Log. You first check what is already established from the project data and any existing charter or requirements brief, and only ask about what's genuinely still missing. Where you can reasonably infer a likely risk from the context already given, you propose it as a suggestion for the PM to accept, edit, or dismiss - you never present a guess as settled fact. Respond with ONLY a JSON object, no markdown fences, no other text."
@@ -214,7 +224,7 @@ ${QUESTION_SHAPE_HINT}`
     }
 
     if (action === "generate") {
-      const context = establishedContext(charter, brief)
+      const context = establishedContext(charter, brief, scoping)
       const qaText = (answers || [])
         .map((a) => `Q: ${a.question}\nA: ${a.answer}`)
         .join("\n\n")
@@ -242,7 +252,7 @@ Return ONLY this JSON shape:
     }
 
     if (action === "suggest") {
-      const context = establishedContext(charter, brief)
+      const context = establishedContext(charter, brief, scoping)
 
       const system =
         "You are a project management assistant proposing additional entries for an existing Risk Log. Respond with ONLY a JSON object, no markdown fences, no other text."

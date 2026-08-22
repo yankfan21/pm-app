@@ -48,8 +48,31 @@ function ProjectOverviewRoute() {
     })
   }
 
+  const scopingMissing = !docsLoading && !docs.scoping
+  const scopingThin = !docsLoading && !!docs.scoping && docs.scoping.sufficient === false
+
   return (
     <>
+      {scopingMissing && (
+        <DocReminderCard
+          storageKey="cpm_overview_scoping_reminder_dismissed_at"
+          heading="No scoping yet"
+          body="Want the assistant to help you map out constraints and unknowns before you Charter this?"
+          ctaLabel="Start Scoping"
+          ctaTo="../documents"
+        />
+      )}
+
+      {scopingThin && (
+        <DocReminderCard
+          storageKey="cpm_overview_scoping_reminder_dismissed_at"
+          heading="Scoping is still thin"
+          body="A few of the vital scoping answers were pretty bare - worth firming up, since Charter and Risk Log will lean on them."
+          ctaLabel="Revisit Scoping"
+          ctaTo="../documents"
+        />
+      )}
+
       {!docsLoading && !docs.charter && (
         <DocReminderCard
           storageKey="cpm_overview_charter_reminder_dismissed_at"

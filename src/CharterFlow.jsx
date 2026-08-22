@@ -39,7 +39,7 @@ async function extractDocumentText(file) {
 // path - used by the guided project-creation wizard (NewProjectFlow.jsx),
 // which only offers the Q&A entry point inline (Upload Existing Document
 // stays reachable from the regular Documents page after creation).
-function CharterFlow({ project, onGenerated, onClose, autoStart = false }) {
+function CharterFlow({ project, scoping, onGenerated, onClose, autoStart = false }) {
   const [phase, setPhase] = useState(autoStart ? 'loading-questions' : 'choose-method')
   const [questions, setQuestions] = useState([])
   const [answers, setAnswers] = useState({})
@@ -58,7 +58,7 @@ function CharterFlow({ project, onGenerated, onClose, autoStart = false }) {
     setError(null)
 
     const { data, error } = await supabase.functions.invoke('charter', {
-      body: { action: 'questions', project },
+      body: { action: 'questions', project, scoping },
     })
 
     if (error || data?.error) {
@@ -83,7 +83,7 @@ function CharterFlow({ project, onGenerated, onClose, autoStart = false }) {
       }))
 
     const { data, error } = await supabase.functions.invoke('charter', {
-      body: { action: 'generate', project, answers: answerList },
+      body: { action: 'generate', project, answers: answerList, scoping },
     })
 
     if (error || data?.error) {

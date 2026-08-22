@@ -119,6 +119,22 @@ Priority: ${project.priority}
 Deadline: ${project.deadline ?? "TBD"}`
 }
 
+function scopingText(scoping) {
+  const answers = scoping?.qa_answers
+  if (!answers || answers.length === 0) return null
+  return answers
+    .map((a) => `${a.vital ? "[vital] " : ""}Q: ${a.question}\nA: ${a.answer}`)
+    .join("\n\n")
+}
+
+// Charter has no other established context to fold in ahead of it (unlike
+// risk-log's charter+brief) - only a preceding Scoping session, if the PM
+// didn't skip it.
+function establishedContext(scoping) {
+  const s = scopingText(scoping)
+  return s ? `Scoping session Q&A:\n${s}` : null
+}
+
 const SECTION_LABELS = {
   purpose: "Purpose",
   scope: "Scope",
@@ -149,7 +165,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { action, project, answers, charter, sectionKey, sectionText, instruction, documentText } =
+    const { action, project, answers, charter, scoping, sectionKey, sectionText, instruction, documentText } =
       await req.json()
 
     if (action === "from_document") {
@@ -173,9 +189,13 @@ Return ONLY this JSON shape:
     }
 
     if (action === "questions") {
+      const context = establishedContext(scoping)
+
       const system =
         "You are a project management assistant. You write short, specific follow-up questions to fill gaps before writing a project charter. Respond with ONLY a JSON object, no markdown fences, no other text."
       const user = `${projectContext(project)}
+
+${context ? `Already established from the project's scoping session (do not re-ask about anything covered here):\n${context}` : "No scoping session exists yet for this project."}
 
 Generate 3 to 5 short, targeted follow-up questions to gather information not already covered above, useful for writing a project charter (e.g. key stakeholders, success metric, known risks, budget if relevant to this project). Skip questions that don't apply to this kind of project.
 
@@ -192,6 +212,8 @@ Return ONLY this JSON shape:
     }
 
     if (action === "generate") {
+      const context = establishedContext(scoping)
+
       const system =
         "You are a project management assistant. You write concise, professional project charters. Respond with ONLY a JSON object, no markdown fences, no other text."
       const qaText = (answers || [])
@@ -199,6 +221,7 @@ Return ONLY this JSON shape:
         .join("\n\n")
       const user = `${projectContext(project)}
 
+${context ? `${context}\n` : ""}
 Additional context from follow-up Q&A:
 ${qaText}
 

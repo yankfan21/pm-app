@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { supabase } from './supabaseClient'
 import { useAuth } from './AuthContext'
 import { DEFAULT_PHASES } from './phases'
+import ScopingFlow from './ScopingFlow'
 import CharterFlow from './CharterFlow'
 import RiskLogFlow from './RiskLogFlow'
 
@@ -40,12 +41,16 @@ function NewProjectFlow({ onCreated, onClose }) {
   const [error, setError] = useState(null)
 
   // Set once the projects-row insert (step 4) succeeds in guided mode -
-  // steps 5/6 need the real row (id, name, goal, priority, deadline) to pass
-  // to CharterFlow/RiskLogFlow, same as any other post-creation caller of
-  // those components. Quick create never sets these; it calls onCreated
-  // immediately instead of visiting steps 5/6.
+  // steps 5/6/7 need the real row (id, name, goal, priority, deadline) to
+  // pass to ScopingFlow/CharterFlow/RiskLogFlow, same as any other
+  // post-creation caller of those components. Quick create never sets
+  // these; it calls onCreated immediately instead of visiting steps 5-7.
   const [createdProject, setCreatedProject] = useState(null)
-  // The just-generated charter (or null if step 5 was skipped) - passed to
+  // The just-generated scoping row (or null if step 5 was skipped) - passed
+  // to CharterFlow and RiskLogFlow as established context, same idea as
+  // charterRow below.
+  const [scopingRow, setScopingRow] = useState(null)
+  // The just-generated charter (or null if step 6 was skipped) - passed to
   // RiskLogFlow as context so its "questions" call can skip anything the
   // charter already covers, same as it would post-creation.
   const [charterRow, setCharterRow] = useState(null)
@@ -104,8 +109,26 @@ function NewProjectFlow({ onCreated, onClose }) {
   }
 
   // Mirrors DocSection's insertDoc (ProjectDocSectionRoutes.jsx) for these
-  // two doc types - duplicated rather than shared since every other caller
-  // of CharterFlow/RiskLogFlow already inserts inline the same way.
+  // doc types - duplicated rather than shared since every other caller of
+  // ScopingFlow/CharterFlow/RiskLogFlow already inserts inline the same way.
+  async function handleScopingGenerated(answerList, sufficient) {
+    const { data, error: insertError } = await supabase
+      .from('scopings')
+      .insert({ project_id: createdProject.id, qa_answers: answerList, sufficient })
+      .select()
+      .single()
+
+    if (insertError) return insertError.message
+
+    setScopingRow(data)
+    setStep(6)
+    return null
+  }
+
+  function handleSkipScoping() {
+    setStep(6)
+  }
+
   async function handleCharterGenerated(result, answerList) {
     const { data, error: insertError } = await supabase
       .from('charters')
@@ -116,12 +139,12 @@ function NewProjectFlow({ onCreated, onClose }) {
     if (insertError) return insertError.message
 
     setCharterRow(data)
-    setStep(6)
+    setStep(7)
     return null
   }
 
   function handleSkipCharter() {
-    setStep(6)
+    setStep(7)
   }
 
   async function handleRiskLogGenerated(risks, answerList) {
@@ -342,16 +365,15 @@ function NewProjectFlow({ onCreated, onClose }) {
         {step === 5 && createdProject && (
           <div className="modal-step">
             <div className="section-header">
-              <p className="step-label">Step 5 of 6 &mdash; Charter (optional)</p>
-              <button type="button" className="btn-secondary" onClick={handleSkipCharter}>
+              <p className="step-label">Step 5 of 7 &mdash; Scoping (optional)</p>
+              <button type="button" className="btn-secondary" onClick={handleSkipScoping}>
                 Skip for now
               </button>
             </div>
-            <CharterFlow
+            <ScopingFlow
               project={createdProject}
-              autoStart
-              onGenerated={handleCharterGenerated}
-              onClose={handleSkipCharter}
+              onGenerated={handleScopingGenerated}
+              onClose={handleSkipScoping}
             />
           </div>
         )}
@@ -359,7 +381,25 @@ function NewProjectFlow({ onCreated, onClose }) {
         {step === 6 && createdProject && (
           <div className="modal-step">
             <div className="section-header">
-              <p className="step-label">Step 6 of 6 &mdash; Risk Log (optional)</p>
+              <p className="step-label">Step 6 of 7 &mdash; Charter (optional)</p>
+              <button type="button" className="btn-secondary" onClick={handleSkipCharter}>
+                Skip for now
+              </button>
+            </div>
+            <CharterFlow
+              project={createdProject}
+              scoping={scopingRow}
+              autoStart
+              onGenerated={handleCharterGenerated}
+              onClose={handleSkipCharter}
+            />
+          </div>
+        )}
+
+        {step === 7 && createdProject && (
+          <div className="modal-step">
+            <div className="section-header">
+              <p className="step-label">Step 7 of 7 &mdash; Risk Log (optional)</p>
               <button type="button" className="btn-secondary" onClick={handleSkipRiskLog}>
                 Skip for now
               </button>
@@ -368,6 +408,7 @@ function NewProjectFlow({ onCreated, onClose }) {
               project={createdProject}
               charter={charterRow}
               brief={null}
+              scoping={scopingRow}
               onGenerated={handleRiskLogGenerated}
               onClose={handleSkipRiskLog}
             />

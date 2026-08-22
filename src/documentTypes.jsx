@@ -65,7 +65,7 @@ export const DOCUMENT_TYPES = [
     documentsPage: true,
     FlowComponent: CharterFlow,
     ViewComponent: CharterView,
-    context: () => ({}),
+    context: (docs) => ({ scoping: docs.scoping }),
     buildInsert: (result) => result,
   },
   {
@@ -86,7 +86,7 @@ export const DOCUMENT_TYPES = [
     docProp: 'riskLog',
     FlowComponent: RiskLogFlow,
     ViewComponent: RiskLogView,
-    context: (docs) => ({ charter: docs.charter, brief: docs.requirements_brief }),
+    context: (docs) => ({ charter: docs.charter, brief: docs.requirements_brief, scoping: docs.scoping }),
     buildInsert: (result) => ({ risks: result }),
   },
   {
