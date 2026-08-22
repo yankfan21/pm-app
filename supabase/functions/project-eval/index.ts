@@ -25,8 +25,9 @@
 // no fixed schedule; Hybrid leads with phases (like Waterfall) for the
 // schedule signal and pulls in velocity/backlog/retro evidence for
 // whichever Epic(s) still have incomplete linked work, as supporting
-// context for that Epic's progress. Risks and budget stay in the
-// evaluation across all three, unscoped.
+// context for that Epic's progress. Risks, budget, and Scoping stay in the
+// evaluation across all three, unscoped - Scoping only as compounding
+// evidence though, never a standalone verdict (see scopingWeightInstructions()).
 //
 // Milestones (the `milestones` table / tasks.milestone_id) are Epics -
 // dateless grouping containers for Hybrid backlog work as of the Epic UI
@@ -243,6 +244,43 @@ function budgetStats(budget) {
   })
 
   return { items, totalEstimated, totalActual, variance, variancePct, byCategory }
+}
+
+// Scoping session context. Unlike charterText()/establishedContext() above
+// (which return null and get silently omitted when nothing exists yet),
+// scoping's presence/absence and thinness are themselves evaluation signal
+// here - so this always returns a line for contextParts rather than null.
+// See the scoping-weighting paragraph in the `user` prompt below for how
+// much each state is allowed to move health_status.
+//
+// A thin/insufficient session's per-answer "thin" flags (ScopingFlow's
+// followups) are never persisted - only qa_answers and the overall
+// `sufficient` boolean are saved (scopings.sql). Re-deriving which specific
+// vital answer was thin would mean a second Claude call (what
+// ScopingView.jsx does live, on demand), which this function deliberately
+// doesn't make. Instead the vital Q&A text itself is handed over so Claude
+// can judge thinness directly from the actual answers, same as it already
+// does for every other block here.
+function scopingText(scoping) {
+  if (!scoping) {
+    return "Scoping: not completed for this project."
+  }
+
+  if (scoping.sufficient === true) {
+    return "Scoping: completed - vital answers were reviewed and judged adequately substantive."
+  }
+
+  // sufficient === false, or null (a row exists but the flag was never set -
+  // treated the same as false, since neither case earned a passing check).
+  const vitalAnswers = (scoping.qa_answers || []).filter((a) => a.vital)
+  if (vitalAnswers.length === 0) {
+    return "Scoping: completed, but flagged as insufficient - key scoping questions were not adequately answered."
+  }
+
+  const lines = vitalAnswers.map(
+    (a) => `Q: ${a.question}\nA: ${a.answer || "(no answer given)"}`
+  )
+  return `Scoping: completed, but flagged as insufficient at the time it was saved. One or more of these vital answers were judged too thin (missing, one word, "N/A", "not sure", etc.) to rely on:\n\n${lines.join("\n\n")}`
 }
 
 function budgetStatsText(stats) {
@@ -628,6 +666,13 @@ function methodologyInstructions(methodology) {
   return `This is a Waterfall project - evaluate primarily on phases and tasks: are phases on track against their date ranges, and are tasks progressing or overdue relative to their phase. A phase marked OVERDUE in the data below (end date passed with incomplete linked tasks) is a concrete red flag - name it directly and let it drive health_status toward at_risk/off_track, don't soften it into a neutral "that phase is in the past" observation. If any Milestones (Epics) are listed, judge them only on completion progress, never as "overdue" against a date - they're dateless grouping containers, not a schedule signal.`
 }
 
+// Methodology-agnostic, unlike methodologyInstructions() above - how much
+// weight Scoping earns doesn't depend on Waterfall vs. Agile vs. Hybrid, so
+// this stays a separate paragraph rather than folded into each of those.
+function scopingWeightInstructions() {
+  return `A Scoping session block is included below. Weigh it according to its own state, not as a primary signal: a missing Scoping session (none completed) may be worth a passing mention in the rationale if relevant, but should rarely by itself move health_status. An insufficient Scoping session (flagged insufficient, or never properly checked) is a real contributing factor - it can tip an otherwise-borderline evaluation toward at_risk, especially when it lines up with other risk signals already present (e.g. an overdue phase, High/Critical-band risks, declining velocity). On its own, though, insufficient Scoping should not push an otherwise healthy project to at_risk, nor push an already-struggling project down to off_track - treat it as compounding evidence, not a standalone verdict.`
+}
+
 const HEALTH_VALUES = ["on_track", "at_risk", "off_track"]
 
 // Row reader for the "metrics_only" action below. The "evaluate" action is
@@ -768,7 +813,7 @@ Deno.serve(async (req) => {
     // the evaluate action carries the whole project object and reads
     // project.methodology off it, so the request-body one is aliased out of
     // the way of that local further down.
-    const { action, projectId, methodology: requestMethodology, project, charter, riskLog, budget, tasks, taskDependencies, statusUpdates, sprints, retros, milestones, phases, today } = await req.json()
+    const { action, projectId, methodology: requestMethodology, project, charter, riskLog, budget, scoping, tasks, taskDependencies, statusUpdates, sprints, retros, milestones, phases, today } = await req.json()
 
     // The Overview "Update Progress" button's path: the same arithmetic the
     // evaluate branch below runs, and deliberately nothing else. No context
@@ -886,6 +931,8 @@ Deno.serve(async (req) => {
     const contextParts = []
     const c = charterText(charter)
     if (c) contextParts.push(`Charter (original goals/success metrics/timeline):\n${c}`)
+
+    contextParts.push(scopingText(scoping))
 
     const rText = riskStatsText(rStats)
     if (rText) contextParts.push(`Risk Log:\n${rText}`)
@@ -1013,6 +1060,8 @@ Deno.serve(async (req) => {
 Today's date: ${todayStr}
 
 ${methodologyInstructions(methodology)}
+
+${scopingWeightInstructions()}
 
 ${context || "No charter, risk log, budget tracker, phases, milestones, tasks, sprints, or status updates exist for this project yet - note the evaluation will be very limited."}
 

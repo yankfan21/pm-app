@@ -201,6 +201,7 @@ export const DOCUMENT_TYPES = [
       charter: docs.charter,
       riskLog: docs.risk_log,
       budget: docs.budget_tracker,
+      scoping: docs.scoping,
       tasks: tasks || [],
       statusUpdates: docs.status_update || [],
       sprints: extra?.sprints || [],
