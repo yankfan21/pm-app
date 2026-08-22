@@ -15,7 +15,7 @@ const PANEL_PHRASES = [
   'See project health at a glance.',
   'Collaborate without losing the thread.',
 ]
-const PANEL_PHRASE_INTERVAL_MS = 10000
+const PANEL_PHRASE_INTERVAL_MS = 5000
 
 function Login() {
   const navigate = useNavigate()
