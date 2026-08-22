@@ -5449,6 +5449,10 @@ textarea.risk-cell-input {
     flex: none;
   }
 
+  .login-panel-preview {
+    display: none;
+  }
+
   .login-panel-form {
     padding: 20px 24px;
   }
