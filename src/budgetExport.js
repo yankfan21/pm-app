@@ -25,15 +25,15 @@ function formatMoney(amount) {
   })
 }
 
-function buildRows(lineItems, tasks) {
-  const taskById = new Map((tasks || []).map((t) => [t.id, t]))
+function buildRows(lineItems) {
   return lineItems.map((item) => {
     const estimated = Number(item.estimated_amount) || 0
     const actual = Number(item.actual_amount) || 0
     return {
       category: item.category || '',
       name: item.name || '',
-      taskTitle: item.task_id ? taskById.get(item.task_id)?.title || '(deleted task)' : '',
+      capexOpex: item.capex_opex_class ? (item.capex_opex_class === 'capex' ? 'Capex' : 'Opex') : '',
+      glAccount: item.gl_account || '',
       estimated,
       actual,
       variance: actual - estimated,
@@ -47,8 +47,8 @@ function totals(rows) {
   return { estimated, actual, variance: actual - estimated }
 }
 
-export function exportBudgetPdf(project, lineItems, tasks) {
-  const rows = buildRows(lineItems, tasks)
+export function exportBudgetPdf(project, lineItems) {
+  const rows = buildRows(lineItems)
   const total = totals(rows)
 
   const doc = new jsPDF({ unit: 'pt', format: 'letter' })
@@ -72,17 +72,19 @@ export function exportBudgetPdf(project, lineItems, tasks) {
   autoTable(doc, {
     startY: 96,
     margin: { left: marginX, right: marginX },
-    head: [['Category', 'Item', 'Linked Task', 'Estimated', 'Actual', 'Variance']],
+    head: [['Category', 'Item', 'Capex/Opex', 'GL Account', 'Estimated', 'Actual', 'Variance']],
     body: rows.map((r) => [
       r.category || String.fromCharCode(8212),
       r.name || String.fromCharCode(8212),
-      r.taskTitle || String.fromCharCode(8212),
+      r.capexOpex || String.fromCharCode(8212),
+      r.glAccount || String.fromCharCode(8212),
       formatMoney(r.estimated),
       formatMoney(r.actual),
       `${r.variance >= 0 ? '+' : ''}${formatMoney(r.variance)}`,
     ]),
     foot: [[
       'Total',
+      '',
       '',
       '',
       formatMoney(total.estimated),
@@ -93,22 +95,23 @@ export function exportBudgetPdf(project, lineItems, tasks) {
     headStyles: { fillColor: [38, 33, 92], textColor: 255 },
     footStyles: { fillColor: [235, 235, 235], textColor: 0, fontStyle: 'bold' },
     columnStyles: {
-      0: { cellWidth: 90 },
-      1: { cellWidth: 140 },
-      2: { cellWidth: 100 },
-      3: { cellWidth: 65 },
-      4: { cellWidth: 65 },
-      5: { cellWidth: 65 },
+      0: { cellWidth: 80 },
+      1: { cellWidth: 120 },
+      2: { cellWidth: 70 },
+      3: { cellWidth: 80 },
+      4: { cellWidth: 60 },
+      5: { cellWidth: 60 },
+      6: { cellWidth: 60 },
     },
   })
 
   doc.save(`${sanitizeFilename(project.name)}-Budget-Tracker.pdf`)
 }
 
-export async function exportBudgetDocx(project, lineItems, tasks) {
-  const rows = buildRows(lineItems, tasks)
+export async function exportBudgetDocx(project, lineItems) {
+  const rows = buildRows(lineItems)
   const total = totals(rows)
-  const columns = ['Category', 'Item', 'Linked Task', 'Estimated', 'Actual', 'Variance']
+  const columns = ['Category', 'Item', 'Capex/Opex', 'GL Account', 'Estimated', 'Actual', 'Variance']
 
   const headerRow = new TableRow({
     tableHeader: true,
@@ -131,7 +134,8 @@ export async function exportBudgetDocx(project, lineItems, tasks) {
         children: [
           new Paragraph(r.category),
           new Paragraph(r.name),
-          new Paragraph(r.taskTitle),
+          new Paragraph(r.capexOpex),
+          new Paragraph(r.glAccount),
           new Paragraph(formatMoney(r.estimated)),
           new Paragraph(formatMoney(r.actual)),
           new Paragraph(`${r.variance >= 0 ? '+' : ''}${formatMoney(r.variance)}`),
@@ -142,6 +146,7 @@ export async function exportBudgetDocx(project, lineItems, tasks) {
   const totalsRow = new TableRow({
     children: [
       'Total',
+      '',
       '',
       '',
       formatMoney(total.estimated),
@@ -181,31 +186,33 @@ export async function exportBudgetDocx(project, lineItems, tasks) {
   downloadBlob(blob, `${sanitizeFilename(project.name)}-Budget-Tracker.docx`)
 }
 
-export async function exportBudgetExcel(project, lineItems, tasks) {
+export async function exportBudgetExcel(project, lineItems) {
   const ExcelJS = (await import('exceljs')).default
-  const rows = buildRows(lineItems, tasks)
+  const rows = buildRows(lineItems)
 
   const workbook = new ExcelJS.Workbook()
   const sheet = workbook.addWorksheet('Budget Tracker')
 
-  sheet.addRow(['Category', 'Item', 'Linked Task', 'Estimated', 'Actual', 'Variance'])
+  sheet.addRow(['Category', 'Item', 'Capex/Opex', 'GL Account', 'Estimated', 'Actual', 'Variance'])
   sheet.getRow(1).font = { bold: true }
   sheet.getColumn(1).width = 20
   sheet.getColumn(2).width = 32
-  sheet.getColumn(3).width = 24
-  sheet.getColumn(4).width = 14
+  sheet.getColumn(3).width = 14
+  sheet.getColumn(4).width = 18
   sheet.getColumn(5).width = 14
   sheet.getColumn(6).width = 14
+  sheet.getColumn(7).width = 14
 
   rows.forEach((r) => {
     const rowNum = sheet.rowCount + 1
     sheet.addRow([
       r.category,
       r.name,
-      r.taskTitle,
+      r.capexOpex,
+      r.glAccount,
       r.estimated,
       r.actual,
-      { formula: `E${rowNum}-D${rowNum}` },
+      { formula: `F${rowNum}-E${rowNum}` },
     ])
   })
 
@@ -215,15 +222,16 @@ export async function exportBudgetExcel(project, lineItems, tasks) {
     'Total',
     '',
     '',
-    lastDataRow >= firstDataRow ? { formula: `SUM(D${firstDataRow}:D${lastDataRow})` } : 0,
+    '',
     lastDataRow >= firstDataRow ? { formula: `SUM(E${firstDataRow}:E${lastDataRow})` } : 0,
     lastDataRow >= firstDataRow ? { formula: `SUM(F${firstDataRow}:F${lastDataRow})` } : 0,
+    lastDataRow >= firstDataRow ? { formula: `SUM(G${firstDataRow}:G${lastDataRow})` } : 0,
   ])
   totalsRow.font = { bold: true }
 
-  sheet.getColumn(4).numFmt = '$#,##0.00'
   sheet.getColumn(5).numFmt = '$#,##0.00'
   sheet.getColumn(6).numFmt = '$#,##0.00'
+  sheet.getColumn(7).numFmt = '$#,##0.00'
 
   const buffer = await workbook.xlsx.writeBuffer()
   const blob = new Blob([buffer], {

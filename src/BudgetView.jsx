@@ -5,7 +5,6 @@ import LoadingButton from './LoadingButton'
 const VIEWS = [
   { key: 'summary', label: 'Summary' },
   { key: 'category', label: 'By Category' },
-  { key: 'task', label: 'By Task' },
 ]
 
 function newRow() {
@@ -13,7 +12,9 @@ function newRow() {
     id: crypto.randomUUID(),
     category: '',
     name: '',
-    task_id: null,
+    capex_opex_class: null,
+    gl_account: '',
+    attachment_id: null,
     estimated_amount: 0,
     actual_amount: 0,
     notes: '',
@@ -41,21 +42,19 @@ function healthStatus(estimated, actual) {
 
 function BudgetView({ project, charter, brief, tasks, budget, canEdit, onUpdate }) {
   const [rows, setRows] = useState(() => withIds(budget.line_items))
+  const [attachments, setAttachments] = useState(() => budget.attachments || [])
   const [error, setError] = useState(null)
   const [view, setView] = useState('summary')
   const [suggestions, setSuggestions] = useState(null)
   const [suggestLoading, setSuggestLoading] = useState(false)
   const [exporting, setExporting] = useState(null)
 
-  const taskById = new Map((tasks || []).map((t) => [t.id, t]))
-  const existingTasks = (tasks || []).map((t) => ({ id: t.id, title: t.title }))
-
-  async function persist(nextRows) {
+  async function persist(nextRows, nextAttachments = attachments) {
     setError(null)
 
     const { data, error } = await supabase
       .from('budget_trackers')
-      .update({ line_items: nextRows, updated_at: new Date().toISOString() })
+      .update({ line_items: nextRows, attachments: nextAttachments, updated_at: new Date().toISOString() })
       .eq('id', budget.id)
       .select()
 
@@ -70,6 +69,38 @@ function BudgetView({ project, charter, brief, tasks, budget, canEdit, onUpdate 
     }
 
     onUpdate(data[0])
+  }
+
+  // Uploads a new PDF to the private budget-attachments bucket at
+  // {project_id}/{attachment_id}.pdf, appends it to this tracker's
+  // attachments array, and links the given row to it - all in one persist
+  // call. Returns an error message string on failure, null on success (the
+  // calling cell reads this rather than throwing, same convention as
+  // persist()'s own error state).
+  async function handleNewAttachment(rowId, file) {
+    const newId = crypto.randomUUID()
+    const storagePath = `${project.id}/${newId}.pdf`
+
+    const { error: uploadError } = await supabase.storage
+      .from('budget-attachments')
+      .upload(storagePath, file, { contentType: 'application/pdf' })
+
+    if (uploadError) return uploadError.message
+
+    const attachment = {
+      id: newId,
+      filename: file.name,
+      storage_path: storagePath,
+      uploaded_at: new Date().toISOString(),
+      size_bytes: file.size,
+    }
+    const nextAttachments = [...attachments, attachment]
+    const nextRows = rows.map((r) => (r.id === rowId ? { ...r, attachment_id: newId } : r))
+
+    setAttachments(nextAttachments)
+    setRows(nextRows)
+    await persist(nextRows, nextAttachments)
+    return null
   }
 
   function updateCell(id, key, value) {
@@ -103,7 +134,7 @@ function BudgetView({ project, charter, brief, tasks, budget, canEdit, onUpdate 
     setError(null)
     try {
       const { exportBudgetPdf } = await import('./budgetExport')
-      exportBudgetPdf(project, rows, tasks)
+      exportBudgetPdf(project, rows)
     } catch (err) {
       setError('Failed to export PDF: ' + err.message)
     }
@@ -115,7 +146,7 @@ function BudgetView({ project, charter, brief, tasks, budget, canEdit, onUpdate 
     setError(null)
     try {
       const { exportBudgetDocx } = await import('./budgetExport')
-      await exportBudgetDocx(project, rows, tasks)
+      await exportBudgetDocx(project, rows)
     } catch (err) {
       setError('Failed to export Word document: ' + err.message)
     }
@@ -127,7 +158,7 @@ function BudgetView({ project, charter, brief, tasks, budget, canEdit, onUpdate 
     setError(null)
     try {
       const { exportBudgetExcel } = await import('./budgetExport')
-      await exportBudgetExcel(project, rows, tasks)
+      await exportBudgetExcel(project, rows)
     } catch (err) {
       setError('Failed to export Excel: ' + err.message)
     }
@@ -139,7 +170,7 @@ function BudgetView({ project, charter, brief, tasks, budget, canEdit, onUpdate 
     setError(null)
 
     const { data, error } = await supabase.functions.invoke('budget', {
-      body: { action: 'suggest', project, charter, brief, line_items: rows, existingTasks },
+      body: { action: 'suggest', project, charter, brief, line_items: rows },
     })
 
     setSuggestLoading(false)
@@ -154,9 +185,11 @@ function BudgetView({ project, charter, brief, tasks, budget, canEdit, onUpdate 
         id: crypto.randomUUID(),
         category: item.category || '',
         name: item.name || '',
+        capex_opex_class: null,
+        gl_account: '',
+        attachment_id: null,
         estimated_amount: Number(item.estimated_amount) || 0,
         actual_amount: 0,
-        task_id: existingTasks.some((t) => t.id === item.task_id) ? item.task_id : null,
         notes: item.notes || '',
       }))
     )
@@ -188,28 +221,6 @@ function BudgetView({ project, charter, brief, tasks, budget, canEdit, onUpdate 
       return acc
     }, {})
   ).sort((a, b) => b.estimated - a.estimated)
-
-  const byTask = Object.values(
-    rows.reduce((acc, r) => {
-      const key = r.task_id || 'unassigned'
-      if (!acc[key]) {
-        const task = r.task_id ? taskById.get(r.task_id) : null
-        acc[key] = {
-          key,
-          label: r.task_id ? task?.title || '(deleted task)' : 'Unassigned',
-          estimated: 0,
-          actual: 0,
-        }
-      }
-      acc[key].estimated += Number(r.estimated_amount) || 0
-      acc[key].actual += Number(r.actual_amount) || 0
-      return acc
-    }, {})
-  ).sort((a, b) => {
-    if (a.key === 'unassigned') return 1
-    if (b.key === 'unassigned') return -1
-    return b.estimated - a.estimated
-  })
 
   return (
     <div className="charter">
@@ -328,55 +339,6 @@ function BudgetView({ project, charter, brief, tasks, budget, canEdit, onUpdate 
         </div>
       )}
 
-      {view === 'task' && (
-        <div className="risk-table-wrap">
-          <table className="risk-log-table budget-rollup-table">
-            <thead>
-              <tr>
-                <th>Task</th>
-                <th>Budget</th>
-                <th>Actual</th>
-                <th>Variance</th>
-              </tr>
-            </thead>
-            <tbody>
-              {byTask.map((t) => {
-                const variance = t.actual - t.estimated
-                return (
-                  <tr key={t.key}>
-                    <td>{t.label}</td>
-                    <td>{formatCurrency(t.estimated)}</td>
-                    <td>{formatCurrency(t.actual)}</td>
-                    <td className={variance > 0 ? 'budget-variance-over' : 'budget-variance-under'}>
-                      {variance >= 0 ? '+' : ''}
-                      {formatCurrency(variance)}
-                    </td>
-                  </tr>
-                )
-              })}
-              {byTask.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="empty">
-                    No line items yet
-                  </td>
-                </tr>
-              )}
-              {byTask.length > 0 && (
-                <tr className="budget-totals-row">
-                  <td>Total</td>
-                  <td>{formatCurrency(totalEstimated)}</td>
-                  <td>{formatCurrency(totalActual)}</td>
-                  <td className={totalVariance > 0 ? 'budget-variance-over' : 'budget-variance-under'}>
-                    {totalVariance >= 0 ? '+' : ''}
-                    {formatCurrency(totalVariance)}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
-
       <h4 className="budget-line-items-heading">Line Items</h4>
 
       <div className="risk-table-wrap">
@@ -385,10 +347,12 @@ function BudgetView({ project, charter, brief, tasks, budget, canEdit, onUpdate 
             <tr>
               <th>Category</th>
               <th>Item</th>
-              <th>Linked Task</th>
+              <th>Capex/Opex</th>
+              <th>GL Account</th>
               <th>Estimated</th>
               <th>Actual Spent</th>
               <th>Notes</th>
+              <th>Attachment</th>
               <th aria-hidden="true"></th>
             </tr>
           </thead>
@@ -417,17 +381,24 @@ function BudgetView({ project, charter, brief, tasks, budget, canEdit, onUpdate 
                 </td>
                 <td>
                   <select
-                    value={row.task_id || ''}
+                    value={row.capex_opex_class || ''}
                     disabled={!canEdit}
-                    onChange={(e) => handleFieldChange(row.id, 'task_id', e.target.value || null)}
+                    onChange={(e) => handleFieldChange(row.id, 'capex_opex_class', e.target.value || null)}
                   >
-                    <option value="">None</option>
-                    {existingTasks.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.title}
-                      </option>
-                    ))}
+                    <option value=""></option>
+                    <option value="capex">Capex</option>
+                    <option value="opex">Opex</option>
                   </select>
+                </td>
+                <td>
+                  <input
+                    type="text"
+                    className="risk-cell-input"
+                    value={row.gl_account}
+                    readOnly={!canEdit}
+                    onChange={(e) => updateCell(row.id, 'gl_account', e.target.value)}
+                    onBlur={handleTextBlur}
+                  />
                 </td>
                 <td>
                   <input
@@ -464,6 +435,16 @@ function BudgetView({ project, charter, brief, tasks, budget, canEdit, onUpdate 
                   />
                 </td>
                 <td>
+                  <BudgetAttachmentCell
+                    row={row}
+                    attachments={attachments}
+                    canEdit={canEdit}
+                    onLink={(attachmentId) => handleFieldChange(row.id, 'attachment_id', attachmentId)}
+                    onUnlink={() => handleFieldChange(row.id, 'attachment_id', null)}
+                    onNewAttachment={(file) => handleNewAttachment(row.id, file)}
+                  />
+                </td>
+                <td>
                   {canEdit && (
                     <button
                       type="button"
@@ -479,7 +460,7 @@ function BudgetView({ project, charter, brief, tasks, budget, canEdit, onUpdate 
             ))}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={7} className="empty">
+                <td colSpan={9} className="empty">
                   No line items yet
                 </td>
               </tr>
@@ -511,7 +492,6 @@ function BudgetView({ project, charter, brief, tasks, budget, canEdit, onUpdate 
                     <p className="risk-suggestion-title">{s.name}</p>
                     <p className="risk-suggestion-meta">
                       Category: {s.category} &middot; Estimated: {formatCurrency(s.estimated_amount)}
-                      {s.task_id ? ` · Linked: ${taskById.get(s.task_id)?.title || ''}` : ''}
                     </p>
                     {s.notes && <p className="risk-suggestion-mitigation">{s.notes}</p>}
                   </div>
@@ -535,6 +515,149 @@ function BudgetView({ project, charter, brief, tasks, budget, canEdit, onUpdate 
               ))}
             </>
           )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Per-line-item attachment control. No attachment linked: a button opens a
+// small picker with two paths - upload a new PDF, or attach one already
+// uploaded elsewhere on this tracker (the multi-line-same-invoice case).
+// Attachment linked: a filename chip that opens a signed URL (the bucket is
+// private, so no public URL exists) plus an unlink control. Unlinking only
+// clears this row's attachment_id - the file and the attachments[] entry
+// stay, since other lines may reference the same invoice.
+function BudgetAttachmentCell({ row, attachments, canEdit, onLink, onUnlink, onNewAttachment }) {
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [localError, setLocalError] = useState(null)
+  const [uploading, setUploading] = useState(false)
+  const [opening, setOpening] = useState(false)
+
+  const linked = row.attachment_id ? attachments.find((a) => a.id === row.attachment_id) : null
+
+  async function handleOpen() {
+    if (!linked) return
+    setOpening(true)
+    setLocalError(null)
+    const { data, error } = await supabase.storage
+      .from('budget-attachments')
+      .createSignedUrl(linked.storage_path, 60)
+    setOpening(false)
+
+    if (error || !data?.signedUrl) {
+      setLocalError('Could not open file: ' + (error?.message || 'unknown error'))
+      return
+    }
+    window.open(data.signedUrl, '_blank', 'noopener,noreferrer')
+  }
+
+  async function handleFileSelect(e) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+
+    setLocalError(null)
+
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
+    if (!isPdf) {
+      setLocalError('Only PDF files are allowed.')
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setLocalError('File is too large — 5MB max.')
+      return
+    }
+
+    setUploading(true)
+    const uploadError = await onNewAttachment(file)
+    setUploading(false)
+
+    if (uploadError) {
+      setLocalError(uploadError)
+      return
+    }
+    setPickerOpen(false)
+  }
+
+  function handleAttachExisting(e) {
+    const attachmentId = e.target.value
+    if (!attachmentId) return
+    onLink(attachmentId)
+    setPickerOpen(false)
+  }
+
+  if (linked) {
+    return (
+      <div className="budget-attachment-cell">
+        <button
+          type="button"
+          className="budget-attachment-chip"
+          onClick={handleOpen}
+          disabled={opening}
+          title={linked.filename}
+        >
+          {opening ? 'Opening...' : linked.filename}
+        </button>
+        {canEdit && (
+          <button
+            type="button"
+            className="budget-attachment-unlink"
+            aria-label="Remove attachment from this line"
+            onClick={onUnlink}
+          >
+            &times;
+          </button>
+        )}
+        {localError && <p className="error budget-attachment-error">{localError}</p>}
+      </div>
+    )
+  }
+
+  if (!canEdit) return <span className="budget-attachment-empty">&mdash;</span>
+
+  return (
+    <div className="budget-attachment-cell">
+      {!pickerOpen && (
+        <button
+          type="button"
+          className="btn-secondary budget-attachment-attach-btn"
+          onClick={() => setPickerOpen(true)}
+        >
+          Attach invoice/PO
+        </button>
+      )}
+      {pickerOpen && (
+        <div className="budget-attachment-picker">
+          <label className="budget-attachment-upload-label">
+            Upload new PDF
+            <input type="file" accept=".pdf,application/pdf" onChange={handleFileSelect} disabled={uploading} />
+          </label>
+          {attachments.length > 0 && (
+            <select defaultValue="" disabled={uploading} onChange={handleAttachExisting}>
+              <option value="" disabled>
+                Attach existing...
+              </option>
+              {attachments.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.filename}
+                </option>
+              ))}
+            </select>
+          )}
+          <button
+            type="button"
+            className="btn-secondary"
+            disabled={uploading}
+            onClick={() => {
+              setPickerOpen(false)
+              setLocalError(null)
+            }}
+          >
+            Cancel
+          </button>
+          {uploading && <span className="charter-status">Uploading...</span>}
+          {localError && <p className="error budget-attachment-error">{localError}</p>}
         </div>
       )}
     </div>

@@ -159,11 +159,6 @@ function establishedContext(charter, brief) {
   return parts.length > 0 ? parts.join("\n\n") : null
 }
 
-function tasksText(existingTasks) {
-  if (!existingTasks || existingTasks.length === 0) return "(no tasks defined yet)"
-  return existingTasks.map((t) => `- id: ${t.id} | title: ${t.title}`).join("\n")
-}
-
 function lineItemsText(lineItems) {
   if (!lineItems || lineItems.length === 0) return "(none yet)"
   return lineItems
@@ -175,7 +170,7 @@ function lineItemsText(lineItems) {
 }
 
 const LINE_ITEM_SHAPE_HINT =
-  '{"category": "short category, e.g. Labor, Software, Travel, Contractors, Equipment", "name": "short description of the line item", "estimated_amount": 1200, "task_id": "id of a matching task from the list above, or null if none clearly applies", "notes": "short optional note, or empty string"}'
+  '{"category": "short category, e.g. Labor, Software, Travel, Contractors, Equipment", "name": "short description of the line item", "estimated_amount": 1200, "notes": "short optional note, or empty string"}'
 
 const QUESTION_SHAPE_HINT =
   '{"questions": [{"id": "short_snake_case_id", "text": "question text", "type": "text", "suggested_answer": "a proposed answer the PM can accept, edit, or dismiss, or null if you have no reasonable basis to suggest one"}, {"id": "short_snake_case_id", "text": "question text", "type": "choice", "choices": ["A", "B", "C"], "suggested_answer": "A" }]}'
@@ -186,7 +181,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { action, project, charter, brief, answers, existingTasks, line_items } = await req.json()
+    const { action, project, charter, brief, answers, line_items } = await req.json()
 
     if (action === "questions") {
       const context = establishedContext(charter, brief)
@@ -227,10 +222,7 @@ ${context ? `${context}\n` : ""}
 Discovery Q&A about the budget:
 ${qaText || "(none provided)"}
 
-Existing tasks on this project (link a line item to one of these only when it clearly applies; otherwise use null - never invent a task):
-${tasksText(existingTasks)}
-
-Propose a starting budget: a list of concrete line items for this project, each with a category, a short name/description, an estimated amount, and optionally a linked task id from the list above. Base it on the project data, charter/brief (if provided), and Q&A above; do not invent specifics that weren't provided or implied. Aim for roughly 4 to 10 line items covering the major cost drivers, not an exhaustive line-by-line breakdown. Do NOT include an "actual_amount" field - actual spend is tracked separately by the PM starting at zero.
+Propose a starting budget: a list of concrete line items for this project, each with a category, a short name/description, and an estimated amount. Base it on the project data, charter/brief (if provided), and Q&A above; do not invent specifics that weren't provided or implied. Aim for roughly 4 to 10 line items covering the major cost drivers, not an exhaustive line-by-line breakdown. Do NOT include an "actual_amount" field - actual spend is tracked separately by the PM starting at zero.
 
 Return ONLY this JSON shape:
 {"line_items": [${LINE_ITEM_SHAPE_HINT}]}`
@@ -252,9 +244,6 @@ Return ONLY this JSON shape:
 ${context ? `${context}\n` : ""}
 Line items already budgeted (do not repeat these):
 ${lineItemsText(line_items)}
-
-Existing tasks on this project (link a line item to one of these only when it clearly applies; otherwise use null):
-${tasksText(existingTasks)}
 
 Propose 1 to 4 additional budget line items for this project that are NOT already covered above. Only propose items that are plausibly relevant given the project context - do not pad with generic boilerplate costs that don't fit this specific project. Do NOT include an "actual_amount" field. If you can't identify any genuinely new, relevant items, return an empty array.
 

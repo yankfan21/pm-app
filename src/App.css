@@ -5082,6 +5082,79 @@ textarea.risk-cell-input {
   color: var(--text);
 }
 
+.budget-attachment-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 140px;
+}
+
+.budget-attachment-empty {
+  color: var(--text-muted, #94a3b8);
+}
+
+.budget-attachment-attach-btn {
+  white-space: nowrap;
+  padding: 4px 10px;
+  font-size: 13px;
+}
+
+.budget-attachment-chip {
+  display: inline-flex;
+  align-items: center;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-subtle, transparent);
+  color: var(--accent, inherit);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.budget-attachment-chip:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.budget-attachment-unlink {
+  border: none;
+  background: none;
+  color: var(--badge-danger-text);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+}
+
+.budget-attachment-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-subtle, transparent);
+  min-width: 180px;
+}
+
+.budget-attachment-upload-label {
+  font-size: 12px;
+  color: var(--text-h);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.budget-attachment-error {
+  font-size: 12px;
+  margin: 0;
+}
+
 /* Login/signup screen - a fixed dark brand palette on purpose, not the
    app's usual light/dark-adaptive --text/--bg variables: this is the one
    screen meant to read as "ConfidantPM" branding regardless of OS theme,

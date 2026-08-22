@@ -26,8 +26,6 @@ function BudgetFlow({ project, charter, brief, tasks, onGenerated, onClose }) {
   // that produced the current proposal.
   const [lastAnswerList, setLastAnswerList] = useState([])
 
-  const existingTasks = (tasks || []).map((t) => ({ id: t.id, title: t.title }))
-
   useEffect(() => {
     loadQuestions()
   }, [])
@@ -59,7 +57,7 @@ function BudgetFlow({ project, charter, brief, tasks, onGenerated, onClose }) {
       .map((q) => ({ question: q.text, answer: answers[q.id] }))
 
     const { data, error } = await supabase.functions.invoke('budget', {
-      body: { action: 'generate', project, charter, brief, existingTasks, answers: answerList },
+      body: { action: 'generate', project, charter, brief, answers: answerList },
     })
 
     if (error || data?.error) {
@@ -72,9 +70,11 @@ function BudgetFlow({ project, charter, brief, tasks, onGenerated, onClose }) {
       temp_id: `li${i}`,
       category: item.category || '',
       name: item.name || '',
+      capex_opex_class: null,
+      gl_account: '',
+      attachment_id: null,
       estimated_amount: Number(item.estimated_amount) || 0,
       actual_amount: 0,
-      task_id: existingTasks.some((t) => t.id === item.task_id) ? item.task_id : null,
       notes: item.notes || '',
       selected: true,
     }))
@@ -209,8 +209,9 @@ function BudgetFlow({ project, charter, brief, tasks, onGenerated, onClose }) {
                     </th>
                     <th>Category</th>
                     <th>Item</th>
+                    <th>Capex/Opex</th>
+                    <th>GL Account</th>
                     <th>Estimated Amount</th>
-                    <th>Linked Task</th>
                     <th aria-hidden="true"></th>
                   </tr>
                 </thead>
@@ -242,6 +243,24 @@ function BudgetFlow({ project, charter, brief, tasks, onGenerated, onClose }) {
                         />
                       </td>
                       <td>
+                        <select
+                          value={row.capex_opex_class || ''}
+                          onChange={(e) => updateRow(row.temp_id, 'capex_opex_class', e.target.value || null)}
+                        >
+                          <option value=""></option>
+                          <option value="capex">Capex</option>
+                          <option value="opex">Opex</option>
+                        </select>
+                      </td>
+                      <td>
+                        <input
+                          type="text"
+                          className="risk-cell-input"
+                          value={row.gl_account}
+                          onChange={(e) => updateRow(row.temp_id, 'gl_account', e.target.value)}
+                        />
+                      </td>
+                      <td>
                         <input
                           type="number"
                           min="0"
@@ -252,19 +271,6 @@ function BudgetFlow({ project, charter, brief, tasks, onGenerated, onClose }) {
                             updateRow(row.temp_id, 'estimated_amount', Math.max(0, Number(e.target.value) || 0))
                           }
                         />
-                      </td>
-                      <td>
-                        <select
-                          value={row.task_id || ''}
-                          onChange={(e) => updateRow(row.temp_id, 'task_id', e.target.value || null)}
-                        >
-                          <option value="">None</option>
-                          {existingTasks.map((t) => (
-                            <option key={t.id} value={t.id}>
-                              {t.title}
-                            </option>
-                          ))}
-                        </select>
                       </td>
                       <td>
                         <button
@@ -280,7 +286,7 @@ function BudgetFlow({ project, charter, brief, tasks, onGenerated, onClose }) {
                   ))}
                   {proposed.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="empty">
+                      <td colSpan={7} className="empty">
                         No line items proposed
                       </td>
                     </tr>
