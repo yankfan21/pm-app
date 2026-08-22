@@ -3,9 +3,13 @@ import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-do
 import { supabase } from './supabaseClient'
 import ConfidantLogo from './ConfidantLogo'
 
-const PREVIEW_STEP = 3
-const PREVIEW_TOTAL = 12
-const PREVIEW_DOTS = 5
+const PANEL_SLIDES = [
+  { image: '/login-panel/gantt.png', headline: 'Plan the full timeline, phase by phase.' },
+  { image: '/login-panel/budget.png', headline: 'Track budget down to the line item.' },
+  { image: '/login-panel/risklog.png', headline: 'Surface risks before they become problems.' },
+  { image: '/login-panel/scoping.png', headline: 'The assistant asks the right questions upfront.' },
+]
+const PANEL_SLIDE_INTERVAL_MS = 10000
 
 function Login() {
   const navigate = useNavigate()
@@ -27,6 +31,14 @@ function Login() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
   const [info, setInfo] = useState(null)
+  const [slideIndex, setSlideIndex] = useState(0)
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setSlideIndex((i) => (i + 1) % PANEL_SLIDES.length)
+    }, PANEL_SLIDE_INTERVAL_MS)
+    return () => clearInterval(id)
+  }, [])
 
   // Falls back to the signed-in home (/dashboard), not "/" - "/" is the
   // public marketing page now, so defaulting there would bounce a user who
@@ -205,18 +217,26 @@ function Login() {
 
       <div className="login-panel login-panel-preview">
         <div className="login-preview-content">
-          <div className="login-preview-steps">
-            <div className="login-preview-dots">
-              {Array.from({ length: PREVIEW_DOTS }, (_, i) => (
-                <span key={i} className={`login-preview-dot ${i < PREVIEW_STEP ? 'filled' : ''}`} />
-              ))}
-            </div>
-            <span className="login-preview-counter">
-              {String(PREVIEW_STEP).padStart(2, '0')} / {PREVIEW_TOTAL}
-            </span>
+          <div className="login-preview-slide-frame">
+            {PANEL_SLIDES.map((slide, i) => (
+              <img
+                key={slide.image}
+                src={slide.image}
+                alt={slide.headline}
+                className={`login-preview-slide-image ${i === slideIndex ? 'active' : ''}`}
+              />
+            ))}
           </div>
-          <p className="login-preview-label">Recognition and scoping</p>
-          <p className="login-preview-question">What is the primary milestone for Phase 1 delivery?</p>
+          <div className="login-preview-headline-frame">
+            {PANEL_SLIDES.map((slide, i) => (
+              <p
+                key={slide.image}
+                className={`login-preview-headline ${i === slideIndex ? 'active' : ''}`}
+              >
+                {slide.headline}
+              </p>
+            ))}
+          </div>
         </div>
       </div>
     </div>
