@@ -3,13 +3,19 @@ import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-do
 import { supabase } from './supabaseClient'
 import ConfidantLogo from './ConfidantLogo'
 
-const PANEL_SLIDES = [
-  { image: '/login-panel/gantt.png', headline: 'Plan the full timeline, phase by phase.' },
-  { image: '/login-panel/budget.png', headline: 'Track budget down to the line item.' },
-  { image: '/login-panel/risklog.png', headline: 'Surface risks before they become problems.' },
-  { image: '/login-panel/scoping.png', headline: 'The assistant asks the right questions upfront.' },
+const PANEL_PHRASES = [
+  'The assistant asks the right questions upfront.',
+  'Plan every phase on a visual timeline.',
+  'Track budget down to the line item.',
+  'Surface risks before they become problems.',
+  'Keep every task assigned, dated, and visible.',
+  'Never miss a milestone.',
+  'Log issues the moment they come up.',
+  'Keep every project document in one place.',
+  'See project health at a glance.',
+  'Collaborate without losing the thread.',
 ]
-const PANEL_SLIDE_INTERVAL_MS = 10000
+const PANEL_PHRASE_INTERVAL_MS = 10000
 
 function Login() {
   const navigate = useNavigate()
@@ -31,12 +37,12 @@ function Login() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
   const [info, setInfo] = useState(null)
-  const [slideIndex, setSlideIndex] = useState(0)
+  const [phraseIndex, setPhraseIndex] = useState(0)
 
   useEffect(() => {
     const id = setInterval(() => {
-      setSlideIndex((i) => (i + 1) % PANEL_SLIDES.length)
-    }, PANEL_SLIDE_INTERVAL_MS)
+      setPhraseIndex((i) => (i + 1) % PANEL_PHRASES.length)
+    }, PANEL_PHRASE_INTERVAL_MS)
     return () => clearInterval(id)
   }, [])
 
@@ -217,23 +223,13 @@ function Login() {
 
       <div className="login-panel login-panel-preview">
         <div className="login-preview-content">
-          <div className="login-preview-slide-frame">
-            {PANEL_SLIDES.map((slide, i) => (
-              <img
-                key={slide.image}
-                src={slide.image}
-                alt={slide.headline}
-                className={`login-preview-slide-image ${i === slideIndex ? 'active' : ''}`}
-              />
-            ))}
-          </div>
           <div className="login-preview-headline-frame">
-            {PANEL_SLIDES.map((slide, i) => (
+            {PANEL_PHRASES.map((phrase, i) => (
               <p
-                key={slide.image}
-                className={`login-preview-headline ${i === slideIndex ? 'active' : ''}`}
+                key={phrase}
+                className={`login-preview-headline ${i === phraseIndex ? 'active' : ''}`}
               >
-                {slide.headline}
+                {phrase}
               </p>
             ))}
           </div>
