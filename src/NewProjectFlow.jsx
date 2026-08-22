@@ -17,7 +17,7 @@ const CREATION_MODES = [
   {
     value: 'guided',
     label: 'Guided setup',
-    description: 'Answer a few AI questions to draft a Charter and Risk Log right after creating',
+    description: 'Answer a few assistant questions to draft a Charter and Risk Log right after creating',
   },
   {
     value: 'quick',
