@@ -180,6 +180,12 @@ function DocSection({ docKey, title, startLabel, viewProps, seed }) {
   )
 }
 
+// Scoping - plain start-then-view page, no seed/filter wiring since
+// ScopingView is read-only (see ScopingView.jsx's own thin-answer nudge).
+export function ScopingRoute() {
+  return <DocSection docKey="scoping" />
+}
+
 // Risk Log - full page, with the ?riskFilter / ?riskId query params
 // KeyMetricsDashboard.jsx's Key Risks list links in with wired straight into
 // RiskLogView's own filter/highlight props. The sync is two-way (the URL

@@ -60,6 +60,9 @@ const ExecutionTeamAgileRoute = lazy(() =>
   import('./ProjectSectionRoutes').then((m) => ({ default: m.ExecutionTeamAgileRoute })),
 )
 
+const ScopingRoute = lazy(() =>
+  import('./ProjectDocSectionRoutes').then((m) => ({ default: m.ScopingRoute })),
+)
 const RiskLogRoute = lazy(() =>
   import('./ProjectDocSectionRoutes').then((m) => ({ default: m.RiskLogRoute })),
 )
@@ -237,6 +240,7 @@ function App() {
                   checklist to become destinations of their own. All rendered by
                   ProjectDocSectionRoutes.jsx off the same DOCUMENT_TYPES
                   entries the checklist used. */}
+              <Route path="scoping" element={<ScopingRoute />} />
               <Route path="risk-log" element={<RiskLogRoute />} />
               <Route path="issues-log" element={<IssuesLogRoute />} />
               <Route path="budget-tracker" element={<BudgetTrackerRoute />} />

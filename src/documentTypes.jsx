@@ -1,3 +1,5 @@
+import ScopingFlow from './ScopingFlow'
+import ScopingView from './ScopingView'
 import CharterFlow from './CharterFlow'
 import CharterView from './CharterView'
 import RequirementsFlow from './RequirementsFlow'
@@ -57,6 +59,28 @@ import ProjectEvalView from './ProjectEvalView'
 // - actionLabel (repeatable types only): the text after "+ " on the
 //   always-visible trigger button (e.g. "Log Status Update")
 export const DOCUMENT_TYPES = [
+  {
+    key: 'scoping',
+    label: 'Scoping',
+    table: 'scopings',
+    docProp: 'scoping',
+    // ScopingFlow predates this registry (it's also used standalone by
+    // NewProjectFlow.jsx's wizard) and calls onGenerated(answerList,
+    // sufficient) - the reverse of every other Flow's onGenerated(result,
+    // answerList) convention insertDoc (ProjectDocSectionRoutes.jsx) expects.
+    // This wrapper reshapes the call instead of changing ScopingFlow itself,
+    // so the wizard's own handleScopingGenerated doesn't need to change too.
+    FlowComponent: (props) => (
+      <ScopingFlow
+        {...props}
+        onGenerated={(answerList, sufficient) => props.onGenerated({ sufficient }, answerList)}
+      />
+    ),
+    ViewComponent: ScopingView,
+    // Scoping runs first in the wizard - no prior docs to fold in.
+    context: () => ({}),
+    buildInsert: (result) => result,
+  },
   {
     key: 'charter',
     label: 'Charter',

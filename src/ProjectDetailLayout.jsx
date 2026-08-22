@@ -193,35 +193,24 @@ function ProjectDetailLayout({ project, isOwner, canEdit }) {
     }
 
     async function loadDocs() {
-      // scopings isn't in the DOCUMENT_TYPES registry (no ViewComponent/nav
-      // route for it yet - see NewProjectFlow.jsx's Scoping step), so it's
-      // fetched alongside rather than through that loop. Still folded into
-      // the same `docs` object/single setDocs call the registry-driven
-      // fetch uses, so there's no race between the two writing docs.scoping
-      // vs. everything else.
-      const [results, scopingResult] = await Promise.all([
-        Promise.all(
-          DOCUMENT_TYPES.map((docType) => {
-            const query = supabase
-              .from(docType.table)
-              .select('*')
-              .eq('project_id', currentProject.id)
+      const results = await Promise.all(
+        DOCUMENT_TYPES.map((docType) => {
+          const query = supabase
+            .from(docType.table)
+            .select('*')
+            .eq('project_id', currentProject.id)
 
-            return docType.repeatable
-              ? query.order('created_at', { ascending: false })
-              : query.maybeSingle()
-          })
-        ),
-        supabase.from('scopings').select('*').eq('project_id', currentProject.id).maybeSingle(),
-      ])
+          return docType.repeatable
+            ? query.order('created_at', { ascending: false })
+            : query.maybeSingle()
+        })
+      )
 
       const next = {}
       results.forEach(({ data, error }, i) => {
         if (error) setError(error.message)
         next[DOCUMENT_TYPES[i].key] = data
       })
-      if (scopingResult.error) setError(scopingResult.error.message)
-      next.scoping = scopingResult.data
 
       setDocs(next)
       setDocsLoading(false)

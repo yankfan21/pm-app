@@ -59,7 +59,7 @@ function ProjectOverviewRoute() {
           heading="No scoping yet"
           body="Want the assistant to help you map out constraints and unknowns before you Charter this?"
           ctaLabel="Start Scoping"
-          ctaTo="../documents"
+          ctaTo="../scoping"
         />
       )}
 
@@ -69,7 +69,7 @@ function ProjectOverviewRoute() {
           heading="Scoping is still thin"
           body="A few of the vital scoping answers were pretty bare - worth firming up, since Charter and Risk Log will lean on them."
           ctaLabel="Revisit Scoping"
-          ctaTo="../documents"
+          ctaTo="../scoping"
         />
       )}
 
