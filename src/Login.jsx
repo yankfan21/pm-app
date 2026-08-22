@@ -222,6 +222,11 @@ function Login() {
       </div>
 
       <div className="login-panel login-panel-preview">
+        <div className="login-preview-blobs" aria-hidden="true">
+          <span className="login-preview-blob login-preview-blob-1" />
+          <span className="login-preview-blob login-preview-blob-2" />
+          <span className="login-preview-blob login-preview-blob-3" />
+        </div>
         <div className="login-preview-content">
           <div className="login-preview-headline-frame">
             {PANEL_PHRASES.map((phrase, i) => (

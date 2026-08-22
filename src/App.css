@@ -5287,10 +5287,58 @@ textarea.risk-cell-input {
 }
 
 .login-panel-preview {
+  position: relative;
   background: #161c27;
   flex-direction: column;
   justify-content: center;
   padding: 48px 40px;
+  overflow: hidden;
+}
+
+/* Purely decorative ambient depth behind the rotating phrase - static
+   (no animation, phrase rotation already carries motion), asymmetric so it
+   reads as depth rather than a centered logo/icon. */
+.login-preview-blobs {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.login-preview-blob {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--accent-strong);
+  filter: blur(70px);
+}
+
+.login-preview-blob-1 {
+  width: 380px;
+  height: 380px;
+  top: -120px;
+  left: -80px;
+  opacity: 0.16;
+}
+
+.login-preview-blob-2 {
+  width: 320px;
+  height: 320px;
+  bottom: -100px;
+  right: -60px;
+  opacity: 0.13;
+}
+
+.login-preview-blob-3 {
+  width: 220px;
+  height: 220px;
+  bottom: 30%;
+  left: 12%;
+  opacity: 0.1;
+}
+
+.login-preview-content {
+  position: relative;
+  z-index: 1;
 }
 
 .login-preview-headline-frame {
@@ -5298,7 +5346,7 @@ textarea.risk-cell-input {
   width: 100%;
   max-width: 420px;
   min-height: 2.8em;
-  margin: 20px auto 0;
+  margin: -32px auto 0;
 }
 
 .login-preview-headline {
