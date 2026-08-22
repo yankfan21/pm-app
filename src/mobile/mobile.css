@@ -673,6 +673,67 @@ html:has(.mobile-app) body {
   border-color: var(--mobile-danger) !important;
 }
 
+/* Danger Zone (MobileSettings.jsx, MobileDeleteAccount.jsx) - same "set
+   apart from routine settings" intent as desktop's .danger-zone/
+   .settings-section-title--danger, adapted to mobile's flatter section
+   rhythm (no border-top rule on .mobile-section-title elsewhere, so the
+   divider lives on the wrapping block instead of the heading). */
+.mobile-danger-zone {
+  margin-top: 8px;
+  padding: 16px;
+  border: 1px solid var(--badge-danger-border);
+  border-radius: 10px;
+  background: var(--badge-danger-bg);
+}
+
+.mobile-danger-zone .mobile-screen-stub {
+  margin: 0 0 12px;
+}
+
+.mobile-btn-danger-filled {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  background: var(--mobile-danger);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mobile-btn-danger-filled:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Delete-account confirmation overlay - new to this file (no prior mobile
+   screen needed a confirmation step; MobileTaskDetail's comment delete has
+   none). z-index above .mobile-tabbar (20) so it covers the tab bar too, not
+   just the screen content behind it. */
+.mobile-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: flex-end;
+  z-index: 50;
+}
+
+.mobile-modal {
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--surface-1-solid);
+  border-radius: 16px 16px 0 0;
+  padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .mobile-comment-edit textarea,
 .mobile-comment-form textarea {
   width: 100%;

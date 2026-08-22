@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { useAuth } from '../AuthContext'
 import MobileContactSupport from './MobileContactSupport'
+import MobileDeleteAccount from './MobileDeleteAccount'
 import { useDeviceMode } from '../hooks/useDeviceMode'
 import { resolveDeviceModeTarget, MOBILE_HOME, DESKTOP_HOME } from '../deviceRouteMap'
 
@@ -204,6 +205,8 @@ function MobileSettings() {
           Privacy Policy
         </a>
       </div>
+
+      <MobileDeleteAccount />
     </div>
   )
 }

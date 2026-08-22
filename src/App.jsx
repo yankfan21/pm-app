@@ -92,6 +92,7 @@ const Login = lazy(() => import('./Login'))
 const ForgotPassword = lazy(() => import('./ForgotPassword'))
 const PrivacyPolicy = lazy(() => import('./PrivacyPolicy'))
 const ResetPassword = lazy(() => import('./ResetPassword'))
+const AccountDeleted = lazy(() => import('./AccountDeleted'))
 const RequireAuth = lazy(() => import('./RequireAuth'))
 const AdminRoute = lazy(() => import('./AdminRoute'))
 const DeviceModeGate = lazy(() => import('./DeviceModeGate'))
@@ -194,6 +195,11 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+
+        {/* Lands after DeleteAccountFlow/MobileDeleteAccount sign the user
+            out post-deletion - no session exists by the time this renders,
+            same reasoning as /reset-password above. */}
+        <Route path="/account-deleted" element={<AccountDeleted />} />
 
         {/* Public legal page - linked from the marketing footer and the
             sign-up form, and reachable with no session for the same reason

@@ -4,6 +4,7 @@ import { supabase } from './supabaseClient'
 import { useAuth } from './AuthContext'
 import AppShell from './AppShell'
 import ContactSupportForm from './ContactSupportForm'
+import DeleteAccountFlow from './DeleteAccountFlow'
 import { useDeviceMode } from './hooks/useDeviceMode'
 import { resolveDeviceModeTarget, MOBILE_HOME, DESKTOP_HOME } from './deviceRouteMap'
 
@@ -194,6 +195,8 @@ function Settings() {
             Privacy Policy
           </a>
         </p>
+
+        <DeleteAccountFlow />
       </div>
     </AppShell>
   )
