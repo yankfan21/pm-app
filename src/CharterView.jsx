@@ -63,7 +63,7 @@ function CharterView({ project, charter, canEdit, onUpdate }) {
 
   async function handleRegenerate() {
     const confirmed = window.confirm(
-      'Regenerating will overwrite the current charter content with a new AI draft. Continue?'
+      'Regenerating will overwrite the current charter content with a new assistant-generated draft. Continue?'
     )
     if (!confirmed) return
 

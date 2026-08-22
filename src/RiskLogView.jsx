@@ -455,7 +455,7 @@ function RiskLogView({
           ) : (
             <>
               <p className="risk-suggestions-label">
-                AI suggestions &mdash; not required, review and accept or dismiss each
+                Suggestions &mdash; not required, review and accept or dismiss each
               </p>
               {suggestions.map((s) => (
                 <div className="risk-suggestion-card" key={s.id}>

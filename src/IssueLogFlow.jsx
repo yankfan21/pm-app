@@ -36,7 +36,7 @@ function IssueLogFlow({ onGenerated, onClose }) {
       <div className="modal-step">
         {error && <p className="error">{error}</p>}
         <p className="charter-status">
-          Issues are logged manually as they come up, not AI-generated - start the log to add the
+          Issues are logged manually as they come up &mdash; start the log to add the
           first one.
         </p>
         <div className="modal-actions">

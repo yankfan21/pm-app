@@ -148,7 +148,7 @@ function DocSection({ docKey, title, startLabel, viewProps, seed }) {
                 </button>
               )}
               <button type="button" className={flowButtonClass} onClick={() => setFlowOpen(true)}>
-                {showSeedButton ? 'Generate with AI' : flowButtonLabel}
+                {showSeedButton ? 'Generate with assistant' : flowButtonLabel}
               </button>
             </div>
           )}

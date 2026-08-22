@@ -64,7 +64,7 @@ function RequirementsView({ project, charter, brief, canEdit, onUpdate }) {
 
   async function handleRegenerate() {
     const confirmed = window.confirm(
-      'Regenerating will overwrite the current brief content with a new AI draft. Continue?'
+      'Regenerating will overwrite the current brief content with a new assistant-generated draft. Continue?'
     )
     if (!confirmed) return
 

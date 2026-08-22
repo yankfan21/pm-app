@@ -69,7 +69,7 @@ function PostMortemView({ project, charter, riskLog, statusUpdates, budget, post
 
   async function handleRegenerate() {
     const confirmed = window.confirm(
-      'Regenerating will overwrite the current post-mortem content with a new AI draft. Continue?'
+      'Regenerating will overwrite the current post-mortem content with a new assistant-generated draft. Continue?'
     )
     if (!confirmed) return
 
