@@ -108,19 +108,32 @@ function ScopingFlow({ project, initialAnswers, onGenerated, onClose }) {
     setPhase('followup')
   }
 
+  // Re-runs 'evaluate' against whatever's currently in the answer fields,
+  // then persists whatever sufficient value comes back - unlike the old
+  // two-button split, this never hardcodes true or false, so an answer
+  // fixed on this screen actually lands as sufficient: true.
   async function handleFollowupFinish() {
     setPhase('finalizing')
     setError(null)
-    // PM addressed (or at least saw) every nudge - take the edited answers
-    // at face value rather than re-running evaluate and risking a second
-    // round of nagging over the same answers.
-    await finalize(buildAnswerList(), true, 'followup')
-  }
 
-  async function handleContinueAnyway() {
-    setPhase('finalizing')
-    setError(null)
-    await finalize(buildAnswerList(), false, 'followup')
+    const fullAnswers = questions.map((q) => ({
+      id: q.id,
+      question: q.text,
+      answer: answers[q.id] || '',
+      vital: !!q.vital,
+    }))
+
+    const { data, error } = await supabase.functions.invoke('scoping', {
+      body: { action: 'evaluate', project, answers: fullAnswers },
+    })
+
+    if (error || data?.error) {
+      setError(error?.message || data.error || "Couldn't check your answers — please try again.")
+      setPhase('followup')
+      return
+    }
+
+    await finalize(buildAnswerList(), data.sufficient, 'followup')
   }
 
   return (
@@ -214,18 +227,10 @@ function ScopingFlow({ project, initialAnswers, onGenerated, onClose }) {
             {error && <p className="error">{error}</p>}
 
             <div className="modal-actions">
-              <button
-                type="button"
-                className="btn-secondary"
-                disabled={phase === 'finalizing'}
-                onClick={handleContinueAnyway}
-              >
-                Continue Anyway
-              </button>
               <LoadingButton
                 className="btn-primary"
                 loading={phase === 'finalizing'}
-                loadingLabel="Saving..."
+                loadingLabel="Checking..."
                 onClick={handleFollowupFinish}
               >
                 Save &amp; Finish
