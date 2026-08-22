@@ -247,15 +247,15 @@ function Login() {
 
       <div className="login-panel login-panel-preview">
         <div className="login-preview-content">
+          <div className="login-preview-icon-layer" aria-hidden="true">
+            {PANEL_ICONS.map((Icon, i) => (
+              <Icon
+                key={i}
+                className={`login-preview-icon ${i === phraseIndex ? 'active' : ''}`}
+              />
+            ))}
+          </div>
           <div className="login-preview-headline-frame">
-            <div className="login-preview-icon-layer" aria-hidden="true">
-              {PANEL_ICONS.map((Icon, i) => (
-                <Icon
-                  key={i}
-                  className={`login-preview-icon ${i === phraseIndex ? 'active' : ''}`}
-                />
-              ))}
-            </div>
             {PANEL_PHRASES.map((phrase, i) => (
               <p
                 key={phrase}
