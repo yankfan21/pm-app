@@ -11,7 +11,7 @@ function QaQuestion({ question, value, onChange }) {
 
       {showSuggestion && (
         <div className="qa-suggestion">
-          <span className="qa-suggestion-tag">AI suggestion:</span>
+          <span className="qa-suggestion-tag">Suggested answer:</span>
           <span className="qa-suggestion-text">{question.suggested_answer}</span>
           <button
             type="button"
