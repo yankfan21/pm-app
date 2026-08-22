@@ -673,17 +673,19 @@ html:has(.mobile-app) body {
   border-color: var(--mobile-danger) !important;
 }
 
-/* Danger Zone (MobileSettings.jsx, MobileDeleteAccount.jsx) - same "set
-   apart from routine settings" intent as desktop's .danger-zone/
-   .settings-section-title--danger, adapted to mobile's flatter section
-   rhythm (no border-top rule on .mobile-section-title elsewhere, so the
-   divider lives on the wrapping block instead of the heading). */
+/* Danger Zone (MobileSettings.jsx, MobileDeleteAccount.jsx) - set apart from
+   routine settings above it by a plain top divider only (no border-top rule
+   on .mobile-section-title elsewhere, so it lives on the wrapping block
+   instead of the heading) - same neutral var(--border) token
+   .mobile-more-group-divider already uses elsewhere in this file, not a
+   colored/tinted card. Was a solid red-tinted card; too visually loud/
+   clickable for a section meant to stay quiet until deliberately engaged
+   with (see .mobile-btn-danger-filled below for the same reasoning on the
+   button). */
 .mobile-danger-zone {
   margin-top: 8px;
-  padding: 16px;
-  border: 1px solid var(--badge-danger-border);
-  border-radius: 10px;
-  background: var(--badge-danger-bg);
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
 }
 
 .mobile-danger-zone .mobile-screen-stub {
@@ -694,13 +696,21 @@ html:has(.mobile-app) body {
   display: block;
   width: 100%;
   padding: 12px;
-  border: none;
+  border: 1px solid var(--mobile-danger);
   border-radius: 8px;
-  background: var(--mobile-danger);
-  color: #fff;
+  background: transparent;
+  color: var(--mobile-danger);
   font: inherit;
   font-weight: 600;
   cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.mobile-btn-danger-filled:hover {
+  background: var(--mobile-danger);
+  color: #fff;
 }
 
 .mobile-btn-danger-filled:disabled {

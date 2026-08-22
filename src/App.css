@@ -1409,11 +1409,11 @@
   cursor: not-allowed;
 }
 
-/* Destructive action button (Delete Account) - filled solid red rather than
-   the translucent tint .btn-primary/.btn-secondary use, so it reads as
-   categorically different from routine actions at a glance. Same token pair
-   as the "critical" risk badge tier (App.css's --badge-danger-text/-bg), just
-   inverted to a solid fill instead of a tint. */
+/* Destructive action button (Delete Account) - quiet outline by default
+   (red border/text, no fill) so it doesn't compete visually with routine
+   actions and can't be mistaken for a normal .btn-primary/.btn-secondary
+   click target; only fills solid red on hover/focus, once the pointer is
+   deliberately over it. */
 .btn-danger {
   display: inline-flex;
   align-items: center;
@@ -1422,16 +1422,19 @@
   padding: 10px 18px;
   border: 1px solid var(--alert-red);
   border-radius: 8px;
-  color: #fff;
-  background: var(--alert-red);
+  color: var(--alert-red);
+  background: transparent;
   font: inherit;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .btn-danger:hover {
-  background: #ef4444;
+  background: var(--alert-red);
+  color: #fff;
 }
 
 .btn-danger:disabled {
@@ -5545,9 +5548,9 @@ textarea.risk-cell-input {
   margin-top: 0;
 }
 
-/* Danger Zone heading only - a top divider on top of the usual 32px gap
-   every other section title gets, so this section reads as set apart before
-   the eye even reaches the red-tinted block below it. */
+/* Danger Zone heading only - same plain top divider every other section
+   boundary on this page uses (e.g. above Legal), not a colored one - the
+   section is set apart by position/divider, not by shouting in red. */
 .settings-section-title--danger {
   padding-top: 32px;
   border-top: 1px solid var(--border);
@@ -5559,15 +5562,13 @@ textarea.risk-cell-input {
   white-space: nowrap;
 }
 
-/* Danger Zone (Settings.jsx, DeleteAccountFlow.jsx) - muted red-tinted block
-   set apart from routine settings above it by both the tint and the section
-   divider, so a scanning eye can't mistake it for another ordinary row. */
+/* Danger Zone (Settings.jsx, DeleteAccountFlow.jsx) - plain layout wrapper
+   only, no tint/border of its own. Previously a solid red-tinted card; that
+   read as too visually loud/clickable for a section that should stay quiet
+   until deliberately engaged with (see .btn-danger below for the same
+   reasoning on the button itself). */
 .danger-zone {
   margin-top: 8px;
-  padding: 20px;
-  border: 1px solid var(--badge-danger-border);
-  border-radius: 10px;
-  background: var(--badge-danger-bg);
 }
 
 .danger-zone-text {
