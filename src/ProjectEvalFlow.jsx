@@ -78,7 +78,7 @@ function ProjectEvalFlow({ project, charter, riskLog, budget, scoping, tasks, ta
         {phase === 'evaluating' && (
           <p className="charter-status">
             <Spinner />
-            Reviewing the charter, risk log, budget, and status history, plus phases/milestones/tasks
+            Reviewing the charter, risk log, budget, scoping session, and status history, plus phases/milestones/tasks
             or sprints/backlog/retros depending on methodology...
           </p>
         )}
