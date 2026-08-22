@@ -1,5 +1,17 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import {
+  MessageCircleQuestion,
+  Calendar,
+  DollarSign,
+  AlertTriangle,
+  CheckSquare,
+  Flag,
+  AlertCircle,
+  FileText,
+  Activity,
+  Users,
+} from 'lucide-react'
 import { supabase } from './supabaseClient'
 import ConfidantLogo from './ConfidantLogo'
 
@@ -14,6 +26,18 @@ const PANEL_PHRASES = [
   'Keep every project document in one place.',
   'See project health at a glance.',
   'Collaborate without losing the thread.',
+]
+const PANEL_ICONS = [
+  MessageCircleQuestion,
+  Calendar,
+  DollarSign,
+  AlertTriangle,
+  CheckSquare,
+  Flag,
+  AlertCircle,
+  FileText,
+  Activity,
+  Users,
 ]
 const PANEL_PHRASE_INTERVAL_MS = 5000
 
@@ -222,13 +246,16 @@ function Login() {
       </div>
 
       <div className="login-panel login-panel-preview">
-        <div className="login-preview-blobs" aria-hidden="true">
-          <span className="login-preview-blob login-preview-blob-1" />
-          <span className="login-preview-blob login-preview-blob-2" />
-          <span className="login-preview-blob login-preview-blob-3" />
-        </div>
         <div className="login-preview-content">
           <div className="login-preview-headline-frame">
+            <div className="login-preview-icon-layer" aria-hidden="true">
+              {PANEL_ICONS.map((Icon, i) => (
+                <Icon
+                  key={i}
+                  className={`login-preview-icon ${i === phraseIndex ? 'active' : ''}`}
+                />
+              ))}
+            </div>
             {PANEL_PHRASES.map((phrase, i) => (
               <p
                 key={phrase}

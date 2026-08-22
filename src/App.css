@@ -5368,47 +5368,6 @@ textarea.risk-cell-input {
   overflow: hidden;
 }
 
-/* Purely decorative ambient depth behind the rotating phrase - static
-   (no animation, phrase rotation already carries motion), asymmetric so it
-   reads as depth rather than a centered logo/icon. */
-.login-preview-blobs {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.login-preview-blob {
-  position: absolute;
-  border-radius: 50%;
-  background: var(--accent-strong);
-  filter: blur(70px);
-}
-
-.login-preview-blob-1 {
-  width: 380px;
-  height: 380px;
-  top: -120px;
-  left: -80px;
-  opacity: 0.16;
-}
-
-.login-preview-blob-2 {
-  width: 320px;
-  height: 320px;
-  bottom: -100px;
-  right: -60px;
-  opacity: 0.13;
-}
-
-.login-preview-blob-3 {
-  width: 220px;
-  height: 220px;
-  bottom: 30%;
-  left: 12%;
-  opacity: 0.1;
-}
-
 .login-preview-content {
   position: relative;
   z-index: 1;
@@ -5437,6 +5396,29 @@ textarea.risk-cell-input {
 
 .login-preview-headline.active {
   opacity: 1;
+}
+
+.login-preview-icon-layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.login-preview-icon {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  color: var(--accent-strong);
+  opacity: 0;
+  transition: opacity 500ms ease;
+}
+
+.login-preview-icon.active {
+  opacity: 0.15;
 }
 
 @media (max-width: 760px) {
