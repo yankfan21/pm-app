@@ -4264,7 +4264,8 @@ a.overview-hotspot-row-count:focus-visible {
   margin-top: 24px;
   overflow-x: auto;
   overflow-y: visible;
-  overscroll-behavior: contain;
+  overscroll-behavior-x: contain;
+  overscroll-behavior-y: auto;
   border: 1px solid var(--border);
   border-radius: 8px;
 }
