@@ -2111,7 +2111,8 @@
   margin-top: 26px;
   overflow-x: auto;
   overflow-y: visible;
-  overscroll-behavior: contain;
+  overscroll-behavior-x: contain;
+  overscroll-behavior-y: auto;
   border: 1px solid var(--border);
   border-radius: 8px;
   /* Extra left/right padding vs. other sections: the first/last date-tick
