@@ -4263,6 +4263,7 @@ a.overview-hotspot-row-count:focus-visible {
 .risk-table-wrap {
   margin-top: 24px;
   overflow-x: auto;
+  overflow-y: visible;
   overscroll-behavior: contain;
   border: 1px solid var(--border);
   border-radius: 8px;
