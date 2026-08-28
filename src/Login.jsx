@@ -12,6 +12,10 @@ import {
   Activity,
   Users,
 } from 'lucide-react'
+import { Capacitor } from '@capacitor/core'
+import { App as CapacitorApp } from '@capacitor/app'
+import { Browser } from '@capacitor/browser'
+import { AppleSignIn } from '@capawesome/capacitor-apple-sign-in'
 import { supabase } from './supabaseClient'
 import ConfidantLogo from './ConfidantLogo'
 
@@ -40,6 +44,11 @@ const PANEL_ICONS = [
   Users,
 ]
 const PANEL_PHRASE_INTERVAL_MS = 5000
+// Custom URL scheme registered in ios/App/App/Info.plist (CFBundleURLTypes)
+// and android/app/src/main/AndroidManifest.xml (intent-filter) - lets Google
+// OAuth hand control back to the native app instead of leaving it stranded
+// in the in-app browser sheet.
+const GOOGLE_OAUTH_NATIVE_REDIRECT = 'com.confidantpm.app://login-callback'
 
 function Login() {
   const navigate = useNavigate()
@@ -83,6 +92,54 @@ function Login() {
     document.body.classList.add('login-route')
     return () => document.body.classList.remove('login-route')
   }, [])
+
+  // Catches the OAuth callback that Google/Supabase hand back to the native
+  // app via GOOGLE_OAUTH_NATIVE_REDIRECT, once the in-app browser sheet
+  // (Browser.open in handleGoogle) has done its job. Web never fires this -
+  // Capacitor's App plugin only emits appUrlOpen on native platforms.
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return
+
+    const listenerPromise = CapacitorApp.addListener('appUrlOpen', async ({ url }) => {
+      if (!url.startsWith(GOOGLE_OAUTH_NATIVE_REDIRECT)) return
+      await Browser.close()
+
+      const callbackUrl = new URL(url)
+      const code = callbackUrl.searchParams.get('code')
+      const hashParams = new URLSearchParams(callbackUrl.hash.replace(/^#/, ''))
+      const accessToken = hashParams.get('access_token')
+      const refreshToken = hashParams.get('refresh_token')
+
+      // Supabase's default flow (PKCE) returns `code`; `access_token`/
+      // `refresh_token` covers the implicit flow in case that's ever
+      // configured instead - handle both rather than assuming one.
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code)
+        if (error) {
+          setError(error.message)
+          return
+        }
+      } else if (accessToken && refreshToken) {
+        const { error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        })
+        if (error) {
+          setError(error.message)
+          return
+        }
+      } else {
+        setError('Google sign-in failed. Please try again.')
+        return
+      }
+
+      navigate(redirectTo, { replace: true })
+    })
+
+    return () => {
+      listenerPromise.then((listener) => listener.remove())
+    }
+  }, [navigate, redirectTo])
 
   function switchMode(nextMode) {
     setMode(nextMode)
@@ -129,11 +186,75 @@ function Login() {
 
   async function handleGoogle() {
     setError(null)
+
+    if (Capacitor.isNativePlatform()) {
+      // Per Apple Guideline 4, auth has to stay in-app rather than kicking
+      // out to full Safari - skipBrowserRedirect gets us the OAuth URL to
+      // open ourselves in an ASWebAuthenticationSession sheet (Browser.open)
+      // instead of Supabase's default window.location redirect. The
+      // appUrlOpen listener above picks up the result.
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: GOOGLE_OAUTH_NATIVE_REDIRECT,
+          skipBrowserRedirect: true,
+        },
+      })
+      if (error) {
+        setError(error.message)
+        return
+      }
+      await Browser.open({ url: data.url })
+      return
+    }
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       // Same reasoning as `redirectTo` above - window.location.origin alone
       // is "/", which would land a freshly authenticated user on the public
       // marketing page instead of the app.
+      options: { redirectTo: `${window.location.origin}/dashboard` },
+    })
+    if (error) setError(error.message)
+  }
+
+  async function handleApple() {
+    setError(null)
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const signInResult = await AppleSignIn.signIn()
+        console.log('[Apple Sign-In] native signIn() result:', signInResult)
+        const { idToken } = signInResult
+        const { error } = await supabase.auth.signInWithIdToken({
+          provider: 'apple',
+          token: idToken,
+        })
+        if (error) {
+          console.error('[Apple Sign-In] signInWithIdToken() error:', error)
+          setError(
+            error.message ||
+              (error.status || error.code
+                ? `Sign-in failed (status ${error.status ?? 'unknown'}${error.code ? `, code ${error.code}` : ''})`
+                : null) ||
+              'Apple sign-in failed. Please try again.'
+          )
+          return
+        }
+        navigate(redirectTo, { replace: true })
+      } catch (err) {
+        console.error('[Apple Sign-In] native flow threw:', err)
+        const message =
+          (err && typeof err === 'object' && (err.message || err.errorMessage)) ||
+          (typeof err === 'string' ? err : null) ||
+          (err ? JSON.stringify(err) : null) ||
+          'Apple sign-in failed. Please try again.'
+        setError(message)
+      }
+      return
+    }
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'apple',
       options: { redirectTo: `${window.location.origin}/dashboard` },
     })
     if (error) setError(error.message)
@@ -219,6 +340,10 @@ function Login() {
 
           <button type="button" className="login-btn-secondary" onClick={handleGoogle}>
             Continue with Google
+          </button>
+
+          <button type="button" className="login-btn-secondary" onClick={handleApple}>
+            Continue with Apple
           </button>
 
           <p className="login-footer-link">
