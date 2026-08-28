@@ -224,11 +224,19 @@ function Login() {
       try {
         const signInResult = await AppleSignIn.signIn()
         console.log('[Apple Sign-In] native signIn() result:', signInResult)
-        const { idToken } = signInResult
-        const { error } = await supabase.auth.signInWithIdToken({
+        const { idToken, user } = signInResult
+        window.alert(
+          `[1] signIn() resolved. idToken length: ${idToken ? idToken.length : 'none'}, user: ${user ?? 'none'}`
+        )
+
+        window.alert('[2] calling supabase.auth.signInWithIdToken()...')
+        const { data, error } = await supabase.auth.signInWithIdToken({
           provider: 'apple',
           token: idToken,
         })
+        window.alert(
+          `[3] signInWithIdToken() resolved. session exists: ${!!data?.session}, error: ${error ? error.message : 'none'}`
+        )
         if (error) {
           console.error('[Apple Sign-In] signInWithIdToken() error:', error)
           setError(
@@ -243,6 +251,7 @@ function Login() {
         navigate(redirectTo, { replace: true })
       } catch (err) {
         console.error('[Apple Sign-In] native flow threw:', err)
+        window.alert(`[4] threw: ${JSON.stringify(err)}`)
         const message =
           (err && typeof err === 'object' && (err.message || err.errorMessage)) ||
           (typeof err === 'string' ? err : null) ||
