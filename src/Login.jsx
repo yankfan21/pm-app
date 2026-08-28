@@ -234,11 +234,12 @@ function Login() {
           provider: 'apple',
           token: idToken,
         })
-        window.alert(
-          `[3] signInWithIdToken() resolved. session exists: ${!!data?.session}, error: ${error ? error.message : 'none'}`
-        )
         if (error) {
-          console.error('[Apple Sign-In] signInWithIdToken() error:', error)
+          const ownProps = Object.getOwnPropertyNames(error)
+          console.error('[Apple Sign-In] signInWithIdToken() error:', error, 'ownProps:', ownProps)
+          window.alert(
+            `[3] signInWithIdToken error - message: ${error?.message ?? 'none'} | status: ${error?.status ?? 'none'} | code: ${error?.code ?? 'none'} | name: ${error?.name ?? 'none'} | __isAuthError: ${error?.__isAuthError ?? 'none'} | ownProps: ${ownProps.join(',') || 'none'}`
+          )
           setError(
             error.message ||
               (error.status || error.code
@@ -248,6 +249,7 @@ function Login() {
           )
           return
         }
+        window.alert(`[3] signInWithIdToken() resolved. session exists: ${!!data?.session}`)
         navigate(redirectTo, { replace: true })
       } catch (err) {
         console.error('[Apple Sign-In] native flow threw:', err)
