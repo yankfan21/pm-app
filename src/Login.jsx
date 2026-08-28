@@ -68,6 +68,9 @@ function Login() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  // Shared across Google and Apple: guards against a double-tap firing a
+  // second concurrent native sign-in call before the first one resolves.
+  const [authInProgress, setAuthInProgress] = useState(false)
   const [error, setError] = useState(null)
   const [info, setInfo] = useState(null)
   const [phraseIndex, setPhraseIndex] = useState(0)
@@ -185,90 +188,92 @@ function Login() {
   }
 
   async function handleGoogle() {
+    if (authInProgress) return
+    setAuthInProgress(true)
     setError(null)
 
-    if (Capacitor.isNativePlatform()) {
-      // Per Apple Guideline 4, auth has to stay in-app rather than kicking
-      // out to full Safari - skipBrowserRedirect gets us the OAuth URL to
-      // open ourselves in an ASWebAuthenticationSession sheet (Browser.open)
-      // instead of Supabase's default window.location redirect. The
-      // appUrlOpen listener above picks up the result.
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: GOOGLE_OAUTH_NATIVE_REDIRECT,
-          skipBrowserRedirect: true,
-        },
-      })
-      if (error) {
-        setError(error.message)
+    try {
+      if (Capacitor.isNativePlatform()) {
+        // Per Apple Guideline 4, auth has to stay in-app rather than kicking
+        // out to full Safari - skipBrowserRedirect gets us the OAuth URL to
+        // open ourselves in an ASWebAuthenticationSession sheet (Browser.open)
+        // instead of Supabase's default window.location redirect. The
+        // appUrlOpen listener above picks up the result.
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: GOOGLE_OAUTH_NATIVE_REDIRECT,
+            skipBrowserRedirect: true,
+          },
+        })
+        if (error) {
+          setError(error.message)
+          return
+        }
+        await Browser.open({ url: data.url })
         return
       }
-      await Browser.open({ url: data.url })
-      return
-    }
 
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      // Same reasoning as `redirectTo` above - window.location.origin alone
-      // is "/", which would land a freshly authenticated user on the public
-      // marketing page instead of the app.
-      options: { redirectTo: `${window.location.origin}/dashboard` },
-    })
-    if (error) setError(error.message)
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        // Same reasoning as `redirectTo` above - window.location.origin alone
+        // is "/", which would land a freshly authenticated user on the public
+        // marketing page instead of the app.
+        options: { redirectTo: `${window.location.origin}/dashboard` },
+      })
+      if (error) setError(error.message)
+    } finally {
+      setAuthInProgress(false)
+    }
   }
 
   async function handleApple() {
+    if (authInProgress) return
+    setAuthInProgress(true)
     setError(null)
-    if (Capacitor.isNativePlatform()) {
-      try {
-        const signInResult = await AppleSignIn.signIn()
-        console.log('[Apple Sign-In] native signIn() result:', signInResult)
-        const { idToken, user } = signInResult
-        window.alert(
-          `[1] signIn() resolved. idToken length: ${idToken ? idToken.length : 'none'}, user: ${user ?? 'none'}`
-        )
 
-        window.alert('[2] calling supabase.auth.signInWithIdToken()...')
-        const { data, error } = await supabase.auth.signInWithIdToken({
-          provider: 'apple',
-          token: idToken,
-        })
-        if (error) {
-          const ownProps = Object.getOwnPropertyNames(error)
-          console.error('[Apple Sign-In] signInWithIdToken() error:', error, 'ownProps:', ownProps)
-          window.alert(
-            `[3] signInWithIdToken error - message: ${error?.message ?? 'none'} | status: ${error?.status ?? 'none'} | code: ${error?.code ?? 'none'} | name: ${error?.name ?? 'none'} | __isAuthError: ${error?.__isAuthError ?? 'none'} | ownProps: ${ownProps.join(',') || 'none'}`
-          )
-          setError(
-            error.message ||
-              (error.status || error.code
-                ? `Sign-in failed (status ${error.status ?? 'unknown'}${error.code ? `, code ${error.code}` : ''})`
-                : null) ||
-              'Apple sign-in failed. Please try again.'
-          )
-          return
+    try {
+      if (Capacitor.isNativePlatform()) {
+        try {
+          const signInResult = await AppleSignIn.signIn()
+          console.log('[Apple Sign-In] native signIn() result:', signInResult)
+          const { idToken } = signInResult
+          const { data, error } = await supabase.auth.signInWithIdToken({
+            provider: 'apple',
+            token: idToken,
+          })
+          if (error) {
+            console.error('[Apple Sign-In] signInWithIdToken() error:', error)
+            setError(
+              error.message ||
+                (error.status || error.code
+                  ? `Sign-in failed (status ${error.status ?? 'unknown'}${error.code ? `, code ${error.code}` : ''})`
+                  : null) ||
+                'Apple sign-in failed. Please try again.'
+            )
+            return
+          }
+          navigate(redirectTo, { replace: true })
+        } catch (err) {
+          console.error('[Apple Sign-In] native flow threw:', err)
+          const message =
+            (err && typeof err === 'object' && (err.message || err.errorMessage)) ||
+            (typeof err === 'string' ? err : null) ||
+            (err ? JSON.stringify(err) : null) ||
+            'Apple sign-in failed. Please try again.'
+          setError(message)
         }
-        window.alert(`[3] signInWithIdToken() resolved. session exists: ${!!data?.session}`)
-        navigate(redirectTo, { replace: true })
-      } catch (err) {
-        console.error('[Apple Sign-In] native flow threw:', err)
-        window.alert(`[4] threw: ${JSON.stringify(err)}`)
-        const message =
-          (err && typeof err === 'object' && (err.message || err.errorMessage)) ||
-          (typeof err === 'string' ? err : null) ||
-          (err ? JSON.stringify(err) : null) ||
-          'Apple sign-in failed. Please try again.'
-        setError(message)
+        return
       }
-      return
-    }
 
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'apple',
-      options: { redirectTo: `${window.location.origin}/dashboard` },
-    })
-    if (error) setError(error.message)
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'apple',
+        options: { redirectTo: `${window.location.origin}/dashboard` },
+      })
+      if (error) setError(error.message)
+    } finally {
+      setAuthInProgress(false)
+    }
   }
 
   return (
@@ -349,11 +354,21 @@ function Login() {
 
           <div className="login-divider">or</div>
 
-          <button type="button" className="login-btn-secondary" onClick={handleGoogle}>
+          <button
+            type="button"
+            className="login-btn-secondary"
+            onClick={handleGoogle}
+            disabled={authInProgress}
+          >
             Continue with Google
           </button>
 
-          <button type="button" className="login-btn-secondary" onClick={handleApple}>
+          <button
+            type="button"
+            className="login-btn-secondary"
+            onClick={handleApple}
+            disabled={authInProgress}
+          >
             Continue with Apple
           </button>
 
