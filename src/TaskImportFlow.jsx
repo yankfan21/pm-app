@@ -36,7 +36,11 @@ function cellAt(raw, mapping, key) {
 // failing the whole import.
 function buildProposedRows(rawRows, mapping, existingTasks, collaborators) {
   const existingByTitle = new Map(existingTasks.map((t) => [t.title.trim().toLowerCase(), t.id]))
-  const collaboratorByEmail = new Map(collaborators.map((c) => [c.email.trim().toLowerCase(), c.user_id]))
+  const collaboratorByEmail = new Map(
+    collaborators
+      .filter((c) => c.email)
+      .map((c) => [(c.email || '').trim().toLowerCase(), c.user_id])
+  )
 
   const draft = rawRows.map((raw, i) => {
     const title = cellAt(raw, mapping, 'title')
