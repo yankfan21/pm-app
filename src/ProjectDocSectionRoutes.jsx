@@ -25,21 +25,6 @@ import { visibleSectionsForCategory } from './projectSections'
 // mean merely navigating to Budget Tracker kicks off an AI call. The button
 // keeps that an explicit PM action, same as clicking the checklist row was.
 
-// Blank risk row shape matching RiskLogView.jsx's own newRow() (not exported
-// from there) - kept in sync manually since this is the only other place
-// that needs to originate a row rather than edit one. Feeds the Risk Log
-// page's manual "+ Log a Risk" seed path (see RiskLogRoute).
-function newRiskLogRow() {
-  return {
-    id: crypto.randomUUID(),
-    risk: '',
-    likelihood: null,
-    severity: null,
-    mitigation: '',
-    owner: '',
-  }
-}
-
 // `seed` (optional) adds a second, non-AI creation path for a doc type whose
 // FlowComponent is an AI Q&A flow: { label, build() } inserts
 // buildInsert(build()) directly and lands the PM straight in the View. Only
@@ -92,6 +77,28 @@ function DocSection({ docKey, title, startLabel, viewProps, seed }) {
       .single()
 
     if (insertError) return insertError.message
+
+    // risk_log's parent row (risk_logs) carries no risk data of its own
+    // anymore (see risk_log_structured_schema.sql) - `result` (whatever
+    // RiskLogFlow drafted, or [] from the manual seed path) is real risk
+    // rows that only exist once this parent row's id is known, so they're
+    // bulk-inserted here rather than via buildInsert. Awaited before
+    // setDocs flips the page over to RiskLogView, so its own fetch-on-mount
+    // always sees them already landed.
+    if (docKey === 'risk_log' && Array.isArray(result) && result.length > 0) {
+      const { error: risksError } = await supabase.from('risks').insert(
+        result.map((r) => ({
+          risk_log_id: data.id,
+          title: r.title,
+          description: r.description || null,
+          likelihood: r.likelihood ?? null,
+          severity: r.severity ?? null,
+          mitigation: r.mitigation || '',
+          owner: r.owner || '',
+        }))
+      )
+      if (risksError) return risksError.message
+    }
 
     setDocs((prev) => ({
       ...prev,
@@ -195,6 +202,7 @@ export function ScopingRoute() {
 // back-button never lands on a stale filter - same contract DocumentsRoute
 // used to hold for the Risk Log modal.
 export function RiskLogRoute() {
+  const { setTasks } = useOutletContext()
   const [searchParams, setSearchParams] = useSearchParams()
   const riskFilter = searchParams.get('riskFilter')
   const riskId = searchParams.get('riskId')
@@ -226,12 +234,13 @@ export function RiskLogRoute() {
   return (
     <DocSection
       docKey="risk_log"
-      seed={{ label: '+ Log a Risk', build: () => [newRiskLogRow()] }}
+      seed={{ label: '+ Log a Risk', build: () => [] }}
       viewProps={{
         initialSeverityFilter: riskFilter,
         onSeverityFilterChange: setRiskFilter,
         highlightRiskId: riskId,
         onRiskHighlightDone: clearRiskId,
+        onTaskCreated: (task) => setTasks((prev) => [...prev, task]),
       }}
     />
   )

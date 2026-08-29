@@ -144,7 +144,12 @@ function MobileProjectMetrics() {
         project.methodology !== 'waterfall'
           ? supabase.from('sprints').select('id, name, start_date, end_date, created_at').eq('project_id', projectId)
           : Promise.resolve({ data: [], error: null }),
-        supabase.from('risk_logs').select('risks').eq('project_id', projectId).maybeSingle(),
+        // risk_logs.risks (jsonb) is dead - see risk_log_structured_schema.sql.
+        // Real risk rows now live in `risks`, one per row; reshaped below to
+        // the {id, risk, likelihood, severity} shape useCriticalIssues/
+        // getRiskSeverityCounts already expect, same compat mapping
+        // ProjectDetailLayout.jsx uses for desktop's docs.risk_log.
+        supabase.from('risks').select('id, title, description, likelihood, severity').eq('project_id', projectId),
         supabase.from('issue_logs').select('issues').eq('project_id', projectId).maybeSingle(),
       ])
 
@@ -161,7 +166,14 @@ function MobileProjectMetrics() {
       setTasks(taskRes.data || [])
       setPhases(phaseRes.data || [])
       setSprints(sprintRes.data || [])
-      setRisks(riskRes.data?.risks || [])
+      setRisks(
+        (riskRes.data || []).map((r) => ({
+          id: r.id,
+          risk: r.description ? `${r.title} - ${r.description}` : r.title,
+          likelihood: r.likelihood,
+          severity: r.severity,
+        }))
+      )
       setIssueLogIssues(issueRes.data?.issues || [])
       setLoading(false)
     }

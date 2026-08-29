@@ -175,13 +175,18 @@ function risksText(risks) {
   return risks
     .map(
       (r, i) =>
-        `${i + 1}. ${r.risk} | Likelihood: ${r.likelihood ?? "unscored"} | Severity: ${r.severity ?? "unscored"} | Mitigation: ${r.mitigation || "(none)"} | Owner: ${r.owner || "(unassigned)"}`
+        `${i + 1}. ${r.title}${r.description ? ` - ${r.description}` : ""} | Likelihood: ${r.likelihood ?? "unscored"} | Severity: ${r.severity ?? "unscored"} | Mitigation: ${r.mitigation || "(none)"} | Owner: ${r.owner || "(unassigned)"}`
     )
     .join("\n")
 }
 
 const RISK_ROW_SHAPE_HINT =
-  '{"risk": "short description of the risk", "likelihood": 1 | 2 | 3 | 4 | 5, "severity": 1 | 2 | 3 | 4 | 5, "mitigation": "short mitigation plan", "owner": "role or name responsible, or empty string if unknown"}'
+  '{"title": "short (one sentence) name for the risk", "description": "additional detail beyond the title, or empty string if the title says it all", "likelihood": 1 | 2 | 3 | 4 | 5, "severity": 1 | 2 | 3 | 4 | 5, "mitigation": "short mitigation plan", "owner": "role or name responsible, or empty string if unknown"}'
+
+const CONTINGENCY_SHAPE_HINT =
+  '{"contingency_trigger": "short description of the specific condition that would mean this risk has occurred", "contingency_plan": "short, concrete plan for what to do once that trigger happens"}'
+
+const NOTE_SHAPE_HINT = '{"body": "a short, specific note (1-3 sentences)"}'
 
 const RISK_SCALE_GUIDE = `Score each risk on two independent 1-5 scales - pick the single best-fit number for each axis based on the project context, never default to the middle value out of uncertainty:
 Likelihood: 1 Rare, 2 Unlikely, 3 Possible, 4 Likely, 5 Almost Certain
@@ -196,7 +201,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { action, project, charter, brief, scoping, answers, risks } = await req.json()
+    const { action, project, charter, brief, scoping, answers, risks, risk } = await req.json()
 
     if (action === "questions") {
       const context = establishedContext(charter, brief, scoping)
@@ -237,7 +242,7 @@ ${context ? `${context}\n` : ""}
 Discovery Q&A about risks:
 ${qaText || "(none provided)"}
 
-Write a Risk Log: a list of concrete risks for this project, each with a likelihood score, severity score, short mitigation plan, and owner (a role or name if implied by context, otherwise an empty string). Base it on the project data, charter/brief (if provided), and Q&A above; do not invent specifics that weren't provided or implied. Keep each text field short (risk and mitigation are one sentence each).
+Write a Risk Log: a list of concrete risks for this project, each with a short title, an optional one-sentence description (only if the title alone doesn't capture it), a likelihood score, severity score, short mitigation plan, and owner (a role or name if implied by context, otherwise an empty string). Base it on the project data, charter/brief (if provided), and Q&A above; do not invent specifics that weren't provided or implied. Keep each text field short (title, description, and mitigation are one sentence each).
 
 ${RISK_SCALE_GUIDE}
 
@@ -272,6 +277,69 @@ Return ONLY this JSON shape:
       const { result, usage } = await callClaude(system, user)
       await logUsage(req, project, usage)
       return new Response(JSON.stringify(result), {
+        headers: { ...corsHeaders, "content-type": "application/json" },
+      })
+    }
+
+    if (action === "suggest_contingency") {
+      const system =
+        "You are a project management assistant proposing a contingency plan for one specific risk that is already logged. Respond with ONLY a JSON object, no markdown fences, no other text."
+      const user = `${projectContext(project)}
+
+Risk: ${risk?.title}${risk?.description ? ` - ${risk.description}` : ""}
+Likelihood: ${risk?.likelihood ?? "unscored"} | Severity: ${risk?.severity ?? "unscored"}
+
+A contingency plan is different from a mitigation plan: mitigation reduces the chance or impact of the risk up front, contingency is the fallback response IF the risk actually happens anyway. Propose a specific trigger condition (how the PM would know this risk has occurred) and a concrete plan for what to do once that trigger fires.
+
+Return ONLY this JSON shape:
+${CONTINGENCY_SHAPE_HINT}`
+
+      const { result, usage } = await callClaude(system, user)
+      await logUsage(req, project, usage)
+      return new Response(JSON.stringify(result), {
+        headers: { ...corsHeaders, "content-type": "application/json" },
+      })
+    }
+
+    if (action === "generate_note") {
+      const system =
+        "You are a project management assistant adding a note to a risk's activity log. Respond with ONLY a JSON object, no markdown fences, no other text."
+      const user = `${projectContext(project)}
+
+Risk: ${risk?.title}${risk?.description ? ` - ${risk.description}` : ""}
+Likelihood: ${risk?.likelihood ?? "unscored"} | Severity: ${risk?.severity ?? "unscored"}
+Mitigation: ${risk?.mitigation || "(none)"} | Owner: ${risk?.owner || "(unassigned)"}
+Contingency trigger: ${risk?.contingency_trigger || "(none)"} | Contingency plan: ${risk?.contingency_plan || "(none)"}
+
+Write one short, specific note worth adding to this risk's activity log right now - e.g. a relevant observation, a status check, or a prompt for the PM to confirm something (not a restatement of fields already shown above).
+
+Return ONLY this JSON shape:
+${NOTE_SHAPE_HINT}`
+
+      const { result, usage } = await callClaude(system, user)
+      await logUsage(req, project, usage)
+
+      // Unlike every other action, this one's whole job is a DB write - the
+      // service-role client construction is fire-and-forget-shaped (same
+      // client setup as logUsage below), but a failed insert here is
+      // reported back rather than swallowed, since the frontend has nothing
+      // useful to show otherwise.
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")
+      const serviceClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"))
+      const { data: noteRow, error: noteError } = await serviceClient
+        .from("risk_notes")
+        .insert({ risk_id: risk?.id, source: "assistant", author_id: null, body: result.body })
+        .select()
+        .single()
+
+      if (noteError) {
+        return new Response(JSON.stringify({ error: noteError.message }), {
+          status: 500,
+          headers: { ...corsHeaders, "content-type": "application/json" },
+        })
+      }
+
+      return new Response(JSON.stringify({ note: noteRow }), {
         headers: { ...corsHeaders, "content-type": "application/json" },
       })
     }

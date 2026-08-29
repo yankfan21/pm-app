@@ -5,12 +5,14 @@ import { getRiskBand } from '../riskScale'
 
 // Quick risk flag (/m/projects/:projectId/more/risks). Minimal subset of
 // desktop's full Risk Log entry (RiskLogView.jsx, via Evaluate Project) -
-// description + optional task link only, no likelihood/severity scoring,
-// mitigation, or owner. Writes into the same risk_logs.risks jsonb array
-// desktop reads, but with likelihood/severity left null (unscored) - the PM
-// scores it on next desktop visit via RiskLogView.jsx's "Needs scoring"
-// prompt, rather than mobile guessing a value. task_id is a key desktop
-// doesn't read yet - harmless, jsonb ignores unknown keys.
+// description only, no title split, no likelihood/severity scoring,
+// mitigation, contingency, or owner. Writes straight into the real `risks`
+// table now (see risk_log_structured_schema.sql) - the description text
+// becomes the row's required `title` (mobile has nothing to split it into,
+// so it isn't split), `description` stays null. Same reasoning as before
+// for leaving likelihood/severity null: the PM scores it on next desktop
+// visit via RiskLogView.jsx's "Needs scoring" prompt, rather than mobile
+// guessing a value.
 const BAND_BADGE_CLASS = {
   Critical: 'severe',
   High: 'critical',
@@ -18,23 +20,12 @@ const BAND_BADGE_CLASS = {
   Low: 'done',
 }
 
-function newRiskObject(description, taskId) {
-  return {
-    id: crypto.randomUUID(),
-    risk: description,
-    likelihood: null,
-    severity: null,
-    mitigation: '',
-    owner: '',
-    task_id: taskId || null,
-  }
-}
-
 function MobileProjectRisks() {
   const { canEdit } = useOutletContext()
   const { projectId } = useParams()
 
-  const [riskLog, setRiskLog] = useState(null)
+  const [riskLogId, setRiskLogId] = useState(null)
+  const [risks, setRisks] = useState([])
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -52,7 +43,7 @@ function MobileProjectRisks() {
   // Same order the list itself renders in ([...risks].reverse(), newest
   // first) - "first match" for a ?riskFilter= band means the first one the
   // PM would actually see scrolling down, not first-inserted.
-  const displayRisks = [...(riskLog?.risks || [])].reverse()
+  const displayRisks = [...risks].reverse()
   const firstBandMatch = riskFilterBand
     ? displayRisks.find((r) => getRiskBand(r.likelihood, r.severity) === riskFilterBand)
     : null
@@ -70,7 +61,7 @@ function MobileProjectRisks() {
       setError(null)
 
       const [riskLogRes, tasksRes] = await Promise.all([
-        supabase.from('risk_logs').select('*').eq('project_id', projectId).maybeSingle(),
+        supabase.from('risk_logs').select('id').eq('project_id', projectId).maybeSingle(),
         supabase.from('tasks').select('id, title').eq('project_id', projectId).order('created_at', { ascending: true }),
       ])
 
@@ -83,8 +74,32 @@ function MobileProjectRisks() {
         return
       }
 
-      setRiskLog(riskLogRes.data)
       setTasks(tasksRes.data || [])
+
+      if (!riskLogRes.data) {
+        setRiskLogId(null)
+        setRisks([])
+        setLoading(false)
+        return
+      }
+
+      setRiskLogId(riskLogRes.data.id)
+
+      const { data: risksData, error: risksError } = await supabase
+        .from('risks')
+        .select('*')
+        .eq('risk_log_id', riskLogRes.data.id)
+        .order('created_at', { ascending: true })
+
+      if (cancelled) return
+
+      if (risksError) {
+        setError(risksError.message)
+        setLoading(false)
+        return
+      }
+
+      setRisks(risksData || [])
       setLoading(false)
     }
 
@@ -127,29 +142,37 @@ function MobileProjectRisks() {
     setSubmitting(true)
     setError(null)
 
-    const oneRisk = newRiskObject(trimmed, taskId)
+    let currentRiskLogId = riskLogId
+    if (!currentRiskLogId) {
+      const { data, error } = await supabase
+        .from('risk_logs')
+        .insert({ project_id: projectId })
+        .select()
+        .single()
 
-    const result = riskLog
-      ? await supabase
-          .from('risk_logs')
-          .update({ risks: [...(riskLog.risks || []), oneRisk], updated_at: new Date().toISOString() })
-          .eq('id', riskLog.id)
-          .select()
-          .single()
-      : await supabase
-          .from('risk_logs')
-          .insert({ project_id: projectId, risks: [oneRisk] })
-          .select()
-          .single()
+      if (error) {
+        setError(error.message)
+        setSubmitting(false)
+        return
+      }
+      currentRiskLogId = data.id
+    }
+
+    const { data, error } = await supabase
+      .from('risks')
+      .insert({ risk_log_id: currentRiskLogId, title: trimmed, task_id: taskId || null })
+      .select()
+      .single()
 
     setSubmitting(false)
 
-    if (result.error) {
-      setError(result.error.message)
+    if (error) {
+      setError(error.message)
       return
     }
 
-    setRiskLog(result.data)
+    setRiskLogId(currentRiskLogId)
+    setRisks((prev) => [...prev, data])
     setDescription('')
     setTaskId('')
   }
@@ -218,13 +241,20 @@ function MobileProjectRisks() {
                   rowRefs.current[r.id] = el
                 }}
               >
-                <p className="mobile-doc-section-body">{r.risk}</p>
+                <p className="mobile-doc-section-body">{r.title}</p>
+                {r.description && <p className="mobile-doc-section-body">{r.description}</p>}
                 <p className="mobile-doc-risk-meta">
                   <span className={`mobile-doc-badge ${band ? BAND_BADGE_CLASS[band] : 'pending'}`}>
                     {band || 'Needs scoring'}
                   </span>
                   {r.task_id && taskTitleById.has(r.task_id) ? ` · ${taskTitleById.get(r.task_id)}` : ''}
                 </p>
+                {(r.contingency_trigger || r.contingency_plan) && (
+                  <p className="mobile-doc-section-body">
+                    {r.contingency_trigger && <>If: {r.contingency_trigger}<br /></>}
+                    {r.contingency_plan && <>Then: {r.contingency_plan}</>}
+                  </p>
+                )}
               </div>
             )
           })}

@@ -110,8 +110,15 @@ export const DOCUMENT_TYPES = [
     docProp: 'riskLog',
     FlowComponent: RiskLogFlow,
     ViewComponent: RiskLogView,
-    context: (docs) => ({ charter: docs.charter, brief: docs.requirements_brief, scoping: docs.scoping }),
-    buildInsert: (result) => ({ risks: result }),
+    // Doesn't touch risk_logs.risks (dead column - see
+    // risk_log_structured_schema.sql) - the parent row this creates only
+    // ever carries qa_answers now. `result` (the array of AI-drafted risks
+    // from RiskLogFlow, or [] from the manual seed path) is bulk-inserted
+    // into the real `risks` table separately by insertDoc's risk_log
+    // special case in ProjectDocSectionRoutes.jsx, once this parent row's
+    // id exists to point risk_log_id at.
+    context: (docs, tasks) => ({ charter: docs.charter, brief: docs.requirements_brief, scoping: docs.scoping, tasks }),
+    buildInsert: () => ({}),
   },
   {
     key: 'issue_log',

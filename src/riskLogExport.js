@@ -4,7 +4,11 @@ import { Document, HeadingLevel, Paragraph, Packer, Table, TableCell, TableRow, 
 import { LIKELIHOOD_SCALE, SEVERITY_SCALE, getRiskScore, getRiskBand, scaleLabel } from './riskScale'
 
 const COLUMNS = [
-  { key: 'risk', label: 'Risk' },
+  {
+    key: 'risk',
+    label: 'Risk',
+    format: (r) => (r.description ? `${r.title}\n${r.description}` : r.title),
+  },
   { key: 'likelihood', label: 'Likelihood', format: (r) => scaleLabel(LIKELIHOOD_SCALE, r.likelihood) },
   { key: 'severity', label: 'Severity', format: (r) => scaleLabel(SEVERITY_SCALE, r.severity) },
   {

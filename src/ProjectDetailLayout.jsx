@@ -212,6 +212,40 @@ function ProjectDetailLayout({ project, isOwner, canEdit }) {
         next[DOCUMENT_TYPES[i].key] = data
       })
 
+      // risk_logs.risks (jsonb) is dead - see risk_log_structured_schema.sql.
+      // Every other consumer of docs.risk_log (KeyMetricsDashboard's Key
+      // Risks/Hotspots card, ProjectOverviewRoute, ProjectSectionRoutes'
+      // backlog-gen context, and the task-gen/milestone-gen/comms-plan/
+      // backlog-gen/project-eval Edge Functions, none of which this Risk
+      // Log overhaul otherwise touches) still expects a plain `.risks`
+      // array shaped like the old jsonb rows, so it's rebuilt here from the
+      // real `risks` table rather than changing every one of those call
+      // sites individually. A project with no risks table rows yet
+      // (including every pre-existing project, since this migration
+      // deliberately did not backfill) correctly resolves to an empty
+      // array here, not stale/frozen jsonb data.
+      if (next.risk_log) {
+        const { data: riskRows, error: riskError } = await supabase
+          .from('risks')
+          .select('*')
+          .eq('risk_log_id', next.risk_log.id)
+          .order('created_at', { ascending: true })
+
+        if (riskError) setError(riskError.message)
+        next.risk_log = {
+          ...next.risk_log,
+          risks: (riskRows || []).map((r) => ({
+            id: r.id,
+            risk: r.description ? `${r.title} - ${r.description}` : r.title,
+            likelihood: r.likelihood,
+            severity: r.severity,
+            mitigation: r.mitigation,
+            owner: r.owner,
+            task_id: r.task_id,
+          })),
+        }
+      }
+
       setDocs(next)
       setDocsLoading(false)
     }
