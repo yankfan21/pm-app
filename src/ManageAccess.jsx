@@ -1,19 +1,22 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
-import { useAuth } from './AuthContext'
 
 const ROLES = [
   { value: 'editor', label: 'Editor' },
   { value: 'viewer', label: 'Viewer' },
 ]
 
-// Owner-only section (gated by the caller). Invite-by-email resolves an
-// email to a user id via the find_user_id_by_email RPC (phase1 migration) -
-// this app has no profiles table readable by every authenticated user,
-// since that would let anyone signed in enumerate every registered email;
-// the RPC only ever reveals whether one exact email has an account.
+// Owner-only section (gated by the caller). Invite-by-email goes through the
+// invite_project_collaborator RPC (add_pending_collaborator_invites_and_cap.sql
+// migration), which does the email->user lookup, the cross-project
+// 5-collaborator cap check, and the insert in one round trip. An email with
+// no existing account is no longer a dead end: it inserts a status='pending'
+// row (user_id null) and gets linked to a real account automatically the
+// moment that person signs up. This app still has no profiles table readable
+// by every authenticated user, since that would let anyone signed in
+// enumerate every registered email; the lookup only ever reveals whether one
+// exact email has an account.
 function ManageAccess({ project }) {
-  const { user } = useAuth()
   const [collaborators, setCollaborators] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -47,45 +50,19 @@ function ManageAccess({ project }) {
 
     const trimmedEmail = email.trim()
 
-    const { data: userId, error: lookupError } = await supabase.rpc('find_user_id_by_email', {
+    const { data, error: inviteError } = await supabase.rpc('invite_project_collaborator', {
+      p_project_id: project.id,
       p_email: trimmedEmail,
+      p_role: role,
     })
-
-    if (lookupError) {
-      setError(lookupError.message)
-      setInviting(false)
-      return
-    }
-    if (!userId) {
-      setError('No account found for that email - ask them to sign up first.')
-      setInviting(false)
-      return
-    }
-    if (userId === user.id) {
-      setError("That's you - you're already the owner of this project.")
-      setInviting(false)
-      return
-    }
-
-    const { data, error: insertError } = await supabase
-      .from('project_collaborators')
-      .insert({
-        project_id: project.id,
-        user_id: userId,
-        email: trimmedEmail,
-        role,
-        invited_by: user.id,
-      })
-      .select()
-      .single()
 
     setInviting(false)
 
-    if (insertError) {
+    if (inviteError) {
       setError(
-        insertError.code === '23505'
-          ? 'That person already has access to this project.'
-          : insertError.message
+        inviteError.code === '23505'
+          ? 'That person already has access to this project, or a pending invite.'
+          : inviteError.message
       )
       return
     }
@@ -140,6 +117,7 @@ function ManageAccess({ project }) {
           {collaborators.map((c) => (
             <li key={c.id} className="collaborator-row">
               <span className="collaborator-email">{c.email}</span>
+              {c.status === 'pending' && <span className="collaborator-pending-badge">Pending</span>}
               <select value={c.role} onChange={(e) => handleRoleChange(c, e.target.value)}>
                 {ROLES.map((r) => (
                   <option key={r.value} value={r.value}>

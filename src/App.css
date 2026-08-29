@@ -5540,6 +5540,17 @@ textarea.risk-cell-input {
   text-decoration: underline;
 }
 
+.collaborator-pending-badge {
+  flex-shrink: 0;
+  padding: 3px 10px;
+  border: 1px solid var(--pill-neutral-border);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--pill-neutral-bg);
+  color: var(--pill-neutral-text);
+}
+
 .settings-section-title {
   margin: 32px 0 4px;
   font-size: 15px;
