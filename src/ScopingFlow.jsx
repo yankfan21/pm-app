@@ -4,13 +4,14 @@ import QaStepper from './QaStepper'
 import QaQuestion from './QaQuestion'
 import LoadingButton from './LoadingButton'
 import Spinner from './Spinner'
+import Modal from './components/Modal'
+import { METHODOLOGY_LABELS } from './methodology'
 
-// Stage order for a fresh (non-editing) scoping session. Stage 2
-// (methodology suggestion) doesn't exist yet - it lands between these two
-// in a later session. STAGE_TOTAL is fixed at 3 now (rather than
-// STAGE_ORDER.length) so the "Stage X of 3" indicator doesn't need to
-// change again when that stage is added.
-const STAGE_ORDER = ['initiation', 'risk']
+// Numbered stages for a fresh (non-editing) scoping session. The
+// methodology-suggestion step sits between them but isn't numbered - it's
+// an assistant-driven checkpoint, not a Q&A stage of its own - so
+// STAGE_TOTAL stays fixed at 3 and Risk still reads "Stage 3 of 3"
+// immediately after it.
 const STAGE_TOTAL = 3
 const STAGE_LABELS = { initiation: 'Project Initiation', risk: 'Risk' }
 const STAGE_NUMBERS = { initiation: 1, risk: 3 }
@@ -89,7 +90,17 @@ function ScopingStage({ project, stage, initialAnswers, onComplete, onClose }) {
   }
 
   async function finalize(answerList, sufficient, revertPhase) {
-    const completeError = await onComplete(answerList, sufficient)
+    // Unfiltered (blanks included) question/answer/vital view of this
+    // stage's answers, separate from the persisted/enriched buildAnswerList
+    // shape - only the initiation stage's onComplete uses this (to feed
+    // suggest_methodology), but it costs nothing to always pass it.
+    const fullAnswers = questions.map((q) => ({
+      question: q.text,
+      answer: answers[q.id] || '',
+      vital: !!q.vital,
+    }))
+
+    const completeError = await onComplete(answerList, sufficient, fullAnswers)
     if (completeError) {
       setError(completeError)
       setPhase(revertPhase)
@@ -254,26 +265,84 @@ function ScopingStage({ project, stage, initialAnswers, onComplete, onClose }) {
   )
 }
 
-// Drives the Initiation -> Risk sequence for a fresh (non-editing) scoping
-// session. Each stage runs its own independent ScopingStage instance
-// (remounted via key={stage} so loading-questions/answering/evaluate state
-// doesn't leak between stages); onGenerated is still called exactly once,
-// after Risk (the last stage) completes, with the two stages' answer lists
-// concatenated and an overall sufficient that's true only if both stages
-// were.
+// Drives the Initiation -> Methodology Suggestion -> Risk sequence for a
+// fresh (non-editing) scoping session. Initiation and Risk each run their
+// own independent ScopingStage instance (remounted via key={phase} so
+// loading-questions/answering/evaluate state doesn't leak between them);
+// onGenerated is still called exactly once, after Risk (the last stage)
+// completes, with the two stages' answer lists concatenated and an overall
+// sufficient that's true only if both stages were.
+//
+// The methodology step in between is assistant-driven and silent by
+// default: it calls suggest_methodology, and only surfaces a confirm modal
+// when there's an actual suggestion that differs from the PM's original
+// manual pick (NewProjectFlow step 1). Anything else - no suggestion, a
+// suggestion matching what's already set, or the call failing outright -
+// falls straight through to Risk with no UI at all, since this step is an
+// enhancement on top of the Q&A, not a gate the PM has to clear.
 function ScopingWizard({ project, onGenerated, onClose }) {
-  const [stageIndex, setStageIndex] = useState(0)
+  const [phase, setPhase] = useState('initiation')
   const [initiationResult, setInitiationResult] = useState(null)
+  const [suggestion, setSuggestion] = useState(null)
+  const [switching, setSwitching] = useState(false)
+  const [switchError, setSwitchError] = useState(null)
 
-  const stage = STAGE_ORDER[stageIndex]
+  async function handleInitiationComplete(answerList, sufficient, fullAnswers) {
+    setInitiationResult({ answers: answerList, sufficient })
+    setPhase('suggesting')
 
-  async function handleStageComplete(answerList, sufficient) {
-    if (stage === 'initiation') {
-      setInitiationResult({ answers: answerList, sufficient })
-      setStageIndex(1)
-      return null
+    try {
+      const { data, error } = await supabase.functions.invoke('scoping', {
+        body: { action: 'suggest_methodology', project, answers: fullAnswers },
+      })
+
+      const suggested = !error && !data?.error ? data?.suggestedMethodology : null
+
+      if (!suggested || suggested === project.methodology) {
+        setPhase('risk')
+        return null
+      }
+
+      setSuggestion({ suggestedMethodology: suggested, reason: data.reason })
+      setPhase('methodology-confirm')
+    } catch {
+      setPhase('risk')
     }
 
+    return null
+  }
+
+  async function handleAcceptSwitch() {
+    setSwitching(true)
+    setSwitchError(null)
+
+    // Only updates projects.methodology - it does not re-seed phases or
+    // toggle waterfall/agile sections for the new methodology.
+    // ProjectDetailLayout.jsx's handleMethodologyChange (the existing
+    // manual-switch path) already has warning-modal copy and reseeding
+    // logic for exactly this kind of change; a later session should have
+    // this accepted-suggestion path borrow from or route through that
+    // instead of writing the column directly the way this does for now.
+    const { error } = await supabase
+      .from('projects')
+      .update({ methodology: suggestion.suggestedMethodology })
+      .eq('id', project.id)
+
+    setSwitching(false)
+
+    if (error) {
+      setSwitchError(error.message)
+      return
+    }
+
+    setPhase('risk')
+  }
+
+  function handleKeepCurrent() {
+    setPhase('risk')
+  }
+
+  async function handleRiskComplete(answerList, sufficient) {
     const combined = [...(initiationResult?.answers || []), ...answerList]
     const overallSufficient = (initiationResult?.sufficient ?? true) && sufficient
     return await onGenerated(combined, overallSufficient)
@@ -281,16 +350,76 @@ function ScopingWizard({ project, onGenerated, onClose }) {
 
   return (
     <>
-      <p className="step-label">
-        Stage {STAGE_NUMBERS[stage]} of {STAGE_TOTAL}: {STAGE_LABELS[stage]}
-      </p>
-      <ScopingStage
-        key={stage}
-        project={project}
-        stage={stage}
-        onComplete={handleStageComplete}
-        onClose={onClose}
-      />
+      {(phase === 'initiation' || phase === 'risk') && (
+        <p className="step-label">
+          Stage {STAGE_NUMBERS[phase]} of {STAGE_TOTAL}: {STAGE_LABELS[phase]}
+        </p>
+      )}
+
+      {phase === 'initiation' && (
+        <ScopingStage
+          key="initiation"
+          project={project}
+          stage="initiation"
+          onComplete={handleInitiationComplete}
+          onClose={onClose}
+        />
+      )}
+
+      {phase === 'suggesting' && (
+        <p className="charter-status">
+          <Spinner />
+          Reviewing your answers...
+        </p>
+      )}
+
+      {phase === 'methodology-confirm' && suggestion && (
+        <Modal onClose={handleKeepCurrent}>
+          <h3 className="charter-heading">The assistant has a methodology suggestion</h3>
+          <p>
+            Current methodology:{' '}
+            <strong>{METHODOLOGY_LABELS[project.methodology] ?? project.methodology}</strong>
+          </p>
+          <p>
+            Suggested methodology:{' '}
+            <strong>
+              {METHODOLOGY_LABELS[suggestion.suggestedMethodology] ?? suggestion.suggestedMethodology}
+            </strong>
+          </p>
+          <p className="charter-status">{suggestion.reason}</p>
+
+          {switchError && <p className="error">{switchError}</p>}
+
+          <div className="modal-actions">
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={handleKeepCurrent}
+              disabled={switching}
+            >
+              Keep {METHODOLOGY_LABELS[project.methodology] ?? project.methodology} and continue
+            </button>
+            <LoadingButton
+              className="btn-primary"
+              loading={switching}
+              loadingLabel="Switching..."
+              onClick={handleAcceptSwitch}
+            >
+              Switch to {METHODOLOGY_LABELS[suggestion.suggestedMethodology] ?? suggestion.suggestedMethodology}
+            </LoadingButton>
+          </div>
+        </Modal>
+      )}
+
+      {phase === 'risk' && (
+        <ScopingStage
+          key="risk"
+          project={project}
+          stage="risk"
+          onComplete={handleRiskComplete}
+          onClose={onClose}
+        />
+      )}
     </>
   )
 }
