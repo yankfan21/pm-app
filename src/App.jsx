@@ -115,6 +115,7 @@ const MobileProjectIssues = lazy(() => import('./mobile/MobileProjectIssues'))
 const MobileProjectStatusUpdate = lazy(() => import('./mobile/MobileProjectStatusUpdate'))
 const MobileProjectExecComms = lazy(() => import('./mobile/MobileProjectExecComms'))
 const MobileProjectNewsletter = lazy(() => import('./mobile/MobileProjectNewsletter'))
+const MobileProjectStakeholders = lazy(() => import('./mobile/MobileProjectStakeholders'))
 
 // Shown only while a lazy route chunk is in flight - deliberately minimal so
 // it reads as a momentary pause rather than a screen of its own. Reuses the
@@ -304,6 +305,7 @@ function App() {
               <Route path="more/status-update" element={<MobileProjectStatusUpdate />} />
               <Route path="more/exec-comms" element={<MobileProjectExecComms />} />
               <Route path="more/newsletter" element={<MobileProjectNewsletter />} />
+              <Route path="more/stakeholders" element={<MobileProjectStakeholders />} />
               <Route path="*" element={<Navigate to="." replace />} />
             </Route>
 
