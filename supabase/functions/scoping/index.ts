@@ -209,6 +209,37 @@ or
       })
     }
 
+    if (action === "suggest_methodology") {
+      // Mirrors src/methodology.js - kept as a literal here since Edge
+      // Functions run on Deno, separate from the Vite/React build that file
+      // lives in.
+      const qaText = (answers || []).length
+        ? answers
+            .map((a) => `Q: ${a.question}\nA: ${a.answer || "(no answer given)"}`)
+            .join("\n\n")
+        : "(no initiation answers given)"
+
+      const system =
+        "You are a project management assistant suggesting a project methodology based on a PM's initiation-stage scoping answers. Respond with ONLY a JSON object, no markdown fences, no other text."
+      const user = `${projectContext(project)}
+
+Initiation answers from this scoping session:
+${qaText}
+
+Based on these answers, suggest whether this project is better run as "waterfall", "agile", or "hybrid". Only suggest a methodology if the answers clearly point toward one being a meaningfully better fit than a reasonable default - if the answers are too sparse to judge, or don't clearly favor a particular methodology, return null instead of guessing. Either way, write a short (1-3 sentence) plain-language reason referencing specifically what in the answers led to your conclusion, written as the assistant speaking directly to the PM (never refer to yourself as "AI").
+
+Return ONLY this JSON shape:
+{"suggestedMethodology": "waterfall", "reason": "short reason"}
+or
+{"suggestedMethodology": null, "reason": "short reason explaining why no suggestion is being made"}`
+
+      const { result, usage } = await callClaude(system, user)
+      await logUsage(req, project, usage)
+      return new Response(JSON.stringify({ ...result, stage: "initiation" }), {
+        headers: { ...corsHeaders, "content-type": "application/json" },
+      })
+    }
+
     return new Response(JSON.stringify({ error: "invalid action" }), {
       status: 400,
       headers: { ...corsHeaders, "content-type": "application/json" },
