@@ -134,7 +134,7 @@ function DocSection({ docKey, title, startLabel, viewProps, seed }) {
 
   return (
     <div className="detail-zone">
-      <h2 className="tasks-heading">{title || docType.label}</h2>
+      {!flowOpen && <h2 className="tasks-heading">{title || docType.label}</h2>}
 
       {docsLoading ? (
         <p className="charter-status">Loading...</p>
