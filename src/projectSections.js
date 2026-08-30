@@ -32,7 +32,7 @@ export const PRIMARY_CATEGORIES = [
   { key: 'overview', label: 'Overview', icon: '◈', group: 'phase' },
   { key: 'planning', label: 'Planning', icon: '▤', group: 'phase' },
   { key: 'execution', label: 'Execution', icon: '▶', group: 'phase' },
-  { key: 'scoping', label: 'Scoping', icon: '◇', group: 'tracking' },
+  { key: 'scoping', label: 'Project Discovery Questionnaire', icon: '◇', group: 'tracking' },
   { key: 'risk-log', label: 'Risk Log', icon: '△', group: 'tracking' },
   { key: 'issues-log', label: 'Issues Log', icon: '◎', group: 'tracking' },
   { key: 'communications', label: 'Communications', icon: '▧', group: 'tracking' },

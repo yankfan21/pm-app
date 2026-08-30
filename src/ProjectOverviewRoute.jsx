@@ -56,9 +56,9 @@ function ProjectOverviewRoute() {
       {scopingMissing && (
         <DocReminderCard
           storageKey="cpm_overview_scoping_reminder_dismissed_at"
-          heading="No scoping yet"
+          heading="No project discovery yet"
           body="Want the assistant to help you map out constraints and unknowns before you Charter this?"
-          ctaLabel="Start Scoping"
+          ctaLabel="Start Discovery"
           ctaTo="../scoping"
         />
       )}
@@ -66,9 +66,9 @@ function ProjectOverviewRoute() {
       {scopingThin && (
         <DocReminderCard
           storageKey="cpm_overview_scoping_reminder_dismissed_at"
-          heading="Scoping is still thin"
-          body="A few of the vital scoping answers were pretty bare - worth firming up, since Charter and Risk Log will lean on them."
-          ctaLabel="Revisit Scoping"
+          heading="Project discovery is still thin"
+          body="A few of the vital project discovery answers were pretty bare - worth firming up, since Charter and Risk Log will lean on them."
+          ctaLabel="Revisit Discovery"
           ctaTo="../scoping"
         />
       )}

@@ -61,7 +61,7 @@ import ProjectEvalView from './ProjectEvalView'
 export const DOCUMENT_TYPES = [
   {
     key: 'scoping',
-    label: 'Scoping',
+    label: 'Project Discovery Questionnaire',
     table: 'scopings',
     docProp: 'scoping',
     // ScopingFlow predates this registry (it's also used standalone by

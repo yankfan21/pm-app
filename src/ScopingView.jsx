@@ -136,13 +136,13 @@ function ScopingView({ project, scoping, canEdit, onUpdate }) {
             <p className="qa-answer">{a.answer || <em>No answer given</em>}</p>
           </li>
         ))}
-        {answers.length === 0 && <li className="empty">No scoping answers recorded</li>}
+        {answers.length === 0 && <li className="empty">No project discovery answers recorded</li>}
       </ul>
 
       {scoping.sufficient === false && (
         <div className="scoping-thin-section">
           <p className="charter-status">
-            A few vital answers were flagged as thin when this scoping session was saved:
+            A few vital answers were flagged as thin when this project discovery session was saved:
           </p>
 
           {error && <p className="error">{error}</p>}

@@ -13,7 +13,7 @@ import { METHODOLOGY_LABELS } from './methodology'
 // STAGE_TOTAL stays fixed at 3 and Risk still reads "Stage 3 of 3"
 // immediately after it.
 const STAGE_TOTAL = 3
-const STAGE_LABELS = { initiation: 'Project Initiation', risk: 'Risk' }
+const STAGE_LABELS = { initiation: 'Project Scope & Goals', risk: 'Initial Risk Assessment' }
 const STAGE_NUMBERS = { initiation: 1, risk: 3 }
 
 // One stage's full Q&A session: loads questions (or reconstructs them from
@@ -191,7 +191,7 @@ function ScopingStage({ project, stage, initialAnswers, onComplete, onClose }) {
       {phase === 'loading-questions' && (
         <p className="charter-status">
           <Spinner />
-          Thinking of a few scoping questions...
+          Thinking of a few project discovery questions...
         </p>
       )}
 
@@ -211,7 +211,7 @@ function ScopingStage({ project, stage, initialAnswers, onComplete, onClose }) {
 
       {phase === 'answering' && questions.length === 0 && (
         <>
-          <p className="charter-status">No scoping questions came back for this project.</p>
+          <p className="charter-status">No project discovery questions came back for this project.</p>
           <div className="modal-actions">
             <button type="button" className="btn-secondary" onClick={onClose}>
               Cancel
@@ -451,7 +451,7 @@ function ScopingFlow({ project, initialAnswers, stage, onGenerated, onClose }) {
   return (
     <div className="charter">
       <div className="section-header">
-        <h3 className="charter-heading">Scoping</h3>
+        <h3 className="charter-heading">Project Discovery Questionnaire</h3>
         <div className="charter-actions">
           <button type="button" className="btn-secondary" onClick={onClose}>
             Cancel

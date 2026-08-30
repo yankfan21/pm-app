@@ -365,7 +365,7 @@ function NewProjectFlow({ onCreated, onClose }) {
         {step === 5 && createdProject && (
           <div className="modal-step">
             <div className="section-header">
-              <p className="step-label">Step 5 of 7 &mdash; Scoping (optional)</p>
+              <p className="step-label">Step 5 of 7 &mdash; Project Discovery Questionnaire (optional)</p>
               <button type="button" className="btn-secondary" onClick={handleSkipScoping}>
                 Skip for now
               </button>
