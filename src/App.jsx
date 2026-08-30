@@ -25,6 +25,7 @@ const ProjectDetailPage = lazy(() => import('./ProjectDetailPage'))
 const ProjectOverviewRoute = lazy(() => import('./ProjectOverviewRoute'))
 const PlanningTasksRoute = lazy(() => import('./PlanningTasksRoute'))
 const DocumentsRoute = lazy(() => import('./DocumentsRoute'))
+const StakeholderRegistryRoute = lazy(() => import('./StakeholderRegistryRoute'))
 
 const PlanningIndexRoute = lazy(() =>
   import('./ProjectSectionRoutes').then((m) => ({ default: m.PlanningIndexRoute })),
@@ -250,6 +251,12 @@ function App() {
               <Route path="risk-log" element={<RiskLogRoute />} />
               <Route path="issues-log" element={<IssuesLogRoute />} />
               <Route path="budget-tracker" element={<BudgetTrackerRoute />} />
+
+              {/* Stakeholder Registry - same tracking-group nav tier as the
+                  four routes above, but its own manual-CRUD route component
+                  rather than a DOCUMENT_TYPES entry (see
+                  StakeholderRegistryRoute.jsx's own header comment). */}
+              <Route path="stakeholder-registry" element={<StakeholderRegistryRoute />} />
 
               <Route path="communications">
                 <Route index element={<CommunicationsIndexRoute />} />
