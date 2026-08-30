@@ -20,11 +20,16 @@ questions, and never acting autonomously without PM confirmation.
 
 ## Workflow
 - Straight-to-main commits. Vercel auto-deploys on push. No PR process.
-- SQL migrations: write to a file and give Scott the exact path — he runs
-  them manually via Supabase SQL editor (click Run, not Ctrl+Enter). Claude
-  Code has no direct Supabase dashboard access.
-- Edge Functions: deployed via dashboard paste by Scott. JWT verification
-  must be manually disabled per new Edge Function in Supabase Settings.
+- SQL migrations: file-first, not manual-run-only. Every migration must be
+  written to a versioned file under supabase/migrations/ before it's run, so
+  it's tracked in git regardless of who executes it. Claude Code can and
+  does run migrations directly against production via
+  `npx supabase db query --linked` (project ref ihualqkokgchmzoeumxo,
+  actively linked) — no need to hand off to Scott for SQL editor execution.
+- Edge Functions: deployed via dashboard paste by Scott — this remains a
+  separate manual step, unaffected by the migration-execution change above.
+  JWT verification must be manually disabled per new Edge Function in
+  Supabase Settings.
 - Any code/output Scott needs to copy elsewhere (migrations, Edge Function
   code) should be written to a file with the path given — never rely on
   terminal copy/paste (causes line-wrapping corruption in Notepad).
