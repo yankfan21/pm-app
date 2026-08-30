@@ -4,19 +4,31 @@ import Spinner from './Spinner'
 import ScopingFlow from './ScopingFlow'
 
 // Both the "Update Answers" edit call and the thin-answer recheck below
-// send one `stage` value for a whole answer array, but since commit
-// 6238278 a single scoping row's qa_answers is normally a mix of
-// "initiation"- and "risk"-tagged answers (the wizard concatenates both
-// stages into one saved array) - there's no single correct stage for a
-// mixed set. Falls back to "risk" whenever the answers don't unanimously
-// agree on one (covers both pre-6238278 answers, which have no .stage at
-// all, and any post-split mixed-stage save). This is a safe stand-in only
-// because the Edge Function's evaluate action doesn't currently vary its
-// prompt by stage - stage is just a required token there, not a behavior
-// switch - so a mismatched value doesn't skew the review. If evaluate ever
-// starts branching on stage, this needs a real per-stage design instead.
+// send one `stage` value for a whole answer array, but the Edge Function's
+// request shape only ever accepts one - there's no per-answer stage on the
+// wire. Falls back to "risk" in two different situations that both need
+// the same token but for different reasons:
+//   - genuinely untagged legacy answers (saved before commit 6238278,
+//     no .stage at all) - "risk" here matches the single-stage prompt
+//     those answers were actually generated from.
+//   - real mixed-stage answers (any post-6238278 scoping that hasn't been
+//     edited since - the wizard concatenates initiation + risk answers
+//     into one saved array, so this is the NORMAL shape going forward, not
+//     an edge case) - logged via console.warn so it's visible once this
+//     starts actually happening, rather than silently indistinguishable
+//     from the legacy case above.
+// Either way this is a safe stand-in only because the Edge Function's
+// evaluate action doesn't currently vary its prompt by stage - stage is
+// just a required token there, not a behavior switch - so a
+// non-representative value doesn't skew the review. If evaluate ever
+// starts branching on stage, this needs a real per-stage-group design
+// instead (e.g. one evaluate call per distinct stage present) - not
+// built here without confirming first.
 function deriveStage(answerList) {
   const stages = new Set(answerList.map((a) => a.stage).filter(Boolean))
+  if (stages.size > 1) {
+    console.warn('Scoping evaluate recheck: answers span multiple stages', [...stages])
+  }
   return stages.size === 1 ? [...stages][0] : 'risk'
 }
 

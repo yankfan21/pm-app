@@ -41,11 +41,14 @@ function ScopingStage({ project, stage, initialAnswers, onComplete, onClose }) {
   // re-answering, not by a smarter reconstruction.
   const isEditing = !!initialAnswers
   const [phase, setPhase] = useState(isEditing ? 'answering' : 'loading-questions')
-  // Answers saved after commit 6238278 carry their own id/type/choices -
-  // reconstruct from those when present so a choice question stays a
-  // choice question on edit. Older saved answers have none of those
-  // fields, so they still fall back to a synthetic index-based id and
-  // freeform text, same as before this fix.
+  // Answers saved after commit 6238278 carry their own id/type/choices/
+  // stage - reconstruct from those when present so a choice question
+  // stays a choice question on edit, and so buildAnswerList (below) can
+  // re-save each answer under its own original stage instead of
+  // collapsing a mixed initiation+risk array to one value. Older saved
+  // answers have none of those fields, so they still fall back to a
+  // synthetic index-based id, freeform text, and the `stage` prop
+  // (ScopingView's derived single-value fallback) as their stage.
   const [questions, setQuestions] = useState(() =>
     isEditing
       ? initialAnswers.map((a, i) => ({
@@ -54,6 +57,7 @@ function ScopingStage({ project, stage, initialAnswers, onComplete, onClose }) {
           type: a.type ?? 'text',
           ...(a.choices ? { choices: a.choices } : {}),
           vital: !!a.vital,
+          stage: a.stage ?? stage,
         }))
       : []
   )
@@ -98,7 +102,7 @@ function ScopingStage({ project, stage, initialAnswers, onComplete, onClose }) {
         vital: !!q.vital,
         type: q.type,
         ...(q.choices ? { choices: q.choices } : {}),
-        stage,
+        stage: q.stage,
       }))
   }
 
