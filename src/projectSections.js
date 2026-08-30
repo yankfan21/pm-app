@@ -37,6 +37,7 @@ export const PRIMARY_CATEGORIES = [
   { key: 'issues-log', label: 'Issues Log', icon: '◎', group: 'tracking' },
   { key: 'communications', label: 'Communications', icon: '▧', group: 'tracking' },
   { key: 'budget-tracker', label: 'Budget Tracker', icon: '◫', group: 'tracking' },
+  { key: 'stakeholder-registry', label: 'Stakeholder Registry', icon: '◐', group: 'tracking' },
   { key: 'documents', label: 'Documents', icon: '▦', group: 'reference' },
 ]
 
@@ -66,6 +67,7 @@ export const SECTIONS_BY_CATEGORY = {
   'risk-log': [],
   'issues-log': [],
   'budget-tracker': [],
+  'stakeholder-registry': [],
   documents: [],
 }
 
