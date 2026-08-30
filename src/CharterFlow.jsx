@@ -39,7 +39,7 @@ async function extractDocumentText(file) {
 // path - used by the guided project-creation wizard (NewProjectFlow.jsx),
 // which only offers the Q&A entry point inline (Upload Existing Document
 // stays reachable from the regular Documents page after creation).
-function CharterFlow({ project, scoping, onGenerated, onClose, autoStart = false }) {
+function CharterFlow({ project, scoping, onGenerated, onClose, autoStart = false, isWizardStep = false }) {
   const [phase, setPhase] = useState(autoStart ? 'loading-questions' : 'choose-method')
   const [questions, setQuestions] = useState([])
   const [answers, setAnswers] = useState({})
@@ -142,14 +142,16 @@ function CharterFlow({ project, scoping, onGenerated, onClose, autoStart = false
 
   return (
     <div className="charter">
-      <div className="section-header">
-        <h3 className="charter-heading">Generate Charter</h3>
-        <div className="charter-actions">
-          <button type="button" className="btn-secondary" onClick={onClose}>
-            Cancel
-          </button>
+      {!isWizardStep && (
+        <div className="section-header">
+          <h3 className="charter-heading">Generate Charter</h3>
+          <div className="charter-actions">
+            <button type="button" className="btn-secondary" onClick={onClose}>
+              Cancel
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="modal-step">
         {phase === 'choose-method' && (

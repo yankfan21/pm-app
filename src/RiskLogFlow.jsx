@@ -3,7 +3,7 @@ import { supabase } from './supabaseClient'
 import QaStepper from './QaStepper'
 import Spinner from './Spinner'
 
-function RiskLogFlow({ project, charter, brief, scoping, onGenerated, onClose }) {
+function RiskLogFlow({ project, charter, brief, scoping, onGenerated, onClose, isWizardStep = false }) {
   const [phase, setPhase] = useState('loading-questions')
   const [questions, setQuestions] = useState([])
   const [answers, setAnswers] = useState({})
@@ -61,14 +61,16 @@ function RiskLogFlow({ project, charter, brief, scoping, onGenerated, onClose })
 
   return (
     <div className="charter">
-      <div className="section-header">
-        <h3 className="charter-heading">Generate Risk Log</h3>
-        <div className="charter-actions">
-          <button type="button" className="btn-secondary" onClick={onClose}>
-            Cancel
-          </button>
+      {!isWizardStep && (
+        <div className="section-header">
+          <h3 className="charter-heading">Generate Risk Log</h3>
+          <div className="charter-actions">
+            <button type="button" className="btn-secondary" onClick={onClose}>
+              Cancel
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="modal-step">
         {phase === 'loading-questions' && (

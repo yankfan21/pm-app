@@ -445,19 +445,21 @@ function ScopingWizard({ project, onGenerated, onClose }) {
 // as RiskLogFlow.jsx, since Scoping (like Risk Log) has no document-upload
 // path. Scoping runs first in the wizard, so unlike RiskLogFlow it has no
 // prior charter/brief context to fold in.
-function ScopingFlow({ project, initialAnswers, stage, onGenerated, onClose }) {
+function ScopingFlow({ project, initialAnswers, stage, onGenerated, onClose, isWizardStep = false }) {
   const isEditing = !!initialAnswers
 
   return (
     <div className="charter">
-      <div className="section-header">
-        <h3 className="charter-heading">Project Discovery Questionnaire</h3>
-        <div className="charter-actions">
-          <button type="button" className="btn-secondary" onClick={onClose}>
-            Cancel
-          </button>
+      {!isWizardStep && (
+        <div className="section-header">
+          <h3 className="charter-heading">Project Discovery Questionnaire</h3>
+          <div className="charter-actions">
+            <button type="button" className="btn-secondary" onClick={onClose}>
+              Cancel
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {isEditing ? (
         // Edit path predates the stage split and still edits the saved

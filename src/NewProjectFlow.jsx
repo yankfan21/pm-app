@@ -374,6 +374,7 @@ function NewProjectFlow({ onCreated, onClose }) {
               project={createdProject}
               onGenerated={handleScopingGenerated}
               onClose={handleSkipScoping}
+              isWizardStep
             />
           </div>
         )}
@@ -392,6 +393,7 @@ function NewProjectFlow({ onCreated, onClose }) {
               autoStart
               onGenerated={handleCharterGenerated}
               onClose={handleSkipCharter}
+              isWizardStep
             />
           </div>
         )}
@@ -411,6 +413,7 @@ function NewProjectFlow({ onCreated, onClose }) {
               scoping={scopingRow}
               onGenerated={handleRiskLogGenerated}
               onClose={handleSkipRiskLog}
+              isWizardStep
             />
           </div>
         )}
