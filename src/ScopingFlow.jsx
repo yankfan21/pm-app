@@ -35,19 +35,32 @@ function ScopingStage({ project, stage, initialAnswers, onComplete, onClose }) {
   // PM's own previously-recorded questions instead of re-fetching from the
   // 'questions' action - that call regenerates via Claude on every invoke,
   // so a second call here isn't guaranteed to return the same question set
-  // (or even the same count) to prefill against. Saved qa_answers only kept
-  // question/answer/vital until this pass (see buildAnswerList), so
-  // choice-type questions still fall back to freeform text on edit - fixing
-  // that reconstruction is a later session's work, not this one.
+  // (or even the same count) to prefill against. Answers saved before
+  // commit 6238278 only kept question/answer/vital, so those still fall
+  // back to a synthetic id and freeform text below - only fixable by
+  // re-answering, not by a smarter reconstruction.
   const isEditing = !!initialAnswers
   const [phase, setPhase] = useState(isEditing ? 'answering' : 'loading-questions')
+  // Answers saved after commit 6238278 carry their own id/type/choices -
+  // reconstruct from those when present so a choice question stays a
+  // choice question on edit. Older saved answers have none of those
+  // fields, so they still fall back to a synthetic index-based id and
+  // freeform text, same as before this fix.
   const [questions, setQuestions] = useState(() =>
     isEditing
-      ? initialAnswers.map((a, i) => ({ id: String(i), text: a.question, type: 'text', vital: !!a.vital }))
+      ? initialAnswers.map((a, i) => ({
+          id: a.id ?? String(i),
+          text: a.question,
+          type: a.type ?? 'text',
+          ...(a.choices ? { choices: a.choices } : {}),
+          vital: !!a.vital,
+        }))
       : []
   )
   const [answers, setAnswers] = useState(() =>
-    isEditing ? Object.fromEntries(initialAnswers.map((a, i) => [String(i), a.answer || ''])) : {}
+    isEditing
+      ? Object.fromEntries(initialAnswers.map((a, i) => [a.id ?? String(i), a.answer || '']))
+      : {}
   )
   const [followups, setFollowups] = useState([])
   const [error, setError] = useState(null)
@@ -428,7 +441,7 @@ function ScopingWizard({ project, onGenerated, onClose }) {
 // as RiskLogFlow.jsx, since Scoping (like Risk Log) has no document-upload
 // path. Scoping runs first in the wizard, so unlike RiskLogFlow it has no
 // prior charter/brief context to fold in.
-function ScopingFlow({ project, initialAnswers, onGenerated, onClose }) {
+function ScopingFlow({ project, initialAnswers, stage, onGenerated, onClose }) {
   const isEditing = !!initialAnswers
 
   return (
@@ -444,15 +457,17 @@ function ScopingFlow({ project, initialAnswers, onGenerated, onClose }) {
 
       {isEditing ? (
         // Edit path predates the stage split and still edits the saved
-        // answers as one flat list rather than per-stage - fixed at the
-        // "risk" stage name since that's the stage whose Edge Function
-        // prompt is the original (pre-split) scoping question set, so
-        // evaluate behavior for edited answers is unchanged from before
-        // this rework. Reworking this to edit per-stage is a later
-        // session's work.
+        // answers as one flat list rather than per-stage. `stage` is an
+        // optional caller-supplied override (ScopingView derives it from
+        // the stored answers' own .stage field when they all agree) -
+        // defaults to "risk" otherwise, since that's the stage whose Edge
+        // Function prompt is the original (pre-split) scoping question
+        // set, keeping evaluate behavior for legacy/mixed-stage answers
+        // the same as before this rework. Reworking this to edit
+        // per-stage is a later session's work.
         <ScopingStage
           project={project}
-          stage="risk"
+          stage={stage || 'risk'}
           initialAnswers={initialAnswers}
           onComplete={onGenerated}
           onClose={onClose}

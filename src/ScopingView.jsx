@@ -3,6 +3,23 @@ import { supabase } from './supabaseClient'
 import Spinner from './Spinner'
 import ScopingFlow from './ScopingFlow'
 
+// Both the "Update Answers" edit call and the thin-answer recheck below
+// send one `stage` value for a whole answer array, but since commit
+// 6238278 a single scoping row's qa_answers is normally a mix of
+// "initiation"- and "risk"-tagged answers (the wizard concatenates both
+// stages into one saved array) - there's no single correct stage for a
+// mixed set. Falls back to "risk" whenever the answers don't unanimously
+// agree on one (covers both pre-6238278 answers, which have no .stage at
+// all, and any post-split mixed-stage save). This is a safe stand-in only
+// because the Edge Function's evaluate action doesn't currently vary its
+// prompt by stage - stage is just a required token there, not a behavior
+// switch - so a mismatched value doesn't skew the review. If evaluate ever
+// starts branching on stage, this needs a real per-stage design instead.
+function deriveStage(answerList) {
+  const stages = new Set(answerList.map((a) => a.stage).filter(Boolean))
+  return stages.size === 1 ? [...stages][0] : 'risk'
+}
+
 // Scoping has no narrative sections (unlike Charter) and no structured row
 // table (unlike Risk Log) - just a flat list of Q&A pairs plus the
 // `sufficient` flag ScopingFlow's end-of-session evaluate check set. That
@@ -32,12 +49,13 @@ function ScopingView({ project, scoping, canEdit, onUpdate }) {
         body: {
           action: 'evaluate',
           project,
-          // Stored qa_answers dropped the question `id` the evaluate action
-          // keys followups off of (only non-empty question/answer/vital
-          // survive into the saved row) - the array index stands in for it
-          // here, then maps each returned followup straight back to the
-          // answer it belongs to.
-          answers: answers.map((a, i) => ({ ...a, id: String(i) })),
+          // Answers saved before commit 6238278 dropped the question `id`
+          // the evaluate action keys followups off of - the array index
+          // stands in for those, then maps each returned followup straight
+          // back to the answer it belongs to. Answers saved after that
+          // commit carry their own real id, used as-is.
+          answers: answers.map((a, i) => ({ ...a, id: a.id ?? String(i) })),
+          stage: deriveStage(answers),
         },
       })
 
@@ -76,6 +94,7 @@ function ScopingView({ project, scoping, canEdit, onUpdate }) {
       <ScopingFlow
         project={project}
         initialAnswers={answers}
+        stage={deriveStage(answers)}
         onGenerated={handleUpdateSubmit}
         onClose={() => setEditing(false)}
       />
@@ -130,7 +149,14 @@ function ScopingView({ project, scoping, canEdit, onUpdate }) {
           )}
 
           {followups?.map((f) => {
-            const answer = answers[Number(f.questionId)]
+            // f.questionId is a real answer id for anything saved after
+            // commit 6238278, or a stringified array index for older
+            // answers (see the id fallback sent alongside 'evaluate'
+            // above) - try a real-id match first, then fall back to
+            // index.
+            const answer =
+              answers.find((a) => a.id != null && a.id === f.questionId) ??
+              answers[Number(f.questionId)]
             if (!answer) return null
             return (
               <div className="scoping-followup" key={f.questionId}>
