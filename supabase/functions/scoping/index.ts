@@ -122,12 +122,22 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { action, project, answers } = await req.json()
+    const { action, project, answers, stage } = await req.json()
+
+    if ((action === "questions" || action === "evaluate") && stage !== "initiation" && stage !== "risk") {
+      return new Response(JSON.stringify({ error: 'stage must be "initiation" or "risk"' }), {
+        status: 400,
+        headers: { ...corsHeaders, "content-type": "application/json" },
+      })
+    }
 
     if (action === "questions") {
       const system =
         "You are a project management assistant running a Scoping session before any other project documents are drafted. You surface the constraints and unknowns most likely to derail this project before real planning starts. Respond with ONLY a JSON object, no markdown fences, no other text."
-      const user = `${projectContext(project)}
+
+      const user =
+        stage === "risk"
+          ? `${projectContext(project)}
 
 Generate scoping questions for this project, covering:
 
@@ -144,10 +154,28 @@ Skip a topic entirely if it plainly doesn't apply to this kind of project, rathe
 
 Return ONLY this JSON shape:
 {"questions": [{"id": "short_snake_case_id", "text": "question text", "type": "text", "vital": true}, {"id": "short_snake_case_id", "text": "question text", "type": "choice", "choices": ["A", "B", "C"], "vital": false}]}`
+          : `${projectContext(project)}
+
+Generate initiation questions for this project - roughly 5-6 questions, targeting one question per topic below as a base set:
+
+Vital (mark "vital": true) - these matter enough that a thin or missing answer should be flagged before finishing (the same end-of-session follow-up check already used for every vital answer in this Scoping session applies here too):
+- Scope boundaries: what's explicitly in scope versus out
+- Success criteria / definition of done
+- Stakeholder and approval structure: who approves what
+
+Supporting (mark "vital": false) - useful context, but a thin answer is fine here:
+- Deliverables and format expectations
+- Budget or resource constraints
+
+Skip a topic entirely if it plainly doesn't apply to this kind of project, rather than forcing a question. For each question, decide if it's better answered with free text or a small set of button choices (max 4 choices, only for genuinely categorical answers).
+
+Return ONLY this JSON shape:
+{"questions": [{"id": "short_snake_case_id", "text": "question text", "type": "text", "vital": true}, {"id": "short_snake_case_id", "text": "question text", "type": "choice", "choices": ["A", "B", "C"], "vital": false}]}`
 
       const { result, usage } = await callClaude(system, user)
       await logUsage(req, project, usage)
-      return new Response(JSON.stringify(result), {
+      const taggedQuestions = (result.questions || []).map((q) => ({ ...q, stage }))
+      return new Response(JSON.stringify({ ...result, questions: taggedQuestions }), {
         headers: { ...corsHeaders, "content-type": "application/json" },
       })
     }
@@ -176,7 +204,7 @@ or
 
       const { result, usage } = await callClaude(system, user)
       await logUsage(req, project, usage)
-      return new Response(JSON.stringify(result), {
+      return new Response(JSON.stringify({ ...result, stage }), {
         headers: { ...corsHeaders, "content-type": "application/json" },
       })
     }
