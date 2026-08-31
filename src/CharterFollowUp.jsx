@@ -3,6 +3,15 @@ import { supabase } from './supabaseClient'
 import QaStepper from './QaStepper'
 import Spinner from './Spinner'
 
+// Best-effort: a fetch failure here shouldn't block the follow-up, it just
+// means the updated sections won't get the Registry's completeness nudge
+// (Edge Function treats a missing/empty array as a no-op).
+async function fetchStakeholders(projectId) {
+  const { data, error } = await supabase.from('stakeholders').select('*').eq('project_id', projectId)
+  if (error) return []
+  return data || []
+}
+
 function CharterFollowUp({ project, charter, onApplied, onClose }) {
   const [phase, setPhase] = useState('loading-questions')
   const [questions, setQuestions] = useState([])
@@ -49,8 +58,10 @@ function CharterFollowUp({ project, charter, onApplied, onClose }) {
         sections: q.sections || [],
       }))
 
+    const stakeholders = await fetchStakeholders(project.id)
+
     const { data, error } = await supabase.functions.invoke('charter', {
-      body: { action: 'apply_followup', project, charter, answers: answerList },
+      body: { action: 'apply_followup', project, charter, answers: answerList, stakeholders },
     })
 
     if (error || data?.error) {

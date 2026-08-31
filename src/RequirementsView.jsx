@@ -294,6 +294,7 @@ function RequirementsView({ project, charter, brief, canEdit, onUpdate }) {
       {showFollowUp && (
         <RequirementsFollowUp
           project={project}
+          charter={charter}
           brief={{ ...brief, ...values }}
           onApplied={handleFollowUpApplied}
           onClose={() => setShowFollowUp(false)}

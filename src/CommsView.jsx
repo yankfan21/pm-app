@@ -437,6 +437,11 @@ function CommsView({ variant, project, charter, brief, riskLog, issueLog, status
         <CommsFollowUp
           variant={variant}
           project={project}
+          charter={charter}
+          brief={brief}
+          riskLog={riskLog}
+          issueLog={issueLog}
+          latestStatus={latestStatus}
           doc={{ ...doc, ...values }}
           onApplied={handleFollowUpApplied}
           onClose={() => setShowFollowUp(false)}

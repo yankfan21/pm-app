@@ -467,11 +467,17 @@ Return ONLY this JSON shape:
       const currentSections = targetKeys
         .map((key) => `${sectionLabels[key]}: ${doc[key] || "(empty)"}`)
         .join("\n")
+      const context = establishedContext(charter, brief, riskLog, issueLog)
+      const statusText = statusUpdateText(latestStatus)
+      const highRisksText = variant === "exec" ? highSeverityRisksText(riskLog) : null
+      const openIssuesHardText = openIssuesText(issueLog)
 
       const system =
         "You are a project management assistant incorporating new answers into specific sections of an existing stakeholder communications document. Respond with ONLY a JSON object, no markdown fences, no other text."
       const user = `${projectContext(project)}
 
+${context ? `${context}\n` : ""}
+${statusText ? `${statusText}\nTreat this Status Update as the primary, freshest source for what's new since the last version - don't just restate older charter/brief context as if it were still current.\n` : ""}
 Current text for the sections that need updating:
 ${currentSections}
 
@@ -479,7 +485,8 @@ New information from follow-up Q&A:
 ${qaText}
 
 For each of these section keys: ${targetKeys.join(", ")} - rewrite that section's text to incorporate the new information above, keeping the rest of the section's existing content intact where still relevant. Preserve the original format (plain paragraph vs "- " bullet list) per section.
-
+${highRisksText ? `\nThe Risks & Blockers section MUST explicitly mention every one of these current High/Critical-band risks, in addition to anything else relevant:\n${highRisksText}\n` : ""}
+${openIssuesHardText ? `\n${variant === "exec" ? "The Risks & Blockers section" : "The newsletter, in whichever section fits most naturally (e.g. Links & Resources)"} MUST explicitly mention every one of these current Open issues, in addition to anything else relevant:\n${openIssuesHardText}\n` : ""}
 Return ONLY this JSON shape:
 {"updates": {${targetKeys.map((k) => `"${k}": "..."`).join(", ")}}}`
 

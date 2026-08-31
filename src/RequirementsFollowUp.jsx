@@ -3,7 +3,7 @@ import { supabase } from './supabaseClient'
 import QaStepper from './QaStepper'
 import Spinner from './Spinner'
 
-function RequirementsFollowUp({ project, brief, onApplied, onClose }) {
+function RequirementsFollowUp({ project, charter, brief, onApplied, onClose }) {
   const [phase, setPhase] = useState('loading-questions')
   const [questions, setQuestions] = useState([])
   const [answers, setAnswers] = useState({})
@@ -50,7 +50,7 @@ function RequirementsFollowUp({ project, brief, onApplied, onClose }) {
       }))
 
     const { data, error } = await supabase.functions.invoke('requirements', {
-      body: { action: 'apply_followup', project, brief, answers: answerList },
+      body: { action: 'apply_followup', project, charter, brief, answers: answerList },
     })
 
     if (error || data?.error) {

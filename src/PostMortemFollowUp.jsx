@@ -4,7 +4,7 @@ import QaStepper from './QaStepper'
 import Spinner from './Spinner'
 
 // Same targeted "ask follow-up questions" patch flow as CharterFollowUp.
-function PostMortemFollowUp({ project, doc, onApplied, onClose }) {
+function PostMortemFollowUp({ project, charter, riskLog, statusUpdates, budget, doc, onApplied, onClose }) {
   const [phase, setPhase] = useState('loading-questions')
   const [questions, setQuestions] = useState([])
   const [answers, setAnswers] = useState({})
@@ -51,7 +51,7 @@ function PostMortemFollowUp({ project, doc, onApplied, onClose }) {
       }))
 
     const { data, error } = await supabase.functions.invoke('post-mortem', {
-      body: { action: 'apply_followup', project, doc, answers: answerList },
+      body: { action: 'apply_followup', project, charter, riskLog, statusUpdates, budget, doc, answers: answerList },
     })
 
     if (error || data?.error) {

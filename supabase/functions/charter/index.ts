@@ -323,6 +323,7 @@ Return ONLY this JSON shape:
       const currentSections = targetKeys
         .map((key) => `${SECTION_LABELS[key]}: ${charter[key] || "(empty)"}`)
         .join("\n")
+      const registryInfo = stakeholdersText(stakeholders)
 
       const system =
         "You are a project management assistant incorporating new answers into specific sections of an existing project charter. Respond with ONLY a JSON object, no markdown fences, no other text."
@@ -334,7 +335,7 @@ ${currentSections}
 New information from follow-up Q&A:
 ${qaText}
 
-For each of these section keys: ${targetKeys.join(", ")} — rewrite that section's text to incorporate the new information above, keeping the rest of the section's existing content intact where still relevant. Preserve the original format (plain paragraph vs "- " bullet list) per section.
+${registryInfo ? `Stakeholder Registry entries for this project:\n${registryInfo}\n\n${STAKEHOLDER_REGISTRY_INSTRUCTION}\n\n` : ""}For each of these section keys: ${targetKeys.join(", ")} — rewrite that section's text to incorporate the new information above, keeping the rest of the section's existing content intact where still relevant. Preserve the original format (plain paragraph vs "- " bullet list) per section.
 
 Return ONLY this JSON shape:
 {"updates": {${targetKeys.map((k) => `"${k}": "..."`).join(", ")}}}`

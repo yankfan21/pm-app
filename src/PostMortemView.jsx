@@ -299,6 +299,10 @@ function PostMortemView({ project, charter, riskLog, statusUpdates, budget, post
       {showFollowUp && (
         <PostMortemFollowUp
           project={project}
+          charter={charter}
+          riskLog={riskLog}
+          statusUpdates={statusUpdates}
+          budget={budget}
           doc={{ ...postMortem, ...values }}
           onApplied={handleFollowUpApplied}
           onClose={() => setShowFollowUp(false)}

@@ -7,7 +7,7 @@ import { COMMS_VARIANTS } from './commsSections'
 // Shared "ask follow-up questions" revise flow for both Stakeholder Comms
 // Plan document types. See CommsFlow.jsx for why this is one parameterized
 // component rather than two near-duplicate files.
-function CommsFollowUp({ variant, project, doc, onApplied, onClose }) {
+function CommsFollowUp({ variant, project, charter, brief, riskLog, issueLog, latestStatus, doc, onApplied, onClose }) {
   const { table, title } = COMMS_VARIANTS[variant]
   const [phase, setPhase] = useState('loading-questions')
   const [questions, setQuestions] = useState([])
@@ -55,7 +55,18 @@ function CommsFollowUp({ variant, project, doc, onApplied, onClose }) {
       }))
 
     const { data, error } = await supabase.functions.invoke('comms-plan', {
-      body: { action: 'apply_followup', variant, project, doc, answers: answerList },
+      body: {
+        action: 'apply_followup',
+        variant,
+        project,
+        charter,
+        brief,
+        riskLog,
+        issueLog,
+        latestStatus,
+        doc,
+        answers: answerList,
+      },
     })
 
     if (error || data?.error) {

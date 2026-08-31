@@ -296,11 +296,13 @@ Return ONLY this JSON shape:
       const currentSections = targetKeys
         .map((key) => `${SECTION_LABELS[key]}: ${brief[key] || "(empty)"}`)
         .join("\n")
+      const establishedContext = charterText(charter)
 
       const system =
         "You are a project management assistant incorporating new answers into specific sections of an existing Requirements/Discovery Brief. Respond with ONLY a JSON object, no markdown fences, no other text."
       const user = `${projectContext(project)}
 
+${establishedContext ? `Existing project charter for context:\n${establishedContext}\n` : ""}
 Current text for the sections that need updating:
 ${currentSections}
 
