@@ -26,10 +26,13 @@ questions, and never acting autonomously without PM confirmation.
   does run migrations directly against production via
   `npx supabase db query --linked` (project ref ihualqkokgchmzoeumxo,
   actively linked) — no need to hand off to Scott for SQL editor execution.
-- Edge Functions: deployed via dashboard paste by Scott — this remains a
-  separate manual step, unaffected by the migration-execution change above.
-  JWT verification must be manually disabled per new Edge Function in
-  Supabase Settings.
+- Edge Functions: can be deployed directly via CLI —
+  `npx supabase functions deploy <function-name> --project-ref
+  ihualqkokgchmzoeumxo` — confirmed working 2026-08-30, no Docker required
+  despite the CLI warning. Dashboard paste is no longer necessary as the
+  default method. Source still gets committed to the repo as before. JWT
+  verification must be manually disabled per new Edge Function in Supabase
+  Settings.
 - Any code/output Scott needs to copy elsewhere (migrations, Edge Function
   code) should be written to a file with the path given — never rely on
   terminal copy/paste (causes line-wrapping corruption in Notepad).
