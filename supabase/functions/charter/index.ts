@@ -135,6 +135,19 @@ function establishedContext(scoping) {
   return s ? `Scoping session Q&A:\n${s}` : null
 }
 
+function stakeholdersText(stakeholders) {
+  if (!stakeholders || stakeholders.length === 0) return null
+  return stakeholders
+    .map((s) => {
+      const details = [s.role_title, s.org, s.contact_info].filter(Boolean).join(", ")
+      return `- ${s.name}${details ? ` (${details})` : ""} [${s.quadrant}]`
+    })
+    .join("\n")
+}
+
+const STAKEHOLDER_REGISTRY_INSTRUCTION =
+  "Every stakeholder listed above from the project's Stakeholder Registry must be represented in the Stakeholders section of the charter. This is additive to any stakeholders already implied by the project context or other documents provided - do not drop stakeholders that come from those other sources."
+
 const SECTION_LABELS = {
   purpose: "Purpose",
   scope: "Scope",
@@ -165,10 +178,12 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { action, project, answers, charter, scoping, sectionKey, sectionText, instruction, documentText } =
+    const { action, project, answers, charter, scoping, sectionKey, sectionText, instruction, documentText, stakeholders } =
       await req.json()
 
     if (action === "from_document") {
+      const registryInfo = stakeholdersText(stakeholders)
+
       const system =
         "You are a project management assistant extracting a structured project charter from an existing document someone has uploaded. Base the charter primarily on the document's actual content; only fall back to the project data provided for anything the document doesn't cover, and never fabricate specifics that aren't implied by either source. Respond with ONLY a JSON object, no markdown fences, no other text."
       const user = `${projectContext(project)}
@@ -176,7 +191,7 @@ Deno.serve(async (req) => {
 Uploaded document text:
 ${documentText}
 
-Extract/write a project charter with these sections: Purpose, Scope, Stakeholders, Success Metrics, Risks, Timeline. Keep each section concise (2-5 sentences, or a short bullet list using "- " prefixes). Base it primarily on the uploaded document above.
+${registryInfo ? `Stakeholder Registry entries for this project:\n${registryInfo}\n\n${STAKEHOLDER_REGISTRY_INSTRUCTION}\n\n` : ""}Extract/write a project charter with these sections: Purpose, Scope, Stakeholders, Success Metrics, Risks, Timeline. Keep each section concise (2-5 sentences, or a short bullet list using "- " prefixes). Base it primarily on the uploaded document above.
 
 Return ONLY this JSON shape:
 {"purpose": "...", "scope": "...", "stakeholders": "...", "success_metrics": "...", "risks": "...", "timeline": "..."}`
@@ -213,6 +228,7 @@ Return ONLY this JSON shape:
 
     if (action === "generate") {
       const context = establishedContext(scoping)
+      const registryInfo = stakeholdersText(stakeholders)
 
       const system =
         "You are a project management assistant. You write concise, professional project charters. Respond with ONLY a JSON object, no markdown fences, no other text."
@@ -225,7 +241,7 @@ ${context ? `${context}\n` : ""}
 Additional context from follow-up Q&A:
 ${qaText}
 
-Write a project charter with these sections: Purpose, Scope, Stakeholders, Success Metrics, Risks, Timeline. Keep each section concise (2-5 sentences, or a short bullet list using "- " prefixes). Base it on the project data and Q&A above; do not invent specifics that weren't provided.
+${registryInfo ? `Stakeholder Registry entries for this project:\n${registryInfo}\n\n${STAKEHOLDER_REGISTRY_INSTRUCTION}\n\n` : ""}Write a project charter with these sections: Purpose, Scope, Stakeholders, Success Metrics, Risks, Timeline. Keep each section concise (2-5 sentences, or a short bullet list using "- " prefixes). Base it on the project data and Q&A above; do not invent specifics that weren't provided.
 
 Return ONLY this JSON shape:
 {"purpose": "...", "scope": "...", "stakeholders": "...", "success_metrics": "...", "risks": "...", "timeline": "..."}`

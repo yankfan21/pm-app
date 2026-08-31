@@ -25,6 +25,15 @@ function autoResize(el) {
   el.style.height = `${el.scrollHeight}px`
 }
 
+// Best-effort: a fetch failure here shouldn't block regeneration, it just
+// means the regenerated Stakeholders section won't get the Registry's
+// completeness nudge (Edge Function treats a missing/empty array as a no-op).
+async function fetchStakeholders(projectId) {
+  const { data, error } = await supabase.from('stakeholders').select('*').eq('project_id', projectId)
+  if (error) return []
+  return data || []
+}
+
 function CharterView({ project, charter, canEdit, onUpdate }) {
   const [values, setValues] = useState(() =>
     Object.fromEntries(SECTIONS.map((s) => [s.key, charter[s.key] || '']))
@@ -70,6 +79,8 @@ function CharterView({ project, charter, canEdit, onUpdate }) {
     setRegenerating(true)
     setError(null)
 
+    const stakeholders = await fetchStakeholders(project.id)
+
     const { data: generated, error: genError } = await supabase.functions.invoke(
       'charter',
       {
@@ -77,6 +88,7 @@ function CharterView({ project, charter, canEdit, onUpdate }) {
           action: 'generate',
           project,
           answers: charter.qa_answers || [],
+          stakeholders,
         },
       }
     )

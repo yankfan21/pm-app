@@ -12,6 +12,15 @@ const SECTIONS = [
   { key: 'timeline', label: 'Timeline' },
 ]
 
+// Best-effort: a fetch failure here shouldn't block charter generation, it
+// just means the generated Stakeholders section won't get the Registry's
+// completeness nudge (Edge Function treats a missing/empty array as a no-op).
+async function fetchStakeholders(projectId) {
+  const { data, error } = await supabase.from('stakeholders').select('*').eq('project_id', projectId)
+  if (error) return []
+  return data || []
+}
+
 async function extractDocumentText(file) {
   const name = file.name.toLowerCase()
   if (name.endsWith('.txt')) {
@@ -82,8 +91,10 @@ function CharterFlow({ project, scoping, onGenerated, onClose, autoStart = false
         answer: answers[q.id],
       }))
 
+    const stakeholders = await fetchStakeholders(project.id)
+
     const { data, error } = await supabase.functions.invoke('charter', {
-      body: { action: 'generate', project, answers: answerList, scoping },
+      body: { action: 'generate', project, answers: answerList, scoping, stakeholders },
     })
 
     if (error || data?.error) {
@@ -109,9 +120,10 @@ function CharterFlow({ project, scoping, onGenerated, onClose, autoStart = false
 
     try {
       const documentText = await extractDocumentText(file)
+      const stakeholders = await fetchStakeholders(project.id)
 
       const { data, error } = await supabase.functions.invoke('charter', {
-        body: { action: 'from_document', project, documentText },
+        body: { action: 'from_document', project, documentText, stakeholders },
       })
 
       if (error || data?.error) {
