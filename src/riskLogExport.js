@@ -78,12 +78,26 @@ export function exportRiskLogPdf(project, risks) {
   doc.save(`${sanitizeFilename(project.name)}-Risk-Log.pdf`)
 }
 
+// Twips (1/20 pt), proportioned to match exportRiskLogPdf's columnStyles cellWidths
+// (120:65:60:70:110:65 pt), scaled to total ~9360 twips (6.5in content width).
+const DOCX_COLUMN_WIDTHS = [2293, 1242, 1146, 1337, 2101, 1241]
+
+function riskCellParagraphs(text) {
+  const lines = text.split('\n')
+  return [
+    new Paragraph({
+      children: lines.map((line, i) => new TextRun({ text: line, break: i === 0 ? undefined : 1 })),
+    }),
+  ]
+}
+
 export async function exportRiskLogDocx(project, risks) {
   const headerRow = new TableRow({
     tableHeader: true,
     children: COLUMNS.map(
-      (c) =>
+      (c, i) =>
         new TableCell({
+          width: { size: DOCX_COLUMN_WIDTHS[i], type: WidthType.DXA },
           shading: { fill: '26215c' },
           children: [
             new Paragraph({
@@ -98,9 +112,13 @@ export async function exportRiskLogDocx(project, risks) {
     (r) =>
       new TableRow({
         children: COLUMNS.map(
-          (c) =>
+          (c, i) =>
             new TableCell({
-              children: [new Paragraph(cellText(r, c) || '')],
+              width: { size: DOCX_COLUMN_WIDTHS[i], type: WidthType.DXA },
+              children:
+                c.key === 'risk'
+                  ? riskCellParagraphs(cellText(r, c) || '')
+                  : [new Paragraph(cellText(r, c) || '')],
             })
         ),
       })
@@ -108,6 +126,7 @@ export async function exportRiskLogDocx(project, risks) {
 
   const table = new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
+    columnWidths: DOCX_COLUMN_WIDTHS,
     rows: [headerRow, ...dataRows],
   })
 
