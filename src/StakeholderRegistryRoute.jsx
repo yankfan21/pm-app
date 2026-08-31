@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import Modal from './components/Modal'
+import LoadingButton from './LoadingButton'
 import QuadrantPicker, { QUADRANTS } from './components/QuadrantPicker'
 
 // Stakeholder Registry - manual CRUD screen, follows the Tasks/Phases
@@ -31,7 +32,7 @@ function quadrantBadgeClass(key) {
 }
 
 function StakeholderRegistryRoute() {
-  const { project, canEdit, setError } = useOutletContext()
+  const { project, canEdit, setError, docs, docsLoading } = useOutletContext()
 
   const [registry, setRegistry] = useState(null)
   const [stakeholders, setStakeholders] = useState([])
@@ -42,6 +43,11 @@ function StakeholderRegistryRoute() {
   const [form, setForm] = useState(emptyForm())
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState(null)
+
+  const [suggestions, setSuggestions] = useState(null)
+  const [suggestLoading, setSuggestLoading] = useState(false)
+  const [suggestNotice, setSuggestNotice] = useState(null)
+  const autoFiredRef = useRef(false)
 
   useEffect(() => {
     let cancelled = false
@@ -107,6 +113,106 @@ function StakeholderRegistryRoute() {
       cancelled = true
     }
   }, [project.id, canEdit, setError])
+
+  // AI suggestions - parses the Charter's free-text Stakeholders section and
+  // proposes individual stakeholders for the PM to accept or dismiss. Same
+  // suggest/accept/dismiss shape as RiskLogView.jsx's "Suggest Additional
+  // Risks": suggestions is null until a run has happened at least once,
+  // each proposed row gets a client-only crypto.randomUUID() id so
+  // dismiss/accept can address it before (accept) or without (dismiss) ever
+  // touching the database.
+  async function handleSuggest() {
+    setSuggestNotice(null)
+
+    const charterStakeholdersText = (docs.charter?.stakeholders || '').trim()
+    if (!charterStakeholdersText) {
+      // Client-side guard rather than relying on the edge function's own
+      // {"stakeholders": []} early-exit for empty input - that response is
+      // indistinguishable from "the Charter has stakeholders but Claude
+      // found nothing new to propose", which would render the wrong message
+      // here. Catching it client-side skips the network round trip entirely
+      // and shows the PM the actual reason nothing happened.
+      setSuggestNotice('Add a Stakeholders section to the Charter first.')
+      return
+    }
+
+    setSuggestLoading(true)
+    setError(null)
+
+    const { data, error } = await supabase.functions.invoke('stakeholder-registry', {
+      body: { action: 'suggest', project, charter: docs.charter, stakeholders },
+    })
+
+    setSuggestLoading(false)
+
+    if (error || data?.error) {
+      setError(error?.message || data.error)
+      return
+    }
+
+    setSuggestions((data.stakeholders || []).map((s) => ({ ...s, id: crypto.randomUUID() })))
+  }
+
+  async function acceptSuggestion(suggestion) {
+    setError(null)
+    const { id: _id, ...rest } = suggestion
+    const { data, error } = await supabase
+      .from('stakeholders')
+      .insert({ registry_id: registry.id, source: 'assistant', ...rest })
+      .select()
+      .single()
+
+    if (error) {
+      setError(error.message)
+      return
+    }
+
+    setStakeholders((prev) => [...prev, data])
+    setSuggestions((prev) => prev.filter((s) => s.id !== suggestion.id))
+  }
+
+  function dismissSuggestion(id) {
+    setSuggestions((prev) => prev.filter((s) => s.id !== id))
+  }
+
+  // Auto-first-open trigger: fires handleSuggest() once, automatically, the
+  // first time an editor opens an empty registry that already has Charter
+  // Stakeholders text to work from. Gated on canEdit since the completion
+  // write below (suggestions_run_at) needs editor RLS anyway, same as the
+  // registry's own lazy-create above. autoFiredRef guards against a second
+  // fire from this effect re-running (e.g. stakeholders.length changing)
+  // while the first run is still in flight, before registry.suggestions_run_at
+  // has come back from the DB to naturally close the gate itself.
+  useEffect(() => {
+    if (!canEdit || loading || docsLoading || !registry) return
+    if (registry.suggestions_run_at) return
+    if (stakeholders.length > 0) return
+    if (!(docs.charter?.stakeholders || '').trim()) return
+    if (autoFiredRef.current) return
+    autoFiredRef.current = true
+
+    async function autoFire() {
+      await handleSuggest()
+
+      // Marked regardless of whether that call produced suggestions or
+      // failed outright - this column tracks "auto-fire has happened", not
+      // "auto-fire succeeded", so it never re-fires on a later visit even if
+      // the PM dismisses/rejects everything and the registry is back to zero
+      // stakeholders. Manual "Re-run Suggestions" clicks never touch this
+      // column (see add_stakeholder_suggestions_tracking.sql).
+      const { data } = await supabase
+        .from('stakeholder_registries')
+        .update({ suggestions_run_at: new Date().toISOString() })
+        .eq('id', registry.id)
+        .select()
+        .single()
+
+      if (data) setRegistry(data)
+    }
+
+    autoFire()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canEdit, loading, docsLoading, registry, stakeholders.length, docs.charter])
 
   function openAddForm() {
     setEditingId(null)
@@ -218,8 +324,18 @@ function StakeholderRegistryRoute() {
               <button type="button" className="btn-primary" onClick={openAddForm}>
                 + Add Stakeholder
               </button>
+              <LoadingButton
+                className="btn-secondary"
+                loading={suggestLoading}
+                loadingLabel="Thinking..."
+                onClick={handleSuggest}
+              >
+                Re-run Suggestions
+              </LoadingButton>
             </div>
           )}
+
+          {suggestNotice && <p className="charter-status">{suggestNotice}</p>}
 
           {!registry && !canEdit && <p className="charter-status">Nothing logged yet.</p>}
 
@@ -274,6 +390,53 @@ function StakeholderRegistryRoute() {
                   )}
                 </tbody>
               </table>
+            </div>
+          )}
+
+          {suggestions != null && canEdit && (
+            <div className="risk-suggestions">
+              {suggestions.length === 0 ? (
+                <p className="charter-status">
+                  No additional stakeholders identified beyond what's already logged.
+                </p>
+              ) : (
+                <>
+                  <p className="risk-suggestions-label">
+                    Suggestions &mdash; not required, review and accept or dismiss each
+                  </p>
+                  {suggestions.map((s) => (
+                    <div className="risk-suggestion-card" key={s.id}>
+                      <div className="risk-suggestion-body">
+                        <p className="risk-suggestion-title">{s.name}</p>
+                        <p className="risk-suggestion-meta">
+                          {[s.role_title, s.org].filter(Boolean).join(' · ') || 'No role/org given'}
+                          {' · '}
+                          <span className={`priority-badge ${quadrantBadgeClass(s.quadrant)}`}>
+                            {quadrantLabel(s.quadrant)}
+                          </span>
+                        </p>
+                        {s.contact_info && <p className="risk-suggestion-mitigation">{s.contact_info}</p>}
+                      </div>
+                      <div className="risk-suggestion-actions">
+                        <button
+                          type="button"
+                          className="btn-secondary"
+                          onClick={() => dismissSuggestion(s.id)}
+                        >
+                          Dismiss
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-primary"
+                          onClick={() => acceptSuggestion(s)}
+                        >
+                          Accept
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
             </div>
           )}
         </>
