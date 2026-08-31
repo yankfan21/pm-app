@@ -450,12 +450,6 @@ function ScopingFlow({ project, initialAnswers, stage, onGenerated, onClose, isW
 
   return (
     <div className="charter">
-      {!isWizardStep && (
-        <div className="section-header">
-          <h3 className="charter-heading">Project Discovery Questionnaire</h3>
-        </div>
-      )}
-
       {isEditing ? (
         // Edit path predates the stage split and still edits the saved
         // answers as one flat list rather than per-stage. `stage` is an
