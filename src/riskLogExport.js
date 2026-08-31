@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
-import { Document, HeadingLevel, Paragraph, Packer, Table, TableCell, TableRow, TextRun, WidthType } from 'docx'
+import { Document, HeadingLevel, Paragraph, Packer, Table, TableCell, TableRow, TableLayoutType, TextRun, WidthType } from 'docx'
 import { LIKELIHOOD_SCALE, SEVERITY_SCALE, getRiskScore, getRiskBand, scaleLabel } from './riskScale'
 
 const COLUMNS = [
@@ -127,6 +127,7 @@ export async function exportRiskLogDocx(project, risks) {
   const table = new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
     columnWidths: DOCX_COLUMN_WIDTHS,
+    layout: TableLayoutType.FIXED,
     rows: [headerRow, ...dataRows],
   })
 
