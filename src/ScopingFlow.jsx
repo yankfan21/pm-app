@@ -453,11 +453,6 @@ function ScopingFlow({ project, initialAnswers, stage, onGenerated, onClose, isW
       {!isWizardStep && (
         <div className="section-header">
           <h3 className="charter-heading">Project Discovery Questionnaire</h3>
-          <div className="charter-actions">
-            <button type="button" className="btn-secondary" onClick={onClose}>
-              Cancel
-            </button>
-          </div>
         </div>
       )}
 
