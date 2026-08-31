@@ -26,6 +26,7 @@ const ProjectOverviewRoute = lazy(() => import('./ProjectOverviewRoute'))
 const PlanningTasksRoute = lazy(() => import('./PlanningTasksRoute'))
 const DocumentsRoute = lazy(() => import('./DocumentsRoute'))
 const StakeholderRegistryRoute = lazy(() => import('./StakeholderRegistryRoute'))
+const CommunicationPlanRoute = lazy(() => import('./CommunicationPlanRoute'))
 
 const PlanningIndexRoute = lazy(() =>
   import('./ProjectSectionRoutes').then((m) => ({ default: m.PlanningIndexRoute })),
@@ -116,6 +117,7 @@ const MobileProjectStatusUpdate = lazy(() => import('./mobile/MobileProjectStatu
 const MobileProjectExecComms = lazy(() => import('./mobile/MobileProjectExecComms'))
 const MobileProjectNewsletter = lazy(() => import('./mobile/MobileProjectNewsletter'))
 const MobileProjectStakeholders = lazy(() => import('./mobile/MobileProjectStakeholders'))
+const MobileProjectCommunicationPlan = lazy(() => import('./mobile/MobileProjectCommunicationPlan'))
 
 // Shown only while a lazy route chunk is in flight - deliberately minimal so
 // it reads as a momentary pause rather than a screen of its own. Reuses the
@@ -264,6 +266,11 @@ function App() {
                 <Route path="exec-comms" element={<ExecCommsRoute />} />
                 <Route path="newsletter" element={<TeamNewsletterRoute />} />
                 <Route path="status-update" element={<StatusUpdateRoute />} />
+                {/* Communication Plan - same tracking-group manual-CRUD
+                    shape as Stakeholder Registry, not a DOCUMENT_TYPES
+                    entry like its three siblings above (see
+                    CommunicationPlanRoute.jsx's own header comment). */}
+                <Route path="comm-plan" element={<CommunicationPlanRoute />} />
               </Route>
 
               <Route path="documents" element={<DocumentsRoute />} />
@@ -306,6 +313,7 @@ function App() {
               <Route path="more/exec-comms" element={<MobileProjectExecComms />} />
               <Route path="more/newsletter" element={<MobileProjectNewsletter />} />
               <Route path="more/stakeholders" element={<MobileProjectStakeholders />} />
+              <Route path="more/comm-plan" element={<MobileProjectCommunicationPlan />} />
               <Route path="*" element={<Navigate to="." replace />} />
             </Route>
 

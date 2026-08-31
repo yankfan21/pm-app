@@ -62,6 +62,7 @@ export const SECTIONS_BY_CATEGORY = {
     { key: 'exec-comms', label: 'Exec Comms Plan', path: 'exec-comms' },
     { key: 'newsletter', label: 'Team Newsletter', path: 'newsletter' },
     { key: 'status-update', label: 'Status Update', path: 'status-update' },
+    { key: 'comm-plan', label: 'Communication Plan', path: 'comm-plan' },
   ],
   scoping: [],
   'risk-log': [],

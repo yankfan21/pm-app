@@ -24,6 +24,7 @@ function MobileProjectMore() {
     { to: `${base}/more/exec-comms`, label: 'Exec Comms' },
     { to: `${base}/more/newsletter`, label: 'Newsletter' },
     { to: `${base}/more/stakeholders`, label: 'Stakeholder Registry' },
+    { to: `${base}/more/comm-plan`, label: 'Communication Plan' },
     { to: `${base}/more/issues`, label: 'Issues' },
     { to: `${base}/more/risks`, label: 'Risks' },
   ]
