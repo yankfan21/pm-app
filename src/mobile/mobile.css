@@ -420,11 +420,23 @@ html:has(.mobile-app) body {
   display: flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
   font-size: 14px;
   font-weight: 600;
 }
 
+/* Same truncation pattern as .mobile-topbar-name-text (MobileProjectLayout)
+   - a long project name wraps across lines instead of truncating without
+   this, misaligning against the demo badge/meta text beside it. */
+.mobile-project-list-name-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .mobile-project-list-meta {
+  flex-shrink: 0;
   font-size: 12px;
   color: var(--accent);
 }
@@ -484,8 +496,11 @@ html:has(.mobile-app) body {
 
 .mobile-task-mark-done {
   flex-shrink: 0;
-  width: 26px;
-  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   border: 2px solid var(--border);
   background: transparent;
@@ -658,6 +673,9 @@ html:has(.mobile-app) body {
 
 .mobile-comment-actions button,
 .mobile-comment-edit-actions button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   font-size: 12px;
   padding: 4px 10px;
   border-radius: 6px;
@@ -718,6 +736,29 @@ html:has(.mobile-app) body {
   cursor: not-allowed;
 }
 
+/* Standard filled primary button - same footprint as .mobile-btn-danger-
+   filled (full-width, block) for use in the same modal flow, but the
+   non-alarming accent colour for steps that only advance/confirm rather
+   than destroy something (e.g. the delete-account flow's "Continue" step,
+   which picks successors but deletes nothing). */
+.mobile-btn-primary-filled {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mobile-btn-primary-filled:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Delete-account confirmation overlay - new to this file (no prior mobile
    screen needed a confirmation step; MobileTaskDetail's comment delete has
    none). z-index above .mobile-tabbar (20) so it covers the tab bar too, not
@@ -763,7 +804,10 @@ html:has(.mobile-app) body {
 
 .mobile-comment-form button,
 .mobile-comment-edit-actions button[type="button"]:first-child {
+  display: inline-flex;
+  align-items: center;
   align-self: flex-start;
+  min-height: 44px;
   padding: 8px 16px;
   border-radius: 8px;
   border: none;
@@ -851,7 +895,10 @@ html:has(.mobile-app) body {
 }
 
 .mobile-risk-form button[type='submit'] {
+  display: inline-flex;
+  align-items: center;
   align-self: flex-start;
+  min-height: 44px;
   padding: 8px 16px;
   border-radius: 8px;
   border: none;
@@ -873,7 +920,10 @@ html:has(.mobile-app) body {
 }
 
 .mobile-status-form button[type='submit'] {
+  display: inline-flex;
+  align-items: center;
   align-self: flex-start;
+  min-height: 44px;
   padding: 8px 16px;
   border-radius: 8px;
   border: none;
@@ -939,7 +989,18 @@ html:has(.mobile-app) body {
   margin-bottom: 6px;
 }
 
+/* Same truncation pattern as .mobile-topbar-name-text (MobileProjectLayout)
+   - a long task title otherwise wraps instead of truncating next to the
+   points badge. */
+.mobile-board-card-title-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .mobile-points-badge {
+  flex-shrink: 0;
   font-size: 11px;
   color: var(--text-muted);
 }
@@ -1151,8 +1212,23 @@ html:has(.mobile-app) body {
   overflow: hidden;
 }
 
+/* Square corners + full border by default - flush stacking (no gap, see
+   MobileProjectDocuments.jsx's group rendering) means every card in the
+   middle of the stack should read as a normal bordered row, not a rounded
+   one. Only the last card in the group (:last-child - the group wrapper's
+   only other child is the header button, which always comes first) caps
+   the stack: it drops its top border and rounds its bottom corners so the
+   whole indented group reads as one continuous block under the header.
+   Previously every indented card got the "last card" treatment, which
+   produced a rounded/square corner seam between stacked cards whenever a
+   group had more than one item (e.g. Communications: Exec Comms Plan +
+   Team Newsletter). */
 .mobile-doc-card--indented {
   margin: 0 0 0 14px;
+  border-radius: 0;
+}
+
+.mobile-doc-card--indented:last-child {
   border-top: none;
   border-radius: 0 0 10px 10px;
 }
@@ -1331,6 +1407,10 @@ html:has(.mobile-app) body {
 }
 
 .mobile-settings-option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
   padding: 8px 14px;
   border-radius: 8px;
   border: 1px solid var(--border);
@@ -1374,7 +1454,10 @@ html:has(.mobile-app) body {
 }
 
 .mobile-btn-secondary {
+  display: inline-flex;
+  align-items: center;
   flex-shrink: 0;
+  min-height: 44px;
   font-size: 12px;
   padding: 6px 12px;
   border-radius: 6px;

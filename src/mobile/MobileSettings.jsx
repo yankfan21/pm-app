@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Capacitor } from '@capacitor/core'
 import { supabase } from '../supabaseClient'
 import { useAuth } from '../AuthContext'
 import MobileContactSupport from './MobileContactSupport'
@@ -131,26 +132,35 @@ function MobileSettings() {
     <div>
       <h1 className="mobile-screen-title">Settings</h1>
 
-      <h2 className="mobile-section-title">View Mode</h2>
-      <p className="mobile-screen-stub">
-        Choose Mobile or Desktop for this session only - resets to automatic detection based on
-        your screen size next time you open ConfidantPM.
-      </p>
+      {/* Hidden in native (Capacitor) builds - same reasoning as
+          MobileDesktopLink.jsx's footer link: there is no "desktop site" to
+          switch to inside the app shell, so exposing the desktop half of
+          this toggle here would just strand a native user on the desktop
+          tree at phone width. Mobile web at /m/ in a browser keeps it. */}
+      {!Capacitor.isNativePlatform() && (
+        <>
+          <h2 className="mobile-section-title">View Mode</h2>
+          <p className="mobile-screen-stub">
+            Choose Mobile or Desktop for this session only - resets to automatic detection based
+            on your screen size next time you open ConfidantPM.
+          </p>
 
-      <div className="mobile-settings-picker" role="radiogroup" aria-label="View Mode">
-        {DEVICE_MODE_OPTIONS.map((option) => (
-          <button
-            key={option.value}
-            type="button"
-            role="radio"
-            aria-checked={mode === option.value}
-            className={`mobile-settings-option ${mode === option.value ? 'selected' : ''}`}
-            onClick={() => handleDeviceModeChange(option.value)}
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
+          <div className="mobile-settings-picker" role="radiogroup" aria-label="View Mode">
+            {DEVICE_MODE_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                role="radio"
+                aria-checked={mode === option.value}
+                className={`mobile-settings-option ${mode === option.value ? 'selected' : ''}`}
+                onClick={() => handleDeviceModeChange(option.value)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
 
       <h2 className="mobile-section-title">Hidden Projects</h2>
       <p className="mobile-screen-stub">

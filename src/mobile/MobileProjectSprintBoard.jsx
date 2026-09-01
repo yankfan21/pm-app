@@ -187,7 +187,7 @@ function MobileProjectSprintBoard() {
                       {cards.map((task) => (
                         <li key={task.id} className="mobile-board-card">
                           <div className="mobile-board-card-title-row">
-                            <span>{task.title}</span>
+                            <span className="mobile-board-card-title-text">{task.title}</span>
                             {task.story_points != null && (
                               <span className="mobile-points-badge">{task.story_points} pts</span>
                             )}

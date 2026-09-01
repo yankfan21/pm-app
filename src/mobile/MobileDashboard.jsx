@@ -115,7 +115,7 @@ function MobileDashboard() {
             <li key={project.id}>
               <Link to={`/m/projects/${project.id}`} className="mobile-project-list-item">
                 <span className="mobile-project-list-name">
-                  {project.name}
+                  <span className="mobile-project-list-name-text">{project.name}</span>
                   {project.is_demo && <span className="mobile-demo-badge">✦ Demo</span>}
                 </span>
                 <span className="mobile-project-list-meta">

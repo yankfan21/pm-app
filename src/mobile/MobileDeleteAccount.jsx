@@ -174,7 +174,7 @@ function MobileDeleteAccount() {
                 )}
                 <button
                   type="button"
-                  className="mobile-btn-danger-filled"
+                  className="mobile-btn-primary-filled"
                   disabled={!allSuccessorsPicked}
                   onClick={() => setStep('confirm')}
                 >
