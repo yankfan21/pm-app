@@ -101,7 +101,6 @@ const DeviceModeGate = lazy(() => import('./DeviceModeGate'))
 
 const MobileShell = lazy(() => import('./mobile/MobileShell'))
 const MobileDashboard = lazy(() => import('./mobile/MobileDashboard'))
-const MobileNotifications = lazy(() => import('./mobile/MobileNotifications'))
 const MobileMore = lazy(() => import('./mobile/MobileMore'))
 const MobileSettings = lazy(() => import('./mobile/MobileSettings'))
 const MobileProjectLayout = lazy(() => import('./mobile/MobileProjectLayout'))
@@ -292,7 +291,6 @@ function App() {
             <Route path="/m" element={<Navigate to="/m/dashboard" replace />} />
             <Route element={<MobileShell />}>
               <Route path="/m/dashboard" element={<MobileDashboard />} />
-              <Route path="/m/notifications" element={<MobileNotifications />} />
               <Route path="/m/more" element={<MobileMore />} />
               <Route path="/m/settings" element={<MobileSettings />} />
             </Route>

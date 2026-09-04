@@ -7,9 +7,9 @@
 // Sprint Retro, Documents' AI-generation flows) have no mobile equivalent -
 // they hard-redirect to the project home (/m/projects/:id) rather than
 // attempting to render at mobile width. Mobile-only pages (task detail w/
-// comments, /m/notifications, the mobile project index stub, /m/more) have
-// no desktop equivalent - they fall back to the project's Overview (or
-// /dashboard outside a project).
+// comments, the mobile project index stub, /m/more) have no desktop
+// equivalent - they fall back to the project's Overview (or /dashboard
+// outside a project).
 //
 // Note the desktop home is /dashboard, not "/" - "/" is the public marketing
 // page (Marketing.jsx) and is mounted outside DeviceModeGate entirely, so it
@@ -45,7 +45,6 @@ const DESKTOP_TO_MOBILE = table([
 
 const MOBILE_TO_DESKTOP = table([
   ['^/m/dashboard$', () => '/dashboard'],
-  ['^/m/notifications$', () => '/dashboard'],
   ['^/m/more$', () => '/dashboard'],
   ['^/m/settings$', () => '/settings'],
   [`^/m/projects/${ID}/tasks$`, (id) => `/projects/${id}/planning/tasks`],

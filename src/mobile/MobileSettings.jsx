@@ -9,7 +9,7 @@ import { useDeviceMode } from '../hooks/useDeviceMode'
 import { resolveDeviceModeTarget, MOBILE_HOME, DESKTOP_HOME } from '../deviceRouteMap'
 
 // Mobile-native Settings (/m/settings) - root-level, not project-scoped (see
-// MobileShell's sibling routes: /m/dashboard, /m/notifications, /m/more).
+// MobileShell's sibling routes: /m/dashboard, /m/more).
 // Same View Mode/Hidden Projects functionality as desktop's Settings.jsx,
 // purpose-built markup here rather than reusing that component - mirrors
 // the MobileProjectStatusUpdate.jsx/MobileProjectRisks.jsx convention of

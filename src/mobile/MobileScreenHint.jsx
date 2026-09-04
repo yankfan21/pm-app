@@ -8,8 +8,8 @@ const MAX_SHOWS = 3
 // never again.
 //
 // Shared by MobileProjectMetrics.jsx (Overview), MobileProjectDocuments.jsx,
-// MobileDashboard.jsx (Home), MobileNotifications.jsx (Alerts), and
-// MobileMore.jsx (More) rather than copied into each: the counter logic is
+// MobileDashboard.jsx (Home), and MobileMore.jsx (More) rather than copied
+// into each: the counter logic is
 // identical and the only thing that differs per screen is the copy and the
 // storage key. Each mount point passes its OWN storageKey, so the hints
 // fade independently - reading Overview three times doesn't burn the
