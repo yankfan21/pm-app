@@ -33,8 +33,33 @@ const corsHeaders = {
 
 const VALID_EVENT_TYPES = ["task_assigned", "task_due_soon", "task_overdue"]
 
+const APP_LOGIN_URL = "https://confidantpm.com/login"
+const IOS_APP_URL = "https://apps.apple.com/app/confidantpm/id6800421213"
+
+const CTA_TEXT = `
+
+Open in ConfidantPM: ${APP_LOGIN_URL}
+Get the iOS App: ${IOS_APP_URL}`
+
+const CTA_HTML = `
+<div style="margin-top:24px;">
+  <a href="${APP_LOGIN_URL}" style="display:inline-block;background-color:#2563eb;color:#ffffff;text-decoration:none;padding:10px 20px;border-radius:6px;font-family:sans-serif;font-size:14px;margin-right:12px;">Open in ConfidantPM</a>
+  <a href="${IOS_APP_URL}" style="display:inline-block;background-color:#000000;color:#ffffff;text-decoration:none;padding:10px 20px;border-radius:6px;font-family:sans-serif;font-size:14px;">Get the iOS App</a>
+</div>`
+
+function escapeHtml(value: unknown) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+}
+
 function buildEmail(body: Record<string, unknown>) {
   const { event_type, task_title, project_name, due_date, reminder_label } = body
+  const safeTaskTitle = escapeHtml(task_title)
+  const safeProjectName = escapeHtml(project_name)
+  const safeDueDate = escapeHtml(due_date)
 
   if (event_type === "task_assigned") {
     return {
@@ -42,7 +67,10 @@ function buildEmail(body: Record<string, unknown>) {
       text: `You've been assigned a task in ${project_name}.
 
 Task: ${task_title}
-${due_date ? `Due: ${due_date}` : "No due date set"}`,
+${due_date ? `Due: ${due_date}` : "No due date set"}${CTA_TEXT}`,
+      html: `<p>You've been assigned a task in ${safeProjectName}.</p>
+<p>Task: ${safeTaskTitle}<br>
+${due_date ? `Due: ${safeDueDate}` : "No due date set"}</p>${CTA_HTML}`,
     }
   }
 
@@ -52,7 +80,10 @@ ${due_date ? `Due: ${due_date}` : "No due date set"}`,
       text: `A task in ${project_name} is due ${reminder_label ?? "soon"}.
 
 Task: ${task_title}
-Due: ${due_date}`,
+Due: ${due_date}${CTA_TEXT}`,
+      html: `<p>A task in ${safeProjectName} is due ${escapeHtml(reminder_label ?? "soon")}.</p>
+<p>Task: ${safeTaskTitle}<br>
+Due: ${safeDueDate}</p>${CTA_HTML}`,
     }
   }
 
@@ -62,7 +93,10 @@ Due: ${due_date}`,
     text: `A task in ${project_name} is overdue${reminder_label ? ` (${reminder_label})` : ""}.
 
 Task: ${task_title}
-Due: ${due_date}`,
+Due: ${due_date}${CTA_TEXT}`,
+    html: `<p>A task in ${safeProjectName} is overdue${reminder_label ? ` (${escapeHtml(reminder_label)})` : ""}.</p>
+<p>Task: ${safeTaskTitle}<br>
+Due: ${safeDueDate}</p>${CTA_HTML}`,
   }
 }
 
@@ -120,7 +154,7 @@ Deno.serve(async (req) => {
     const apiKey = Deno.env.get("RESEND_API_KEY")
     if (!apiKey) throw new Error("RESEND_API_KEY secret is not set")
 
-    const { subject, text } = buildEmail(body)
+    const { subject, text, html } = buildEmail(body)
 
     const resp = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -133,6 +167,7 @@ Deno.serve(async (req) => {
         to: [recipient_email],
         subject,
         text,
+        html,
       }),
     })
 
