@@ -7,7 +7,7 @@ function QaQuestion({ question, value, onChange }) {
 
   return (
     <label>
-      {question.text}
+      <span className="qa-question-text">{question.text}</span>
 
       {showSuggestion && (
         <div className="qa-suggestion">
@@ -44,7 +44,9 @@ function QaQuestion({ question, value, onChange }) {
           ))}
         </div>
       ) : (
-        <input type="text" value={value || ''} onChange={(e) => onChange(e.target.value)} />
+        // textarea rather than a one-line input: answers are sentences, and a
+        // single-line box scrolls sideways once they run past its width.
+        <textarea className="qa-answer-input" rows={3} value={value || ''} onChange={(e) => onChange(e.target.value)} />
       )}
     </label>
   )

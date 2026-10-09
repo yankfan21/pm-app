@@ -36,30 +36,51 @@ function QaStepper({
 
   return (
     <div className="qa-stepper">
+      {/* Segmented progress, one segment per question. Purely visual - the
+          text label below carries the same information for screen readers
+          that don't announce progressbar roles. */}
+      <div
+        className="qa-progress"
+        role="progressbar"
+        aria-label="Questions answered"
+        aria-valuemin={1}
+        aria-valuemax={total}
+        aria-valuenow={step + 1}
+      >
+        {questions.map((q, i) => (
+          <span key={q.id} className={i <= step ? 'on' : ''} aria-hidden="true" />
+        ))}
+      </div>
+
       <p className="step-label">
         Question {step + 1} of {total}
       </p>
 
-      <QaQuestion
-        question={question}
-        value={answers[question.id]}
-        onChange={(value) => onAnswerChange(question.id, value)}
-      />
+      <div className="qa-card">
+        {/* key: each question gets a fresh QaQuestion, so dismissing one
+            question's suggestion no longer hides the next one's. */}
+        <QaQuestion
+          key={question.id}
+          question={question}
+          value={answers[question.id]}
+          onChange={(value) => onAnswerChange(question.id, value)}
+        />
 
-      {isLast && error && <p className="error">{error}</p>}
+        {isLast && error && <p className="error">{error}</p>}
 
-      <div className="modal-actions">
-        <button type="button" className="btn-secondary" onClick={handleBack}>
-          {step === 0 ? 'Cancel' : 'Back'}
-        </button>
-        <LoadingButton
-          className="btn-primary"
-          loading={isLast && submitting}
-          loadingLabel={loadingLabel}
-          onClick={handleNext}
-        >
-          {isLast ? submitLabel : 'Next'}
-        </LoadingButton>
+        <div className="modal-actions">
+          <button type="button" className="btn-secondary" onClick={handleBack}>
+            {step === 0 ? 'Cancel' : 'Back'}
+          </button>
+          <LoadingButton
+            className="btn-primary"
+            loading={isLast && submitting}
+            loadingLabel={loadingLabel}
+            onClick={handleNext}
+          >
+            {isLast ? submitLabel : 'Next'}
+          </LoadingButton>
+        </div>
       </div>
     </div>
   )

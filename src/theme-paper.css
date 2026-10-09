@@ -267,3 +267,175 @@
 :root[data-theme='paper'] .filter-tab.selected {
   border-color: var(--accent-border);
 }
+
+/* ------------------------------------------------------------------ */
+/* Q&A flows - QaStepper.jsx / QaQuestion.jsx (Charter, Requirements,  */
+/* Post-Mortem and their follow-ups, Scoping nudges)                   */
+/* ------------------------------------------------------------------ */
+
+:root[data-theme='paper'] {
+  /* Question typography. One decision point for "serif on the questions":
+     point --qa-question-font at var(--sans) (weight 600) to switch it off. */
+  --qa-question-font: var(--heading);
+  --qa-question-size: 26px;
+  --qa-question-weight: 500;
+  --qa-question-tracking: -0.2px;
+}
+
+/* One question per screen: a centred column, not the full 1080px modal. */
+:root[data-theme='paper'] .qa-stepper {
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+/* The flow's own "Generate X" header repeats the modal title and its Cancel
+   duplicates the stepper's Back/Cancel, so drop it while a stepper is up. */
+:root[data-theme='paper'] .charter:has(.qa-stepper) > .section-header {
+  display: none;
+}
+
+/* Segmented progress: one segment per question. */
+:root[data-theme='paper'] .qa-progress {
+  display: flex;
+  gap: 6px;
+}
+
+:root[data-theme='paper'] .qa-progress span {
+  flex: 1;
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: #e6dfd2;
+}
+
+:root[data-theme='paper'] .qa-progress span.on {
+  background: var(--accent);
+}
+
+:root[data-theme='paper'] .qa-stepper .step-label {
+  margin: 10px 0 14px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* The question and its answer sit on one ruled sheet. */
+:root[data-theme='paper'] .qa-card {
+  padding: 26px 28px 22px;
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--text-h);
+  border-radius: var(--radius-lg);
+  background: var(--card-bg);
+  box-shadow: var(--card-shadow);
+}
+
+:root[data-theme='paper'] .qa-card label {
+  margin-bottom: 20px;
+}
+
+:root[data-theme='paper'] .qa-card .qa-question-text {
+  display: block;
+  margin-bottom: 14px;
+  font-family: var(--qa-question-font);
+  font-size: var(--qa-question-size);
+  font-weight: var(--qa-question-weight);
+  letter-spacing: var(--qa-question-tracking);
+  line-height: 1.25;
+  color: var(--text-h);
+}
+
+/* AI suggestion: a compact tinted strip, not a quote bar. "Use" is the one
+   action, so it is the one button. */
+:root[data-theme='paper'] .qa-suggestion {
+  align-items: center;
+  margin: 0 0 14px;
+  padding: 8px 10px 8px 12px;
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-md);
+  background: var(--accent-bg);
+  font-size: 13.5px;
+  line-height: 1.4;
+}
+
+:root[data-theme='paper'] .qa-suggestion-tag {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+:root[data-theme='paper'] .qa-suggestion-text {
+  flex: 1 1 14em;
+  color: var(--text-h);
+}
+
+:root[data-theme='paper'] .qa-suggestion-link {
+  padding: 3px 4px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+:root[data-theme='paper'] .qa-suggestion-link:first-of-type {
+  margin-left: 0;
+  padding: 3px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-strong);
+  color: var(--on-accent);
+}
+
+:root[data-theme='paper'] .qa-suggestion-link:first-of-type:hover {
+  background: var(--btn-primary-hover-bg);
+  text-decoration: none;
+}
+
+/* Answer field and choice buttons. */
+:root[data-theme='paper'] .qa-card .qa-answer-input {
+  min-height: 112px;
+  margin-top: 0;
+  padding: 12px 14px;
+  border-color: var(--input-border);
+  background: var(--input-bg);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+:root[data-theme='paper'] .qa-card .qa-answer-input:focus {
+  outline: 2px solid var(--accent-border);
+  outline-offset: 1px;
+  border-color: var(--accent);
+}
+
+:root[data-theme='paper'] .qa-card .priority-buttons {
+  flex-wrap: wrap;
+  margin: 0;
+}
+
+:root[data-theme='paper'] .qa-card .priority-buttons button {
+  flex: 1 1 8em;
+  min-height: 44px;
+  padding: 10px 14px;
+  border-color: var(--input-border);
+  background: var(--input-bg);
+}
+
+:root[data-theme='paper'] .qa-card .priority-buttons button.selected {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+  font-weight: 600;
+}
+
+/* Back on the left, Next on the right. */
+:root[data-theme='paper'] .qa-card .modal-actions {
+  justify-content: space-between;
+  margin-top: 0;
+}
+
+/* The modal's document title lines up with the centred question column. */
+:root[data-theme='paper'] .modal-doc-title:has(+ .qa-stepper),
+:root[data-theme='paper'] .modal-doc-title:has(+ * .qa-stepper) {
+  max-width: 680px;
+  margin: 0 auto 18px;
+  font-family: var(--heading);
+  font-weight: 600;
+}

@@ -5,6 +5,14 @@
 // maybeSingle, insert/update/delete/upsert, rpc, functions.invoke.
 import { makeFixtures } from './devFixtures'
 
+const DEV_CHARTER_QUESTIONS = [
+  { id: 'q1', text: 'What problem is this project solving, and for whom?', type: 'text', suggested_answer: 'Cut support tickets by moving self-service into the customer portal.' },
+  { id: 'q2', text: 'How would you describe the scale of this project?', type: 'choice', choices: ['Small', 'Medium', 'Large', 'Enterprise'] },
+  { id: 'q3', text: 'Who is the executive sponsor?', type: 'text' },
+  { id: 'q4', text: 'What does success look like in the first 90 days after launch?', type: 'text', suggested_answer: 'Ticket volume down 20% and portal adoption above 60%.' },
+  { id: 'q5', text: 'How firm is the target go-live date?', type: 'choice', choices: ['Fixed', 'Flexible', 'Not set'] },
+]
+
 let _db
 // Lazy so nothing is built unless the fake client is actually used.
 const getDb = () => (_db ??= makeFixtures())
@@ -90,7 +98,18 @@ const user = { id: 'dev-bypass-user', email: 'dev@localhost', user_metadata: { f
 export const devSupabase = {
   from: builder,
   rpc: async () => ({ data: null, error: null }),
-  functions: { invoke: async () => ({ data: null, error: { message: 'AI functions are disabled in dev preview mode.' } }) },
+  functions: {
+    // Dev preview only: canned Charter Q&A so the step-by-step flow can be
+    // previewed. Every other function (and every other Charter action) stays
+    // disabled, and nothing here calls a real AI service.
+    invoke: async (name, opts) => {
+      const body = opts?.body || {}
+      if (name === 'charter' && body.action === 'questions') {
+        return { data: { questions: DEV_CHARTER_QUESTIONS }, error: null }
+      }
+      return { data: null, error: { message: 'AI functions are disabled in dev preview mode.' } }
+    },
+  },
   storage: { from: () => ({ upload: async () => ({ data: null, error: { message: 'Storage disabled in dev preview.' } }), getPublicUrl: () => ({ data: { publicUrl: '' } }) }) },
   auth: {
     getSession: async () => ({ data: { session: { access_token: 'dev-bypass', user } } }),

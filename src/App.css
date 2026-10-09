@@ -3949,7 +3949,8 @@ a.overview-hotspot-row-count:focus-visible {
 }
 
 .modal-step input[type='text'],
-.modal-step input[type='date'] {
+.modal-step input[type='date'],
+.modal-step .qa-answer-input {
   display: block;
   width: 100%;
   margin-top: 6px;
@@ -4227,6 +4228,16 @@ a.overview-hotspot-row-count:focus-visible {
 
 .qa-stepper .step-label {
   margin-bottom: 24px;
+}
+
+/* Segmented progress bar - the Paper theme shows it (theme-paper.css). */
+.qa-progress {
+  display: none;
+}
+
+.qa-answer-input {
+  resize: vertical;
+  line-height: 1.45;
 }
 
 .review-list {
