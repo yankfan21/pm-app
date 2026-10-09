@@ -8,6 +8,7 @@ import './index.css'
 import './theme-paper.css'
 import App from './App.jsx'
 import { AuthProvider } from './AuthContext.jsx'
+import { BrandingProvider } from './branding/BrandingContext.jsx'
 
 // Local preview of the in-progress Paper redesign (src/theme-paper.css).
 // VITE_REDESIGN is unset in production, so the shipped theme is unchanged.
@@ -19,7 +20,9 @@ const tree = (
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <App />
+        <BrandingProvider>
+          <App />
+        </BrandingProvider>
       </AuthProvider>
     </BrowserRouter>
   </StrictMode>

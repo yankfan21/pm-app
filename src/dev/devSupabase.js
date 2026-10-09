@@ -15,7 +15,15 @@ const DEV_CHARTER_QUESTIONS = [
 
 let _db
 // Lazy so nothing is built unless the fake client is actually used.
-const getDb = () => (_db ??= makeFixtures())
+const getDb = () => (_db ??= withDevOrg(makeFixtures()))
+
+// VITE_DEV_ORG=true previews white-label branding with a sample organization.
+function withDevOrg(db) {
+  if (import.meta.env.VITE_DEV_ORG !== 'true') return db
+  db.organizations = [{ id: 'org-dev', app_name: 'Northwind Projects', logo_path: null, accent_color: '#b45309', rail_color: '#1f2a44' }]
+  db.organization_members = [{ organization_id: 'org-dev', user_id: 'dev-bypass-user', role: 'admin', created_at: new Date().toISOString() }]
+  return db
+}
 let nextId = 1000
 const uid = () => `dev-${nextId++}`
 

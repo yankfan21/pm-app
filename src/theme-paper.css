@@ -44,16 +44,16 @@
   --social-bg: #ebe6dc;
 
   /* The one accent (teal). White text on --accent-strong is 5.5:1. */
-  --accent: #0f766e;
-  --accent-muted: #0f766e;
-  --accent-strong: #0f766e;
-  --accent-bg: rgba(15, 118, 110, 0.1);
-  --accent-border: rgba(15, 118, 110, 0.35);
-  --link: #0f766e;
-  --tab-active-bg: rgba(15, 118, 110, 0.12);
-  --tab-active-text: #0f766e;
-  --sort-active: #0f766e;
-  --card-accent-purple: #0f766e;
+  --accent: var(--brand-accent, #0f766e);
+  --accent-muted: var(--brand-accent, #0f766e);
+  --accent-strong: var(--brand-accent-strong, #0f766e);
+  --accent-bg: var(--brand-accent-bg, rgba(15, 118, 110, 0.1));
+  --accent-border: var(--brand-accent-border, rgba(15, 118, 110, 0.35));
+  --link: var(--brand-accent, #0f766e);
+  --tab-active-bg: var(--brand-accent-bg, rgba(15, 118, 110, 0.12));
+  --tab-active-text: var(--brand-accent, #0f766e);
+  --sort-active: var(--brand-accent, #0f766e);
+  --card-accent-purple: var(--brand-accent, #0f766e);
   --card-accent-amber: #a85d00;
   --card-accent-red: #c0392b;
   --card-tint-purple: rgba(15, 118, 110, 0.05);
@@ -61,10 +61,10 @@
   --card-tint-red: rgba(192, 57, 43, 0.05);
 
   /* Buttons and inputs */
-  --btn-primary-bg: #0f766e;
-  --btn-primary-hover-bg: #115e59;
-  --btn-primary-border: #0f766e;
-  --btn-primary-text: #fff;
+  --btn-primary-bg: var(--brand-accent-strong, #0f766e);
+  --btn-primary-hover-bg: var(--brand-accent-hover, #115e59);
+  --btn-primary-border: var(--brand-accent-strong, #0f766e);
+  --btn-primary-text: var(--brand-on-accent, #fff);
   --btn-primary-backdrop-filter: none;
   --btn-secondary-border: #d9d2c4;
   --btn-secondary-text: #161b26;
@@ -90,12 +90,12 @@
   --badge-danger-bg: #f8dcd8;
   --badge-danger-text: #a8321f;
   --badge-danger-border: rgba(168, 50, 31, 0.3);
-  --demo-accent: #0f766e;
+  --demo-accent: var(--brand-accent, #0f766e);
   --demo-accent-bg: rgba(15, 118, 110, 0.1);
   --demo-accent-border: rgba(15, 118, 110, 0.4);
 
   /* Rail: ink-dark, no frosted glass, no hairline against the canvas. */
-  --rail-bg: #1c2330;
+  --rail-bg: var(--brand-rail-bg, #1c2330);
   --rail-border: transparent;
   --rail-backdrop-filter: none;
 }
@@ -110,11 +110,11 @@
   --text-muted: #939cad;
   --border: rgba(255, 255, 255, 0.12);
   --code-bg: rgba(255, 255, 255, 0.06);
-  --accent: #5eead4;
-  --accent-muted: #5eead4;
-  --accent-bg: rgba(45, 212, 191, 0.14);
-  --accent-border: rgba(45, 212, 191, 0.4);
-  --link: #5eead4;
+  --accent: var(--brand-rail-accent, #5eead4);
+  --accent-muted: var(--brand-rail-accent, #5eead4);
+  --accent-bg: var(--brand-rail-accent-bg, rgba(45, 212, 191, 0.14));
+  --accent-border: var(--brand-rail-accent-border, rgba(45, 212, 191, 0.4));
+  --link: var(--brand-rail-accent, #5eead4);
   --btn-secondary-border: rgba(255, 255, 255, 0.18);
   --btn-secondary-text: #e6eaf1;
   --input-bg: rgba(255, 255, 255, 0.06);
@@ -736,4 +736,12 @@
 
 :root[data-theme='paper'] .kanban-card-actions .assignee-picker input {
   flex: 1 1 auto;
+}
+
+:root[data-theme='paper'] .app-sidebar-brand-logo {
+  display: block;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
 }

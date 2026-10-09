@@ -2,6 +2,7 @@ import { Link, NavLink } from 'react-router-dom'
 import { useAuth } from './AuthContext'
 import ConfidantLogo from './ConfidantLogo'
 import AppStoreBadges from './components/AppStoreBadges'
+import { useBranding } from './branding/BrandingContext'
 
 const NAV_VIEWS = [
   { to: '/dashboard', label: 'Dashboard', icon: '▦', end: true },
@@ -52,16 +53,27 @@ function initialsFromEmail(email) {
 // container for it.
 function AppSidebar({ nav }) {
   const { user, signOut } = useAuth()
+  const { appName, logoUrl } = useBranding()
 
   return (
     <aside className="app-sidebar">
       <Link to="/dashboard" className="app-sidebar-brand">
         <span className="app-sidebar-brand-mark">
-          <ConfidantLogo size={28} />
+          {logoUrl ? (
+            <img className="app-sidebar-brand-logo" src={logoUrl} alt="" width={28} height={28} />
+          ) : (
+            <ConfidantLogo size={28} />
+          )}
         </span>
         <span className="app-sidebar-brand-text">
-          <span className="app-sidebar-brand-name">Confidant<span className="brand-name-accent">PM</span></span>
-          <span className="app-sidebar-tagline">Structure the chaos. One step at a time.</span>
+          {appName ? (
+            <span className="app-sidebar-brand-name">{appName}</span>
+          ) : (
+            <>
+              <span className="app-sidebar-brand-name">Confidant<span className="brand-name-accent">PM</span></span>
+              <span className="app-sidebar-tagline">Structure the chaos. One step at a time.</span>
+            </>
+          )}
         </span>
       </Link>
 
@@ -92,7 +104,8 @@ function AppSidebar({ nav }) {
           own-scroll zone, so anything inside it scrolls away with a long
           project nav. Sitting between the body and the account footer pins
           the badges to the bottom of the rail in both nav modes. */}
-      <AppStoreBadges />
+      {/* ConfidantPM's own store listings: not shown under a customer's brand. */}
+      {!appName && <AppStoreBadges />}
 
       {user ? (
         <div className="account-menu">
