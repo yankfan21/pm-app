@@ -3,34 +3,12 @@ import { useAuth } from './AuthContext'
 import ConfidantLogo from './ConfidantLogo'
 import AppStoreBadges from './components/AppStoreBadges'
 import { useBranding } from './branding/BrandingContext'
+import { initialsFromEmail } from './initials'
 
 const NAV_VIEWS = [
   { to: '/dashboard', label: 'Dashboard', icon: '▦', end: true },
   { to: '/projects', label: 'All Projects', icon: '▤', end: false },
 ]
-
-// Initials for the sidebar avatar. Moved here verbatim from the old
-// AppHeader.jsx (deleted - the top bar it owned is now this rail). The
-// Supabase auth user is the only identity this app has - there is no profile
-// row, no display-name field, nothing in user_metadata - so the email local
-// part is the only thing available to derive from. Split it on the separators
-// people actually put between first and last name (. _ - +) and take one
-// letter from each of the first two pieces; a local part with no separator has
-// no detectable name boundary ("scottsilvers" could be anything), so it falls
-// back to its first two characters. Always returns something for a non-empty
-// email, so the avatar never renders blank.
-function initialsFromEmail(email) {
-  const localPart = (email || '').split('@')[0]
-  const parts = localPart.split(/[.\-_+]+/).filter(Boolean)
-
-  if (parts.length >= 2) {
-    return (parts[0][0] + parts[1][0]).toUpperCase()
-  }
-  if (parts.length === 1) {
-    return parts[0].slice(0, 2).toUpperCase()
-  }
-  return '?'
-}
 
 // The one persistent left rail, replacing the horizontal top bar every page
 // used to render for itself. Three fixed zones - brand, swappable body,

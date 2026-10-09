@@ -4,6 +4,9 @@ import { supabase } from './supabaseClient'
 import { useAuth } from './AuthContext'
 import { METHODOLOGY_LABELS } from './methodology'
 import { HEALTH_LABELS, HEALTH_COLOR_CLASS } from './projectEvalHealth'
+import { CALMSKY } from './redesign'
+import CourseLine from './components/CourseLine'
+import AvatarStack from './components/AvatarStack'
 
 const ELEVATED_PRIORITIES = ['Critical', 'High']
 
@@ -31,6 +34,10 @@ function ProjectList({ projects, loading, emptyMessage, onHide }) {
   // evaluation lives only on the project detail page now, not here (the
   // list/dashboard is status display only, no action buttons).
   const [evaluationsByProject, setEvaluationsByProject] = useState({})
+  // CalmSky_Redesign only: milestones (for the course line) and collaborator
+  // emails (for the avatar stack), keyed by project_id. Not fetched otherwise.
+  const [milestonesByProject, setMilestonesByProject] = useState({})
+  const [peopleByProject, setPeopleByProject] = useState({})
 
   // Dashboard/AllProjects both derive `projects` via filter()/sort() on
   // every render, which is a new array reference each time even when the
@@ -60,7 +67,28 @@ function ProjectList({ projects, loading, emptyMessage, onHide }) {
       setEvaluationsByProject(latestByProject)
     }
 
+    async function loadCardExtras() {
+      const ids = projects.map((p) => p.id)
+      if (!CALMSKY || ids.length === 0) return
+
+      const [{ data: ms }, { data: people }] = await Promise.all([
+        supabase.from('milestones').select('id, project_id, name, start_date, end_date').in('project_id', ids),
+        supabase.from('project_collaborators').select('project_id, email').in('project_id', ids),
+      ])
+
+      const grouped = (rows) => {
+        const out = {}
+        ;(rows || []).forEach((r) => {
+          ;(out[r.project_id] ||= []).push(r)
+        })
+        return out
+      }
+      setMilestonesByProject(grouped(ms))
+      setPeopleByProject(grouped(people))
+    }
+
     loadLatestEvaluations()
+    loadCardExtras()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectIdsKey])
 
@@ -113,8 +141,20 @@ function ProjectList({ projects, loading, emptyMessage, onHide }) {
                 </div>
               </div>
               <div className="project-card-desc">{project.goal}</div>
+              {CALMSKY && (
+                <CourseLine
+                  start={project.created_at}
+                  end={project.deadline}
+                  milestones={milestonesByProject[project.id]}
+                />
+              )}
               <div className="project-card-bottom">
                 <span className={`doc-status-badge ${statusColorClass}`}>{statusLabel}</span>
+                {CALMSKY && (
+                  <AvatarStack
+                    emails={[project.owner_email, ...(peopleByProject[project.id] || []).map((c) => c.email)]}
+                  />
+                )}
                 <span className="project-card-deadline">Target Go Live: {project.deadline ?? 'TBD'}</span>
               </div>
             </li>

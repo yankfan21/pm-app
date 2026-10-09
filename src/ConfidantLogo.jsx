@@ -1,6 +1,6 @@
 // CalmSky_Redesign mark: an open C ring with a milestone diamond. Only shown
 // when VITE_CALMSKY_REDESIGN is on; production keeps the stacked-pages mark.
-const CALMSKY = import.meta.env.VITE_CALMSKY_REDESIGN === 'true'
+import { CALMSKY } from './redesign'
 
 export default function ConfidantLogo({ size = 32, className = '' }) {
   if (CALMSKY) {
