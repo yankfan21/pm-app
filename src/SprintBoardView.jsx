@@ -445,7 +445,7 @@ function SprintBoardView({
                   {canEdit && (
                     <button
                       type="button"
-                      className="btn-secondary"
+                      className="btn-secondary pull-forward-trigger"
                       disabled={unfinishedItems.length === 0}
                       onClick={() => setShowPullForward((prev) => !prev)}
                     >

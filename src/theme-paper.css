@@ -700,3 +700,40 @@
 :root[data-theme='paper'] .login-brand-tagline {
   color: var(--auth-text-muted);
 }
+
+/* Phase "calculated from tasks" note: .charter-status is body size, which
+   made this helper line larger than the phase title beside it. Caption size. */
+:root[data-theme='paper'] .phase-auto-note {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+/* Sprint board: the secondary action matches the compact toolbar buttons on
+   the Gantt instead of the 45px page-level button, and the per-card controls
+   (type + assignee) shrink to fit the narrow kanban column instead of clipping. */
+:root[data-theme='paper'] .pull-forward-trigger {
+  padding: 5px 12px;
+  font-size: 13px;
+}
+
+:root[data-theme='paper'] .kanban-card-actions {
+  gap: 6px;
+}
+
+:root[data-theme='paper'] .kanban-card-actions select,
+:root[data-theme='paper'] .kanban-card-actions input {
+  min-width: 0;
+  font-size: 12px;
+  padding: 4px 6px;
+}
+
+/* Assignee control gets its own full-width row so names are not clipped. */
+:root[data-theme='paper'] .kanban-card-actions .assignee-picker {
+  flex: 1 1 100%;
+  min-width: 0;
+}
+
+:root[data-theme='paper'] .kanban-card-actions .assignee-picker input {
+  flex: 1 1 auto;
+}
