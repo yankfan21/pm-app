@@ -1,0 +1,95 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ConfidantPM — design directions</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0}
+body{font:14px/1.4 Inter,system-ui,sans-serif;background:#0b0b0f;color:#ddd;padding:32px}
+h1{font:600 20px Inter;margin-bottom:4px}.sub{color:#888;margin-bottom:28px;max-width:760px}
+.dir{margin-bottom:44px}.dir>h2{font:600 16px Inter;color:#fff}.dir>p{color:#999;margin:4px 0 12px;max-width:900px}
+.frame{width:1200px;height:680px;border-radius:12px;overflow:hidden;display:flex;border:1px solid #333}
+
+/* ---- shared mock structure, driven only by tokens ---- */
+.app{display:flex;width:100%;background:var(--bg);color:var(--text);font-family:var(--font-body)}
+.rail{width:210px;background:var(--rail-bg);border-right:1px solid var(--border);padding:18px 14px;display:flex;flex-direction:column;gap:4px;color:var(--rail-text)}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:18px;font:var(--brand-font);color:var(--rail-strong)}
+.logo{width:26px;height:26px;border-radius:var(--r-sm);background:var(--accent);display:grid;place-items:center;color:var(--on-accent);font:700 13px var(--font-head)}
+.nav{padding:8px 10px;border-radius:var(--r-sm);font-weight:500}
+.nav.on{background:var(--accent-soft);color:var(--rail-strong);box-shadow:inset 3px 0 0 var(--accent)}
+.rail .sp{flex:1}.avatar{width:28px;height:28px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:grid;place-items:center;font-size:11px;font-weight:600}
+.main{flex:1;padding:24px 28px;overflow:hidden}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+h3.page{font:var(--h-font);color:var(--text-h)}
+.btn{background:var(--accent);color:var(--on-accent);border-radius:var(--r-md);padding:9px 14px;font-weight:600;box-shadow:var(--btn-shadow)}
+.grid{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:14px;margin-bottom:14px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px 16px;box-shadow:var(--card-shadow)}
+.card.a{border-left:4px solid var(--accent)}.card.w{border-left:4px solid var(--warn)}
+.card h4{font:var(--h4-font);color:var(--text-h);margin-bottom:2px}.muted{color:var(--muted);font-size:12px}
+.pill{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:600}
+.ok{background:var(--ok-bg);color:var(--ok)}.wn{background:var(--warn-bg);color:var(--warn)}.nu{background:var(--neutral-bg);color:var(--muted)}
+.bar{height:6px;border-radius:9px;background:var(--track);margin:10px 0 6px;overflow:hidden}.bar i{display:block;height:100%;background:var(--accent);border-radius:9px}
+.stat{font:var(--stat-font);color:var(--text-h);margin-top:8px}
+.gantt{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px 16px;box-shadow:var(--card-shadow)}
+.gantt h4{font:var(--h4-font);color:var(--text-h);margin-bottom:10px}
+.row{display:grid;grid-template-columns:150px 1fr;align-items:center;height:28px;border-top:1px solid var(--border);font-size:12px}
+.track{position:relative;height:100%}.task{position:absolute;top:7px;height:14px;border-radius:var(--r-xs);background:var(--accent)}
+.task.done{background:var(--ok)}.task.risk{background:var(--warn)}
+.today{position:absolute;top:0;bottom:0;width:2px;background:var(--danger);left:46%}
+.ring{width:64px;height:64px;border-radius:50%;background:conic-gradient(var(--accent) var(--p),var(--track) 0);display:grid;place-items:center;float:right}
+.ring b{width:48px;height:48px;border-radius:50%;background:var(--card);display:grid;place-items:center;font:600 13px var(--font-body);color:var(--text-h)}
+.sw{display:flex;gap:6px;margin-top:10px;padding:0 2px}.sw i{width:22px;height:22px;border-radius:5px;border:1px solid #fff2}
+
+/* ---- A: Refined Navy ---- */
+.A{--bg:#141b2b;--rail-bg:#0f1523;--rail-text:#9fb0c8;--rail-strong:#f1f5f9;--card:#1b2438;--border:rgba(255,255,255,.08);
+--text:#d6deea;--text-h:#f4f7fb;--muted:#8d9bb2;--accent:#4f9cf0;--accent-soft:rgba(79,156,240,.14);--on-accent:#06101f;
+--ok:#4ade80;--ok-bg:rgba(74,222,128,.13);--warn:#fbbf24;--warn-bg:rgba(251,191,36,.13);--neutral-bg:rgba(255,255,255,.06);--track:#2a3550;--danger:#f87171;
+--font-body:Inter,sans-serif;--font-head:Inter,sans-serif;--brand-font:600 16px Inter;--h-font:600 24px Inter;--h4-font:600 14px Inter;--stat-font:600 26px Inter;
+--r-xs:3px;--r-sm:6px;--r-md:8px;--r-lg:10px;--card-shadow:none;--btn-shadow:none}
+/* ---- B: Violet Studio ---- */
+.B{--bg:#151220;--rail-bg:#110e1b;--rail-text:#9994a8;--rail-strong:#f2f0f7;--card:#1e1a29;--border:rgba(255,255,255,.07);
+--text:#d9d5e4;--text-h:#f2f0f7;--muted:#9994a8;--accent:#7c5cfc;--accent-soft:rgba(124,92,252,.18);--on-accent:#fff;
+--ok:#4ade80;--ok-bg:rgba(74,222,128,.14);--warn:#f5a623;--warn-bg:rgba(245,166,35,.15);--neutral-bg:rgba(255,255,255,.06);--track:#2d2740;--danger:#ff6b81;
+--font-body:'Instrument Sans',sans-serif;--font-head:Sora,sans-serif;--brand-font:700 16px Sora;--h-font:600 24px Sora;--h4-font:600 14px Sora;--stat-font:700 26px Sora;
+--r-xs:5px;--r-sm:9px;--r-md:11px;--r-lg:16px;--card-shadow:0 8px 24px rgba(0,0,0,.28);--btn-shadow:0 4px 14px rgba(124,92,252,.4)}
+/* ---- C: Paper & Ink ---- */
+.C{--bg:#f6f3ee;--rail-bg:#1c2330;--rail-text:#aeb7c6;--rail-strong:#fff;--card:#fffdfa;--border:#e3ddd2;
+--text:#3a3f4a;--text-h:#161b26;--muted:#7b8190;--accent:#0f766e;--accent-soft:rgba(45,212,191,.14);--on-accent:#fff;
+--ok:#15803d;--ok-bg:#dcf3e3;--warn:#a85d00;--warn-bg:#fbe9c9;--neutral-bg:#ebe6dc;--track:#e6dfd2;--danger:#c0392b;
+--font-body:'Instrument Sans',sans-serif;--font-head:Fraunces,serif;--brand-font:600 18px Fraunces;--h-font:500 30px Fraunces;--h4-font:600 15px Fraunces;--stat-font:500 30px Fraunces;
+--r-xs:2px;--r-sm:4px;--r-md:6px;--r-lg:6px;--card-shadow:0 1px 0 #e3ddd2,0 6px 16px rgba(60,50,30,.06);--btn-shadow:none}
+.C .rail{border-right:none}.C .card{border-top:2px solid var(--text-h)}.C .card.a,.C .card.w{border-top:2px solid var(--text-h)}
+.C .nav.on{box-shadow:inset 3px 0 0 #2dd4bf}
+</style></head><body>
+<h1>ConfidantPM — three design directions</h1>
+<p class="sub">Same screen (Dashboard + project Gantt strip), same markup, three token sets. Each swatch row at the bottom is the full brand input of that direction — everything else derives from it. Mock data only.</p>
+
+<template id="t">
+<div class="app"><div class="rail">
+ <div class="brand"><div class="logo">C</div>ConfidantPM</div>
+ <div class="nav on">Dashboard</div><div class="nav">All Projects</div><div class="nav">Settings</div>
+ <div class="sp"></div><div class="avatar">SS</div><div class="nav" style="border:1px solid var(--border);margin-top:8px">Sign out</div></div>
+<div class="main">
+ <div class="top"><h3 class="page">Dashboard</h3><div class="btn">+ New Project</div></div>
+ <div class="grid">
+  <div class="card a"><h4>Warehouse Mgmt Rollout</h4><div class="muted">Waterfall · Go live 2026-12-01</div><div class="bar"><i style="width:62%"></i></div><span class="pill ok">On Track</span> <span class="pill nu">62%</span></div>
+  <div class="card w"><h4>Mobile App Relaunch</h4><div class="muted">Hybrid · Go live 2027-02-14</div><div class="bar"><i style="width:34%"></i></div><span class="pill wn">At Risk</span> <span class="pill nu">34%</span></div>
+  <div class="card"><div class="ring" style="--p:72%"><b>72%</b></div><h4>Sprint health</h4><div class="muted">Committed points done</div><div class="stat">83 <span class="muted" style="font-size:12px">pts</span></div></div>
+ </div>
+ <div class="gantt"><h4>Phases &amp; milestones</h4>
+  <div class="row"><span>Initiation</span><div class="track"><div class="task done" style="left:2%;width:18%"></div></div></div>
+  <div class="row"><span>Planning</span><div class="track"><div class="task done" style="left:16%;width:26%"></div></div></div>
+  <div class="row"><span>Build</span><div class="track"><div class="task" style="left:38%;width:34%"></div><div class="today"></div></div></div>
+  <div class="row"><span>UAT</span><div class="track"><div class="task risk" style="left:66%;width:18%"></div></div></div>
+  <div class="row"><span>Go live</span><div class="track"><div class="task" style="left:86%;width:10%"></div></div></div>
+ </div>
+ <div class="sw" data-sw></div>
+</div></div>
+</template>
+<script>
+const D=[["A","A · Refined Navy — a refresh","Keeps today's navy and blue so nothing feels unfamiliar. Fixes what's rough: hard-coded one-offs, inconsistent radii, flat hierarchy. Inter throughout, 6–10px radii, no glass blur. Lowest risk; least memorable.",["#141b2b","#1b2438","#4f9cf0","#4ade80","#fbbf24"]],
+["B","B · Violet Studio — moderate departure","Follows the design/inspiration mockups and the gap-analysis token table: charcoal-purple, violet accent, ring gauges, mint/amber pills, rounder 16px cards with soft depth. Sora headings give the Q&A screens a confident voice.",["#151220","#1e1a29","#7c5cfc","#4ade80","#f5a623"]],
+["C","C · Paper & Ink — bolder departure","Warm paper canvas, ink-dark rail, serif (Fraunces) headings, hairline-ruled cards. Reads like a considered document tool, not a dashboard clone — fitting for charters and status reports. Light by default; the only chroma is the brand accent, so it is the best canvas for white-labelling.",["#f6f3ee","#fffdfa","#0f766e","#15803d","#a85d00"]]];
+const t=document.getElementById('t');
+for(const [k,h,p,sw] of D){const s=document.createElement('section');s.className='dir';s.innerHTML=`<h2>${h}</h2><p>${p}</p><div class="frame ${k}"></div>`;
+ const n=t.content.cloneNode(true);n.querySelector('[data-sw]').innerHTML=sw.map(c=>`<i style="background:${c}" title="${c}"></i>`).join('');
+ s.querySelector('.frame').appendChild(n);document.body.appendChild(s);}
+</script></body></html>
