@@ -439,3 +439,155 @@
   font-family: var(--heading);
   font-weight: 600;
 }
+
+/* ------------------------------------------------------------------ */
+/* Gantt chart - GanttChart.jsx                                        */
+/* ------------------------------------------------------------------ */
+
+/* Chart colours. The three state hues were run through the data-viz palette
+   validator on the card surface (#fffdfa): all pass the lightness band,
+   chroma floor, red-green colour-blind separation (worst pair 11.9) and 3:1
+   contrast. They are chart tokens, not the brand accent: a white-label accent
+   has to be re-validated before it can drive these. */
+:root[data-theme='paper'] {
+  --chart-task: #008a7c;
+  --chart-single: #c47f00;
+  --chart-delayed: #b3261e;
+  --chart-done: #9aa3b0;
+  --chart-phase: #3a4252;
+  --chart-milestone: var(--text-h);
+  --chart-dep: #8a90a0;
+  --highlight-text: #c2410c;
+}
+
+/* Bars: thinner (16px in a 24px row), softly rounded. Fill states:
+   open = teal, completed = neutral so finished work recedes, delayed = red,
+   single-date = amber with a hatch (a second cue besides colour). */
+:root[data-theme='paper'] .gantt-bar {
+  top: 4px;
+  bottom: 4px;
+  border-radius: 3px;
+  background: var(--chart-task);
+}
+
+:root[data-theme='paper'] .gantt-bar.single-date,
+:root[data-theme='paper'] .gantt-legend-swatch.bar.single-date {
+  background: repeating-linear-gradient(
+    135deg,
+    var(--chart-single) 0 4px,
+    color-mix(in srgb, var(--chart-single) 55%, #fff) 4px 8px
+  );
+}
+
+:root[data-theme='paper'] .gantt-bar.delayed,
+:root[data-theme='paper'] .gantt-milestone.delayed,
+:root[data-theme='paper'] .gantt-legend-swatch.bar.delayed {
+  background: var(--chart-delayed);
+}
+
+:root[data-theme='paper'] .gantt-bar.completed,
+:root[data-theme='paper'] .gantt-milestone.completed,
+:root[data-theme='paper'] .gantt-legend-swatch.bar.completed {
+  background: var(--chart-done);
+}
+
+:root[data-theme='paper'] .gantt-legend-swatch.bar {
+  background: var(--chart-task);
+}
+
+:root[data-theme='paper'] .gantt-milestone,
+:root[data-theme='paper'] .gantt-legend-swatch.diamond {
+  background: var(--chart-milestone);
+}
+
+/* Phase summary: a thin ink bracket over a faint rail, like a document rule. */
+:root[data-theme='paper'] .gantt-phase-track {
+  height: 6px;
+  background: color-mix(in srgb, var(--border) 60%, transparent);
+  border-radius: 1px;
+}
+
+:root[data-theme='paper'] .gantt-phase-band {
+  border-radius: 1px;
+  background: var(--chart-phase);
+}
+
+:root[data-theme='paper'] .gantt-dep-line {
+  stroke: var(--chart-dep);
+}
+
+:root[data-theme='paper'] .gantt-dep-arrowhead {
+  fill: var(--chart-dep);
+}
+
+:root[data-theme='paper'] .gantt-critical-summary {
+  color: var(--highlight-text);
+}
+
+/* Toolbar: compact controls on one rhythm instead of a scatter of
+   oversized buttons. */
+:root[data-theme='paper'] .gantt .charter-actions {
+  align-items: center;
+  gap: 8px 14px;
+  margin-top: 14px;
+}
+
+:root[data-theme='paper'] .gantt .charter-actions .btn-secondary {
+  padding: 5px 12px;
+  font-size: 13px;
+}
+
+:root[data-theme='paper'] .gantt-critical-toggle {
+  font-size: 13px;
+}
+
+:root[data-theme='paper'] .gantt-date-range {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+:root[data-theme='paper'] .gantt .task-date-field input {
+  padding: 4px 8px;
+  font-size: 13px;
+}
+
+:root[data-theme='paper'] .gantt-zoom-btn {
+  padding: 5px 12px;
+}
+
+:root[data-theme='paper'] .gantt-zoom-btn.active {
+  background: var(--accent-strong);
+  color: var(--on-accent);
+}
+
+/* Filters: a ruled strip, not another boxed card. */
+:root[data-theme='paper'] .gantt-filters {
+  padding: 10px 0;
+  border-width: 1px 0;
+  border-radius: 0;
+  background: transparent;
+  font-size: 13px;
+}
+
+/* Legend: flat inline key, no pill borders. */
+:root[data-theme='paper'] .gantt-legend {
+  gap: 6px 18px;
+  color: var(--text-muted);
+}
+
+:root[data-theme='paper'] .gantt-legend-item {
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+/* Critical-path dependencies keep the highlight colour (these must come
+   after the neutral dependency rules above, which are more specific than the
+   base critical rules). */
+:root[data-theme='paper'] .gantt-dep-line.gantt-dep-line-critical {
+  stroke: var(--highlight);
+}
+
+:root[data-theme='paper'] .gantt-dep-arrowhead-critical {
+  fill: var(--highlight);
+}
