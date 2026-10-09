@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ConfidantPM · Open C with PM</title>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&family=Schibsted+Grotesk:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#171614;--line:#37332d;--text:#f3efe8;--muted:#b3ada1;--dim:#847e72;--accent:#7ab8f0;--ink:#071827}
+*{box-sizing:border-box;margin:0}
+body{background:#0d0c0b;color:var(--text);font:15px/1.5 'Hanken Grotesk',system-ui,sans-serif;padding:28px 20px 60px}
+h1{font:600 18px 'Schibsted Grotesk',sans-serif;max-width:1300px;margin:0 auto 6px}
+.sub{color:var(--dim);max-width:1300px;margin:0 auto 22px}
+.grid{max-width:1300px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:16px}
+.c{background:var(--bg);border:1px solid var(--line);border-radius:20px;padding:22px}
+.c h2{font:600 15px 'Schibsted Grotesk',sans-serif}.c p{color:var(--muted);font-size:13px;margin:2px 0 16px}
+.big{display:flex;align-items:center;gap:22px}
+.tile{width:104px;height:104px;border-radius:26px;background:var(--accent);display:grid;place-items:center;flex:none}
+.tile svg{width:68px;height:68px}
+.word{font:700 30px 'Schibsted Grotesk',sans-serif;letter-spacing:-.02em;white-space:nowrap}.word em{font-style:normal;color:var(--accent)}
+.row{display:flex;align-items:center;gap:18px;margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
+.sm{display:flex;align-items:center;gap:8px;font:600 15px 'Schibsted Grotesk',sans-serif}
+.sm svg{width:28px;height:28px}.fav svg{width:16px;height:16px}
+.lite{background:#f6f4ef;color:#1b1a17;border-radius:12px;padding:8px 12px}.lite em{color:#2f78b8;font-style:normal}
+text{font-family:'Schibsted Grotesk',sans-serif;font-weight:800}
+</style></head><body>
+<h1>Open C, with PM built in</h1>
+<p class="sub">Same Open C as before. Each variant puts PM into the mark differently. Letters use Schibsted Grotesk here and would be converted to outlines in the final logo files.</p>
+<div class="grid" id="g"></div>
+<script>
+const RING=c=>`<path d="M50 18 A22 22 0 1 0 50 46" stroke="${c}" stroke-width="8" stroke-linecap="round" fill="none"/>`;
+const BG=c=>c==='#071827'?'#7ab8f0':(c==='#2f78b8'?'#f6f4ef':'#171614');
+const L=[
+{n:'A · PM inside the C',d:'The most literal: the letters PM sit in the open centre of the ring. Clear at large sizes, but the letters get tiny in a favicon.',
+ svg:c=>`<svg viewBox="0 0 64 64">${RING(c)}<text x="31" y="38.5" font-size="17" text-anchor="middle" fill="${c}">PM</text></svg>`},
+{n:'B · P inside the C',d:'Just the P, drawn as simple rounded strokes. Reads "CP" at a glance and holds up small. M lives in the wordmark.',
+ svg:c=>`<svg viewBox="0 0 64 64" fill="none">${RING(c)}<path d="M29 22 V43" stroke="${c}" stroke-width="5.5" stroke-linecap="round"/><path d="M29 22 H34 a6.5 6.5 0 0 1 0 13 H29" stroke="${c}" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`},
+{n:'C · M peaks inside the C',d:'An M drawn as two rising peaks, like a plan going up. Reads as a milestone chart and as an M.',
+ svg:c=>`<svg viewBox="0 0 64 64" fill="none">${RING(c)}<path d="M23 41 V25 L31 34 L39 25 V41" stroke="${c}" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`},
+{n:'D · C above PM',d:'The Open C as the mark, with PM set underneath in wide lettering as part of the badge. Best as a stacked lockup and app icon.',
+ svg:c=>`<svg viewBox="0 0 64 64" fill="none"><path d="M44 12 A16 16 0 1 0 44 38" stroke="${c}" stroke-width="7" stroke-linecap="round"/><path d="M34 19 L40 25 L34 31 L28 25Z" fill="${c}"/><text x="32" y="58" font-size="15" text-anchor="middle" fill="${c}" letter-spacing="3">PM</text></svg>`},
+{n:'E · Diamond becomes P',d:'Keeps your original diamond idea, but the milestone sits in the C like a pin, and PM is the accent in the wordmark. The simplest mark, with PM carried by the lockup.',
+ svg:c=>`<svg viewBox="0 0 64 64" fill="none">${RING(c)}<path d="M34 24 L42 32 L34 40 L26 32Z" fill="${c}"/></svg>`}
+];
+g.innerHTML=L.map(x=>`<div class="c"><h2>${x.n}</h2><p>${x.d}</p>
+<div class="big"><div class="tile">${x.svg('#071827')}</div><div class="word">Confidant<em>PM</em></div></div>
+<div class="row"><span class="sm"><span style="display:flex">${x.svg('#7ab8f0')}</span>ConfidantPM</span>
+<span class="fav" style="display:flex">${x.svg('#7ab8f0')}</span>
+<span class="sm lite"><span style="display:flex">${x.svg('#2f78b8')}</span>Confidant<em>PM</em></span></div></div>`).join('');
+</script></body></html>

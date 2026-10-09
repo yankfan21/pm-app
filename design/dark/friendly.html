@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en" data-p="teal">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ConfidantPM · Friendly</title>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&family=Schibsted+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#171614;--surface:#1f1d1a;--raised:#282521;--line:#37332d;--soft:#2c2925;
+  --text:#f3efe8;--muted:#b3ada1;--dim:#847e72;
+  --ok:#78b995;--risk:#dcae55;--late:#e9776c;
+  --accent:#5fc9bb;--accent-ink:#06201c;--accent-soft:rgba(95,201,187,.14);
+  --head:'Schibsted Grotesk',system-ui,sans-serif;--body:'Hanken Grotesk',system-ui,sans-serif;
+}
+[data-p=sky]{--accent:#7ab8f0;--accent-ink:#071827;--accent-soft:rgba(122,184,240,.14)}
+[data-p=sage]{--accent:#a7cf93;--accent-ink:#0f1c0a;--accent-soft:rgba(167,207,147,.14);--ok:#a9b8a0}
+*{box-sizing:border-box;margin:0}
+body{background:#0d0c0b;color:var(--text);font:15px/1.5 var(--body);padding:28px 20px 60px}
+h1,h2,h3,.h{font-family:var(--head)}
+.top{max-width:1500px;margin:0 auto 22px}.top h1{font-size:18px;font-weight:600}.top p{color:var(--dim);margin-top:4px}
+.pick{flex-wrap:wrap;display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;margin-top:12px;width:max-content}
+.pick button{background:transparent;color:var(--muted);border:0;padding:8px 16px;font:500 13px var(--body);cursor:pointer}
+.pick button[aria-pressed=true]{background:var(--raised);color:var(--text)}
+.stage{max-width:1500px;margin:0 auto;display:flex;gap:36px;align-items:flex-start;flex-wrap:wrap}
+.cap{color:var(--dim);font-size:12px;margin-bottom:8px;letter-spacing:.04em;text-transform:uppercase}
+.desk{width:1000px;height:680px;background:var(--bg);border:1px solid var(--line);border-radius:20px;display:flex;overflow:hidden;flex:none}
+.side{width:204px;background:var(--surface);padding:18px 12px;display:flex;flex-direction:column;gap:3px}
+.logo{display:flex;align-items:center;gap:9px;padding:2px 8px 18px;font:600 15px var(--head)}
+.mark{width:26px;height:26px;border-radius:9px;background:var(--accent);display:grid;place-items:center}
+.mark i{width:9px;height:9px;border:2px solid var(--accent-ink);border-radius:50%}
+.nav{padding:9px 12px;border-radius:12px;color:var(--muted);font-weight:500}
+.nav.on{background:var(--raised);color:var(--text)}
+.sp{flex:1}
+.me{display:flex;align-items:center;gap:10px;padding:10px;border-radius:14px;background:var(--raised)}
+.av{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font:600 12px var(--head);color:#171614;flex:none}
+.me b{display:block;font:600 13px var(--head)}.me span{font-size:11px;color:var(--dim)}
+.main{flex:1;padding:28px 32px;min-width:0;overflow:hidden}
+.hello{font:600 28px/1.15 var(--head);letter-spacing:-.02em}
+.hello em{font-style:normal;color:var(--accent)}
+.lead{color:var(--muted);margin:6px 0 18px}
+.note{display:flex;gap:14px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px 16px;margin-bottom:18px}
+.note .spark{width:30px;height:30px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;flex:none;font-size:14px}
+.note p{color:var(--text)}.note small{color:var(--dim);display:block;margin-top:2px;font-size:12px}
+.acts{display:flex;gap:8px;margin-top:10px}
+.btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:999px;padding:8px 15px;font:600 13px var(--body)}
+.btn.q{background:transparent;color:var(--muted);border:1px solid var(--line)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.pc{background:var(--surface);border:1px solid var(--soft);border-radius:18px;padding:16px}
+.pc .t{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.pn{font:600 15px var(--head)}.pm{color:var(--dim);font-size:12px;margin-top:1px}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);background:var(--raised);padding:3px 9px;border-radius:999px;white-space:nowrap}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--ok)}.dot.risk{background:var(--risk)}.dot.late{background:var(--late)}
+.cl{position:relative;height:24px;margin:0 6px 14px}
+.cl .solid{position:absolute;left:0;width:58%;top:11px;height:3px;background:var(--muted);border-radius:3px}
+.cl .dots{position:absolute;left:58%;right:0;top:11px;border-top:3px dotted var(--dim)}
+.cl .tm{position:absolute;left:58%;top:2px;bottom:2px;width:3px;margin-left:-1.5px;border-radius:2px;background:var(--accent)}
+.cl .ms{position:absolute;top:6px;width:12px;height:12px;transform:translateX(-50%) rotate(45deg);border:2px solid var(--muted);background:var(--surface);border-radius:4px}
+.cl .ms.done{background:var(--muted)}.cl .ms.late{border-color:var(--late);background:var(--late)}
+.cl .gl{position:absolute;right:0;top:5px;width:14px;height:14px;border-radius:50%;border:2px solid var(--muted);background:var(--surface);transform:translateX(50%)}
+.team{display:flex;align-items:center;justify-content:space-between;color:var(--dim);font-size:12px}
+.stack{display:flex}.stack .av{width:24px;height:24px;font-size:10px;border:2px solid var(--surface);margin-left:-7px}.stack .av:first-child{margin-left:0}
+.wait{margin-top:18px}.wait h3{font:600 14px var(--head);color:var(--muted);margin-bottom:6px}
+.wi{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-top:1px solid var(--soft)}
+.wi span{color:var(--dim);margin-left:8px;font-size:13px}.wi a{color:var(--accent);font-weight:600;font-size:13px}
+.phone{width:340px;height:700px;background:var(--bg);border:1px solid var(--line);border-radius:40px;overflow:hidden;display:flex;flex-direction:column;flex:none}
+.sb{height:44px;display:flex;justify-content:space-between;align-items:flex-end;padding:0 26px 4px;font:600 12px var(--body)}
+.pb{flex:1;padding:12px 18px;overflow:hidden}.pb .hello{font-size:24px}.pb .lead{margin-bottom:14px}
+.pb .note{padding:12px 14px;margin-bottom:12px}.pb .pc{margin-bottom:10px;padding:14px}
+.tabs{height:70px;background:var(--surface);display:flex;justify-content:space-around;padding-top:10px}
+.tab{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:11px;color:var(--dim)}
+.tab i{width:22px;height:22px;border-radius:50%;border:2px solid var(--dim)}
+.tab.on{color:var(--text)}.tab.on i{border-color:var(--accent);background:var(--accent-soft)}
+
+[data-p=tangerine]{--bg:#1c110b;--surface:#27170e;--raised:#33200f;--line:#4a2e16;--soft:#38230f;--text:#fff1e4;--muted:#ddb994;--dim:#a7845f;--accent:#ff8a2b;--accent-ink:#2a1100;--accent-soft:rgba(255,138,43,.18);--late:#ff5a5f;--risk:#ffd166;--ok:#7fd1a0}
+[data-p=emerald]{--bg:#06231d;--surface:#0b2f27;--raised:#103b31;--line:#1b5244;--soft:#12453a;--text:#effaf5;--muted:#9fd0bf;--dim:#6aa492;--accent:#ff8fa3;--accent-ink:#35040f;--accent-soft:rgba(255,143,163,.18);--late:#ffb347;--risk:#f6e27f;--ok:#7be0a8}
+[data-p=burgundy]{--bg:#240a14;--surface:#32101d;--raised:#401726;--line:#5e2336;--soft:#4a1b2b;--text:#fff0ea;--muted:#e0b4b0;--dim:#a9787c;--accent:#ffd9b0;--accent-ink:#3a1008;--accent-soft:rgba(255,217,176,.18);--late:#ff7a6b;--risk:#ffcf5c;--ok:#8fdcae}
+[data-p=lemon]{--bg:#09090b;--surface:#131316;--raised:#1d1d21;--line:#2f2f35;--soft:#232328;--text:#f7f7f2;--muted:#b9b9b0;--dim:#85857c;--accent:#ffe14d;--accent-ink:#1a1600;--accent-soft:rgba(255,225,77,.16);--late:#ff6b5f;--risk:#ffa94d;--ok:#79d6a4}
+[data-p=cobalt]{--bg:#0a1a45;--surface:#0f2459;--raised:#16306f;--line:#25428a;--soft:#1b3a7c;--text:#eef3ff;--muted:#a9bde8;--dim:#7589bb;--accent:#ffc83d;--accent-ink:#2a1d00;--accent-soft:rgba(255,200,61,.18);--late:#ff7a6b;--risk:#ffe08a;--ok:#7fe0b0}
+</style>
+</head>
+<body>
+<div class="top"><h1>Friendly and personal</h1><p>Warm charcoal, round shapes, a human voice, faces on projects, and an AI note that asks before it acts.</p>
+<div class="pick" id="pick"><button data-p="teal" aria-pressed="true">Calm teal</button><button data-p="sky" aria-pressed="false">Calm sky</button><button data-p="tangerine" aria-pressed="false">Tangerine</button><button data-p="emerald" aria-pressed="false">Emerald + coral</button><button data-p="burgundy" aria-pressed="false">Burgundy + cream</button><button data-p="lemon" aria-pressed="false">Black + lemon</button><button data-p="cobalt" aria-pressed="false">Cobalt + gold</button></div></div>
+<div class="stage">
+<div><div class="cap">Desktop</div>
+ <div class="desk">
+  <aside class="side"><div class="logo"><span class="mark"><i></i></span>ConfidantPM</div>
+   <div class="nav on">Home</div><div class="nav">Projects</div><div class="nav">Tasks</div><div class="nav">Gantt</div><div class="nav">Comms</div><div class="sp"></div>
+   <div class="me"><span class="av" style="background:#e5b79a">SS</span><div><b>Scott</b><span>Your workspace</span></div></div></aside>
+  <section class="main">
+   <div class="hello">Morning, Scott. <em>Two things</em> need you today.</div>
+   <p class="lead">Everything else is on track.</p>
+   <div class="note"><span class="spark">✦</span><div><p>The Customer Mobile App beta milestone slipped by 6 days. I can look at options to protect the go-live date.</p><small>Based on the project plan and last week's status update</small><div class="acts"><button class="btn">Show me options</button><button class="btn q">Not now</button></div></div></div>
+   <div class="grid" id="d"></div>
+   <div class="wait"><h3>Waiting for your decision</h3>
+    <div class="wi"><div>Approve revised scope<span>Vendor Portal</span></div><a>Review</a></div>
+    <div class="wi"><div>Accept 6 generated tasks<span>Customer Mobile App</span></div><a>Review</a></div></div>
+  </section></div>
+ </div>
+<div><div class="cap">Phone</div>
+ <div class="phone"><div class="sb"><span>9:41</span><span>●●●</span></div>
+  <div class="pb"><div class="hello">Morning, Scott. <em>Two things</em> need you.</div><p class="lead">Everything else is on track.</p>
+   <div class="note"><span class="spark">✦</span><div><p style="font-size:14px">Customer Mobile App slipped 6 days. Want me to look at options?</p><div class="acts"><button class="btn">Show me</button><button class="btn q">Not now</button></div></div></div>
+   <div id="m"></div></div>
+  <nav class="tabs"><div class="tab on"><i></i>Home</div><div class="tab"><i></i>Projects</div><div class="tab"><i></i>Tasks</div><div class="tab"><i></i>Comms</div></nav></div></div>
+</div>
+<script>
+const C={A:'#e5b79a',B:'#a9c9e8',C:'#d9c38a',D:'#c3b0e0'};
+const P=[{n:'Warehouse Mgmt System',m:'Hybrid · 62% done',ms:[[12,'done'],[30,'done'],[48,'done'],[74,'']],s:['On track',''],t:[['AP','B'],['MK','C'],['SS','A']],due:'Go-live Nov 20'},
+{n:'Customer Mobile App',m:'Agile · 41% done',ms:[[20,'done'],[45,'late'],[82,'']],s:['Late','late'],t:[['JL','D'],['SS','A']],due:'Go-live Dec 4'},
+{n:'Vendor Portal',m:'Waterfall · 85% done',ms:[[15,'done'],[35,'done'],[55,'done'],[78,'']],s:['At risk','risk'],t:[['MK','C'],['AP','B'],['SS','A']],due:'Go-live Oct 30'}];
+const av=([i,c])=>`<span class="av" style="background:${C[c]}">${i}</span>`;
+const line=p=>`<div class="cl"><div class="solid"></div><div class="dots"></div><div class="tm"></div>${p.ms.map(([x,c])=>`<div class="ms ${c}" style="left:${x}%"></div>`).join('')}<div class="gl"></div></div>`;
+const card=p=>`<div class="pc"><div class="t"><div><div class="pn">${p.n}</div><div class="pm">${p.m}</div></div><span class="pill"><span class="dot ${p.s[1]}"></span>${p.s[0]}</span></div>${line(p)}<div class="team"><div class="stack">${p.t.map(av).join('')}</div><span>${p.due}</span></div></div>`;
+d.innerHTML=P.map(card).join('');m.innerHTML=P.slice(0,2).map(card).join('');
+document.querySelectorAll('#pick button').forEach(b=>b.onclick=()=>{document.documentElement.dataset.p=b.dataset.p;document.querySelectorAll('#pick button').forEach(x=>x.setAttribute('aria-pressed',x===b))});
+</script>
+</body></html>
