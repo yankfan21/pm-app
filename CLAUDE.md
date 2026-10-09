@@ -87,3 +87,52 @@ work — just flags for future decisions.
   finds it still sitting on `tasks`, that's expected — it's just inert.
   Eventually: drop `tasks.depends_on` in a migration.
 
+
+## Redesign ("Paper" theme) and white-label branding — status as of 2026-10-09
+
+Work lives on branch `claude/wonderful-lovelace-7l64oi`. Everything is behind
+`VITE_REDESIGN=true`; with it unset the shipped theme is unchanged. **Launch
+timing is the owner's call: a new prod version ships when they decide. Do not
+merge, push or deploy the redesign unprompted.** Local commits are fine; ask
+before pushing.
+
+Local preview: `.env.local` (git-ignored) with `VITE_DEV_BYPASS_AUTH=true` and
+`VITE_REDESIGN=true`, then `npm run dev`. The bypass swaps in an in-memory fake
+Supabase (`src/dev/`) with sample data; it only works when `import.meta.env.DEV`
+is true, so it can never be on in a production build. Add `VITE_DEV_ORG=true` to
+preview a sample branded organization.
+
+**Done:** token foundation, Paper shell/nav, project lists, Q&A flows, Gantt,
+marketing and public screens, desktop walkthrough fixes (phase note size, sprint
+board controls). Branding layer: `src/branding/color.js` (contrast-safe token
+derivation; run `node --test src/branding/color.test.js`, a directory argument
+fails on Node 24), `src/branding/BrandingContext.jsx` (loads the user's org and
+sets `--brand-*` variables), Paper tokens read them with the teal fallback,
+sidebar shows the org app name/logo and hides ConfidantPM's store badges when
+branded. With no org (or no migration applied) the app looks exactly like stock.
+
+**Branding decisions (owner):**
+- Per organization only. No per-user themes. A user in several orgs gets the
+  oldest membership's branding (no switcher yet).
+- **The owner sets branding, not customers.** No customer-facing branding
+  settings screen and no org-admin editing. Branding is written only by the
+  owner through the Supabase dashboard (SQL editor + Storage page) / service
+  role.
+- Wanted for the future, not a launch blocker.
+
+**Next steps, in order:**
+1. Tighten `supabase/migrations/organizations_branding.sql` to match: remove the
+   org-admin UPDATE policy, the column-level UPDATE grant, the admin logo
+   upload/update/delete storage policies, `is_org_admin`, and the `role` column
+   on `organization_members`. Keep member read-only access and the validation
+   checks. The migration is reviewed but has **never been run anywhere**; test it
+   on a throwaway Supabase project, never production first.
+2. Write `BRANDING.md`: copy-paste SQL to create an org, add users, set
+   name/colors, plus how to upload a logo (bucket `org-logos`, path
+   `{organization_id}/{filename}`, png/jpeg/webp, max 1 MB).
+3. Still unchecked: Project Discovery Q&A flow, mobile screens beyond the
+   dashboard. Paper is light-only (no dark mode). Dev fixtures list
+   `dev-bypass-user` twice in the assignee dropdown (duplicate React key
+   warning); confirm the real app can't do the same.
+4. Not built (add only if wanted): browser tab title/favicon per org, branded
+   login/marketing pages, branding in emails and PDF/Word exports.
