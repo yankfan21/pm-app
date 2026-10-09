@@ -591,3 +591,112 @@
 :root[data-theme='paper'] .gantt-dep-arrowhead-critical {
   fill: var(--highlight);
 }
+
+/* ------------------------------------------------------------------ */
+/* Public pages - marketing, sign-in, forgot/reset password, privacy   */
+/* ------------------------------------------------------------------ */
+
+/* These screens run on the fixed --auth-* palette (so the marketing page and
+   the sign-in it hands off to never show a seam). Re-pointing the tokens
+   moves all of them to Paper together. */
+:root[data-theme='paper'] {
+  --auth-bg: #f6f3ee;
+  --auth-panel: #fffdfa;
+  --auth-text: #3a3f4a;
+  --auth-text-h: #161b26;
+  --auth-text-soft: #4a505c;
+  --auth-text-muted: #656b7a;
+  --auth-error-text: #a8321f;
+  --auth-border: #e3ddd2;
+  --auth-border-strong: #d9d2c4;
+  --auth-input-bg: #fffdfa;
+}
+
+/* index.css paints the page behind the sign-in screen with a literal. */
+:root[data-theme='paper'] body.login-route {
+  background-color: var(--auth-bg);
+}
+
+:root[data-theme='paper'] .marketing-nav-name {
+  font-family: var(--heading);
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+}
+
+:root[data-theme='paper'] .marketing-nav-signin {
+  border-radius: var(--radius-md);
+}
+
+:root[data-theme='paper'] .marketing-hero {
+  padding: 88px 0 96px;
+}
+
+:root[data-theme='paper'] .marketing-hero-headline {
+  font-size: 58px;
+  font-weight: 500;
+  line-height: 1.08;
+  letter-spacing: -1.4px;
+}
+
+:root[data-theme='paper'] .marketing-hero-sub {
+  font-size: 18px;
+}
+
+:root[data-theme='paper'] .marketing-cta {
+  color: var(--on-accent);
+}
+
+:root[data-theme='paper'] .marketing-cta:hover {
+  background: var(--btn-primary-hover-bg);
+}
+
+/* Each section opens with an ink rule, like a ruled document. */
+:root[data-theme='paper'] .marketing-section {
+  padding-top: 30px;
+  border-top: 2px solid var(--auth-text-h);
+}
+
+:root[data-theme='paper'] .marketing-section-heading {
+  font-weight: 500;
+}
+
+:root[data-theme='paper'] .marketing-card {
+  border-top: 2px solid var(--auth-text-h);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--card-shadow);
+}
+
+:root[data-theme='paper'] .marketing-card-title {
+  font-family: var(--heading);
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--auth-text-h);
+}
+
+:root[data-theme='paper'] .marketing-footer {
+  border-top: 2px solid var(--auth-text-h);
+}
+
+:root[data-theme='paper'] .marketing-footer-tagline {
+  font-family: var(--heading);
+  font-size: 30px;
+  font-weight: 500;
+}
+
+@media (max-width: 720px) {
+  :root[data-theme='paper'] .marketing-hero {
+    padding: 56px 0 64px;
+  }
+
+  :root[data-theme='paper'] .marketing-hero-headline {
+    font-size: 38px;
+    letter-spacing: -0.9px;
+  }
+}
+
+/* The sign-in tagline reads var(--text-secondary, #94a3b8); that token is
+   never defined, so the slate fallback is too pale on the light surface. */
+:root[data-theme='paper'] .login-brand-tagline {
+  color: var(--auth-text-muted);
+}
