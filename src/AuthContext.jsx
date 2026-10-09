@@ -1,5 +1,11 @@
 import { createContext, useContext, useEffect, useState } from 'react'
-import { supabase } from './supabaseClient'
+import { supabase, DEV_BYPASS_AUTH } from './supabaseClient'
+
+// Fake signed-in user for DEV_BYPASS_AUTH (local redesign preview only).
+const DEV_SESSION = {
+  access_token: 'dev-bypass',
+  user: { id: 'dev-bypass-user', email: 'dev@localhost', user_metadata: { full_name: 'Dev Preview' } },
+}
 
 const AuthContext = createContext(undefined)
 
@@ -10,10 +16,11 @@ const AuthContext = createContext(undefined)
 // request automatically starts authenticating as that user - no other code
 // needs to change to "start using" auth.
 export function AuthProvider({ children }) {
-  const [session, setSession] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [session, setSession] = useState(DEV_BYPASS_AUTH ? DEV_SESSION : null)
+  const [loading, setLoading] = useState(!DEV_BYPASS_AUTH)
 
   useEffect(() => {
+    if (DEV_BYPASS_AUTH) return
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session)
       setLoading(false)
@@ -30,7 +37,7 @@ export function AuthProvider({ children }) {
     session,
     user: session?.user ?? null,
     loading,
-    signOut: () => supabase.auth.signOut(),
+    signOut: () => (DEV_BYPASS_AUTH ? Promise.resolve() : supabase.auth.signOut()),
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
