@@ -1,0 +1,115 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ConfidantPM — Q&A walkthrough prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0}html,body{height:100%}
+body{font:15px/1.45 Inter,system-ui,sans-serif;background:var(--bg);color:var(--text)}
+.app{display:flex;height:100vh;background:var(--bg);color:var(--text);font-family:var(--font-body)}
+.rail{width:230px;flex:none;background:var(--rail-bg);border-right:1px solid var(--border);padding:18px 14px;display:flex;flex-direction:column;gap:4px;color:var(--rail-text)}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:18px;font:var(--brand-font);color:var(--rail-strong)}
+.logo{width:26px;height:26px;border-radius:var(--r-sm);background:var(--accent);display:grid;place-items:center;color:var(--on-accent);font:700 13px var(--font-head)}
+.nav{padding:8px 10px;border-radius:var(--r-sm);font-weight:500;font-size:14px}
+.nav.on{background:var(--accent-soft);color:var(--rail-strong);box-shadow:inset 3px 0 0 var(--accent)}
+.rail .sp{flex:1}.themes{display:flex;gap:6px;font-size:12px}
+.themes button{flex:1;padding:7px 0;border-radius:var(--r-sm);border:1px solid var(--border);background:transparent;color:var(--rail-text);cursor:pointer;font:inherit}
+.themes button.on{background:var(--accent);color:var(--on-accent);border-color:transparent;font-weight:600}
+.main{flex:1;overflow:auto;padding:40px 28px;display:flex;justify-content:center}
+.col{width:100%;max-width:680px}
+.crumb{font-size:12px;color:var(--muted);margin-bottom:6px;letter-spacing:.04em;text-transform:uppercase}
+h1{font:var(--h-font);color:var(--text-h);margin-bottom:6px}
+.lede{color:var(--muted);margin-bottom:22px}
+.prog{display:flex;gap:5px;margin:4px 0 8px}.prog i{flex:1;height:5px;border-radius:9px;background:var(--track)}.prog i.d{background:var(--accent);opacity:.55}.prog i.c{background:var(--accent)}
+.meta{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:22px}
+.meta b{color:var(--text-h);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:26px;box-shadow:var(--card-shadow)}
+.q{font:var(--q-font);color:var(--text-h);margin-bottom:6px}
+.hint{color:var(--muted);font-size:13px;margin-bottom:16px}
+.sug{display:flex;gap:10px;align-items:flex-start;background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);border-radius:var(--r-md);padding:10px 12px;margin-bottom:16px;font-size:13px}
+.sug .tag{color:var(--accent);font-weight:600;white-space:nowrap}.sug .t{flex:1;color:var(--text)}.sug .src{display:block;color:var(--muted);font-size:11.5px;margin-top:2px}
+.lk{background:none;border:none;color:var(--accent);font:600 13px inherit;font-family:inherit;cursor:pointer;padding:0 2px}
+textarea,input[type=text]{width:100%;background:var(--field);color:var(--text-h);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 14px;font:inherit;resize:vertical;min-height:48px}
+textarea{min-height:104px}textarea:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px}
+.choices{display:flex;flex-wrap:wrap;gap:8px}
+.choices button{padding:10px 16px;border-radius:var(--r-md);border:1px solid var(--border);background:var(--field);color:var(--text);font:inherit;cursor:pointer}
+.choices button.sel{background:var(--accent-soft);border-color:var(--accent);color:var(--text-h);font-weight:600}
+.actions{display:flex;justify-content:space-between;margin-top:22px}
+.btn{border-radius:var(--r-md);padding:10px 20px;font:600 14px inherit;font-family:inherit;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text)}
+.btn.p{background:var(--accent);color:var(--on-accent);border-color:transparent;box-shadow:var(--btn-shadow)}
+.opt{display:block;width:100%;text-align:left;margin-bottom:10px;padding:16px 18px;border-radius:var(--r-lg);border:1px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;font:inherit;box-shadow:var(--card-shadow)}
+.opt:hover{border-color:var(--accent)}.opt b{display:block;color:var(--text-h);font:var(--h4-font);margin-bottom:2px}.opt span{color:var(--muted);font-size:13px}
+.ctx{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px}.chip{font-size:12px;padding:4px 10px;border-radius:99px;background:var(--ok-bg);color:var(--ok);font-weight:600}
+.rev{border-top:1px solid var(--border);padding:12px 0;display:grid;grid-template-columns:150px 1fr auto;gap:12px;font-size:14px}
+.rev:first-child{border-top:none}.rev .k{color:var(--muted)}.rev .v{color:var(--text-h)}
+.note{font-size:12.5px;color:var(--muted);margin-top:14px}
+/* ---- A: Refined Navy ---- */
+.A{--bg:#141b2b;--rail-bg:#0f1523;--rail-text:#9fb0c8;--rail-strong:#f1f5f9;--card:#1b2438;--border:rgba(255,255,255,.08);
+--text:#d6deea;--text-h:#f4f7fb;--muted:#8d9bb2;--accent:#4f9cf0;--accent-soft:rgba(79,156,240,.14);--on-accent:#06101f;
+--ok:#4ade80;--ok-bg:rgba(74,222,128,.13);--warn:#fbbf24;--warn-bg:rgba(251,191,36,.13);--neutral-bg:rgba(255,255,255,.06);--track:#2a3550;--danger:#f87171;
+--font-body:Inter,sans-serif;--font-head:Inter,sans-serif;--brand-font:600 16px Inter;--h-font:600 24px Inter;--h4-font:600 14px Inter;--stat-font:600 26px Inter;
+--r-xs:3px;--r-sm:6px;--r-md:8px;--r-lg:10px;--card-shadow:none;--btn-shadow:none}
+/* ---- B: Violet Studio ---- */
+.B{--bg:#151220;--rail-bg:#110e1b;--rail-text:#9994a8;--rail-strong:#f2f0f7;--card:#1e1a29;--border:rgba(255,255,255,.07);
+--text:#d9d5e4;--text-h:#f2f0f7;--muted:#9994a8;--accent:#7c5cfc;--accent-soft:rgba(124,92,252,.18);--on-accent:#fff;
+--ok:#4ade80;--ok-bg:rgba(74,222,128,.14);--warn:#f5a623;--warn-bg:rgba(245,166,35,.15);--neutral-bg:rgba(255,255,255,.06);--track:#2d2740;--danger:#ff6b81;
+--font-body:'Instrument Sans',sans-serif;--font-head:Sora,sans-serif;--brand-font:700 16px Sora;--h-font:600 24px Sora;--h4-font:600 14px Sora;--stat-font:700 26px Sora;
+--r-xs:5px;--r-sm:9px;--r-md:11px;--r-lg:16px;--card-shadow:0 8px 24px rgba(0,0,0,.28);--btn-shadow:0 4px 14px rgba(124,92,252,.4)}
+/* ---- C: Paper & Ink ---- */
+.C{--bg:#f6f3ee;--rail-bg:#1c2330;--rail-text:#aeb7c6;--rail-strong:#fff;--card:#fffdfa;--border:#e3ddd2;
+--text:#3a3f4a;--text-h:#161b26;--muted:#7b8190;--accent:#0f766e;--accent-soft:rgba(45,212,191,.14);--on-accent:#fff;
+--ok:#15803d;--ok-bg:#dcf3e3;--warn:#a85d00;--warn-bg:#fbe9c9;--neutral-bg:#ebe6dc;--track:#e6dfd2;--danger:#c0392b;
+--font-body:'Instrument Sans',sans-serif;--font-head:Fraunces,serif;--brand-font:600 18px Fraunces;--h-font:500 30px Fraunces;--h4-font:600 15px Fraunces;--stat-font:500 30px Fraunces;
+--r-xs:2px;--r-sm:4px;--r-md:6px;--r-lg:6px;--card-shadow:0 1px 0 #e3ddd2,0 6px 16px rgba(60,50,30,.06);--btn-shadow:none}
+.C .rail{border-right:none}.C .card{border-top:2px solid var(--text-h)}.C .card.a,.C .card.w{border-top:2px solid var(--text-h)}
+.C .nav.on{box-shadow:inset 3px 0 0 #2dd4bf}
+
+.A{--field:#111827;--q-font:600 22px/1.3 Inter}
+.B{--field:#17132a;--q-font:600 22px/1.3 Sora}
+.C{--field:#fff;--q-font:500 26px/1.25 Fraunces}
+.C .card{border-top:2px solid var(--text-h)}
+.C .nav.on{box-shadow:inset 3px 0 0 #2dd4bf}.C .rail{border-right:none}
+</style></head><body>
+<div id="root" class="B"></div>
+<script>
+const SECTIONS={purpose:'Purpose',scope:'Scope',stakeholders:'Stakeholders',metrics:'Success metrics',risks:'Risks',timeline:'Timeline'};
+const Q=[
+{s:'purpose',t:'What business problem does the Warehouse Management System rollout solve?',h:'One or two sentences. Plain language is fine.',sug:'Replace the legacy WMS across four distribution centres to cut pick errors and enable same-day shipping.',src:'Project description'},
+{s:'purpose',t:'Who is the executive sponsor?',h:'The person who owns the budget and can unblock decisions.',sug:'Dana Whitfield, VP Operations',src:'Scoping document'},
+{s:'scope',t:'What is explicitly in scope?',h:'List the major deliverables.',sug:'Software migration, scanner hardware, staff training, cutover support',src:'Scoping document'},
+{s:'scope',t:'What is explicitly out of scope?',h:'Naming exclusions now prevents scope creep later.',sug:'ERP upgrade and the fifth, planned distribution centre',src:'Scoping document'},
+{s:'stakeholders',t:'Which group is most affected day to day?',type:'choice',c:['Warehouse floor staff','Logistics planners','Customer service','Finance'],h:'Choose the one that needs the most communication.'},
+{s:'metrics',t:'How will you know the project succeeded?',h:'Include a number and a date where you can.',sug:'Pick accuracy above 99.5% within 60 days of go-live',src:'Requirements Brief'},
+{s:'risks',t:'What is the biggest risk to delivery?',type:'choice',c:['Vendor integration slips','Staff training capacity','Budget overrun','Cutover downtime'],h:'You can add the rest in the Risk Log.'},
+{s:'timeline',t:'What is the target go-live date?',h:'Phase dates will be calculated from this, and you can override them.',sug:'2026-12-01',src:'Project record'}];
+const A={};let step=-1,theme='B'; // -1 intro, 0..n-1 questions, n review
+function themeBar(){return `<div class="themes">${[['A','Navy'],['B','Violet'],['C','Paper']].map(([k,n])=>`<button class="${theme==k?'on':''}" onclick="setTheme('${k}')">${n}</button>`).join('')}</div>`}
+function setTheme(k){theme=k;render()}
+function go(n){step=n;render();document.querySelector('.main').scrollTop=0}
+function setA(i,v){A[i]=v;render(true)}
+function render(keep){
+ const n=Q.length;let body='';
+ const prog=(cur)=>`<div class="prog">${Q.map((_,i)=>`<i class="${i<cur?'d':i==cur?'c':''}"></i>`).join('')}</div>`;
+ if(step==-1){body=`<div class="crumb">Warehouse Management System Rollout · Documents</div><h1>Create the Project Charter</h1><p class="lede">${n} short questions. I've pre-filled what I already know from your other documents. You confirm every answer.</p>
+  <div class="ctx"><span class="chip">✓ Scoping document read</span><span class="chip">✓ Requirements Brief read</span><span class="chip">✓ Project record read</span></div>
+  <button class="opt" onclick="go(0)"><b>Answer questions step by step</b><span>Recommended · about 4 minutes</span></button>
+  <button class="opt" onclick="go(0)"><b>Upload an existing charter (.docx)</b><span>I'll extract the answers and ask only about the gaps</span></button>`}
+ else if(step<n){const q=Q[step],v=A[step]||'';
+  const showSug=q.sug&&v!==q.sug;
+  body=`<div class="crumb">Project Charter · ${SECTIONS[q.s]}</div>${prog(step)}
+  <div class="meta"><b>${SECTIONS[q.s]}</b><span>Question ${step+1} of ${n}</span></div>
+  <div class="card"><div class="q">${q.t}</div><div class="hint">${q.h}</div>
+  ${showSug?`<div class="sug"><span class="tag">Suggested</span><span class="t">${q.sug}<span class="src">From: ${q.src}</span></span><button class="lk" onclick="setA(${step},Q[${step}].sug)">Use</button><button class="lk" style="color:var(--muted)" onclick="Q[${step}].sug=null;render(true)">Dismiss</button></div>`:''}
+  ${q.type=='choice'?`<div class="choices">${q.c.map(c=>`<button class="${v==c?'sel':''}" onclick="setA(${step},'${c}')">${c}</button>`).join('')}</div>`
+   :(step==n-1?`<input type="text" id="f" value="${v}" oninput="A[${step}]=this.value">`:`<textarea id="f" oninput="A[${step}]=this.value">${v}</textarea>`)}
+  <div class="actions"><button class="btn" onclick="go(${step}-1)">${step==0?'Back':'Back'}</button><button class="btn p" onclick="go(${step}+1)">${step==n-1?'Review answers':'Next'}</button></div></div>
+  <p class="note">Nothing is saved to your project until you generate the document.</p>`}
+ else{body=`<div class="crumb">Project Charter · Review</div>${prog(n)}<h1>Review your answers</h1><p class="lede">Edit anything, then generate. The Charter is a draft until you accept it.</p>
+  <div class="card">${Q.map((q,i)=>`<div class="rev"><span class="k">${SECTIONS[q.s]}</span><span class="v">${A[i]||'<i style="color:var(--warn)">Not answered — I will flag this as missing evidence</i>'}</span><button class="lk" onclick="go(${i})">Edit</button></div>`).join('')}
+  <div class="actions"><button class="btn" onclick="go(${n}-1)">Back</button><button class="btn p" onclick="alert('Prototype: this is where the Edge Function would draft the Charter for your review.')">Generate Charter</button></div></div>`}
+ document.getElementById('root').className=theme;
+ const act=document.activeElement&&document.activeElement.id,pos=act?document.activeElement.selectionStart:0;
+ document.getElementById('root').innerHTML=`<div class="app"><div class="rail"><div class="brand"><div class="logo">C</div>ConfidantPM</div><div class="nav">Dashboard</div><div class="nav on">All Projects</div><div class="nav">Settings</div><div class="sp"></div><div class="note" style="margin:0 0 6px">Compare themes</div>${themeBar()}</div><div class="main"><div class="col">${body}</div></div></div>`;
+ if(keep&&act){const e=document.getElementById(act);if(e){e.focus();try{e.setSelectionRange(pos,pos)}catch{}}}
+}
+document.addEventListener('keydown',e=>{if(e.key=='Enter'&&!e.shiftKey&&e.target.tagName=='INPUT'){e.preventDefault();go(step+1)}});
+render();
+</script></body></html>
