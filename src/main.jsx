@@ -2,10 +2,19 @@ import { StrictMode } from 'react'
 import { createRoot, hydrateRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { Capacitor } from '@capacitor/core'
+import '@fontsource-variable/schibsted-grotesk'
+import '@fontsource-variable/hanken-grotesk'
 import './index.css'
+import './theme-calmsky.css'
 import App from './App.jsx'
 import { AuthProvider } from './AuthContext.jsx'
 import { BrandingProvider } from './branding/BrandingContext.jsx'
+
+// Local preview of the in-progress CalmSky_Redesign (src/theme-calmsky.css).
+// VITE_CALMSKY_REDESIGN is unset in production, so the shipped theme is unchanged.
+if (import.meta.env.VITE_CALMSKY_REDESIGN === 'true') {
+  document.documentElement.setAttribute('data-theme', 'calmsky')
+}
 
 const tree = (
   <StrictMode>

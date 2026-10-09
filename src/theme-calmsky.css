@@ -1,0 +1,100 @@
+/* CalmSky_Redesign - the "Friendly" dark theme (design/dark/friendly*.html).
+   Warm charcoal canvas, round shapes, one soft sky accent for actions, nav
+   and Today; status keeps muted traffic lights.
+
+   Switched on by VITE_CALMSKY_REDESIGN=true (main.jsx sets data-theme="calmsky");
+   production leaves it unset and keeps the shipped navy theme. When approved,
+   these values move into :root in index.css and the flag goes away.
+
+   Stage 1 is tokens only: no component rules live here yet. Text pairs are
+   >= 4.5:1 on their surface (--text-muted on --bg is about 8:1). */
+
+:root[data-theme='calmsky'] {
+  color-scheme: dark;
+
+  /* Fonts, self-hosted via @fontsource-variable (main.jsx). */
+  --sans: 'Hanken Grotesk Variable', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --heading: 'Schibsted Grotesk Variable', system-ui, 'Segoe UI', Roboto, sans-serif;
+
+  /* Round and friendly. */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+
+  /* Surfaces and text (warm charcoal) */
+  --bg: #171614;
+  --text: #e6e1d7;
+  --text-h: #f3efe8;
+  --text-muted: #b3ada1;
+  --border: #37332d;
+  --code-bg: #26231f;
+  --card-bg: #1f1d1a;
+  --card-backdrop-filter: none;
+  --card-shadow: none;
+  --card-hover-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  --surface-1-solid: #1f1d1a;
+  --header-bg: #1f1d1a;
+  --header-border: #2c2925;
+  --row-bg: #23201d;
+  --row-border: #2c2925;
+  --shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  --social-bg: #26231f;
+
+  /* The one accent (calm sky). --accent-strong stays a mid sky because older
+     buttons put hardcoded white text on it (white on #2f78b8 is 4.7:1);
+     .btn-primary uses the light sky with dark ink instead. */
+  --accent: #7ab8f0;
+  --accent-muted: #7ab8f0;
+  --accent-strong: #2f78b8;
+  --accent-bg: rgba(122, 184, 240, 0.14);
+  --accent-border: rgba(122, 184, 240, 0.4);
+  --link: #7ab8f0;
+  --tab-active-bg: rgba(122, 184, 240, 0.16);
+  --tab-active-text: #7ab8f0;
+  --tab-inactive-text: var(--text-muted);
+  --sort-active: #7ab8f0;
+  --card-accent-purple: var(--accent);
+  --card-accent-amber: #dcae55;
+  --card-accent-red: #e9776c;
+  --card-accent-muted: var(--border);
+  --card-tint-purple: rgba(122, 184, 240, 0.05);
+  --card-tint-amber: rgba(220, 174, 85, 0.05);
+  --card-tint-red: rgba(233, 119, 108, 0.06);
+
+  /* Buttons and inputs */
+  --btn-primary-bg: #7ab8f0;
+  --btn-primary-hover-bg: #93c6f4;
+  --btn-primary-border: #7ab8f0;
+  --btn-primary-text: #071827;
+  --btn-primary-backdrop-filter: none;
+  --btn-secondary-border: #4a453d;
+  --btn-secondary-text: #f3efe8;
+  --input-bg: #1f1d1a;
+  --input-border: #4a453d;
+  --input-text: #f3efe8;
+  --disabled-bg: #26231f;
+  --disabled-text: #7d786c;
+  --disabled-border: #2c2925;
+
+  /* Status: muted traffic lights */
+  --pill-neutral-bg: #2c2925;
+  --pill-neutral-text: #b3ada1;
+  --pill-neutral-border: #3d382f;
+  --zone-accent-neutral: #847e72;
+  --alert-red: #e9776c;
+  --badge-success-bg: rgba(120, 185, 149, 0.14);
+  --badge-success-text: #8fcfa9;
+  --badge-success-border: rgba(120, 185, 149, 0.35);
+  --badge-warning-bg: rgba(220, 174, 85, 0.14);
+  --badge-warning-text: #e6bd6e;
+  --badge-warning-border: rgba(220, 174, 85, 0.35);
+  --badge-danger-bg: rgba(233, 119, 108, 0.14);
+  --badge-danger-text: #f09186;
+  --badge-danger-border: rgba(233, 119, 108, 0.35);
+
+  /* Rail: same warm surface as cards, no frosted glass, no hairline. */
+  --rail-bg: #1f1d1a;
+  --rail-border: transparent;
+  --rail-backdrop-filter: none;
+}
