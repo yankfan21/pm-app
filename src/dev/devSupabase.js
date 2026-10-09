@@ -13,6 +13,18 @@ const DEV_CHARTER_QUESTIONS = [
   { id: 'q5', text: 'How firm is the target go-live date?', type: 'choice', choices: ['Fixed', 'Flexible', 'Not set'] },
 ]
 
+const DEV_SCOPING_QUESTIONS = {
+  initiation: [
+    { id: 's1', text: 'What is the single most important outcome this project must deliver?', type: 'text', vital: true, stage: 'initiation' },
+    { id: 's2', text: 'How is the scope likely to change once work starts?', type: 'choice', choices: ['Stable', 'Some change', 'Highly uncertain'], vital: true, stage: 'initiation' },
+    { id: 's3', text: 'What is explicitly out of scope?', type: 'text', stage: 'initiation' },
+  ],
+  risk: [
+    { id: 'r1', text: 'What is the biggest risk to the target date?', type: 'text', vital: true, stage: 'risk' },
+    { id: 'r2', text: 'Which dependencies are outside your control?', type: 'text', stage: 'risk' },
+  ],
+}
+
 let _db
 // Lazy so nothing is built unless the fake client is actually used.
 const getDb = () => (_db ??= withDevOrg(makeFixtures()))
@@ -114,6 +126,17 @@ export const devSupabase = {
       const body = opts?.body || {}
       if (name === 'charter' && body.action === 'questions') {
         return { data: { questions: DEV_CHARTER_QUESTIONS }, error: null }
+      }
+      // Same idea for the Project Discovery Questionnaire. 'evaluate' nudges once
+      // for any vital answer under 8 characters so the follow-up screen is
+      // reachable; 'suggest_methodology' proposes a switch so that screen is too.
+      if (name === 'scoping') {
+        if (body.action === 'questions') return { data: { questions: DEV_SCOPING_QUESTIONS[body.stage] || [] }, error: null }
+        if (body.action === 'evaluate') {
+          const thin = (body.answers || []).filter((a) => a.vital && (a.answer || '').trim().length < 8)
+          return { data: { sufficient: thin.length === 0, followups: thin.map((a) => ({ questionId: a.id, prompt: 'Could you say a little more here?' })) }, error: null }
+        }
+        if (body.action === 'suggest_methodology') return { data: { suggestedMethodology: 'hybrid', reason: 'Fixed milestones with an uncertain scope suit a hybrid approach.' }, error: null }
       }
       return { data: null, error: { message: 'AI functions are disabled in dev preview mode.' } }
     },

@@ -76,11 +76,10 @@ export function makeFixtures() {
   ]
   const sprint_retros = [{ id: 'r1', sprint_id: 'sp-por1', went_well: ['Shipped password reset early'], didnt_go_well: ['Ticket history estimate was off'], action_items: ['Split large stories'], is_locked: false, created_at: ts(-1), updated_at: ts(-1) }]
 
+  // The owner is never a project_collaborators row (the invite RPC refuses it);
+  // AssigneePicker synthesizes the owner entry from projects.owner_id/owner_email.
   const project_collaborators = [
-    { id: 'pc1', project_id: 'p-wms', user_id: OWNER, email: 'dev@localhost', role: 'owner', hidden: false, created_at: ts(-90) },
     { id: 'pc2', project_id: 'p-wms', user_id: 'u2', email: 'a.patel@example.com', role: 'editor', hidden: false, created_at: ts(-80) },
-    { id: 'pc3', project_id: 'p-app', user_id: OWNER, email: 'dev@localhost', role: 'owner', hidden: false, created_at: ts(-60) },
-    { id: 'pc4', project_id: 'p-portal', user_id: OWNER, email: 'dev@localhost', role: 'owner', hidden: false, created_at: ts(-40) },
   ]
 
   const project_evaluations = [
