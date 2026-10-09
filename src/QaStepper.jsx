@@ -48,7 +48,7 @@ function QaStepper({
         aria-valuenow={step + 1}
       >
         {questions.map((q, i) => (
-          <span key={q.id} className={i <= step ? 'on' : ''} aria-hidden="true" />
+          <span key={q.id} className={i < step ? 'on' : i === step ? 'on current' : ''} aria-hidden="true" />
         ))}
       </div>
 

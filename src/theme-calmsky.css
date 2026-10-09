@@ -319,3 +319,107 @@
   background: #282521;
   color: var(--text-muted);
 }
+
+/* ------------------------------------------------------------------ */
+/* Stage 3: Q&A step (QaStepper.jsx, QaQuestion.jsx)                   */
+/* ------------------------------------------------------------------ */
+
+/* Segmented progress: finished steps muted, the current one in the accent. */
+:root[data-theme='calmsky'] .qa-progress {
+  display: flex;
+  gap: 5px;
+  margin: 4px 0 18px;
+}
+
+:root[data-theme='calmsky'] .qa-progress span {
+  flex: 1;
+  height: 5px;
+  border-radius: 5px;
+  background: #282521;
+}
+
+:root[data-theme='calmsky'] .qa-progress span.on {
+  background: var(--text-muted);
+}
+
+:root[data-theme='calmsky'] .qa-progress span.current {
+  background: var(--accent);
+}
+
+:root[data-theme='calmsky'] .qa-stepper .step-label {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+:root[data-theme='calmsky'] .qa-question-text {
+  display: block;
+  margin-bottom: 14px;
+  font-family: var(--heading);
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--text-h);
+}
+
+/* Answer field: rounded, accent ring on focus. Ghost text is the placeholder. */
+:root[data-theme='calmsky'] .qa-field {
+  position: relative;
+}
+
+:root[data-theme='calmsky'] .qa-answer-input {
+  min-height: 112px;
+  padding: 16px 18px 40px;
+  border: 1.5px solid var(--input-border);
+  border-radius: var(--radius-lg);
+  background: var(--card-bg);
+  font-size: 15px;
+}
+
+:root[data-theme='calmsky'] .qa-answer-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+:root[data-theme='calmsky'] .qa-answer-input::placeholder {
+  color: #847e72;
+  opacity: 1;
+}
+
+:root[data-theme='calmsky'] .qa-field-hint {
+  position: absolute;
+  right: 14px;
+  bottom: 10px;
+  display: flex;
+  gap: 14px;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+:root[data-theme='calmsky'] .qa-field-hint .qa-suggestion-link:first-of-type {
+  margin-left: 0;
+  color: var(--accent);
+}
+
+:root[data-theme='calmsky'] .qa-field-hint .qa-suggestion-link:last-of-type {
+  color: var(--text-muted);
+}
+
+:root[data-theme='calmsky'] .qa-field-hint kbd {
+  padding: 0 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Choice buttons: round pills. */
+:root[data-theme='calmsky'] .priority-buttons button {
+  border-radius: 999px;
+}
+
+:root[data-theme='calmsky'] .modal-actions {
+  margin-top: 20px;
+}
