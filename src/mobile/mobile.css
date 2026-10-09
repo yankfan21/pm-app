@@ -262,7 +262,7 @@ html:has(.mobile-app) body {
 .mobile-demo-badge {
   display: inline-block;
   padding: 1px 7px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-size: 10px;
   font-weight: 500;
   white-space: nowrap;
@@ -369,7 +369,7 @@ html:has(.mobile-app) body {
      out. */
   text-align: left;
   padding: 14px 16px;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   background: var(--card-bg);
   backdrop-filter: var(--card-backdrop-filter);
@@ -409,7 +409,7 @@ html:has(.mobile-app) body {
   align-items: center;
   gap: 8px;
   padding: 14px 16px;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   background: var(--card-bg);
   color: inherit;
@@ -458,7 +458,7 @@ html:has(.mobile-app) body {
   justify-content: center;
   min-height: 32px;
   padding: 5px 7px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   border: 1px solid var(--border);
   background: var(--card-bg);
   backdrop-filter: var(--card-backdrop-filter);
@@ -471,7 +471,7 @@ html:has(.mobile-app) body {
 .mobile-filter-chip.selected {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .mobile-task-list {
@@ -488,7 +488,7 @@ html:has(.mobile-app) body {
   align-items: center;
   gap: 10px;
   padding: 12px;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   background: var(--card-bg);
   backdrop-filter: var(--card-backdrop-filter);
@@ -501,10 +501,10 @@ html:has(.mobile-app) body {
   justify-content: center;
   width: 44px;
   height: 44px;
-  border-radius: 50%;
+  border-radius: var(--radius-round);
   border: 2px solid var(--border);
   background: transparent;
-  color: #fff;
+  color: var(--on-accent);
   font-size: 14px;
   line-height: 1;
   cursor: pointer;
@@ -549,7 +549,7 @@ html:has(.mobile-app) body {
 
 .mobile-status-badge {
   padding: 2px 8px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-size: 11px;
 }
 
@@ -589,7 +589,7 @@ html:has(.mobile-app) body {
 
 .mobile-status-option {
   padding: 8px 12px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border);
   background: var(--card-bg);
   backdrop-filter: var(--card-backdrop-filter);
@@ -642,7 +642,7 @@ html:has(.mobile-app) body {
 
 .mobile-comment {
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   background: var(--card-bg);
   backdrop-filter: var(--card-backdrop-filter);
@@ -678,7 +678,7 @@ html:has(.mobile-app) body {
   min-height: 44px;
   font-size: 12px;
   padding: 4px 10px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--card-bg);
   backdrop-filter: var(--card-backdrop-filter);
@@ -715,7 +715,7 @@ html:has(.mobile-app) body {
   width: 100%;
   padding: 12px;
   border: 1px solid var(--mobile-danger);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--mobile-danger);
   font: inherit;
@@ -728,7 +728,7 @@ html:has(.mobile-app) body {
 
 .mobile-btn-danger-filled:hover {
   background: var(--mobile-danger);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .mobile-btn-danger-filled:disabled {
@@ -746,9 +746,9 @@ html:has(.mobile-app) body {
   width: 100%;
   padding: 12px;
   border: 1px solid var(--accent);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   font: inherit;
   font-weight: 600;
   cursor: pointer;
@@ -766,7 +766,7 @@ html:has(.mobile-app) body {
 .mobile-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--scrim);
   display: flex;
   align-items: flex-end;
   z-index: 50;
@@ -788,7 +788,7 @@ html:has(.mobile-app) body {
 .mobile-comment-edit textarea,
 .mobile-comment-form textarea {
   width: 100%;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border);
   padding: 8px;
   font: inherit;
@@ -809,10 +809,10 @@ html:has(.mobile-app) body {
   align-self: flex-start;
   min-height: 44px;
   padding: 8px 16px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   border: none;
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   font-size: 13px;
   cursor: pointer;
 }
@@ -849,7 +849,7 @@ html:has(.mobile-app) body {
   width: 100%;
   min-height: 44px;
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border);
   font-family: inherit;
   font-size: 16px;
@@ -900,10 +900,10 @@ html:has(.mobile-app) body {
   align-self: flex-start;
   min-height: 44px;
   padding: 8px 16px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   border: none;
   background: var(--accent-strong);
-  color: #fff;
+  color: var(--on-accent);
   font-size: 13px;
   cursor: pointer;
 }
@@ -925,10 +925,10 @@ html:has(.mobile-app) body {
   align-self: flex-start;
   min-height: 44px;
   padding: 8px 16px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   border: none;
   background: var(--accent-strong);
-  color: #fff;
+  color: var(--on-accent);
   font-size: 13px;
   cursor: pointer;
 }
@@ -975,7 +975,7 @@ html:has(.mobile-app) body {
 
 .mobile-board-card {
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   background: var(--card-bg);
   backdrop-filter: var(--card-backdrop-filter);
@@ -1026,7 +1026,7 @@ html:has(.mobile-app) body {
   align-items: center;
   font-size: 11px;
   padding: 5px 10px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: transparent;
   color: var(--text-muted);
@@ -1046,7 +1046,7 @@ html:has(.mobile-app) body {
 
 .mobile-metrics-card {
   padding: 14px 16px;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   background: var(--card-bg);
   backdrop-filter: var(--card-backdrop-filter);
@@ -1068,7 +1068,7 @@ html:has(.mobile-app) body {
    left as-is since it's pinned to --zone-accent-neutral, which didn't
    change. */
 :root[data-theme='dark'] .mobile-metrics-card {
-  background: #2a354d;
+  background: var(--mobile-surface-raised);
   border-color: rgba(148, 163, 184, 0.3);
 }
 
@@ -1082,7 +1082,7 @@ html:has(.mobile-app) body {
 .mobile-health-badge {
   display: inline-block;
   padding: 3px 10px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-size: 12px;
   font-weight: 600;
   background: var(--pill-neutral-bg);
@@ -1108,7 +1108,7 @@ html:has(.mobile-app) body {
   font-size: 11px;
   font-weight: 600;
   padding: 2px 9px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--badge-success-bg);
   color: var(--badge-success-text);
 }
@@ -1205,7 +1205,7 @@ html:has(.mobile-app) body {
 }
 
 .mobile-doc-card {
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   background: var(--card-bg);
   backdrop-filter: var(--card-backdrop-filter);
@@ -1280,7 +1280,7 @@ html:has(.mobile-app) body {
   font-weight: 600;
   line-height: 18px;
   padding: 2px 9px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--pill-neutral-bg);
   color: var(--pill-neutral-text);
 }
@@ -1350,7 +1350,7 @@ html:has(.mobile-app) body {
 
 .mobile-doc-risk-card {
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border);
   background: var(--surface-1-solid);
 }
@@ -1386,7 +1386,7 @@ html:has(.mobile-app) body {
 
 .mobile-doc-status-entry {
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border);
   background: var(--surface-1-solid);
 }
@@ -1412,7 +1412,7 @@ html:has(.mobile-app) body {
   justify-content: center;
   min-height: 44px;
   padding: 8px 14px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border);
   background: var(--card-bg);
   backdrop-filter: var(--card-backdrop-filter);
@@ -1424,7 +1424,7 @@ html:has(.mobile-app) body {
 .mobile-settings-option.selected {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .mobile-settings-hidden-row {
@@ -1433,7 +1433,7 @@ html:has(.mobile-app) body {
   align-items: center;
   gap: 8px;
   padding: 12px;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   background: var(--card-bg);
   backdrop-filter: var(--card-backdrop-filter);
@@ -1460,7 +1460,7 @@ html:has(.mobile-app) body {
   min-height: 44px;
   font-size: 12px;
   padding: 6px 12px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--card-bg);
   backdrop-filter: var(--card-backdrop-filter);
