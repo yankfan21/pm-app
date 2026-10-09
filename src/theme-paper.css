@@ -154,3 +154,116 @@
   font-family: var(--heading);
   font-weight: 500;
 }
+
+/* ------------------------------------------------------------------ */
+/* Project list (Dashboard + All Projects) - ProjectList.jsx           */
+/* ------------------------------------------------------------------ */
+
+/* Card: a ruled document sheet instead of a left-bar tile. The 2px top rule
+   is ink by default and carries the priority/health signal the left bar and
+   background wash used to (amber = watch, red = at risk, grey = archived).
+   Status is still spelled out in the badge, so colour is never the only cue. */
+:root[data-theme='paper'] .project-list li:not(.empty) {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 18px 14px;
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--text-h);
+  border-radius: var(--radius-lg);
+  background: var(--card-bg);
+}
+
+:root[data-theme='paper'] .project-list li.accent-amber {
+  border-top-color: var(--card-accent-amber);
+}
+
+:root[data-theme='paper'] .project-list li.accent-red {
+  border-top-color: var(--card-accent-red);
+}
+
+:root[data-theme='paper'] .project-list li.accent-muted {
+  border-top-color: var(--border);
+}
+
+:root[data-theme='paper'] .project-list li.clickable:hover {
+  border-color: #d9d2c4;
+  transform: none;
+}
+
+/* Eyebrow (methodology, demo) above the title; title below it, free to wrap. */
+:root[data-theme='paper'] .project-card-top {
+  flex-direction: column-reverse;
+  align-items: stretch;
+  gap: 6px;
+}
+
+:root[data-theme='paper'] .project-card-badges {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  /* Fixed height so a card with a Demo pill doesn't push its title lower
+     than its neighbours'. */
+  min-height: 20px;
+}
+
+:root[data-theme='paper'] .project-card-badges .methodology-badge {
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+:root[data-theme='paper'] .project-card-badges .demo-badge {
+  padding: 1px 7px;
+  font-size: 10px;
+  letter-spacing: 0.02em;
+}
+
+:root[data-theme='paper'] .project-card-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-family: var(--heading);
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: -0.1px;
+  white-space: normal;
+}
+
+:root[data-theme='paper'] .project-card-desc {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  margin: 8px 0 14px;
+  font-size: 13.5px;
+  line-height: 1.4;
+  color: var(--text-muted);
+  white-space: normal;
+}
+
+/* Status row pinned to the card bottom under a hairline, so cards of unequal
+   copy length still align across a grid row. */
+:root[data-theme='paper'] .project-card-bottom {
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+/* Search and filters: neutral hairlines; teal is reserved for the selected
+   state and focus. */
+:root[data-theme='paper'] .filter-tab {
+  border-color: var(--border);
+}
+
+:root[data-theme='paper'] .filter-tab.selected {
+  border-color: var(--accent-border);
+}
