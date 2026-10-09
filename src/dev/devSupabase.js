@@ -21,7 +21,7 @@ const getDb = () => (_db ??= withDevOrg(makeFixtures()))
 function withDevOrg(db) {
   if (import.meta.env.VITE_DEV_ORG !== 'true') return db
   db.organizations = [{ id: 'org-dev', app_name: 'Northwind Projects', logo_path: null, accent_color: '#b45309', rail_color: '#1f2a44' }]
-  db.organization_members = [{ organization_id: 'org-dev', user_id: 'dev-bypass-user', role: 'admin', created_at: new Date().toISOString() }]
+  db.organization_members = [{ organization_id: 'org-dev', user_id: 'dev-bypass-user', created_at: new Date().toISOString() }]
   return db
 }
 let nextId = 1000

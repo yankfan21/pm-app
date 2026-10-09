@@ -6,17 +6,16 @@
 -- when there is more than one; the app does not offer a switcher yet).
 --
 -- WHO CAN DO WHAT
---   * Read:   members read their own organization; nobody else can.
---   * Update: organization admins can change ONLY the four branding columns
---             (app_name, logo_path, accent_color, rail_color) of their own
---             organization. Enforced twice: RLS (is_org_admin) and column-level
---             UPDATE grants, so name/id/created_at cannot be changed from the
---             client even by an admin.
---   * Create organizations and manage membership: platform admin only, from the
---     SQL editor / service role (see the example at the bottom). There are no
---     client INSERT/UPDATE/DELETE policies on organization_members, and none for
---     INSERT/DELETE on organizations, so a signed-in user cannot grant
---     themselves membership or create an organization.
+--   * Read:   members read their own organization, their own membership rows and
+--             their organization's logos; nobody else can.
+--   * Write:  nobody from the client. Branding is owner-managed: the platform
+--             owner creates organizations, manages membership, sets branding and
+--             uploads logos from the Supabase dashboard (SQL editor / Storage
+--             page) or the service role, which bypass RLS. There are no client
+--             INSERT/UPDATE/DELETE policies or grants on organizations or
+--             organization_members, and none for writes to the logo bucket, so
+--             a signed-in user cannot grant themselves membership, create an
+--             organization or change branding. See BRANDING.md.
 --
 -- VALUES ARE VALIDATED IN THE DATABASE, not just the UI. Colours must be exactly
 -- #rrggbb, because the app writes them into CSS. app_name may not contain < >
@@ -50,7 +49,6 @@ create table if not exists organizations (
 create table if not exists organization_members (
   organization_id uuid not null references organizations(id) on delete cascade,
   user_id uuid not null references auth.users(id) on delete cascade,
-  role text not null default 'member' check (role in ('admin', 'member')),
   created_at timestamptz not null default now(),
   primary key (organization_id, user_id)
 );
@@ -91,23 +89,8 @@ as $$
   );
 $$;
 
-create or replace function public.is_org_admin(p_org_id uuid)
-returns boolean
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select exists (
-    select 1 from public.organization_members
-    where organization_id = p_org_id and user_id = auth.uid() and role = 'admin'
-  );
-$$;
-
 revoke all on function public.is_org_member(uuid) from public;
-revoke all on function public.is_org_admin(uuid) from public;
 grant execute on function public.is_org_member(uuid) to authenticated;
-grant execute on function public.is_org_admin(uuid) to authenticated;
 
 -- ── row level security ────────────────────────────────────────────────
 
@@ -119,30 +102,23 @@ create policy "members can read their organization" on organizations
   for select to authenticated
   using (public.is_org_member(id));
 
-drop policy if exists "org admins can update branding" on organizations;
-create policy "org admins can update branding" on organizations
-  for update to authenticated
-  using (public.is_org_admin(id))
-  with check (public.is_org_admin(id));
-
 drop policy if exists "users can read their own memberships" on organization_members;
 create policy "users can read their own memberships" on organization_members
   for select to authenticated
-  using (user_id = auth.uid() or public.is_org_admin(organization_id));
+  using (user_id = auth.uid());
 
 -- Supabase grants new public tables to anon/authenticated by default; narrow
 -- that to exactly what the policies above intend.
 revoke all on organizations from anon, authenticated;
 revoke all on organization_members from anon, authenticated;
 grant select on organizations to authenticated;
-grant update (app_name, logo_path, accent_color, rail_color) on organizations to authenticated;
 grant select on organization_members to authenticated;
 
 -- ── logo storage ──────────────────────────────────────────────────────
 -- org_id_from_logo_path never raises: it returns NULL for any object name that
 -- is not "{uuid}/...", so these policies cannot throw a cast error on objects
 -- in other buckets (Postgres does not guarantee that bucket_id = '...' is
--- evaluated before the cast). is_org_member/is_org_admin(NULL) are false.
+-- evaluated before the cast). is_org_member(NULL) is false.
 create or replace function public.org_id_from_logo_path(p_name text)
 returns uuid
 language sql
@@ -158,7 +134,8 @@ $$;
 -- tags, exports and emails without signed-URL plumbing. Raster formats only
 -- (no SVG: an SVG opened directly can carry script). Objects live at
 -- {organization_id}/{filename}; org_id_from_logo_path(name) recovers the
--- organization id, which is what the write policies check.
+-- organization id, which is what the member read policy checks. Uploads are done
+-- by the owner from the dashboard, which bypasses RLS.
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('org-logos', 'org-logos', true, 1048576, array['image/png', 'image/jpeg', 'image/webp'])
@@ -176,46 +153,6 @@ using (
   and public.is_org_member(public.org_id_from_logo_path(name))
 );
 
-drop policy if exists "org logos: admins can upload" on storage.objects;
-create policy "org logos: admins can upload"
-on storage.objects for insert
-to authenticated
-with check (
-  bucket_id = 'org-logos'
-  and public.is_org_admin(public.org_id_from_logo_path(name))
-);
-
-drop policy if exists "org logos: admins can update" on storage.objects;
-create policy "org logos: admins can update"
-on storage.objects for update
-to authenticated
-using (
-  bucket_id = 'org-logos'
-  and public.is_org_admin(public.org_id_from_logo_path(name))
-)
-with check (
-  bucket_id = 'org-logos'
-  and public.is_org_admin(public.org_id_from_logo_path(name))
-);
-
-drop policy if exists "org logos: admins can delete" on storage.objects;
-create policy "org logos: admins can delete"
-on storage.objects for delete
-to authenticated
-using (
-  bucket_id = 'org-logos'
-  and public.is_org_admin(public.org_id_from_logo_path(name))
-);
-
--- ── creating an organization (platform admin, SQL editor) ─────────────
--- Not run by this migration. Example:
---
---   with org as (
---     insert into organizations (name, app_name, accent_color, rail_color)
---     values ('Northwind Logistics', 'Northwind Projects', '#b45309', '#1f2a44')
---     returning id
---   )
---   insert into organization_members (organization_id, user_id, role)
---   select org.id, u.id, 'admin'
---   from org, auth.users u
---   where u.email = 'someone@northwind.example';
+-- ── creating an organization ─────────────────────────────────────────
+-- Not done by this migration. Copy-paste SQL for creating organizations, adding
+-- users, setting branding and uploading logos is in BRANDING.md.

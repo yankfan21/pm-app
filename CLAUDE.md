@@ -121,15 +121,10 @@ branded. With no org (or no migration applied) the app looks exactly like stock.
 - Wanted for the future, not a launch blocker.
 
 **Next steps, in order:**
-1. Tighten `supabase/migrations/organizations_branding.sql` to match: remove the
-   org-admin UPDATE policy, the column-level UPDATE grant, the admin logo
-   upload/update/delete storage policies, `is_org_admin`, and the `role` column
-   on `organization_members`. Keep member read-only access and the validation
-   checks. The migration is reviewed but has **never been run anywhere**; test it
-   on a throwaway Supabase project, never production first.
-2. Write `BRANDING.md`: copy-paste SQL to create an org, add users, set
-   name/colors, plus how to upload a logo (bucket `org-logos`, path
-   `{organization_id}/{filename}`, png/jpeg/webp, max 1 MB).
+1. ~~Tighten the migration to the owner-managed model~~ — done (admin policies,
+   grants, `is_org_admin` and `role` removed). It has still **never been run
+   anywhere**; test it on a throwaway Supabase project, never production first.
+2. ~~Write `BRANDING.md`~~ — done; verify its SQL on the throwaway project.
 3. Still unchecked: Project Discovery Q&A flow, mobile screens beyond the
    dashboard. Paper is light-only (no dark mode). Dev fixtures list
    `dev-bypass-user` twice in the assignee dropdown (duplicate React key
