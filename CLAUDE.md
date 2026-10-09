@@ -87,3 +87,15 @@ work — just flags for future decisions.
   finds it still sitting on `tasks`, that's expected — it's just inert.
   Eventually: drop `tasks.depends_on` in a migration.
 
+
+- **Idea: full visual redesign + white-label theming.** (Logged 2026-10-09,
+  not scheduled.) Two parts: (1) a new overall look and feel for
+  ConfidantPM, designed using the frontend-design plugin; (2) a theming
+  layer so the app can be branded per customer (their colors and logos)
+  without code changes, for when a company adopts it. Likely approach:
+  move all colors/typography/radii to CSS variables (design tokens), add a
+  per-organization brand config (logo, primary/accent colors, maybe app
+  name) stored in Supabase and applied at load, and do the redesign on top
+  of those tokens so the default ConfidantPM look is just one theme. Open
+  questions: per-org vs. per-user branding, logo storage (Supabase
+  Storage), whether branding also applies to emails and PDF/Excel exports.
