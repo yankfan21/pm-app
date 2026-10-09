@@ -44,9 +44,9 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   text-align: left;
-  background: var(--header-bg);
-  backdrop-filter: var(--card-backdrop-filter);
-  border-right: 1px solid var(--header-border);
+  background: var(--rail-bg);
+  backdrop-filter: var(--rail-backdrop-filter);
+  border-right: 1px solid var(--rail-border);
 }
 
 .app-sidebar-brand {

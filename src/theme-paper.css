@@ -1,0 +1,156 @@
+/* Paper & Ink - the redesign theme (design/directions, direction C).
+   Warm paper canvas, ink-dark rail, serif headings, one teal accent.
+
+   Light only: there is no dark counterpart and no user toggle. During the
+   step-by-step rollout this is switched on by VITE_REDESIGN=true (index.html
+   sets data-theme="paper"); production leaves it unset and keeps the current
+   look. When the redesign is approved the values below move into :root in
+   index.css and the data-theme plumbing goes away.
+
+   Contrast: text pairs here are >= 4.5:1 on their surface. The mockup's muted
+   text (#7b8190) measured 3.5:1 and its green/amber badge text just under
+   4.5:1, so those are a step darker below. */
+
+:root[data-theme='paper'] {
+  color-scheme: light;
+
+  /* Fonts. Self-hosted via @fontsource (main.jsx), no third-party requests. */
+  --sans: 'Instrument Sans Variable', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --heading: 'Fraunces Variable', Georgia, 'Times New Roman', serif;
+
+  /* Radii: tighter, more document-like than the navy theme. */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 6px;
+
+  /* Surfaces and text */
+  --bg: #f6f3ee;
+  --text: #3a3f4a;
+  --text-h: #161b26;
+  --text-muted: #656b7a;
+  --border: #e3ddd2;
+  --code-bg: #ebe6dc;
+  --card-bg: #fffdfa;
+  --card-backdrop-filter: none;
+  --card-shadow: 0 1px 0 #e3ddd2, 0 6px 16px rgba(60, 50, 30, 0.06);
+  --card-hover-shadow: 0 1px 0 #e3ddd2, 0 10px 22px rgba(60, 50, 30, 0.1);
+  --surface-1-solid: #fffdfa;
+  --header-bg: #fffdfa;
+  --header-border: #e3ddd2;
+  --row-bg: #fbf8f3;
+  --row-border: #ece6da;
+  --shadow: 0 1px 0 #e3ddd2, 0 6px 16px rgba(60, 50, 30, 0.08);
+  --social-bg: #ebe6dc;
+
+  /* The one accent (teal). White text on --accent-strong is 5.5:1. */
+  --accent: #0f766e;
+  --accent-muted: #0f766e;
+  --accent-strong: #0f766e;
+  --accent-bg: rgba(15, 118, 110, 0.1);
+  --accent-border: rgba(15, 118, 110, 0.35);
+  --link: #0f766e;
+  --tab-active-bg: rgba(15, 118, 110, 0.12);
+  --tab-active-text: #0f766e;
+  --sort-active: #0f766e;
+  --card-accent-purple: #0f766e;
+  --card-accent-amber: #a85d00;
+  --card-accent-red: #c0392b;
+  --card-tint-purple: rgba(15, 118, 110, 0.05);
+  --card-tint-amber: rgba(168, 93, 0, 0.05);
+  --card-tint-red: rgba(192, 57, 43, 0.05);
+
+  /* Buttons and inputs */
+  --btn-primary-bg: #0f766e;
+  --btn-primary-hover-bg: #115e59;
+  --btn-primary-border: #0f766e;
+  --btn-primary-text: #fff;
+  --btn-primary-backdrop-filter: none;
+  --btn-secondary-border: #d9d2c4;
+  --btn-secondary-text: #161b26;
+  --input-bg: #fffdfa;
+  --input-border: #d9d2c4;
+  --input-text: #161b26;
+  --disabled-bg: #ebe6dc;
+  --disabled-text: #9a9686;
+  --disabled-border: #e3ddd2;
+
+  /* Status */
+  --pill-neutral-bg: #ebe6dc;
+  --pill-neutral-text: #656b7a;
+  --pill-neutral-border: #d9d2c4;
+  --zone-accent-neutral: #9a9686;
+  --alert-red: #c0392b;
+  --badge-success-bg: #dcf3e3;
+  --badge-success-text: #166534;
+  --badge-success-border: rgba(22, 101, 52, 0.3);
+  --badge-warning-bg: #fbe9c9;
+  --badge-warning-text: #8f4f00;
+  --badge-warning-border: rgba(143, 79, 0, 0.3);
+  --badge-danger-bg: #f8dcd8;
+  --badge-danger-text: #a8321f;
+  --badge-danger-border: rgba(168, 50, 31, 0.3);
+  --demo-accent: #0f766e;
+  --demo-accent-bg: rgba(15, 118, 110, 0.1);
+  --demo-accent-border: rgba(15, 118, 110, 0.4);
+
+  /* Rail: ink-dark, no frosted glass, no hairline against the canvas. */
+  --rail-bg: #1c2330;
+  --rail-border: transparent;
+  --rail-backdrop-filter: none;
+}
+
+/* Everything inside the rail is on a dark surface, so re-point the generic
+   tokens for that subtree. The nav, admin box, invite form and store badges
+   all read --text/--accent/--border etc., so they follow without any
+   per-component overrides. */
+:root[data-theme='paper'] .app-sidebar {
+  --text: #aeb7c6;
+  --text-h: #fff;
+  --text-muted: #939cad;
+  --border: rgba(255, 255, 255, 0.12);
+  --code-bg: rgba(255, 255, 255, 0.06);
+  --accent: #5eead4;
+  --accent-muted: #5eead4;
+  --accent-bg: rgba(45, 212, 191, 0.14);
+  --accent-border: rgba(45, 212, 191, 0.4);
+  --link: #5eead4;
+  --btn-secondary-border: rgba(255, 255, 255, 0.18);
+  --btn-secondary-text: #e6eaf1;
+  --input-bg: rgba(255, 255, 255, 0.06);
+  --input-border: rgba(255, 255, 255, 0.18);
+  --input-text: #e6eaf1;
+  --disabled-bg: rgba(255, 255, 255, 0.05);
+  --disabled-text: rgba(230, 234, 241, 0.4);
+}
+
+:root[data-theme='paper'] .app-sidebar-brand-name {
+  font-family: var(--heading);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  color: #fff;
+}
+
+:root[data-theme='paper'] .app-sidebar .brand-name-accent {
+  color: var(--accent);
+}
+
+:root[data-theme='paper'] .app-sidebar-tagline {
+  color: var(--text-muted);
+}
+
+/* Active nav item: tinted row plus a teal bar on the left edge, shared by
+   global nav and both tiers of project nav so they read as one system. */
+:root[data-theme='paper'] .app-sidebar-nav-item.selected,
+:root[data-theme='paper'] .project-nav-primary-item.selected,
+:root[data-theme='paper'] .project-nav-secondary-item.selected {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+/* Page titles. h1/h2 already take --heading; .page-title and the project
+   title get the serif at the weight the mockup uses. */
+:root[data-theme='paper'] .page-title {
+  font-family: var(--heading);
+  font-weight: 500;
+}

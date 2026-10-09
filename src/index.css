@@ -184,6 +184,11 @@
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
+  /* Persistent rail surface (AppShell.jsx). Defaults reproduce the previous
+     header-bg treatment exactly; the Paper theme swaps in an ink-dark rail. */
+  --rail-bg: var(--header-bg);
+  --rail-border: var(--header-border);
+  --rail-backdrop-filter: var(--card-backdrop-filter);
   --serif: Georgia, 'Times New Roman', serif;
 
   /* ---- Design tokens, step 2 of the redesign (no visual change) ----

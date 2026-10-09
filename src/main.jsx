@@ -2,9 +2,18 @@ import { StrictMode } from 'react'
 import { createRoot, hydrateRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { Capacitor } from '@capacitor/core'
+import '@fontsource-variable/fraunces'
+import '@fontsource-variable/instrument-sans'
 import './index.css'
+import './theme-paper.css'
 import App from './App.jsx'
 import { AuthProvider } from './AuthContext.jsx'
+
+// Local preview of the in-progress Paper redesign (src/theme-paper.css).
+// VITE_REDESIGN is unset in production, so the shipped theme is unchanged.
+if (import.meta.env.VITE_REDESIGN === 'true') {
+  document.documentElement.setAttribute('data-theme', 'paper')
+}
 
 const tree = (
   <StrictMode>
