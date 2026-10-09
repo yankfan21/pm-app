@@ -80,7 +80,7 @@ const Q=[
 {s:'metrics',t:'How will you know the project succeeded?',h:'Include a number and a date where you can.',sug:'Pick accuracy above 99.5% within 60 days of go-live',src:'Requirements Brief'},
 {s:'risks',t:'What is the biggest risk to delivery?',type:'choice',c:['Vendor integration slips','Staff training capacity','Budget overrun','Cutover downtime'],h:'You can add the rest in the Risk Log.'},
 {s:'timeline',t:'What is the target go-live date?',h:'Phase dates will be calculated from this, and you can override them.',sug:'2026-12-01',src:'Project record'}];
-const A={};let step=-1,theme='B'; // -1 intro, 0..n-1 questions, n review
+const A={};let step=-1,theme='C'; // -1 intro, 0..n-1 questions, n review
 function themeBar(){return `<div class="themes">${[['A','Navy'],['B','Violet'],['C','Paper']].map(([k,n])=>`<button class="${theme==k?'on':''}" onclick="setTheme('${k}')">${n}</button>`).join('')}</div>`}
 function setTheme(k){theme=k;render()}
 function go(n){step=n;render();document.querySelector('.main').scrollTop=0}
