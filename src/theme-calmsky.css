@@ -578,3 +578,53 @@
 :root[data-theme='calmsky'] .gantt-phase-band {
   background: color-mix(in srgb, var(--text-muted) 38%, transparent);
 }
+
+/* ------------------------------------------------------------------ */
+/* Stage 5: stray navy sweep. Tokens from index.css that still carried */
+/* the slate-navy palette, re-pointed to the warm charcoal family.     */
+/* ------------------------------------------------------------------ */
+:root[data-theme='calmsky'] {
+  /* Slate neutrals -> warm neutrals (auth screens, brand name, muted text) */
+  --neutral-100: #f3efe8;
+  --neutral-200: #e6e1d7;
+  --neutral-300: #cdc7bb;
+  --neutral-400: #a39d90;
+
+  /* Login and password screens */
+  --auth-bg: #171614;
+  --auth-panel: #1f1d1a;
+
+  /* Select option chips and mobile raised surface */
+  --option-pending-bg: #2a2622;
+  --option-pending-text: #e6e1d7;
+  --option-info-bg: #1f2e3c;
+  --option-info-text: #7ab8f0;
+  --mobile-surface-raised: #282521;
+}
+
+/* Legacy solid buttons that filled with --accent-strong and hardcoded white
+   text now match .btn-primary: sky fill, dark ink, pill shape. */
+:root[data-theme='calmsky'] .toggle-group button.selected,
+:root[data-theme='calmsky'] .task-form button,
+:root[data-theme='calmsky'] .backlog-create-form button,
+:root[data-theme='calmsky'] .sprint-create-form button,
+:root[data-theme='calmsky'] .pull-forward-create-sprint button,
+:root[data-theme='calmsky'] .retro-add-form button,
+:root[data-theme='calmsky'] .mobile-risk-form button[type='submit'],
+:root[data-theme='calmsky'] .mobile-status-form button[type='submit'],
+:root[data-theme='calmsky'] .login-btn-primary,
+:root[data-theme='calmsky'] .marketing-cta {
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+:root[data-theme='calmsky'] .marketing-cta:hover {
+  background: var(--btn-primary-hover-bg);
+}
+
+/* Links with no colour rule fell back to the browser's periwinkle default. */
+:where(:root[data-theme='calmsky']) a:not([class]) {
+  color: var(--link);
+}
