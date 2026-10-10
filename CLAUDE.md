@@ -142,12 +142,14 @@ Supabase client throws without a URL).
   calmsky, deliberately): `.mobile-doc-row` content-box overflow, risk-card
   fields with a transparent border (`.risk-cell-input` beats
   `.risk-card-textarea`). Worth fixing in the shipped CSS at launch.
-- `index.html` `theme-color` and `public/manifest.json` `background_color` /
-  `theme_color` are still navy `#1a2130` (affects the browser/status bar, so
-  prod-visible); change at launch together with the icons.
-- Live favicon/PNG icons/manifest in `public/` are untouched (would change
-  prod); re-export from `design/logo/icon-tile.svg` at launch. No outlined
-  wordmark file yet.
+- Done 2026-10-10 (local commits, not pushed, not flag-gated so they ship with
+  the first deploy of this branch): web icons in `public/` (favicon, PNGs,
+  maskables, apple-touch-icon) and native iOS/Android icons plus charcoal
+  splash regenerated from `design/logo/icon-tile.svg` via `@capacitor/assets`
+  (sources in `resources/`); `theme-color` and manifest colours are charcoal
+  `#171614`. Still open: `public/og-image.png` (social share image) still has
+  the old branding; no outlined wordmark file yet; native apps need
+  `npx cap sync` and a rebuild to pick any of this up.
 - Not built because there is no data behind it: the dashboard AI note and
   "Waiting for your decision" list (needs a product decision on what the AI
   flags / what counts as pending); a late-milestone state (milestones have no
