@@ -378,6 +378,21 @@ function GanttChart({ project, tasks, taskDependencies, phases, milestones = [],
     // being remounted in a render where none of the values above changed.
   })
 
+  // "Start" / "Today" jump buttons: the chart opens at today, so a PM
+  // looking at a project that began in the past needs a way back.
+  const jumpTo = (target) => {
+    const wrap = wrapRef.current
+    if (!wrap) return
+    let left = 0
+    if (target === 'today') {
+      const labelWidth = labelHeaderRef.current?.getBoundingClientRect().width ?? 0
+      const visibleTrack = Math.max(0, wrap.clientWidth - labelWidth - COLUMN_GAP_PX)
+      const todayInTrack = ((todayMs - rangeStart) / totalSpan) * trackPxWidth
+      left = Math.max(0, todayInTrack - visibleTrack * 0.25)
+    }
+    wrap.scrollTo({ left, behavior: 'smooth' })
+  }
+
   // Only computed while the toggle is on - cheap either way at this scale,
   // but no reason to run it when nothing reads the result.
   const criticalPath = showCriticalPath ? computeCriticalPath(bars, taskDependencies) : null
@@ -565,6 +580,20 @@ function GanttChart({ project, tasks, taskDependencies, phases, milestones = [],
                 ✕
               </button>
             )}
+          </div>
+          <div className="gantt-zoom-control gantt-jump-control" role="group" aria-label="Jump to">
+            <button type="button" className="gantt-zoom-btn" disabled={bars.length === 0} onClick={() => jumpTo('start')}>
+              ⇤ Start
+            </button>
+            <button
+              type="button"
+              className="gantt-zoom-btn"
+              disabled={bars.length === 0 || !todayInRange}
+              title={todayInRange ? undefined : 'Today is outside this chart’s date range'}
+              onClick={() => jumpTo('today')}
+            >
+              Today
+            </button>
           </div>
           <div className="gantt-zoom-control" role="group" aria-label="Zoom level">
             {ZOOM_LEVELS.map((z) => (
