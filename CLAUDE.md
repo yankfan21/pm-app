@@ -88,6 +88,24 @@ work — just flags for future decisions.
   Eventually: drop `tasks.depends_on` in a migration.
 
 
+### Demo projects (is_demo = true) — dates and Gantt data, 2026-10-10
+
+Demo content is hand-built in production and reset nightly (08:00 UTC,
+`restore_demo_projects()`) from `*_demo_snapshot` tables. As of 2026-10-10
+(`demo_dynamic_dates_and_gantt_showcase.sql`, `demo_gantt_showcase_curated.sql`,
+both already run in production) the reset slides every demo date (tasks,
+phases, milestones, sprints, project deadline) by the whole days since
+`demo_snapshot_meta.anchor_date`, so the demos always sit around today.
+`task_dependencies` is now part of the snapshot (before, the nightly task
+delete cascaded them away and never restored them). Issue/risk/charter
+dates are not shifted. The waterfall and hybrid demos have a hand-written
+schedule: all four statuses, milestone markers, tasks with several
+predecessors. To change demo content: edit it live, then run
+`select public.capture_demo_snapshot();` (this also resets the anchor to
+today). The agile demo has no task dates, so the shift does nothing for it.
+`npx supabase` needs a login in this checkout (`supabase login`, then
+`link`), and `~/.npm` is root-owned: use `npm_config_cache=<scratch dir>`.
+
 ## CalmSky_Redesign and white-label branding — status as of 2026-10-10
 
 **LIVE as of 2026-10-10.** The redesign was merged to `main` (fast-forward) and
