@@ -88,46 +88,88 @@ work — just flags for future decisions.
   Eventually: drop `tasks.depends_on` in a migration.
 
 
-## Redesign ("Paper" theme) and white-label branding — status as of 2026-10-09
+## CalmSky_Redesign and white-label branding — status as of 2026-10-09
 
-Work lives on branch `claude/wonderful-lovelace-7l64oi`. Everything is behind
-`VITE_REDESIGN=true`; with it unset the shipped theme is unchanged. **Launch
-timing is the owner's call: a new prod version ships when they decide. Do not
-merge, push or deploy the redesign unprompted.** Local commits are fine; ask
-before pushing.
+Work lives on branch `claude/wonderful-lovelace-7l64oi` (a git worktree at
+`~/pm-app-redesign`). Everything is behind `VITE_CALMSKY_REDESIGN=true`; with
+it unset the shipped navy theme is unchanged. **Launch timing is the owner's
+call: a new prod version ships when they decide. Do not merge, push or deploy
+the redesign unprompted.** Local commits are fine; ask before pushing. Never
+run the branding migration against production.
 
-Local preview: `.env.local` (git-ignored) with `VITE_DEV_BYPASS_AUTH=true` and
-`VITE_REDESIGN=true`, then `npm run dev`. The bypass swaps in an in-memory fake
-Supabase (`src/dev/`) with sample data; it only works when `import.meta.env.DEV`
-is true, so it can never be on in a production build. Add `VITE_DEV_ORG=true` to
-preview a sample branded organization.
+The earlier light "Paper" theme was removed (commit 5dccf96). The owner
+rejected light themes (tinted looked dirty, white stark), purple/magenta, ice
+white, glows and heavy effects, and the bold palettes.
 
-**Done:** token foundation, Paper shell/nav, project lists, Q&A flows, Gantt,
-marketing and public screens, desktop walkthrough fixes (phase note size, sprint
-board controls). Branding layer: `src/branding/color.js` (contrast-safe token
-derivation; run `node --test src/branding/color.test.js`, a directory argument
-fails on Node 24), `src/branding/BrandingContext.jsx` (loads the user's org and
-sets `--brand-*` variables), Paper tokens read them with the teal fallback,
-sidebar shows the org app name/logo and hides ConfidantPM's store badges when
-branded. With no org (or no migration applied) the app looks exactly like stock.
+**Decided look ("Friendly" dark, Calm Sky accent):** warm charcoal base
+(#171614, cards #1f1d1a), calm sky accent #7ab8f0 for primary actions, nav and
+Today only, round shapes (pill buttons, 18px cards), Schibsted Grotesk
+headings + Hanken Grotesk body, human greeting copy, muted traffic-light
+statuses, light "document" pages for Comms outputs, subtle quick motion,
+balanced density. Logo: open C ring with a milestone diamond, "PM" in the
+wordmark carried by the accent. Reference mockups: `design/dark/friendly.html`
+and `friendly-screens.html`; logo files in `design/logo/` (SVG); real-app
+screenshots in `design/screens/` (desktop) and `design/screens/mobile/`.
 
-**Branding decisions (owner):**
-- Per organization only. No per-user themes. A user in several orgs gets the
-  oldest membership's branding (no switcher yet).
-- **The owner sets branding, not customers.** No customer-facing branding
-  settings screen and no org-admin editing. Branding is written only by the
-  owner through the Supabase dashboard (SQL editor + Storage page) / service
-  role.
-- Wanted for the future, not a launch blocker.
+**How it is built:** `src/theme-calmsky.css` overrides the index.css tokens
+under `:root[data-theme='calmsky']`, plus component rules per stage.
+`src/main.jsx` sets `data-theme` from the flag; `src/redesign.js` exports
+`CALMSKY` for gating JSX. Components that only exist in the redesign
+(`CourseLine`, `AvatarStack`) and their extra queries are rendered/run only
+when `CALMSKY` is true. `initialsFromEmail` moved to `src/initials.js`.
 
-**Next steps, in order:**
-1. ~~Tighten the migration to the owner-managed model~~ — done (admin policies,
-   grants, `is_org_admin` and `role` removed). It has still **never been run
-   anywhere**; test it on a throwaway Supabase project, never production first.
-2. ~~Write `BRANDING.md`~~ — done; verify its SQL on the throwaway project.
-3. Still unchecked: Project Discovery Q&A flow, mobile screens beyond the
-   dashboard. Paper is light-only (no dark mode). Dev fixtures list
-   `dev-bypass-user` twice in the assignee dropdown (duplicate React key
-   warning); confirm the real app can't do the same.
-4. Not built (add only if wanted): browser tab title/favicon per org, branded
-   login/marketing pages, branding in emails and PDF/Word exports.
+**Done (all committed locally, nothing pushed):** tokens, logo mark, shell and
+dashboard (greeting, project cards with course line + avatars), Q&A step
+(segmented progress, ghost-text suggestion, Tab accepts while the field is
+empty), Gantt (done solid / not started dashed / in progress tinted / delayed
+red, Today = accent line), stray navy/blue sweep (verified by a computed-colour
+scan of 18 desktop routes), mobile app (home with course-line cards, contrast
+fixes).
+
+**Not done / open:**
+- Login, forgot/reset password and marketing pages: marketing already looked
+  on-theme; login could not be viewed because the dev bypass signs you in
+  (run a second vite with `VITE_DEV_BYPASS_AUTH=false` to see it).
+- Remaining mobile screens (Documents, Status update, Comms, Stakeholders,
+  Issues, Settings detail) not individually checked; no real-device or
+  simulator check yet.
+- Gantt dependency arrows and legend arrows still use slate `#94a3b8` strokes
+  (inline in `GanttChart.jsx`); milestone diamonds not seen rendered (dev data
+  has none); critical-path view not toggled.
+- Closed modals, hidden forms and hover states were not covered by the sweep.
+- Live favicon/PNG icons/manifest in `public/` are untouched (would change
+  prod); re-export from `design/logo/icon-tile.svg` at launch. No outlined
+  wordmark file yet.
+- Not built because there is no data behind it: the dashboard AI note and
+  "Waiting for your decision" list (needs a product decision on what the AI
+  flags / what counts as pending); a late-milestone state (milestones have no
+  done/late field, so the course line only shows passed vs upcoming by date).
+- Health is shown only in the status badge now (amber/red card bars removed).
+- Agile zone indigo (`--agile-accent`) and the document-preview indigo
+  (`--paper-accent`) were deliberately kept.
+- Unresolved from earlier: after "Switch to Hybrid" in Project Discovery the
+  header methodology badge still showed Waterfall; unconfirmed whether that is
+  stale state in the real app or just the dev fake (`ScopingFlow.jsx` writes
+  `projects.methodology` but nothing tells the parent to refresh).
+- `.claude/launch.json` defines the preview server on port 5183 (5173 is often
+  taken by another project's server).
+
+**Local preview:** `.env.local` (git-ignored) with `VITE_DEV_BYPASS_AUTH=true`
+and `VITE_CALMSKY_REDESIGN=true`, then `npm run dev` (or the `calmsky-dev`
+preview on 5183). The bypass swaps in an in-memory fake Supabase (`src/dev/`)
+with sample data and only works when `import.meta.env.DEV` is true. Add
+`VITE_DEV_ORG=true` to preview a sample branded organization. Phone screens
+live under `/m/...` (headless Chrome will not go narrower than ~500px; use
+puppeteer device emulation, see the scratch shoot script approach, or the
+browser pane's mobile viewport).
+
+### White-label branding (PARKED)
+
+Code, migration and `BRANDING.md` stay on the branch, inert; do not work on
+it. Its colour derivation assumed Paper's light surfaces and is not wired to
+the CalmSky tokens. Decisions (owner): per organization only, no per-user
+themes; oldest membership wins for a user in several orgs; **the owner sets
+branding, not customers** (written only via the Supabase dashboard / service
+role, no customer-facing settings or org-admin editing). The migration has
+**never been run anywhere**; test it on a throwaway Supabase project, never
+production first. Wanted for the future, not a launch blocker.
