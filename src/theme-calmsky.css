@@ -718,3 +718,14 @@
 :root[data-theme='calmsky'] body.login-route {
   background-color: var(--auth-panel);
 }
+
+/* Mobile fixes found in the remaining-screens pass. The locked document row is
+   a div (content-box) at width 100% plus padding, so its badge ran off the
+   card; the desktop link is a button and fell back to the system font. */
+:root[data-theme='calmsky'] .mobile-doc-row {
+  box-sizing: border-box;
+}
+
+:root[data-theme='calmsky'] .mobile-desktop-link {
+  font-family: inherit;
+}
