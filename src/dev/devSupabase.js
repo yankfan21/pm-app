@@ -138,6 +138,14 @@ export const devSupabase = {
         }
         if (body.action === 'suggest_methodology') return { data: { suggestedMethodology: 'hybrid', reason: 'Fixed milestones with an uncertain scope suit a hybrid approach.' }, error: null }
       }
+      // Account deletion: a canned preview so the modal steps can be viewed. Execute stays
+      // disabled (falls through to the error below), so nothing is ever deleted.
+      if (name === 'delete-account' && body.action === 'preview') {
+        return { data: {
+          needs_successor: [{ id: 'p-wms', name: 'Warehouse Management System Rollout', collaborators: [{ id: 'u-1', email: 'a.patel@example.com' }, { id: 'u-2', email: 'j.moreau@example.com' }] }],
+          will_be_deleted: [{ id: 'p-portal', name: 'Customer Portal Redesign' }],
+        }, error: null }
+      }
       return { data: null, error: { message: 'AI functions are disabled in dev preview mode.' } }
     },
   },

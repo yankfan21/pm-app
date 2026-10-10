@@ -118,7 +118,7 @@ under `:root[data-theme='calmsky']`, plus component rules per stage.
 (`CourseLine`, `AvatarStack`) and their extra queries are rendered/run only
 when `CALMSKY` is true. `initialsFromEmail` moved to `src/initials.js`.
 
-**Done (all committed locally, nothing pushed):** tokens, logo mark, shell and
+**Done (all committed locally, nothing pushed):** Gantt critical path now muted amber `#d98f2b` with a 2.5px ring (set under calmsky only; legend arrow follows), mobile delete-account modal scanned clean on 2026-10-10 via a dev-only canned `delete-account` preview in `src/dev/devSupabase.js` (execute stays disabled), tokens, logo mark, shell and
 dashboard (greeting, project cards with course line + avatars), Q&A step
 (segmented progress, ghost-text suggestion, Tab accepts while the field is
 empty), Gantt (done solid / not started dashed / in progress tinted / delayed
@@ -134,12 +134,7 @@ Supabase client throws without a URL).
 **Not done / open:**
 - No real-device or simulator check of the mobile app yet (only headless
   Chrome emulation).
-- Gantt critical-path colour is still bright orange (`--highlight` #f97316) for
-  bars and arrows, which clashes with the muted Friendly palette; on a delayed
-  bar the orange ring blends with the red fill. Owner's call (muted amber, or
-  the sky accent with a heavier stroke).
-- Not covered by the 2026-10-10 hover/focus/modal crawl (`design/tools/`): the
-  mobile delete-account modal (the crawler skips delete actions), states that
+- Not covered by the 2026-10-10 hover/focus/modal crawl (`design/tools/`): states that
   only appear after other interactions, and the dashboard AI note / waiting
   list (not built).
 - Known leftovers that are harmless: `.revision-preview` navy tint (6%),
