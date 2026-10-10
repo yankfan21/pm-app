@@ -174,12 +174,13 @@ export function ExecutionGanttRoute() {
 // thing the page itself does.
 export function ExecutionListWaterfallRoute() {
   const { project, tasks, collaborators } = useOutletContext()
+  const scheduledTasks = useMemo(() => tasks.filter((t) => t.backlog_status == null), [tasks])
   return (
     <MethodologySection side="waterfall">
       <TaskListView
         title="List (Tasks)"
         variant="waterfall"
-        tasks={tasks.filter((t) => t.backlog_status == null)}
+        tasks={scheduledTasks}
         collaborators={collaborators}
         project={project}
         expanded
@@ -190,12 +191,13 @@ export function ExecutionListWaterfallRoute() {
 
 export function ExecutionTeamWaterfallRoute() {
   const { project, tasks, collaborators } = useOutletContext()
+  const scheduledTasks = useMemo(() => tasks.filter((t) => t.backlog_status == null), [tasks])
   return (
     <MethodologySection side="waterfall">
       <TeamView
         title="Team (Tasks)"
         variant="waterfall"
-        tasks={tasks.filter((t) => t.backlog_status == null)}
+        tasks={scheduledTasks}
         collaborators={collaborators}
         project={project}
         expanded
@@ -289,12 +291,13 @@ export function ExecutionSprintRetroRoute() {
 
 export function ExecutionListAgileRoute() {
   const { project, tasks, collaborators } = useOutletContext()
+  const backlogTasks = useMemo(() => tasks.filter((t) => t.backlog_status != null), [tasks])
   return (
     <MethodologySection side="agile">
       <TaskListView
         title="List (Backlog)"
         variant="agile"
-        tasks={tasks.filter((t) => t.backlog_status != null)}
+        tasks={backlogTasks}
         collaborators={collaborators}
         project={project}
         expanded
@@ -305,12 +308,13 @@ export function ExecutionListAgileRoute() {
 
 export function ExecutionTeamAgileRoute() {
   const { project, tasks, collaborators, sprints, selectedSprintId } = useOutletContext()
+  const backlogTasks = useMemo(() => tasks.filter((t) => t.backlog_status != null), [tasks])
   return (
     <MethodologySection side="agile">
       <TeamView
         title="Team (Backlog)"
         variant="agile"
-        tasks={tasks.filter((t) => t.backlog_status != null)}
+        tasks={backlogTasks}
         collaborators={collaborators}
         project={project}
         sprints={sprints}
