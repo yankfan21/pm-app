@@ -49,6 +49,8 @@ export function makeFixtures() {
     T('t8', 'p-wms', 'User acceptance testing', { s: 20, e: 35, ph: 3, who: 'R. Chen', m: 'm2' }),
     T('t9', 'p-wms', 'Cutover rehearsal', { s: 40, e: 55, ph: 3, who: 'A. Patel' }),
     T('t10', 'p-wms', 'Go-live cutover', { s: 70, e: 75, ph: 3, who: 'A. Patel', m: 'm3', pr: 'High' }),
+    T('t13', 'p-wms', 'UAT sign-off', { s: 35, e: 35, ph: 3, type: 'milestone_marker' }),
+    T('t14', 'p-wms', 'Vendor selected', { s: -55, e: -55, ph: 1, type: 'milestone_marker', status: 'completed' }),
     T('t11', 'p-wms', 'Hypercare support', { s: 75, e: 105, ph: 4, who: 'S. Okafor' }),
     T('t12', 'p-wms', 'Post-implementation review', { s: 105, e: 120, ph: 4 }),
     T('a1', 'p-app', 'Design system audit', { s: -45, e: -20, ph: 1, status: 'completed', who: 'L. Brandt' }),
@@ -67,6 +69,8 @@ export function makeFixtures() {
     { task_id: 't8', depends_on_id: 't6', created_at: ts(-50) },
     { task_id: 't9', depends_on_id: 't8', created_at: ts(-50) },
     { task_id: 't10', depends_on_id: 't9', created_at: ts(-50) },
+    { task_id: 't13', depends_on_id: 't8', created_at: ts(-50) },
+    { task_id: 't10', depends_on_id: 't13', created_at: ts(-50) },
   ]
 
   const sprints = [

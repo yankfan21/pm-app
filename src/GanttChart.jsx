@@ -947,15 +947,15 @@ function GanttChart({ project, tasks, taskDependencies, phases, milestones = [],
           </span>
           <span className="gantt-legend-item">
             <svg className="gantt-legend-arrow" viewBox="0 0 20 12" width="20" height="12" aria-hidden="true">
-              <path d="M0,3 H10 V9 H14" fill="none" stroke="#94a3b8" strokeWidth="1.5" />
-              <path d="M14,6 L20,9 L14,12 Z" fill="#94a3b8" />
+              <path d="M0,3 H10 V9 H14" fill="none" style={{ stroke: 'var(--neutral-400)' }} strokeWidth="1.5" />
+              <path d="M14,6 L20,9 L14,12 Z" style={{ fill: 'var(--neutral-400)' }} />
             </svg>
             Dependency
           </span>
           <span className="gantt-legend-item">
             <svg className="gantt-legend-arrow" viewBox="0 0 20 12" width="20" height="12" aria-hidden="true">
-              <path d="M0,3 H10 V9 H14" fill="none" stroke="#94a3b8" strokeWidth="1.5" strokeDasharray="3 2" />
-              <path d="M14,6 L20,9 L14,12 Z" fill="#94a3b8" />
+              <path d="M0,3 H10 V9 H14" fill="none" style={{ stroke: 'var(--neutral-400)' }} strokeWidth="1.5" strokeDasharray="3 2" />
+              <path d="M14,6 L20,9 L14,12 Z" style={{ fill: 'var(--neutral-400)' }} />
             </svg>
             Multiple predecessors
           </span>
