@@ -155,7 +155,7 @@ Supabase client throws without a URL).
 - Health is shown only in the status badge now (amber/red card bars removed).
 - Agile zone indigo (`--agile-accent`) and the document-preview indigo
   (`--paper-accent`) were deliberately kept.
-- Fixed 2026-10-10 (build-verified, not yet clicked through in the browser): the
+- Fixed 2026-10-10 (verified by clicking through in the dev preview: the badge switches to Hybrid with no reload): the
   "Switch to Hybrid" header badge staying on Waterfall was real stale state, not
   just the dev fake. `ScopingFlow` now takes `onProjectUpdated`, and the two
   callers (`ProjectDocSectionRoutes.jsx`, `DocumentsRoute.jsx`) pass `setProject`,

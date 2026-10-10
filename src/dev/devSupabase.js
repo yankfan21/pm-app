@@ -77,6 +77,7 @@ function builder(table) {
       const hit = rows.filter((r) => matchesFilters(r, state.filters))
       if (state.mode === 'update') hit.forEach((r) => Object.assign(r, state.payload))
       else db[table] = rows.filter((r) => !hit.includes(r))
+      if (state.single) return { data: hit[0] ?? null, error: null }
       return { data: hit, error: null }
     }
     let out = rows.filter((r) => matchesFilters(r, state.filters)).map((r) => ({ ...r }))
