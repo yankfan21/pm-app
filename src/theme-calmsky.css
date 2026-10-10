@@ -300,9 +300,9 @@
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  width: 24px;
-  height: 24px;
-  margin-left: -7px;
+  width: 26px;
+  height: 26px;
+  margin-left: -4px;
   border: 2px solid var(--card-bg);
   border-radius: 50%;
   color: #171614;
@@ -627,4 +627,63 @@
 /* Links with no colour rule fell back to the browser's periwinkle default. */
 :where(:root[data-theme='calmsky']) a:not([class]) {
   color: var(--link);
+}
+
+/* ------------------------------------------------------------------ */
+/* Stage 6: mobile app (src/mobile)                                    */
+/* ------------------------------------------------------------------ */
+:root[data-theme='calmsky'] {
+  /* Dark ink on sky fills: filter chips, done marks, mobile form buttons. */
+  --on-accent: #071827;
+}
+
+:root[data-theme='calmsky'] .mobile-brand-name {
+  font-family: var(--heading);
+  letter-spacing: -0.02em;
+  color: var(--text-h);
+}
+
+:root[data-theme='calmsky'] .mobile-brand-name-accent {
+  color: var(--accent);
+}
+
+:root[data-theme='calmsky'] .mobile-screen-title {
+  font-family: var(--heading);
+  letter-spacing: -0.02em;
+}
+
+:root[data-theme='calmsky'] .mobile-app-body--root .mobile-screen-title {
+  text-align: left;
+  font-size: 26px;
+  line-height: 1.15;
+}
+
+/* Project cards on mobile home: name and methodology on top, then the course
+   line, then people and go-live date. */
+:root[data-theme='calmsky'] .mobile-project-list-item {
+  flex-wrap: wrap;
+  row-gap: 4px;
+  border-color: var(--row-border);
+}
+
+:root[data-theme='calmsky'] .mobile-project-list-meta {
+  padding: 2px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-muted);
+}
+
+:root[data-theme='calmsky'] .mobile-project-list-item .course-line {
+  flex-basis: 100%;
+  margin: 12px 8px 4px;
+}
+
+:root[data-theme='calmsky'] .mobile-project-list-foot {
+  flex-basis: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
 }
