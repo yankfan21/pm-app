@@ -135,7 +135,7 @@ desktop and phone; login needs `VITE_DEV_BYPASS_AUTH=false` plus dummy
 Supabase client throws without a URL).
 
 **Not done / open:**
-- iOS Simulator check done 2026-10-10 (iPhone 17 Pro, Safari, localhost:5183): home, project overview, More and the Contact form render correctly, no input auto-zoom; found and fixed the iOS system-blue input focus ring (CalmSky-only rule on `.mobile-app`). Not checked on a physical iPhone, and not the Capacitor build.
+- iOS Simulator check done 2026-10-10 (iPhone 17 Pro, Safari, localhost:5183): home, project overview, More and the Contact form render correctly, no input auto-zoom; found and fixed the iOS system-blue input focus ring (CalmSky-only rule on `.mobile-app`). Physical iPhone 13 checked via TestFlight 2026-10-10 (iOS 1.2 build works).
 - Not covered by the 2026-10-10 hover/focus/modal crawl (`design/tools/`): states that
   only appear after other interactions, and the dashboard AI note / waiting
   list (not built).
@@ -189,6 +189,48 @@ with sample data and only works when `import.meta.env.DEV` is true. Add
 live under `/m/...` (headless Chrome will not go narrower than ~500px; use
 puppeteer device emulation, see the scratch shoot script approach, or the
 browser pane's mobile viewport).
+
+### iOS App Store release (1.2, submitted 2026-10-10)
+
+iOS 1.2 (build 1) with the CalmSky look, new icon and charcoal splash was
+uploaded and submitted for App Review on 2026-10-10 (1.0 and 1.1 passed
+review earlier). Live version before it: 1.1. The native app bundles `dist`
+(no `server.url`), so the redesign only reaches phones via a new build.
+
+How a build is made (repeat for the next release):
+1. Put the Supabase values in a git-ignored `.env.production.local`:
+   `VITE_SUPABASE_URL=https://ihualqkokgchmzoeumxo.supabase.co`,
+   `VITE_SUPABASE_ANON_KEY` (publishable key, Supabase > Project Settings >
+   API) and `VITE_CALMSKY_REDESIGN=true`. Without the URL the build and the
+   prerender step fail with "supabaseUrl is required".
+2. Bump `MARKETING_VERSION` (and `CURRENT_PROJECT_VERSION` if the version
+   number is unchanged) in `ios/App/App.xcodeproj/project.pbxproj`. A new
+   version string may restart at build 1; a build number must be unique
+   within a version.
+3. `npm run build`, then `npx cap sync ios`.
+4. Archive: Xcode > Product > Archive on "Any iOS Device (arm64)", or
+   `xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration
+   Release -destination 'generic/platform=iOS' -archivePath <path> -allowProvisioningUpdates archive`
+   (Claude Code can do this locally). Then Xcode > Window > Organizer >
+   Archives > Distribute App > App Store Connect > Upload (owner does the upload).
+5. App Store Connect: add the version, What's New, screenshots, pick the
+   processed build, check App Review login, Submit. Test the build in
+   TestFlight on the phone first.
+
+Gotchas:
+- Run `npx cap open ios` from `~/pm-app-redesign`, not `~/pm-app` (old
+  `ui-redesign` checkout, version 1.0, stale bundle). The Xcode status bar
+  shows the branch; it must read `claude/wonderful-lovelace-7l64oi`.
+- `ITSAppUsesNonExemptEncryption` is false in `Info.plist` (HTTPS only), so
+  App Store Connect no longer asks the export-compliance question per build.
+- Screenshot slots: "iPhone with Dynamic Island (medium display)" takes
+  1206x2622 or 1179x2556 (not 1320x2868); iPad 13" took 2752x2064. Tools:
+  `design/tools/store.mjs <outDir> [6.3]` (phone) and `design/tools/store-ipad.mjs`
+  (iPad, desktop layout). Finished sets are in `design/appstore/upload/`
+  (uncommitted). The dev sample data in `src/dev/devFixtures.js` was extended to six projects
+  for these shots.
+- The native app already hides the "View desktop site" link and store badges
+  (`Capacitor.isNativePlatform`); the capture scripts hide them to match.
 
 ### White-label branding (PARKED)
 
