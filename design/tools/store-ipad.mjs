@@ -17,6 +17,29 @@ await p.setViewport({ width: 1376, height: 1032, deviceScaleFactor: 2, isMobile:
 for (const [name, r] of shots) {
   await p.goto('http://localhost:5183' + r, { waitUntil: 'networkidle0' })
   await new Promise(x => setTimeout(x, 1200))
+  if (name.includes('gantt')) {
+    // Start the chart at today and run it to the go-live month (React-controlled date inputs).
+    await p.evaluate(() => {
+      const iso = d => d.toISOString().slice(0, 10)
+      const from = new Date(), to = new Date(Date.now() + 75 * 864e5)
+      const [a, b] = document.querySelectorAll('input[type="date"]')
+      const set = (el, v) => { Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(el, v); el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })) }
+      set(a, iso(from)); set(b, iso(to))
+    })
+    await new Promise(x => setTimeout(x, 800))
+    // Critical path on, then collapse the finished phases so the live Execution work leads.
+    await p.evaluate(() => {
+      const cb = [...document.querySelectorAll('label')].find(l => /critical path/i.test(l.textContent))?.querySelector('input')
+      if (cb && !cb.checked) cb.click()
+    })
+    await new Promise(x => setTimeout(x, 600))
+    await p.evaluate(() => {
+      for (const btn of document.querySelectorAll('.gantt-phase-toggle')) {
+        if (/^(Initiation|Planning) Phase$/.test(btn.textContent.replace('▾', '').trim())) btn.click()
+      }
+    })
+    await new Promise(x => setTimeout(x, 600))
+  }
   await p.screenshot({ path: `${OUT}/${name}.png` })
 }
 await b.close()
