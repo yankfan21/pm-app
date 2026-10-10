@@ -88,14 +88,17 @@ work — just flags for future decisions.
   Eventually: drop `tasks.depends_on` in a migration.
 
 
-## CalmSky_Redesign and white-label branding — status as of 2026-10-09
+## CalmSky_Redesign and white-label branding — status as of 2026-10-10
 
-Work lives on branch `claude/wonderful-lovelace-7l64oi` (a git worktree at
-`~/pm-app-redesign`). Everything is behind `VITE_CALMSKY_REDESIGN=true`; with
-it unset the shipped navy theme is unchanged. **Launch timing is the owner's
-call: a new prod version ships when they decide. Do not merge, push or deploy
-the redesign unprompted.** Local commits are fine; ask before pushing. Never
-run the branding migration against production.
+**LIVE as of 2026-10-10.** The redesign was merged to `main` (fast-forward) and
+pushed with the owner's approval; `VITE_CALMSKY_REDESIGN=true` is now set in
+Vercel Production, so confidantpm.com shows the CalmSky look. Latest pushed
+commit `b10a40e` (dashboard cards: Target Go Live on its own row). To roll the
+theme back, remove that Vercel env var and redeploy (the shipped navy theme is
+still in the code). Work was developed on branch `claude/wonderful-lovelace-7l64oi`
+(git worktree `~/pm-app-redesign`). Going forward the standing rule is the
+usual one: ask before pushing or deploying anything. Never run the branding
+migration against production.
 
 The earlier light "Paper" theme was removed (commit 5dccf96). The owner
 rejected light themes (tinted looked dirty, white stark), purple/magenta, ice
@@ -118,7 +121,7 @@ under `:root[data-theme='calmsky']`, plus component rules per stage.
 (`CourseLine`, `AvatarStack`) and their extra queries are rendered/run only
 when `CALMSKY` is true. `initialsFromEmail` moved to `src/initials.js`.
 
-**Done (all committed locally, nothing pushed):** Gantt critical path now muted amber `#d98f2b` with a 2.5px ring (set under calmsky only; legend arrow follows), mobile delete-account modal scanned clean on 2026-10-10 via a dev-only canned `delete-account` preview in `src/dev/devSupabase.js` (execute stays disabled), tokens, logo mark, shell and
+**Done (all pushed to `main` and live):** Gantt critical path now muted amber `#d98f2b` with a 2.5px ring (set under calmsky only; legend arrow follows), mobile delete-account modal scanned clean on 2026-10-10 via a dev-only canned `delete-account` preview in `src/dev/devSupabase.js` (execute stays disabled), tokens, logo mark, shell and
 dashboard (greeting, project cards with course line + avatars), Q&A step
 (segmented progress, ghost-text suggestion, Tab accepts while the field is
 empty), Gantt (done solid / not started dashed / in progress tinted / delayed
@@ -146,8 +149,7 @@ Supabase client throws without a URL).
   (`mobile.css`), and the risk-card fields' resting border via
   `.risk-field .risk-cell-input` (`App.css`; `.risk-cell-input:focus` still
   wins the tie and shows the accent). Verified by computed styles in both themes.
-- Done 2026-10-10 (local commits, not pushed, not flag-gated so they ship with
-  the first deploy of this branch): web icons in `public/` (favicon, PNGs,
+- Done 2026-10-10 (pushed and live; not flag-gated): web icons in `public/` (favicon, PNGs,
   maskables, apple-touch-icon) and native iOS/Android icons plus charcoal
   splash regenerated from `design/logo/icon-tile.svg` via `@capacitor/assets`
   (sources in `resources/`); `theme-color` and manifest colours are charcoal
@@ -190,7 +192,7 @@ browser pane's mobile viewport).
 
 ### White-label branding (PARKED)
 
-Code, migration and `BRANDING.md` stay on the branch, inert; do not work on
+Code and `BRANDING.md` are in `main`, inert (`BrandingProvider` only acts on the removed Paper theme); the migration is parked at `supabase/parked/organizations_branding.sql`, outside `supabase/migrations/` so `db push` cannot apply it. Do not work on
 it. Its colour derivation assumed Paper's light surfaces and is not wired to
 the CalmSky tokens. Decisions (owner): per organization only, no per-user
 themes; oldest membership wins for a user in several orgs; **the owner sets
