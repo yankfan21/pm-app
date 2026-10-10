@@ -359,6 +359,25 @@ function GanttChart({ project, tasks, taskDependencies, phases, milestones = [],
     return () => observer.disconnect()
   }, [expanded, bars.length])
 
+  // Open scrolled so today sits near the left of the visible track instead of
+  // at the project's first date - once per wrap element, after the first real
+  // width measurement, so later zoom/filter changes never yank the PM's
+  // scroll position. Manual scrolling is untouched; no-op when today is
+  // outside the range or the chart already fits without scrolling.
+  const scrolledWrapRef = useRef(null)
+  useLayoutEffect(() => {
+    const wrap = wrapRef.current
+    if (!wrap || scrolledWrapRef.current === wrap || wrap.clientWidth === 0) return
+    scrolledWrapRef.current = wrap
+    if (!todayInRange) return
+    const labelWidth = labelHeaderRef.current?.getBoundingClientRect().width ?? 0
+    const visibleTrack = Math.max(0, wrap.clientWidth - labelWidth - COLUMN_GAP_PX)
+    const todayInTrack = ((todayMs - rangeStart) / totalSpan) * trackPxWidth
+    wrap.scrollLeft = Math.max(0, todayInTrack - visibleTrack * 0.25)
+    // No dep array: guarded by the wrap node, so it also catches the wrap
+    // being remounted in a render where none of the values above changed.
+  })
+
   // Only computed while the toggle is on - cheap either way at this scale,
   // but no reason to run it when nothing reads the result.
   const criticalPath = showCriticalPath ? computeCriticalPath(bars, taskDependencies) : null
