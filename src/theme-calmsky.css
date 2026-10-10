@@ -423,3 +423,158 @@
 :root[data-theme='calmsky'] .modal-actions {
   margin-top: 20px;
 }
+
+/* ------------------------------------------------------------------ */
+/* Stage 4: Gantt (GanttChart.jsx)                                     */
+/* Done is solid, not started is a dashed outline, in progress is a    */
+/* tinted outline, delayed is the one red. Today is the accent.        */
+/* ------------------------------------------------------------------ */
+
+:root[data-theme='calmsky'] .gantt-wrap {
+  border-color: var(--row-border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-1-solid);
+}
+
+:root[data-theme='calmsky'] .gantt-fullscreen .gantt-wrap {
+  background: var(--bg);
+}
+
+/* Bars: rounded pills. The base look is "not started". */
+:root[data-theme='calmsky'] .gantt-bar {
+  top: 4px;
+  bottom: 4px;
+  box-sizing: border-box;
+  border: 1.5px dashed #847e72;
+  border-radius: 999px;
+  background: transparent;
+}
+
+:root[data-theme='calmsky'] .gantt-bar.in-progress {
+  border: 1.5px solid var(--text-muted);
+  background: color-mix(in srgb, var(--text-muted) 40%, transparent);
+}
+
+:root[data-theme='calmsky'] .gantt-bar.single-date {
+  border: 1.5px solid var(--card-accent-amber);
+  background: var(--card-accent-amber);
+}
+
+:root[data-theme='calmsky'] .gantt-bar.delayed {
+  border: 1.5px solid var(--card-accent-red);
+  background: var(--card-accent-red);
+}
+
+:root[data-theme='calmsky'] .gantt-bar.completed {
+  border: 1.5px solid var(--text-muted);
+  background: var(--text-muted);
+}
+
+/* Milestones: outline diamond, filled once completed. */
+:root[data-theme='calmsky'] .gantt-milestone {
+  box-sizing: border-box;
+  width: 13px;
+  height: 13px;
+  border: 2px solid var(--text-muted);
+  border-radius: 4px;
+  background: var(--surface-1-solid);
+}
+
+:root[data-theme='calmsky'] .gantt-milestone.delayed {
+  border-color: var(--card-accent-red);
+  background: var(--card-accent-red);
+}
+
+:root[data-theme='calmsky'] .gantt-milestone.completed {
+  background: var(--text-muted);
+}
+
+/* Phases */
+:root[data-theme='calmsky'] .gantt-phase-track,
+:root[data-theme='calmsky'] .gantt-phase-band {
+  border-radius: 999px;
+}
+
+/* Today: a solid accent line (red now means delayed, nothing else). */
+:root[data-theme='calmsky'] .gantt-today-marker {
+  border-left: 3px solid var(--accent);
+  border-radius: 2px;
+}
+
+:root[data-theme='calmsky'] .gantt-today-note {
+  color: var(--accent);
+}
+
+/* Controls */
+:root[data-theme='calmsky'] .gantt-zoom-control {
+  border-radius: 999px;
+}
+
+:root[data-theme='calmsky'] .gantt-zoom-btn.active {
+  background: #282521;
+  color: var(--text-h);
+}
+
+:root[data-theme='calmsky'] .gantt-filters {
+  border-color: var(--row-border);
+  border-radius: var(--radius-lg);
+}
+
+:root[data-theme='calmsky'] .gantt-legend-item {
+  border-color: var(--row-border);
+}
+
+/* Legend swatches follow the bar and milestone looks above. */
+:root[data-theme='calmsky'] .gantt-legend-swatch {
+  box-sizing: border-box;
+}
+
+:root[data-theme='calmsky'] .gantt-legend-swatch.bar {
+  height: 10px;
+  border: 1.5px dashed #847e72;
+  border-radius: 999px;
+  background: transparent;
+}
+
+:root[data-theme='calmsky'] .gantt-legend-swatch.bar.in-progress {
+  border: 1.5px solid var(--text-muted);
+  background: color-mix(in srgb, var(--text-muted) 40%, transparent);
+}
+
+:root[data-theme='calmsky'] .gantt-legend-swatch.bar.single-date {
+  border: 1.5px solid var(--card-accent-amber);
+  background: var(--card-accent-amber);
+}
+
+:root[data-theme='calmsky'] .gantt-legend-swatch.bar.delayed {
+  border: 1.5px solid var(--card-accent-red);
+  background: var(--card-accent-red);
+}
+
+:root[data-theme='calmsky'] .gantt-legend-swatch.bar.completed {
+  border: 1.5px solid var(--text-muted);
+  background: var(--text-muted);
+}
+
+:root[data-theme='calmsky'] .gantt-legend-swatch.bar.critical-path {
+  background: transparent;
+}
+
+:root[data-theme='calmsky'] .gantt-legend-swatch.diamond {
+  border: 2px solid var(--text-muted);
+  border-radius: 3px;
+  background: transparent;
+}
+
+:root[data-theme='calmsky'] .gantt-legend-swatch.today-line {
+  border-left: 3px solid var(--accent);
+}
+
+/* Phase bands stay neutral so the accent is reserved for Today and actions. */
+:root[data-theme='calmsky'] .gantt-phase-track {
+  background: color-mix(in srgb, var(--text-muted) 10%, transparent);
+}
+
+:root[data-theme='calmsky'] .gantt-phase-band {
+  background: color-mix(in srgb, var(--text-muted) 38%, transparent);
+}

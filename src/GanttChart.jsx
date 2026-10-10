@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { DAY_MS, buildElbowPoints, computeCriticalPath, computeGanttLayout, parseDay } from './ganttLayout'
 import { resolveAssigneeLabel } from './components/AssigneePicker'
+import { CALMSKY } from './redesign'
 
 const UNPHASED_KEY = '__unphased'
 
@@ -835,7 +836,7 @@ function GanttChart({ project, tasks, taskDependencies, phases, milestones = [],
                         ref={(el) => {
                           barRefs.current[task.id] = el
                         }}
-                        className={`gantt-bar ${singleDate ? 'single-date' : ''} ${isDelayed ? 'delayed' : ''} ${task.completed ? 'completed' : ''} ${isCritical ? 'critical-path' : ''}`}
+                        className={`gantt-bar ${singleDate ? 'single-date' : ''} ${isDelayed ? 'delayed' : ''} ${task.completed ? 'completed' : ''} ${isCritical ? 'critical-path' : ''} ${CALMSKY && task.status === 'in_progress' ? 'in-progress' : ''}`}
                         style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
                         title={`${task.start_date || 'TBD'} → ${task.due_date || 'TBD'}${assigneeSuffix}`}
                       />
@@ -907,10 +908,23 @@ function GanttChart({ project, tasks, taskDependencies, phases, milestones = [],
 
       {expanded && bars.length > 0 && (
         <div className="gantt-legend">
-          <span className="gantt-legend-item">
-            <span className="gantt-legend-swatch bar" />
-            Task (start–due)
-          </span>
+          {CALMSKY ? (
+            <>
+              <span className="gantt-legend-item">
+                <span className="gantt-legend-swatch bar" />
+                Not started
+              </span>
+              <span className="gantt-legend-item">
+                <span className="gantt-legend-swatch bar in-progress" />
+                In progress
+              </span>
+            </>
+          ) : (
+            <span className="gantt-legend-item">
+              <span className="gantt-legend-swatch bar" />
+              Task (start–due)
+            </span>
+          )}
           <span className="gantt-legend-item">
             <span className="gantt-legend-swatch bar single-date" />
             Single date only
