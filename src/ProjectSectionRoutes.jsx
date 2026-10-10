@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+﻿import { useEffect, useMemo, useState } from 'react'
 import { Navigate, useOutletContext, useSearchParams } from 'react-router-dom'
 import PhaseDetailView from './PhaseDetailView'
 import GanttChart from './GanttChart'
@@ -148,11 +148,14 @@ export function PlanningBacklogRoute() {
 
 export function ExecutionGanttRoute() {
   const { project, tasks, taskDependencies, phases, milestones, collaborators } = useOutletContext()
+  // Memoized: GanttChart's dependency-line measuring effect depends on the
+  // `tasks` identity and sets state, so a fresh array every render loops it.
+  const scheduledTasks = useMemo(() => tasks.filter((t) => t.backlog_status == null), [tasks])
   return (
     <MethodologySection side="waterfall">
       <GanttChart
         project={project}
-        tasks={tasks.filter((t) => t.backlog_status == null)}
+        tasks={scheduledTasks}
         taskDependencies={taskDependencies}
         phases={phases}
         milestones={milestones}
