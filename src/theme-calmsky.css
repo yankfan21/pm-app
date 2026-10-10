@@ -215,11 +215,14 @@
 }
 
 :root[data-theme='calmsky'] .project-card-bottom {
-  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 10px 12px;
 }
 
+/* Own row under the badge and avatars, so the date never runs off the card. */
 :root[data-theme='calmsky'] .project-card-deadline {
-  margin-left: auto;
+  flex-basis: 100%;
   color: var(--text-muted);
 }
 
