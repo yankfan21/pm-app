@@ -12,4 +12,6 @@ To preview: .env.local has VITE_DEV_BYPASS_AUTH=true and VITE_CALMSKY_REDESIGN=t
 
 First thing to do: the open items listed in CLAUDE.md, in this order unless I say otherwise: (1) the remaining mobile screens (Documents, Status update, Comms, Stakeholders, Issues, Settings detail); (2) Gantt dependency/legend arrows still using slate #94a3b8, milestone diamonds and critical-path view not yet seen; (3) closed modals, hidden forms and hover states the colour sweep could not see.
 
+For phone screenshots, headless Chrome won't go narrower than ~500px, so use the repo's puppeteer (node_modules/puppeteer) with executablePath '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' and page.setViewport({width: 390, height: 844, deviceScaleFactor: 2, isMobile: true, hasTouch: true}). A computed-colour scan of every element (hue 190-270, saturation > 0.15) is how the navy/blue sweeps were verified.
+
 When I ask to "see" screens, I mean the MOBILE app unless I say desktop. Send me full-size screenshots as files (SendUserFile) rather than pointing at the browser pane. Ask before pushing, before launch steps (swapping public/ favicons and icons), and before building anything that needs product decisions (the dashboard AI note and "Waiting for your decision" list have no data behind them yet).
