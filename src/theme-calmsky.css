@@ -687,3 +687,34 @@
   font-size: 12px;
   color: var(--text-muted);
 }
+
+/* ------------------------------------------------------------------ */
+/* Stage 7: login, password and marketing pages                        */
+/* ------------------------------------------------------------------ */
+:root[data-theme='calmsky'] .login-brand-tagline {
+  color: var(--text-muted);
+}
+
+:root[data-theme='calmsky'] .login-preview-icon {
+  color: var(--accent);
+}
+
+:root[data-theme='calmsky'] .login-heading,
+:root[data-theme='calmsky'] .login-brand-name {
+  font-family: var(--heading);
+  letter-spacing: -0.02em;
+}
+
+:root[data-theme='calmsky'] .login-btn-secondary {
+  border-radius: 999px;
+}
+
+:root[data-theme='calmsky'] .login-btn-secondary + .login-btn-secondary {
+  margin-top: 10px;
+}
+
+/* index.css hardcodes #161c27 behind the login screens; on a phone it showed
+   as a navy block under the form. */
+:root[data-theme='calmsky'] body.login-route {
+  background-color: var(--auth-panel);
+}

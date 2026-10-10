@@ -124,12 +124,12 @@ dashboard (greeting, project cards with course line + avatars), Q&A step
 empty), Gantt (done solid / not started dashed / in progress tinted / delayed
 red, Today = accent line), stray navy/blue sweep (verified by a computed-colour
 scan of 18 desktop routes), mobile app (home with course-line cards, contrast
-fixes).
+fixes), login / forgot / reset / privacy / marketing pages (scan-clean on
+desktop and phone; login needs `VITE_DEV_BYPASS_AUTH=false` plus dummy
+`VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` on a second vite, since the real
+Supabase client throws without a URL).
 
 **Not done / open:**
-- Login, forgot/reset password and marketing pages: marketing already looked
-  on-theme; login could not be viewed because the dev bypass signs you in
-  (run a second vite with `VITE_DEV_BYPASS_AUTH=false` to see it).
 - Remaining mobile screens (Documents, Status update, Comms, Stakeholders,
   Issues, Settings detail) not individually checked; no real-device or
   simulator check yet.
@@ -137,6 +137,9 @@ fixes).
   (inline in `GanttChart.jsx`); milestone diamonds not seen rendered (dev data
   has none); critical-path view not toggled.
 - Closed modals, hidden forms and hover states were not covered by the sweep.
+- `index.html` `theme-color` and `public/manifest.json` `background_color` /
+  `theme_color` are still navy `#1a2130` (affects the browser/status bar, so
+  prod-visible); change at launch together with the icons.
 - Live favicon/PNG icons/manifest in `public/` are untouched (would change
   prod); re-export from `design/logo/icon-tile.svg` at launch. No outlined
   wordmark file yet.
