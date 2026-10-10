@@ -560,6 +560,26 @@
   background: transparent;
 }
 
+:root[data-theme='calmsky'] {
+  /* Critical path: muted amber, a touch deeper than the single-date fill so a
+     critical single-date bar still reads as two signals. Ring 2.5px. */
+  --highlight: #d98f2b;
+  --shadow-ring-highlight: 0 0 0 2.5px #d98f2b;
+}
+
+:root[data-theme='calmsky'] .gantt-legend-arrow-critical {
+  stroke: var(--highlight);
+  fill: var(--highlight);
+}
+
+:root[data-theme='calmsky'] .gantt-legend-arrow-critical:first-child {
+  fill: none;
+}
+
+:root[data-theme='calmsky'] .gantt-legend-arrow-critical:last-child {
+  stroke: none;
+}
+
 :root[data-theme='calmsky'] .gantt-legend-swatch.diamond {
   border: 2px solid var(--text-muted);
   border-radius: 3px;

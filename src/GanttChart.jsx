@@ -961,8 +961,8 @@ function GanttChart({ project, tasks, taskDependencies, phases, milestones = [],
           </span>
           <span className="gantt-legend-item">
             <svg className="gantt-legend-arrow" viewBox="0 0 20 12" width="20" height="12" aria-hidden="true">
-              <path d="M0,3 H10 V9 H14" fill="none" stroke="#f97316" strokeWidth="2.5" />
-              <path d="M14,6 L20,9 L14,12 Z" fill="#f97316" />
+              <path className="gantt-legend-arrow-critical" d="M0,3 H10 V9 H14" fill="none" stroke="#f97316" strokeWidth="2.5" />
+              <path className="gantt-legend-arrow-critical" d="M14,6 L20,9 L14,12 Z" fill="#f97316" />
             </svg>
             Critical path dependency
           </span>
