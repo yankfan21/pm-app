@@ -323,6 +323,7 @@ function ProjectDetailLayout({ project, isOwner, canEdit }) {
 
   const outletContext = {
     project: currentProject,
+    setProject: setCurrentProject,
     isOwner,
     canEdit,
     loading,
