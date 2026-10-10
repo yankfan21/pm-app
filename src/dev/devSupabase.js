@@ -114,7 +114,7 @@ function builder(table) {
   return b
 }
 
-const user = { id: 'dev-bypass-user', email: 'dev@localhost', user_metadata: { full_name: 'Dev Preview' } }
+const user = { id: 'dev-bypass-user', email: 'alex.morgan@example.com', user_metadata: { full_name: 'Alex Morgan' } }
 
 export const devSupabase = {
   from: builder,

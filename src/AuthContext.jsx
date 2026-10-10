@@ -4,7 +4,7 @@ import { supabase, DEV_BYPASS_AUTH } from './supabaseClient'
 // Fake signed-in user for DEV_BYPASS_AUTH (local redesign preview only).
 const DEV_SESSION = {
   access_token: 'dev-bypass',
-  user: { id: 'dev-bypass-user', email: 'dev@localhost', user_metadata: { full_name: 'Dev Preview' } },
+  user: { id: 'dev-bypass-user', email: 'alex.morgan@example.com', user_metadata: { full_name: 'Alex Morgan' } },
 }
 
 const AuthContext = createContext(undefined)
