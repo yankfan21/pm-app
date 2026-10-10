@@ -124,19 +124,30 @@ dashboard (greeting, project cards with course line + avatars), Q&A step
 empty), Gantt (done solid / not started dashed / in progress tinted / delayed
 red, Today = accent line), stray navy/blue sweep (verified by a computed-colour
 scan of 18 desktop routes), mobile app (home with course-line cards, contrast
-fixes), login / forgot / reset / privacy / marketing pages (scan-clean on
+fixes; the remaining project screens Documents, Status update, Exec comms,
+Newsletter, Comm plan, Stakeholders, Issues, More and Settings were checked by
+screenshot plus colour scan, 2026-10-10), login / forgot / reset / privacy / marketing pages (scan-clean on
 desktop and phone; login needs `VITE_DEV_BYPASS_AUTH=false` plus dummy
 `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` on a second vite, since the real
 Supabase client throws without a URL).
 
 **Not done / open:**
-- Remaining mobile screens (Documents, Status update, Comms, Stakeholders,
-  Issues, Settings detail) not individually checked; no real-device or
-  simulator check yet.
-- Gantt dependency arrows and legend arrows still use slate `#94a3b8` strokes
-  (inline in `GanttChart.jsx`); milestone diamonds not seen rendered (dev data
-  has none); critical-path view not toggled.
-- Closed modals, hidden forms and hover states were not covered by the sweep.
+- No real-device or simulator check of the mobile app yet (only headless
+  Chrome emulation).
+- Gantt critical-path colour is still bright orange (`--highlight` #f97316) for
+  bars and arrows, which clashes with the muted Friendly palette; on a delayed
+  bar the orange ring blends with the red fill. Owner's call (muted amber, or
+  the sky accent with a heavier stroke).
+- Not covered by the 2026-10-10 hover/focus/modal crawl (`design/tools/`): the
+  mobile delete-account modal (the crawler skips delete actions), states that
+  only appear after other interactions, and the dashboard AI note / waiting
+  list (not built).
+- Known leftovers that are harmless: `.revision-preview` navy tint (6%),
+  `.mobile-metrics-card` slate border under `data-theme='dark'` (never applies
+  under calmsky). Shipped-theme CSS bugs found along the way (fixed only under
+  calmsky, deliberately): `.mobile-doc-row` content-box overflow, risk-card
+  fields with a transparent border (`.risk-cell-input` beats
+  `.risk-card-textarea`). Worth fixing in the shipped CSS at launch.
 - `index.html` `theme-color` and `public/manifest.json` `background_color` /
   `theme_color` are still navy `#1a2130` (affects the browser/status bar, so
   prod-visible); change at launch together with the icons.
@@ -156,6 +167,15 @@ Supabase client throws without a URL).
   `projects.methodology` but nothing tells the parent to refresh).
 - `.claude/launch.json` defines the preview server on port 5183 (5173 is often
   taken by another project's server).
+
+**Verification tools (`design/tools/`):** `shoot.mjs` (phone screenshots plus
+colour scan per route) and `crawl.mjs` (hover/focus/click-everything scan,
+screenshots any modal or form that opens). Both use the repo's puppeteer and
+Chrome at `/Applications/Google Chrome.app`. The dev fixtures now include
+milestone markers and a multi-predecessor dependency so the Gantt diamonds and
+dashed arrows render. Done 2026-10-10: Gantt legend arrows use
+`var(--neutral-400)`, danger hover ink warm, risk form borders, mobile
+locked-doc row and desktop-link font fixed.
 
 **Local preview:** `.env.local` (git-ignored) with `VITE_DEV_BYPASS_AUTH=true`
 and `VITE_CALMSKY_REDESIGN=true`, then `npm run dev` (or the `calmsky-dev`
