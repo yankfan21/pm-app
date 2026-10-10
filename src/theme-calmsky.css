@@ -729,3 +729,18 @@
 :root[data-theme='calmsky'] .mobile-desktop-link {
   font-family: inherit;
 }
+
+/* Danger buttons fill red on hover; the sky-tinted ink from --on-accent looked
+   navy there. */
+:root[data-theme='calmsky'] .btn-danger:hover,
+:root[data-theme='calmsky'] .mobile-btn-danger-filled:hover {
+  color: #1a1210;
+}
+
+/* Risk card form: .risk-cell-input's transparent border (declared later in
+   App.css) beat .risk-card-textarea, leaving Title/Description/Mitigation as
+   invisible boxes until hovered. */
+:root[data-theme='calmsky'] .risk-field .risk-cell-input {
+  border-color: var(--border);
+  border-radius: 12px;
+}
