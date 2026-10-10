@@ -764,3 +764,11 @@
   border-color: var(--border);
   border-radius: 12px;
 }
+
+/* Mobile form fields: without this, iOS Safari draws its system-blue focus ring,
+   which is a stray blue on the warm charcoal. Accent border plus a soft ring. */
+:root[data-theme='calmsky'] .mobile-app :is(input, select, textarea):focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent);
+}

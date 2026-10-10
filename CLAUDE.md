@@ -132,8 +132,7 @@ desktop and phone; login needs `VITE_DEV_BYPASS_AUTH=false` plus dummy
 Supabase client throws without a URL).
 
 **Not done / open:**
-- No real-device or simulator check of the mobile app yet (only headless
-  Chrome emulation).
+- iOS Simulator check done 2026-10-10 (iPhone 17 Pro, Safari, localhost:5183): home, project overview, More and the Contact form render correctly, no input auto-zoom; found and fixed the iOS system-blue input focus ring (CalmSky-only rule on `.mobile-app`). Not checked on a physical iPhone, and not the Capacitor build.
 - Not covered by the 2026-10-10 hover/focus/modal crawl (`design/tools/`): states that
   only appear after other interactions, and the dashboard AI note / waiting
   list (not built).
