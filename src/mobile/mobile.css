@@ -1067,10 +1067,11 @@ html:has(.mobile-app) body {
    (+9,+11,+16) re-applied on top of the new --bg, keeping the same
    lighter-than-page-by-one-step relationship the original hex had; border
    left as-is since it's pinned to --zone-accent-neutral, which didn't
-   change. */
+   change. Shipped theme only: CalmSky (data-theme='calmsky') deliberately skips
+   this and keeps the plain card fill and --border. */
 :root[data-theme='dark'] .mobile-metrics-card {
   background: var(--mobile-surface-raised);
-  border-color: rgba(148, 163, 184, 0.3);
+  border-color: color-mix(in srgb, var(--zone-accent-neutral) 30%, transparent);
 }
 
 .mobile-metrics-card .mobile-section-title {

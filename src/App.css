@@ -2907,7 +2907,7 @@
   margin-top: 10px;
   padding: 14px 16px;
   border-radius: var(--radius-sm);
-  background: rgba(30, 58, 138, 0.06);
+  background: color-mix(in srgb, var(--charter-accent) 6%, transparent);
   border-left: 3px solid var(--charter-accent);
 }
 

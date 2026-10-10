@@ -136,9 +136,11 @@ Supabase client throws without a URL).
 - Not covered by the 2026-10-10 hover/focus/modal crawl (`design/tools/`): states that
   only appear after other interactions, and the dashboard AI note / waiting
   list (not built).
-- Known leftovers that are harmless: `.revision-preview` navy tint (6%),
-  `.mobile-metrics-card` slate border under `data-theme='dark'` (never applies
-  under calmsky). The shipped-theme CSS bugs found along the way are now fixed
+- Leftovers tidied 2026-10-10: `.revision-preview` tint now derives from
+  `--charter-accent` (was hardcoded navy rgba); the `.mobile-metrics-card` slate
+  border derives from `--zone-accent-neutral` (same value in the shipped theme).
+  That slate/raised rule stays shipped-theme-only on purpose; under calmsky the
+  card keeps the plain fill and `--border`. The shipped-theme CSS bugs found along the way are now fixed
   in the shipped CSS too (2026-10-10, not flag-gated): `.mobile-doc-row`
   border-box (`mobile.css`), `.mobile-desktop-link` font inherit
   (`mobile.css`), and the risk-card fields' resting border via
