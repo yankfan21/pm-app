@@ -11,6 +11,9 @@ export function makeFixtures() {
     { id: 'p-wms', name: 'Warehouse Management System Rollout', goal: 'Replace the legacy WMS across all four distribution centres.', priority: 'High', deadline: iso(75), methodology: 'waterfall', status: 'Active', is_demo: false, owner_id: OWNER, owner_email: 'dev@localhost', created_at: ts(-90) },
     { id: 'p-app', name: 'Mobile App Relaunch', goal: 'Ship the rebuilt customer app on iOS and Android.', priority: 'Medium', deadline: iso(140), methodology: 'hybrid', status: 'Active', is_demo: false, owner_id: OWNER, owner_email: 'dev@localhost', created_at: ts(-60) },
     { id: 'p-portal', name: 'Customer Portal Redesign', goal: 'Cut support tickets by moving self-service into the portal.', priority: 'Medium', deadline: iso(45), methodology: 'agile', status: 'Active', is_demo: true, owner_id: OWNER, owner_email: 'dev@localhost', created_at: ts(-40) },
+    { id: 'p-crm', name: 'CRM Data Migration', goal: 'Move customer records from the old CRM into the new platform.', priority: 'High', deadline: iso(95), methodology: 'waterfall', status: 'Active', is_demo: false, owner_id: OWNER, owner_email: 'dev@localhost', created_at: ts(-70) },
+    { id: 'p-pay', name: 'Payments Platform Upgrade', goal: 'Upgrade the payment gateway and add two new payment methods.', priority: 'Medium', deadline: iso(110), methodology: 'agile', status: 'Active', is_demo: false, owner_id: OWNER, owner_email: 'dev@localhost', created_at: ts(-30) },
+    { id: 'p-hr', name: 'HR Onboarding Revamp', goal: 'Cut new-hire onboarding from three weeks to one.', priority: 'Low', deadline: iso(165), methodology: 'hybrid', status: 'Active', is_demo: false, owner_id: OWNER, owner_email: 'dev@localhost', created_at: ts(-20) },
     { id: 'p-old', name: 'Helpdesk Migration', goal: 'Move to the new ticketing tool.', priority: 'Low', deadline: iso(-20), methodology: 'waterfall', status: 'Archived', is_demo: false, owner_id: OWNER, owner_email: 'dev@localhost', created_at: ts(-200) },
   ]
 
@@ -89,6 +92,10 @@ export function makeFixtures() {
   const project_evaluations = [
     { id: 'e1', project_id: 'p-wms', health_status: 'at_risk', rationale: 'ERP integration is overdue and sits on the critical path to UAT.', recommendations: ['Add a second integration engineer', 'Re-baseline UAT dates'], metrics: { overdue_tasks: 1, completed_pct: 25 }, created_at: ts(-2) },
     { id: 'e2', project_id: 'p-app', health_status: 'on_track', rationale: 'Sprint 1 is on pace.', recommendations: [], metrics: { completed_pct: 12 }, created_at: ts(-3) },
+    { id: 'e6', project_id: 'p-portal', health_status: 'on_track', rationale: 'Portal sprints are delivering as planned.', recommendations: [], metrics: { completed_pct: 35 }, created_at: ts(-2) },
+    { id: 'e3', project_id: 'p-crm', health_status: 'on_track', rationale: 'Migration waves are on schedule.', recommendations: [], metrics: { completed_pct: 40 }, created_at: ts(-4) },
+    { id: 'e4', project_id: 'p-pay', health_status: 'at_risk', rationale: 'Gateway certification is waiting on the vendor.', recommendations: ['Escalate the certification slot'], metrics: { completed_pct: 18 }, created_at: ts(-1) },
+    { id: 'e5', project_id: 'p-hr', health_status: 'on_track', rationale: 'Early scoping is complete.', recommendations: [], metrics: { completed_pct: 8 }, created_at: ts(-5) },
   ]
 
   const charters = [{ id: 'ch1', project_id: 'p-wms', purpose: 'Replace the legacy WMS to cut pick errors and enable same-day shipping.', scope: 'Software migration, scanner hardware, staff training, cutover support.', stakeholders: 'Dana Whitfield (VP Operations, sponsor); centre managers; IT.', success_metrics: 'Pick accuracy above 99.5% within 60 days of go-live.', risks: 'Vendor integration slips; staff training capacity.', timeline: `Go live ${iso(75)}.`, created_at: ts(-85) }]

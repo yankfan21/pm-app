@@ -17,6 +17,11 @@ await p.setViewport({ width: 1376, height: 1032, deviceScaleFactor: 2, isMobile:
 for (const [name, r] of shots) {
   await p.goto('http://localhost:5183' + r, { waitUntil: 'networkidle0' })
   await new Promise(x => setTimeout(x, 1200))
+  if (name.includes('dashboard')) {
+    // Dismiss the intro banner so the project cards lead.
+    await p.evaluate(() => document.querySelector('button[aria-label*="ismiss" i], button[aria-label*="lose" i]')?.click())
+    await new Promise(x => setTimeout(x, 500))
+  }
   if (name.includes('gantt')) {
     // Start the chart at today and run it to the go-live month (React-controlled date inputs).
     await p.evaluate(() => {
