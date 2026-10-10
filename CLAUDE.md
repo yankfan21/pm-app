@@ -138,10 +138,12 @@ Supabase client throws without a URL).
   list (not built).
 - Known leftovers that are harmless: `.revision-preview` navy tint (6%),
   `.mobile-metrics-card` slate border under `data-theme='dark'` (never applies
-  under calmsky). Shipped-theme CSS bugs found along the way (fixed only under
-  calmsky, deliberately): `.mobile-doc-row` content-box overflow, risk-card
-  fields with a transparent border (`.risk-cell-input` beats
-  `.risk-card-textarea`). Worth fixing in the shipped CSS at launch.
+  under calmsky). The shipped-theme CSS bugs found along the way are now fixed
+  in the shipped CSS too (2026-10-10, not flag-gated): `.mobile-doc-row`
+  border-box (`mobile.css`), `.mobile-desktop-link` font inherit
+  (`mobile.css`), and the risk-card fields' resting border via
+  `.risk-field .risk-cell-input` (`App.css`; `.risk-cell-input:focus` still
+  wins the tie and shows the accent). Verified by computed styles in both themes.
 - Done 2026-10-10 (local commits, not pushed, not flag-gated so they ship with
   the first deploy of this branch): web icons in `public/` (favicon, PNGs,
   maskables, apple-touch-icon) and native iOS/Android icons plus charcoal

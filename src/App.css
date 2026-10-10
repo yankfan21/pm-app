@@ -4447,9 +4447,12 @@ a.overview-hotspot-row-count:focus-visible {
 }
 
 /* Unlike the old table cells, these fields aren't already delineated by a
-   row/column grid, so the textarea gets its own resting border instead of
-   the transparent-until-hover one .risk-cell-input normally uses. */
-.risk-card-textarea {
+   row/column grid, so every field gets its own resting border instead of
+   the transparent-until-hover one .risk-cell-input normally uses. Scoped
+   under .risk-field so it outranks the later .risk-cell-input rule (a plain
+   .risk-card-textarea lost that tie, leaving the fields as invisible boxes);
+   .risk-cell-input:focus still wins the tie below and shows the accent. */
+.risk-field .risk-cell-input {
   border-color: var(--border);
 }
 

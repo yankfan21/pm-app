@@ -739,17 +739,6 @@
   background-color: var(--auth-panel);
 }
 
-/* Mobile fixes found in the remaining-screens pass. The locked document row is
-   a div (content-box) at width 100% plus padding, so its badge ran off the
-   card; the desktop link is a button and fell back to the system font. */
-:root[data-theme='calmsky'] .mobile-doc-row {
-  box-sizing: border-box;
-}
-
-:root[data-theme='calmsky'] .mobile-desktop-link {
-  font-family: inherit;
-}
-
 /* Danger buttons fill red on hover; the sky-tinted ink from --on-accent looked
    navy there. */
 :root[data-theme='calmsky'] .btn-danger:hover,
@@ -757,11 +746,9 @@
   color: #1a1210;
 }
 
-/* Risk card form: .risk-cell-input's transparent border (declared later in
-   App.css) beat .risk-card-textarea, leaving Title/Description/Mitigation as
-   invisible boxes until hovered. */
+/* Round the Risk card form fields to match the pill/18px shape language (the
+   resting border itself comes from App.css). */
 :root[data-theme='calmsky'] .risk-field .risk-cell-input {
-  border-color: var(--border);
   border-radius: 12px;
 }
 
