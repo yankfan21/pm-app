@@ -147,8 +147,8 @@ Supabase client throws without a URL).
   maskables, apple-touch-icon) and native iOS/Android icons plus charcoal
   splash regenerated from `design/logo/icon-tile.svg` via `@capacitor/assets`
   (sources in `resources/`); `theme-color` and manifest colours are charcoal
-  `#171614`. Still open: `public/og-image.png` (social share image) still has
-  the old branding; no outlined wordmark file yet; native apps need
+  `#171614`. Still open: `public/og-image.png` now carries the CalmSky look (draft kept at
+  `design/logo/og-image-draft.png`); no outlined wordmark file yet; native apps need
   `npx cap sync` and a rebuild to pick any of this up.
 - Not built because there is no data behind it: the dashboard AI note and
   "Waiting for your decision" list (needs a product decision on what the AI
