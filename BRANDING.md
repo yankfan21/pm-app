@@ -13,7 +13,7 @@ Branding only shows on the redesign (`VITE_REDESIGN=true`).
 
 ## Before you start
 
-`supabase/migrations/organizations_branding.sql` must be applied first. It has
+`supabase/parked/organizations_branding.sql` must be applied first. It has (Parked outside supabase/migrations/ so `db push` cannot apply it; move it back only to test on a throwaway project.)
 never been run anywhere, so apply it to a throwaway Supabase project and check
 this runbook against it before touching production. In the SQL editor, use the
 **Run** button for the whole file, not "run current statement".
