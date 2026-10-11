@@ -7143,6 +7143,7 @@ textarea.risk-cell-input {
   width: 280px;
   flex: 0 1 280px;
   margin-bottom: 0;
+  font-size: 13px;
 }
 
 .dashboard .controls-zone .filter-tabs,
