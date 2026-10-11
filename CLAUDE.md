@@ -294,7 +294,7 @@ production first. Wanted for the future, not a launch blocker.
 - Local-only, uncommitted on the PC: `android/gradle.properties` (Windows JDK path), 5 deleted scratch SQL files, 3 untracked scratch files.
 - iOS 1.2 App Review status: check on the Mac.
 
-## Dashboard + All Projects merge (web desktop only) — design decided 2026-10-11, NOT BUILT
+## Dashboard + All Projects merge (web desktop only) — BUILT and live 2026-10-11
 
 Desktop web only; the mobile `/m/...` routes, iOS and Android are untouched.
 `Dashboard.jsx` and `AllProjects.jsx` both render the same `ProjectList` from
@@ -351,9 +351,14 @@ versions only; there is no stored "pending/draft" state for AI proposals
 drafts as "pending" so they appear in the list). Bigger build (schema, flows,
 RLS); the list layout can take it later without a redo.
 
-**Build plan:** (1) merge `AllProjects` into `Dashboard` with search in the
-filter row; (2) top-bar layout for `/dashboard` only, with footer and badges;
-(3) "Needs your attention" list computed from existing task, milestone and
-status update data; (4) AI note, source TBD; (5) redirect + sidebar cleanup.
-Verify in the dev preview (`calmsky-dev`, port 5183) with sample data.
-Ask before pushing.
+**Build status (all pushed to `main`, last commit `74999d0`):**
+1. Filter row on `Dashboard.jsx` (search, methodology, Active/Archived, sort; default Deadline). `AllProjects.jsx` deleted.
+2. Top bar + footer: `AppShell` takes `topNav`, turned on by `ProjectsShell` for `/dashboard` only. `TopBar` and `PageFooter` live in `AppShell.jsx`; styles at the end of `App.css`.
+3. "Needs your attention": `src/needsAttention.js` (pure rules), `components/NeedsAttention.jsx`. Rules: overdue tasks (grouped per project), milestone past with open tasks, status update overdue by the project's Status Update row in `comm_plan_items` (Ad hoc skipped; no update ever sent counts from the plan row's `created_at`). Max 3 shown, "See all N". Demo projects are skipped once the user has any real project (`attentionProjects`).
+4. AI note: `components/AiNote.jsx`, CalmSky only. Source is rule-based: the slipped milestone (date passed, tasks still open) with the most days late (`computeAiNoteFact`). Wording is **templated, no AI call yet**. "Show me options" only lists up to 5 open tasks and links to the project; "Not now" is remembered per milestone in localStorage. Attention list and note share one fetch (`useAttentionData`).
+5. `/projects` redirects to `/dashboard`; "All Projects" removed from the rail; project pages' back link goes to `/dashboard`. Mobile untouched.
+
+**Still open:**
+- AI-written wording and real options for the note (would need an Edge Function; deploy, JWT setting and per-view API cost to weigh).
+- Not tested: the all-caught-up state, "See all" expansion, the demo-only case, blocked localStorage, and the Account menu's Escape / click-outside close. The `devFixtures.js` sample data now has a slipped milestone, a weekly status plan and an old status update so the note and list render in the preview.
+- Pending-proposals inbox stays deferred.
