@@ -260,3 +260,28 @@ branding, not customers** (written only via the Supabase dashboard / service
 role, no customer-facing settings or org-admin editing). The migration has
 **never been run anywhere**; test it on a throwaway Supabase project, never
 production first. Wanted for the future, not a launch blocker.
+
+### Android / Google Play (production access granted 2026-10-11)
+
+- Package `com.confidantpm.app`. Closed testing passed; Google granted production
+  access 2026-10-11. First production release: version 1.1 (`versionCode` 2) with the
+  CalmSky look. Check Play Console for whether it was sent for review / is live.
+- **Build (PC):** the CalmSky look is a build-time flag, so the build needs
+  `VITE_CALMSKY_REDESIGN=true`. Put it in git-ignored `.env.production.local`
+  (without it the bundle ships the old navy theme). Then `npm run build`,
+  `npx cap sync android`, `cd android && ./gradlew.bat bundleRelease`. Output:
+  `android/app/build/outputs/bundle/release/app-release.aab`. Bump `versionCode` in
+  `android/app/build.gradle` for every upload.
+- Signing: `android/keystore.properties` (git-ignored) points at
+  `E:\confidantpm-release-key.jks`. Back that key up; losing it blocks updates.
+- `android/gradle.properties` has a Windows-only `org.gradle.java.home`; keep it
+  uncommitted (it would break a Mac build).
+- The native app hides "View desktop site" and store badges (`Capacitor.isNativePlatform`).
+- Emulator on the PC: Pixel 8 API 37.2 in Android Studio. The Run button can stay
+  greyed; `./gradlew.bat assembleDebug` then `adb install -r
+  app/build/outputs/apk/debug/app-debug.apk` works.
+- **Store listing assets** (`design/play-store/`): `icon-512.png` (full-bleed square),
+  `feature-graphic-1024x500.png` (source `feature-graphic.html`), `screenshots/`
+  (1080x1920, made with `node design/tools/store-play.mjs <outDir>` against a dev
+  server started with `VITE_DEV_BYPASS_AUTH=true VITE_CALMSKY_REDESIGN=true npx vite
+  --port 5183`). Upload in Play Console > Grow users > Store presence > Main store listing.
