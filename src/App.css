@@ -6922,3 +6922,110 @@ textarea.risk-cell-input {
   font-size: 11px;
   color: var(--text);
 }
+
+/* Dashboard top bar + footer (AppShell topNav). No rail, so .app spans the
+   full width. */
+.app-shell-top {
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+}
+
+.app-shell-top .app {
+  margin-left: 0;
+  width: 100%;
+  min-height: 0;
+  flex: 1;
+}
+
+.top-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 32px;
+  background: var(--card-bg, var(--bg));
+  border-bottom: 1px solid var(--border);
+}
+
+.top-bar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.top-bar-spacer {
+  flex: 1;
+}
+
+.top-bar-account {
+  position: relative;
+}
+
+.top-bar-account-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 999px;
+}
+
+.top-bar-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  min-width: 160px;
+  background: var(--card-bg, var(--bg));
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 6px;
+  z-index: 20;
+}
+
+.top-bar-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.top-bar-menu button:hover {
+  background: var(--neutral-100, rgba(255, 255, 255, 0.06));
+}
+
+.page-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+  padding: 18px 32px;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.page-footer-links {
+  display: flex;
+  gap: 22px;
+}
+
+.page-footer-links a {
+  color: var(--text-muted, inherit);
+  text-decoration: none;
+}
+
+.page-footer-links a:hover {
+  text-decoration: underline;
+}

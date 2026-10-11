@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Outlet, useNavigate } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import { useAuth } from './AuthContext'
 import AppShell from './AppShell'
@@ -7,6 +7,7 @@ import NewProjectFlow from './NewProjectFlow'
 
 function ProjectsShell() {
   const navigate = useNavigate()
+  const onDashboard = useLocation().pathname === '/dashboard'
   const { user } = useAuth()
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
@@ -69,17 +70,19 @@ function ProjectsShell() {
   }
 
   return (
-    <AppShell>
+    <AppShell topNav={onDashboard ? { onNewProject: () => setShowNewProject(true) } : undefined}>
       <div className="app-body">
-        <div className="projects-toolbar">
-          <button
-            type="button"
-            className="btn-primary"
-            onClick={() => setShowNewProject(true)}
-          >
-            <span aria-hidden="true">+</span> New Project
-          </button>
-        </div>
+        {!onDashboard && (
+          <div className="projects-toolbar">
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={() => setShowNewProject(true)}
+            >
+              <span aria-hidden="true">+</span> New Project
+            </button>
+          </div>
+        )}
 
         {error && <p className="error">{error}</p>}
 

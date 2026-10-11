@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 import { useAuth } from './AuthContext'
 import ConfidantLogo from './ConfidantLogo'
@@ -117,6 +118,100 @@ function AppSidebar({ nav }) {
   )
 }
 
+// Dashboard-only chrome: brand, + New project and the account menu in a top
+// bar, with Settings / Support / Privacy and the store badges in a page
+// footer. Project pages keep the left rail (AppSidebar).
+function TopBar({ onNewProject }) {
+  const { user, signOut } = useAuth()
+  const { appName, logoUrl } = useBranding()
+  const [open, setOpen] = useState(false)
+  const menuRef = useRef(null)
+
+  useEffect(() => {
+    if (!open) return undefined
+    function onDown(e) {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setOpen(false)
+    }
+    function onKey(e) {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('mousedown', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+
+  return (
+    <header className="top-bar">
+      <Link to="/dashboard" className="top-bar-brand">
+        <span className="app-sidebar-brand-mark">
+          {logoUrl ? (
+            <img className="app-sidebar-brand-logo" src={logoUrl} alt="" width={28} height={28} />
+          ) : (
+            <ConfidantLogo size={28} />
+          )}
+        </span>
+        <span className="app-sidebar-brand-name">
+          {appName || (
+            <>
+              Confidant<span className="brand-name-accent">PM</span>
+            </>
+          )}
+        </span>
+      </Link>
+      <span className="top-bar-spacer" />
+      <button type="button" className="btn-primary" onClick={onNewProject}>
+        <span aria-hidden="true">+</span> New project
+      </button>
+      {user ? (
+        <div className="top-bar-account" ref={menuRef}>
+          <button
+            type="button"
+            className="top-bar-account-btn"
+            aria-haspopup="menu"
+            aria-expanded={open}
+            aria-label={`Account menu, signed in as ${user.email}`}
+            title={user.email}
+            onClick={() => setOpen((v) => !v)}
+          >
+            <span className="account-menu-avatar" aria-hidden="true">
+              <span>{initialsFromEmail(user.email)}</span>
+            </span>
+            <span aria-hidden="true">Account ▾</span>
+          </button>
+          {open && (
+            <div className="top-bar-menu" role="menu">
+              <button type="button" role="menuitem" onClick={signOut}>
+                Sign out
+              </button>
+            </div>
+          )}
+        </div>
+      ) : (
+        <Link to="/login" className="btn-secondary">
+          Sign In
+        </Link>
+      )}
+    </header>
+  )
+}
+
+function PageFooter() {
+  const { appName } = useBranding()
+  return (
+    <footer className="page-footer">
+      <nav className="page-footer-links" aria-label="Footer">
+        <Link to="/settings">Settings</Link>
+        <Link to="/settings#contact-support">Support</Link>
+        <Link to="/privacy">Privacy</Link>
+      </nav>
+      {!appName && <AppStoreBadges />}
+    </footer>
+  )
+}
+
 // Page frame for every authenticated desktop route: the rail plus the
 // scrolling content column beside it. Every page that used to hand-roll
 // `<div className="app"><AppHeader/>...` renders this instead, so the rail is
@@ -127,7 +222,19 @@ function AppSidebar({ nav }) {
 // ProjectDetailPage's loading and error states deliberately omit it too:
 // there's no project loaded to build a project nav from at that point, and a
 // global-mode rail beats the rail vanishing and re-appearing.
-function AppShell({ nav, children }) {
+//
+// `topNav` ({ onNewProject }) swaps the rail for the top bar + footer; only
+// the Dashboard uses it.
+function AppShell({ nav, topNav, children }) {
+  if (topNav) {
+    return (
+      <div className="app-shell app-shell-top">
+        <TopBar onNewProject={topNav.onNewProject} />
+        <div className="app">{children}</div>
+        <PageFooter />
+      </div>
+    )
+  }
   return (
     <div className="app-shell">
       <AppSidebar nav={nav} />
