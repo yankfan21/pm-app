@@ -285,3 +285,10 @@ production first. Wanted for the future, not a launch blocker.
   (1080x1920, made with `node design/tools/store-play.mjs <outDir>` against a dev
   server started with `VITE_DEV_BYPASS_AUTH=true VITE_CALMSKY_REDESIGN=true npx vite
   --port 5183`). Upload in Play Console > Grow users > Store presence > Main store listing.
+
+**Open items after Android submit (2026-10-11):**
+- Play review of 1.1 pending; when live: install from Play, check icon/screenshots/graphic, record the store link here and in the marketing page (Google Play badge is currently muted "coming soon" in `AppStoreBadges.jsx`; enable it with the real link).
+- Play short description not reviewed (full description is fine, pasted by owner, boutique agencies / independent PMs positioning).
+- "View desktop site" still shows on mobile web (`src/mobile/MobileDesktopLink.jsx`); hidden in native apps. Owner undecided on removing it for mobile web.
+- Local-only, uncommitted on the PC: `android/gradle.properties` (Windows JDK path), 5 deleted scratch SQL files, 3 untracked scratch files.
+- iOS 1.2 App Review status: check on the Mac.
