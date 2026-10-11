@@ -100,7 +100,8 @@ export function attentionProjects(projects) {
 // that slipped furthest (date passed, tasks still open). Failing that, the
 // top item of the attention list, so the note still has something true to
 // say. Rule-based; the note only words it and never changes anything.
-// Shape: { key, project, sentence, openTasks }.
+// Shape: { key, covers, project, sentence, openTasks }; `covers` is the
+// attention-list item key the note already says, so the list can leave it out.
 export function computeAiNoteFact(projects, data, today = Date.now()) {
   const { tasks, milestones } = data
   const todayStr = new Date(today).toISOString().slice(0, 10)
@@ -120,6 +121,7 @@ export function computeAiNoteFact(projects, data, today = Date.now()) {
     const { project, milestone, openTasks, days } = best
     return {
       key: `ms-${milestone.id}`,
+      covers: `ms-${milestone.id}`,
       project,
       openTasks,
       sentence:
@@ -134,5 +136,5 @@ export function computeAiNoteFact(projects, data, today = Date.now()) {
   const project = projects.find((p) => p.id === top.projectId)
   // Dismissals of these come back weekly: the facts are ongoing, not one event.
   const week = Math.floor(today / (7 * DAY))
-  return { key: `${top.key}:${week}`, project, openTasks: [], sentence: `${top.projectName}: ${top.text}.` }
+  return { key: `${top.key}:${week}`, covers: top.key, project, openTasks: [], sentence: `${top.projectName}: ${top.text}.` }
 }

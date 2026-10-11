@@ -4,12 +4,13 @@ import { computeAttentionItems } from '../needsAttention'
 
 const CAP = 3
 
-function NeedsAttention({ projects, data, loading }) {
+// hideKeys: items the AI note already says, so they aren't shown twice.
+function NeedsAttention({ projects, data, loading, hideKeys = [] }) {
   const [showAll, setShowAll] = useState(false)
 
   if (loading || !data) return null
 
-  const items = computeAttentionItems(projects, data)
+  const items = computeAttentionItems(projects, data).filter((i) => !hideKeys.includes(i.key))
   const shown = showAll ? items : items.slice(0, CAP)
 
   return (

@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
-const DISMISS_KEY = 'dashboard-ai-note-dismissed'
+export const DISMISS_KEY = 'dashboard-ai-note-dismissed'
 
-function readDismissed() {
+export function readDismissed() {
   try {
     return JSON.parse(localStorage.getItem(DISMISS_KEY) || '[]')
   } catch {
@@ -15,23 +15,14 @@ function readDismissed() {
 // the top attention item).
 // Wording is templated for now. "Show me options" only lays out the open
 // tasks (when there are any) and links to the project - nothing is changed unless the PM does it.
-function AiNote({ fact }) {
-  const [dismissed, setDismissed] = useState(readDismissed)
+// Dismissal state lives in the Dashboard (dismissed / onDismiss) so the
+// attention list can show the note's item again once the note is gone.
+function AiNote({ fact, dismissed, onDismiss }) {
   const [open, setOpen] = useState(false)
 
   if (!fact || dismissed.includes(fact.key)) return null
   const { project, openTasks, sentence } = fact
   const hasTasks = openTasks.length > 0
-
-  function dismiss() {
-    const next = [...dismissed, fact.key]
-    setDismissed(next)
-    try {
-      localStorage.setItem(DISMISS_KEY, JSON.stringify(next.slice(-50)))
-    } catch {
-      // storage unavailable: dismissal lasts for this visit only
-    }
-  }
 
   return (
     <aside className="ai-note" aria-label="Suggestion">
@@ -57,7 +48,7 @@ function AiNote({ fact }) {
           ) : (
             <button type="button" className="btn-primary" onClick={() => setOpen(true)}>Show me options</button>
           )}
-          <button type="button" className="btn-secondary" onClick={dismiss}>Not now</button>
+          <button type="button" className="btn-secondary" onClick={() => onDismiss(fact.key)}>Not now</button>
         </div>
       </div>
     </aside>
