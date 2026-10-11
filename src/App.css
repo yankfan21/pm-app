@@ -7090,3 +7090,42 @@ textarea.risk-cell-input {
   cursor: pointer;
   padding: 4px 0;
 }
+
+/* Dashboard AI note */
+.ai-note {
+  display: flex;
+  gap: 14px;
+  padding: 16px 20px;
+  margin: 0 0 24px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--card-bg, transparent);
+}
+
+.ai-note-spark {
+  color: var(--accent, currentColor);
+  font-size: 18px;
+  line-height: 1.4;
+}
+
+.ai-note-text {
+  margin: 0 0 6px;
+  font-size: 15px;
+}
+
+.ai-note-source {
+  display: block;
+  opacity: 0.7;
+}
+
+.ai-note-options {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  font-size: 14px;
+}
+
+.ai-note-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}

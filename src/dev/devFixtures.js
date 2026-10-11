@@ -31,6 +31,7 @@ export function makeFixtures() {
     { id: 'm1', project_id: 'p-wms', name: 'Vendor contract signed', start_date: iso(-70), end_date: iso(-70), description: 'Signed by procurement.', created_at: ts(-80) },
     { id: 'm2', project_id: 'p-wms', name: 'UAT complete', start_date: iso(35), end_date: iso(35), description: 'All four centres sign off.', created_at: ts(-80) },
     { id: 'm3', project_id: 'p-wms', name: 'Go live', start_date: iso(75), end_date: iso(75), description: 'Cutover weekend.', created_at: ts(-80) },
+    { id: 'm5', project_id: 'p-wms', name: 'ERP integration complete', start_date: iso(-6), end_date: iso(-6), description: '', created_at: ts(-80) },
     { id: 'm4', project_id: 'p-app', name: 'Beta in TestFlight', start_date: iso(30), end_date: iso(30), description: '', created_at: ts(-50) },
   ]
 
@@ -47,7 +48,7 @@ export function makeFixtures() {
     T('t3', 'p-wms', 'Design data migration plan', { s: -50, e: -25, ph: 2, status: 'completed', who: 'A. Patel' }),
     T('t4', 'p-wms', 'Configure scanner hardware', { s: -30, e: 5, ph: 3, status: 'in_progress', who: 'R. Chen' }),
     T('t5', 'p-wms', 'Migrate item master data', { s: -20, e: 12, ph: 3, status: 'in_progress', who: 'A. Patel' }),
-    T('t6', 'p-wms', 'Integrate with ERP', { s: -10, e: -2, ph: 3, status: 'delayed', who: 'J. Moreau', pr: 'High' }),
+    T('t6', 'p-wms', 'Integrate with ERP', { s: -10, e: -2, ph: 3, status: 'delayed', who: 'J. Moreau', pr: 'High', m: 'm5' }),
     T('t7', 'p-wms', 'Train floor staff (wave 1)', { s: 10, e: 30, ph: 3, who: 'S. Okafor' }),
     T('t8', 'p-wms', 'User acceptance testing', { s: 20, e: 35, ph: 3, who: 'R. Chen', m: 'm2' }),
     T('t9', 'p-wms', 'Cutover rehearsal', { s: 40, e: 55, ph: 3, who: 'A. Patel' }),

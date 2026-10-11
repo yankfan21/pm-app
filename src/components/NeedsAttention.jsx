@@ -1,42 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { supabase } from '../supabaseClient'
 import { computeAttentionItems } from '../needsAttention'
 
 const CAP = 3
 
-function NeedsAttention({ projects: allProjects, loading }) {
-  // Demo projects only get attention items while they're all the user has;
-  // once there is at least one real project they would just be noise.
-  const hasReal = allProjects.some((p) => !p.is_demo)
-  const projects = hasReal ? allProjects.filter((p) => !p.is_demo) : allProjects
-  const [data, setData] = useState(null)
+function NeedsAttention({ projects, data, loading }) {
   const [showAll, setShowAll] = useState(false)
-  const idsKey = projects.map((p) => p.id).join(',')
-
-  useEffect(() => {
-    const ids = projects.map((p) => p.id)
-    if (ids.length === 0) {
-      setData({ tasks: [], milestones: [], planItems: [], updates: [] })
-      return undefined
-    }
-    let cancelled = false
-    async function load() {
-      const [t, m, pi, su] = await Promise.all([
-        supabase.from('tasks').select('id, project_id, title, due_date, status, task_type, milestone_id').in('project_id', ids),
-        supabase.from('milestones').select('id, project_id, name, end_date').in('project_id', ids),
-        supabase.from('comm_plan_items').select('project_id, type, frequency, created_at').in('project_id', ids).eq('type', 'Status Update'),
-        supabase.from('status_updates').select('project_id, created_at').in('project_id', ids),
-      ])
-      if (cancelled) return
-      setData({ tasks: t.data || [], milestones: m.data || [], planItems: pi.data || [], updates: su.data || [] })
-    }
-    load()
-    return () => {
-      cancelled = true
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [idsKey])
 
   if (loading || !data) return null
 

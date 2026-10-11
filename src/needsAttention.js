@@ -75,3 +75,28 @@ export function computeAttentionItems(projects, { tasks, milestones, planItems, 
 
   return items.sort((a, b) => b.daysLate - a.daysLate)
 }
+
+// Demo projects only count while they are all the user has.
+export function attentionProjects(projects) {
+  return projects.some((p) => !p.is_demo) ? projects.filter((p) => !p.is_demo) : projects
+}
+
+// The single fact behind the dashboard AI note: the milestone that slipped
+// furthest - its date has passed with tasks still open. Rule-based; the note
+// only words it and never changes anything.
+export function computeAiNoteFact(projects, { tasks, milestones }, today = Date.now()) {
+  const todayStr = new Date(today).toISOString().slice(0, 10)
+  let best = null
+  for (const project of projects) {
+    for (const m of milestones.filter((x) => x.project_id === project.id)) {
+      if (!m.end_date || m.end_date >= todayStr) continue
+      const left = tasks.filter(
+        (t) => t.project_id === project.id && t.milestone_id === m.id && t.status !== 'completed' && t.task_type !== 'milestone_marker'
+      )
+      if (left.length === 0) continue
+      const days = daysBetween(m.end_date, today)
+      if (!best || days > best.days) best = { key: m.id, project, milestone: m, openTasks: left, days }
+    }
+  }
+  return best
+}

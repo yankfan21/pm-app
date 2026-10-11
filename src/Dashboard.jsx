@@ -2,6 +2,9 @@ import { useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import ProjectList from './ProjectList'
 import NeedsAttention from './components/NeedsAttention'
+import AiNote from './components/AiNote'
+import useAttentionData from './useAttentionData'
+import { attentionProjects, computeAiNoteFact } from './needsAttention'
 import MobileAppTeaserCard from './components/MobileAppTeaserCard'
 import { useAuth } from './AuthContext'
 import { CALMSKY } from './redesign'
@@ -92,6 +95,9 @@ function Dashboard() {
   const isSearching = query.trim() !== ''
   const scoped = projects.filter((p) => matchesMethodology(p, methodology))
 
+  const factProjects = attentionProjects(active)
+  const attentionData = useAttentionData(factProjects)
+
   let display
   if (isSearching) {
     const matches = scoped.filter((p) => matchesQuery(p, query))
@@ -123,6 +129,9 @@ function Dashboard() {
             Your projects.
           </p>
         </>
+      )}
+      {CALMSKY && !loading && attentionData && (
+        <AiNote fact={computeAiNoteFact(factProjects, attentionData)} />
       )}
       <MobileAppTeaserCard />
       <div className="controls-zone">
@@ -192,7 +201,7 @@ function Dashboard() {
         }
         onHide={hideProject}
       />
-      <NeedsAttention projects={active} loading={loading} />
+      <NeedsAttention projects={factProjects} data={attentionData} loading={loading} />
     </div>
   )
 }
