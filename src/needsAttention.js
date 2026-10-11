@@ -1,5 +1,5 @@
-// Time-based facts only, derived from existing task, milestone and status
-// update data: overdue tasks, a milestone date passed with open tasks, a
+// Time-based facts only, derived from existing project, task, milestone and status
+// update data: a passed go-live date, overdue tasks, a milestone date passed with open tasks, a
 // status update overdue by the project's own cadence. Deliberately no risk
 // scoring - this is not a risk log.
 
@@ -55,18 +55,33 @@ export function computeAttentionItems(projects, { tasks, milestones, planItems, 
       })
     }
 
+    if (project.deadline && project.deadline < todayStr) {
+      const days = daysBetween(project.deadline, today)
+      items.push({
+        key: `golive-${project.id}`,
+        projectId: project.id,
+        projectName: project.name,
+        text: `Target go-live passed ${plural(days, 'day')} ago (${project.deadline})`,
+        daysLate: days,
+      })
+    }
+
     const plan = planItems.find((i) => i.project_id === project.id && i.type === 'Status Update')
     const every = plan && CADENCE_DAYS[plan.frequency]
     if (every) {
       const mine = updates.filter((u) => u.project_id === project.id)
-      const last = mine.length ? mine.reduce((a, b) => (a.created_at >= b.created_at ? a : b)).created_at : plan.created_at
+      const neverSent = mine.length === 0
+      // With no update on record the clock starts when the plan row was made.
+      const last = neverSent ? plan.created_at : mine.reduce((a, b) => (a.created_at >= b.created_at ? a : b)).created_at
       const days = daysBetween(last, today)
       if (days > every) {
         items.push({
           key: `su-${project.id}`,
           projectId: project.id,
           projectName: project.name,
-          text: `Status update is due (${plan.frequency.toLowerCase()}); the last was ${plural(days, 'day')} ago`,
+          text: neverSent
+            ? `No status update sent yet; the ${plan.frequency.toLowerCase()} plan was set up ${plural(days, 'day')} ago`
+            : `Status update is due (${plan.frequency.toLowerCase()}); the last was ${plural(days, 'day')} ago`,
           daysLate: days - every,
         })
       }
