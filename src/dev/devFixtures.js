@@ -113,7 +113,7 @@ export function makeFixtures() {
     projects, phases, milestones, tasks, task_dependencies, sprints, sprint_retros, project_collaborators,
     project_evaluations, charters, risk_logs, risks, stakeholders,
     scopings: [], requirements_briefs: [], issue_logs: [], exec_comms_plans: [], team_newsletters: [], budget_trackers: [],
-    status_updates: [], document_versions: [], post_mortems: [], communication_plans: [], comm_plan_items: [], comm_plan_audience: [],
+    status_updates: [{ id: 'su1', project_id: 'p-wms', what_got_done: 'Vendor kickoff', whats_blocked: '', whats_coming_up: '', created_at: ts(-12) }], document_versions: [], post_mortems: [], communication_plans: [], comm_plan_items: [{ id: 'cpi1', plan_id: 'cp1', project_id: 'p-wms', type: 'Status Update', frequency: 'Weekly', format: 'Email', created_at: ts(-60) }], comm_plan_audience: [],
     stakeholder_registries: [], task_comments: [], risk_notes: [], risk_tasks: [],
   }
 }

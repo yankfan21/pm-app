@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import ProjectList from './ProjectList'
+import NeedsAttention from './components/NeedsAttention'
 import MobileAppTeaserCard from './components/MobileAppTeaserCard'
 import { useAuth } from './AuthContext'
 import { CALMSKY } from './redesign'
@@ -191,6 +192,7 @@ function Dashboard() {
         }
         onHide={hideProject}
       />
+      <NeedsAttention projects={active} loading={loading} />
     </div>
   )
 }

@@ -7029,3 +7029,64 @@ textarea.risk-cell-input {
 .page-footer-links a:hover {
   text-decoration: underline;
 }
+
+/* Dashboard "Needs your attention" list */
+.needs-attention {
+  margin-top: 40px;
+}
+
+.needs-attention-title {
+  font-size: 18px;
+  margin: 0 0 12px;
+}
+
+.needs-attention-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.needs-attention-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--card-bg, transparent);
+}
+
+.needs-attention-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 14px;
+  min-width: 0;
+}
+
+.needs-attention-project {
+  font-weight: 600;
+}
+
+.needs-attention-clear {
+  margin: 0;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  font-size: 14px;
+}
+
+.needs-attention-more {
+  margin-top: 10px;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 4px 0;
+}
