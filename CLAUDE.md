@@ -287,6 +287,7 @@ production first. Wanted for the future, not a launch blocker.
   --port 5183`). Upload in Play Console > Grow users > Store presence > Main store listing.
 
 **Open items after Android submit (2026-10-11):**
+- Mac synced to the PC's Android work on 2026-10-11 (branch fast-forwarded to origin/main `a2eaac0`). Play 1.1 was submitted with full rollout, so once Google approves (expected 1-4 days) it should go live on its own; if the release page instead shows "ready to publish", the owner clicks publish in Play Console. Back up `E:\confidantpm-release-key.jks`.
 - Play review of 1.1 pending; when live: install from Play, check icon/screenshots/graphic, record the store link here and in the marketing page (Google Play badge is currently muted "coming soon" in `AppStoreBadges.jsx`; enable it with the real link).
 - Play short description not reviewed (full description is fine, pasted by owner, boutique agencies / independent PMs positioning).
 - "View desktop site" still shows on mobile web (`src/mobile/MobileDesktopLink.jsx`); hidden in native apps. Owner undecided on removing it for mobile web.
