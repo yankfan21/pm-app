@@ -179,37 +179,35 @@ function Dashboard() {
 
         {!isSearching && (
           <div className="list-controls">
-            <button
-              type="button"
-              className={`status-tab ${tab === 'active' ? 'selected' : ''}`}
-              onClick={() => setTab('active')}
-            >
-              Active
-            </button>
+            <div className="view-switch" role="group" aria-label="Project view">
+              {[
+                ['active', 'Active'],
+                ['archived', 'Archived'],
+              ].map(([key, label]) => (
+                <button
+                  type="button"
+                  key={key}
+                  className={`view-switch-btn ${tab === key ? 'selected' : ''}`}
+                  aria-pressed={tab === key}
+                  onClick={() => setTab(key)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
 
             {tab === 'active' && (
-              <div className="sort-controls">
-                <span className="sort-controls-label">Sort by</span>
-                {SORT_OPTIONS.map(({ key, label }) => (
-                  <button
-                    type="button"
-                    key={key}
-                    className={`sort-option ${sort === key ? 'selected' : ''}`}
-                    onClick={() => setSort(key)}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
+              <label className="sort-select">
+                <span>Sort by</span>
+                <select value={sort} onChange={(e) => setSort(e.target.value)}>
+                  {SORT_OPTIONS.map(({ key, label }) => (
+                    <option key={key} value={key}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </label>
             )}
-
-            <button
-              type="button"
-              className={`status-tab ${tab === 'archived' ? 'selected' : ''}`}
-              onClick={() => setTab('archived')}
-            >
-              Archived
-            </button>
           </div>
         )}
       </div>

@@ -132,7 +132,7 @@ function ProjectList({ projects, loading, emptyMessage, onHide }) {
                 </button>
               )}
               <div className="project-card-top">
-                <span className="project-card-title">{project.name}</span>
+                <span className="project-card-title" title={project.name}>{project.name}</span>
                 <div className="project-card-badges">
                   <span className="methodology-badge">
                     {METHODOLOGY_LABELS[project.methodology] ?? project.methodology}

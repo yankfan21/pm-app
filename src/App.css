@@ -7164,3 +7164,59 @@ textarea.risk-cell-input {
   cursor: pointer;
   padding: 4px 0;
 }
+
+/* Dashboard: Active/Archived as one switch, sort as a dropdown. */
+.dashboard .list-controls {
+  gap: 12px;
+}
+
+.view-switch {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+}
+
+.view-switch-btn {
+  padding: 5px 14px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.view-switch-btn.selected {
+  background: var(--accent-bg, rgba(122, 184, 240, 0.16));
+  color: var(--accent);
+}
+
+.sort-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.sort-select select {
+  padding: 6px 28px 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background-color: var(--card-bg);
+  color: var(--text-h);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* Project card header: methodology and Demo badges sit side by side so a
+   demo card's content starts at the same height as every other card. */
+.project-card-badges {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+}
