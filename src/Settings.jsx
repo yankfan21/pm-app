@@ -151,7 +151,7 @@ function Settings() {
 
         <h3 className="settings-section-title">Hidden Projects</h3>
         <p className="dashboard-subtitle">
-          Projects you&rsquo;ve hidden from your own Dashboard and All Projects lists. Hiding is
+          Projects you&rsquo;ve hidden from your own Dashboard list. Hiding is
           personal - it doesn&rsquo;t change your access or affect anyone else&rsquo;s view.
         </p>
 

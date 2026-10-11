@@ -8,7 +8,6 @@ import { initialsFromEmail } from './initials'
 
 const NAV_VIEWS = [
   { to: '/dashboard', label: 'Dashboard', icon: '▦', end: true },
-  { to: '/projects', label: 'All Projects', icon: '▤', end: false },
 ]
 
 // The one persistent left rail, replacing the horizontal top bar every page
@@ -16,7 +15,7 @@ const NAV_VIEWS = [
 // account footer - so the frame never moves between routes and only the
 // middle changes:
 //
-//   global mode  (no `nav` passed): Dashboard / All Projects
+//   global mode  (no `nav` passed): Dashboard
 //   project mode (`nav` passed):    ProjectNav + ProjectAdmin, handed in by
 //                                   ProjectDetailLayout
 //

@@ -21,7 +21,6 @@ import './App.css'
 // not one per route.
 const ProjectsShell = lazy(() => import('./ProjectsShell'))
 const Dashboard = lazy(() => import('./Dashboard'))
-const AllProjects = lazy(() => import('./AllProjects'))
 const ProjectDetailPage = lazy(() => import('./ProjectDetailPage'))
 const ProjectOverviewRoute = lazy(() => import('./ProjectOverviewRoute'))
 const PlanningTasksRoute = lazy(() => import('./PlanningTasksRoute'))
@@ -223,7 +222,7 @@ function App() {
           <Route element={<DeviceModeGate />}>
             <Route element={<ProjectsShell />}>
               <Route path="dashboard" element={<Dashboard />} />
-              <Route path="projects" element={<AllProjects />} />
+              <Route path="projects" element={<Navigate to="/dashboard" replace />} />
             </Route>
 
             <Route path="/projects/:projectId" element={<ProjectDetailPage />}>

@@ -97,7 +97,7 @@ function ProjectDetailPage() {
       <AppShell>
         <div className="app-body">
           <p className="error">{error || 'Project not found.'}</p>
-          <Link to="/projects" className="btn-secondary back-link">
+          <Link to="/dashboard" className="btn-secondary back-link">
             &larr; Back to projects
           </Link>
         </div>

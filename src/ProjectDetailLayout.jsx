@@ -62,7 +62,7 @@ function buildMethodologySwitchWarning(fromMethodology, toMethodology, counts) {
 // methodology/priority/archive row), and hands all of it to whichever
 // section route is currently matched via <Outlet context={...}/> - same
 // layout+Outlet pattern ProjectsShell.jsx already uses for
-// Dashboard/AllProjects. Nothing here re-fetches or resets when navigating
+// the Dashboard. Nothing here re-fetches or resets when navigating
 // between sections, since the state lives above the Outlet, not inside it.
 //
 // Task-form state and the Documents checklist's per-item expand/flow state
@@ -376,7 +376,7 @@ function ProjectDetailLayout({ project, isOwner, canEdit }) {
   return (
     <AppShell nav={projectNav}>
       <div className="app-body">
-        <Link to="/projects" className="btn-secondary back-link">
+        <Link to="/dashboard" className="btn-secondary back-link">
           &larr; Back to projects
         </Link>
 

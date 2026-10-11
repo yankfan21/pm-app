@@ -390,7 +390,7 @@ function ProgressStatCard({ project, evaluation, loading, unsavedMetrics }) {
 // What it no longer skips is the write. The edge function persists the
 // computed object onto the latest evaluation row's `metrics` column, so the
 // refreshed figure survives navigation and a page refresh and reaches every
-// other reader of that row (All Projects' badge, mobile). This hook's job
+// other reader of that row (the Dashboard badge, mobile). This hook's job
 // on success is therefore mostly to hand the new values up via
 // onPersisted() so the one copy of that row on this page - the
 // docs.project_evaluation array both the metric cards and the Project

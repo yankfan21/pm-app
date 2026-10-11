@@ -39,7 +39,7 @@ function ProjectList({ projects, loading, emptyMessage, onHide }) {
   const [milestonesByProject, setMilestonesByProject] = useState({})
   const [peopleByProject, setPeopleByProject] = useState({})
 
-  // Dashboard/AllProjects both derive `projects` via filter()/sort() on
+  // Dashboard derives `projects` via filter()/sort() on
   // every render, which is a new array reference each time even when the
   // underlying ids haven't changed - depending on that reference directly
   // would re-fetch on every unrelated re-render, so key off the actual ids.
