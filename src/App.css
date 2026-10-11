@@ -7150,3 +7150,17 @@ textarea.risk-cell-input {
 .dashboard .controls-zone .list-controls {
   margin-bottom: 0;
 }
+
+.demo-toggle {
+  display: block;
+  margin: 16px 0 0;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  opacity: 0.75;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 4px 0;
+}

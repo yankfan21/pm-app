@@ -74,6 +74,8 @@ function firstNameFromEmail(email) {
   return first ? first[0].toUpperCase() + first.slice(1) : ''
 }
 
+const DEMO_HIDE_AT = 3
+
 function summaryLine(active) {
   const count = active.length
   const soon = Date.now() + 30 * 24 * 60 * 60 * 1000
@@ -91,9 +93,16 @@ function Dashboard() {
   const [query, setQuery] = useState('')
   const [methodology, setMethodology] = useState('all')
 
-  const active = projects.filter((p) => p.status !== 'Archived')
+  const [showDemos, setShowDemos] = useState(false)
+  const allActive = projects.filter((p) => p.status !== 'Archived')
+  // Demo projects step aside once the user has DEMO_HIDE_AT or more real
+  // projects on the dashboard. Display only; search still finds them.
+  const demoRuleApplies = allActive.filter((p) => !p.is_demo).length >= DEMO_HIDE_AT
+  const demosHidden = demoRuleApplies && !showDemos
+  const active = demosHidden ? allActive.filter((p) => !p.is_demo) : allActive
+  const demoCount = allActive.length - allActive.filter((p) => !p.is_demo).length
   const isSearching = query.trim() !== ''
-  const scoped = projects.filter((p) => matchesMethodology(p, methodology))
+  const scoped = projects.filter((p) => matchesMethodology(p, methodology) && !(demosHidden && !isSearching && p.is_demo))
 
   const [dismissedNotes, setDismissedNotes] = useState(readDismissed)
   function dismissNote(key) {
@@ -213,6 +222,11 @@ function Dashboard() {
         }
         onHide={hideProject}
       />
+      {demoRuleApplies && demoCount > 0 && !isSearching && (
+        <button type="button" className="demo-toggle" onClick={() => setShowDemos((v) => !v)}>
+          {showDemos ? 'Hide demo projects' : `Show demo projects (${demoCount})`}
+        </button>
+      )}
       <NeedsAttention
         projects={factProjects}
         data={attentionData}
