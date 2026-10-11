@@ -265,7 +265,7 @@ production first. Wanted for the future, not a launch blocker.
 
 - Package `com.confidantpm.app`. Closed testing passed; Google granted production
   access 2026-10-11. First production release: version 1.1 (`versionCode` 20; 2 was already used in Play) with the
-  CalmSky look. Check Play Console for whether it was sent for review / is live.
+  CalmSky look. SUBMITTED for review 2026-10-11 (release 1.1 full rollout, worldwide, plus new icon, feature graphic, screenshots). Next: when approved, install from Play and record the store link here.
 - **Build (PC):** the CalmSky look is a build-time flag, so the build needs
   `VITE_CALMSKY_REDESIGN=true`. Put it in git-ignored `.env.production.local`
   (without it the bundle ships the old navy theme). Then `npm run build`,
