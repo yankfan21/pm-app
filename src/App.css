@@ -7129,3 +7129,23 @@ textarea.risk-cell-input {
   gap: 10px;
   margin-top: 14px;
 }
+
+/* Dashboard: search, methodology, Active/Archived and sort share one row
+   (wraps on narrow widths). */
+.dashboard .controls-zone {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 20px;
+}
+
+.dashboard .controls-zone .search-input {
+  width: 280px;
+  flex: 0 1 280px;
+  margin-bottom: 0;
+}
+
+.dashboard .controls-zone .filter-tabs,
+.dashboard .controls-zone .list-controls {
+  margin-bottom: 0;
+}
