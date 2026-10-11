@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { DAY_MS, buildElbowPoints, computeCriticalPath, computeGanttLayout, parseDay } from './ganttLayout'
 import { resolveAssigneeLabel } from './components/AssigneePicker'
+import { CALMSKY } from './redesign'
 
 const UNPHASED_KEY = '__unphased'
 
@@ -358,6 +359,40 @@ function GanttChart({ project, tasks, taskDependencies, phases, milestones = [],
     return () => observer.disconnect()
   }, [expanded, bars.length])
 
+  // Open scrolled so today sits near the left of the visible track instead of
+  // at the project's first date - once per wrap element, after the first real
+  // width measurement, so later zoom/filter changes never yank the PM's
+  // scroll position. Manual scrolling is untouched; no-op when today is
+  // outside the range or the chart already fits without scrolling.
+  const scrolledWrapRef = useRef(null)
+  useLayoutEffect(() => {
+    const wrap = wrapRef.current
+    if (!wrap || scrolledWrapRef.current === wrap || wrap.clientWidth === 0) return
+    scrolledWrapRef.current = wrap
+    if (!todayInRange) return
+    const labelWidth = labelHeaderRef.current?.getBoundingClientRect().width ?? 0
+    const visibleTrack = Math.max(0, wrap.clientWidth - labelWidth - COLUMN_GAP_PX)
+    const todayInTrack = ((todayMs - rangeStart) / totalSpan) * trackPxWidth
+    wrap.scrollLeft = Math.max(0, todayInTrack - visibleTrack * 0.25)
+    // No dep array: guarded by the wrap node, so it also catches the wrap
+    // being remounted in a render where none of the values above changed.
+  })
+
+  // "Start" / "Today" jump buttons: the chart opens at today, so a PM
+  // looking at a project that began in the past needs a way back.
+  const jumpTo = (target) => {
+    const wrap = wrapRef.current
+    if (!wrap) return
+    let left = 0
+    if (target === 'today') {
+      const labelWidth = labelHeaderRef.current?.getBoundingClientRect().width ?? 0
+      const visibleTrack = Math.max(0, wrap.clientWidth - labelWidth - COLUMN_GAP_PX)
+      const todayInTrack = ((todayMs - rangeStart) / totalSpan) * trackPxWidth
+      left = Math.max(0, todayInTrack - visibleTrack * 0.25)
+    }
+    wrap.scrollTo({ left, behavior: 'smooth' })
+  }
+
   // Only computed while the toggle is on - cheap either way at this scale,
   // but no reason to run it when nothing reads the result.
   const criticalPath = showCriticalPath ? computeCriticalPath(bars, taskDependencies) : null
@@ -545,6 +580,20 @@ function GanttChart({ project, tasks, taskDependencies, phases, milestones = [],
                 ✕
               </button>
             )}
+          </div>
+          <div className="gantt-zoom-control gantt-jump-control" role="group" aria-label="Jump to">
+            <button type="button" className="gantt-zoom-btn" disabled={bars.length === 0} onClick={() => jumpTo('start')}>
+              ⇤ Start
+            </button>
+            <button
+              type="button"
+              className="gantt-zoom-btn"
+              disabled={bars.length === 0 || !todayInRange}
+              title={todayInRange ? undefined : 'Today is outside this chart’s date range'}
+              onClick={() => jumpTo('today')}
+            >
+              Today
+            </button>
           </div>
           <div className="gantt-zoom-control" role="group" aria-label="Zoom level">
             {ZOOM_LEVELS.map((z) => (
@@ -835,7 +884,7 @@ function GanttChart({ project, tasks, taskDependencies, phases, milestones = [],
                         ref={(el) => {
                           barRefs.current[task.id] = el
                         }}
-                        className={`gantt-bar ${singleDate ? 'single-date' : ''} ${isDelayed ? 'delayed' : ''} ${task.completed ? 'completed' : ''} ${isCritical ? 'critical-path' : ''}`}
+                        className={`gantt-bar ${singleDate ? 'single-date' : ''} ${isDelayed ? 'delayed' : ''} ${task.completed ? 'completed' : ''} ${isCritical ? 'critical-path' : ''} ${CALMSKY && task.status === 'in_progress' ? 'in-progress' : ''}`}
                         style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
                         title={`${task.start_date || 'TBD'} → ${task.due_date || 'TBD'}${assigneeSuffix}`}
                       />
@@ -907,10 +956,23 @@ function GanttChart({ project, tasks, taskDependencies, phases, milestones = [],
 
       {expanded && bars.length > 0 && (
         <div className="gantt-legend">
-          <span className="gantt-legend-item">
-            <span className="gantt-legend-swatch bar" />
-            Task (start–due)
-          </span>
+          {CALMSKY ? (
+            <>
+              <span className="gantt-legend-item">
+                <span className="gantt-legend-swatch bar" />
+                Not started
+              </span>
+              <span className="gantt-legend-item">
+                <span className="gantt-legend-swatch bar in-progress" />
+                In progress
+              </span>
+            </>
+          ) : (
+            <span className="gantt-legend-item">
+              <span className="gantt-legend-swatch bar" />
+              Task (start–due)
+            </span>
+          )}
           <span className="gantt-legend-item">
             <span className="gantt-legend-swatch bar single-date" />
             Single date only
@@ -933,22 +995,22 @@ function GanttChart({ project, tasks, taskDependencies, phases, milestones = [],
           </span>
           <span className="gantt-legend-item">
             <svg className="gantt-legend-arrow" viewBox="0 0 20 12" width="20" height="12" aria-hidden="true">
-              <path d="M0,3 H10 V9 H14" fill="none" stroke="#94a3b8" strokeWidth="1.5" />
-              <path d="M14,6 L20,9 L14,12 Z" fill="#94a3b8" />
+              <path d="M0,3 H10 V9 H14" fill="none" style={{ stroke: 'var(--neutral-400)' }} strokeWidth="1.5" />
+              <path d="M14,6 L20,9 L14,12 Z" style={{ fill: 'var(--neutral-400)' }} />
             </svg>
             Dependency
           </span>
           <span className="gantt-legend-item">
             <svg className="gantt-legend-arrow" viewBox="0 0 20 12" width="20" height="12" aria-hidden="true">
-              <path d="M0,3 H10 V9 H14" fill="none" stroke="#94a3b8" strokeWidth="1.5" strokeDasharray="3 2" />
-              <path d="M14,6 L20,9 L14,12 Z" fill="#94a3b8" />
+              <path d="M0,3 H10 V9 H14" fill="none" style={{ stroke: 'var(--neutral-400)' }} strokeWidth="1.5" strokeDasharray="3 2" />
+              <path d="M14,6 L20,9 L14,12 Z" style={{ fill: 'var(--neutral-400)' }} />
             </svg>
             Multiple predecessors
           </span>
           <span className="gantt-legend-item">
             <svg className="gantt-legend-arrow" viewBox="0 0 20 12" width="20" height="12" aria-hidden="true">
-              <path d="M0,3 H10 V9 H14" fill="none" stroke="#f97316" strokeWidth="2.5" />
-              <path d="M14,6 L20,9 L14,12 Z" fill="#f97316" />
+              <path className="gantt-legend-arrow-critical" d="M0,3 H10 V9 H14" fill="none" stroke="#f97316" strokeWidth="2.5" />
+              <path className="gantt-legend-arrow-critical" d="M14,6 L20,9 L14,12 Z" fill="#f97316" />
             </svg>
             Critical path dependency
           </span>

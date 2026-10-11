@@ -38,7 +38,8 @@ export default function AssigneePicker({
   // denormalized onto the project row itself, same pattern as
   // project_collaborators.email, so every viewer with access to the project
   // can see who the owner is, not just the owner viewing their own tasks.
-  const options = ownerUserId && ownerEmail ? [...collaborators, { user_id: ownerUserId, email: `${ownerEmail} (Owner)` }] : collaborators
+  const others = collaborators.filter((c) => c.user_id !== ownerUserId)
+  const options = ownerUserId && ownerEmail ? [...others, { user_id: ownerUserId, email: `${ownerEmail} (Owner)` }] : collaborators
 
   function handleSelectChange(e) {
     const val = e.target.value

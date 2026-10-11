@@ -43,6 +43,7 @@ function DocSection({ docKey, title, startLabel, viewProps, seed }) {
     retros,
     milestones,
     phases,
+    setProject,
   } = useOutletContext()
 
   const [flowOpen, setFlowOpen] = useState(false)
@@ -165,6 +166,7 @@ function DocSection({ docKey, title, startLabel, viewProps, seed }) {
               project={project}
               {...contextProps}
               onGenerated={insertDoc}
+              onProjectUpdated={setProject}
               onClose={() => setFlowOpen(false)}
             />
           )}

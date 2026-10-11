@@ -1,0 +1,764 @@
+/* CalmSky_Redesign - the "Friendly" dark theme (design/dark/friendly*.html).
+   Warm charcoal canvas, round shapes, one soft sky accent for actions, nav
+   and Today; status keeps muted traffic lights.
+
+   Switched on by VITE_CALMSKY_REDESIGN=true (main.jsx sets data-theme="calmsky");
+   production leaves it unset and keeps the shipped navy theme. When approved,
+   these values move into :root in index.css and the flag goes away.
+
+   Stage 1 is tokens only: no component rules live here yet. Text pairs are
+   >= 4.5:1 on their surface (--text-muted on --bg is about 8:1). */
+
+:root[data-theme='calmsky'] {
+  color-scheme: dark;
+
+  /* Fonts, self-hosted via @fontsource-variable (main.jsx). */
+  --sans: 'Hanken Grotesk Variable', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --heading: 'Schibsted Grotesk Variable', system-ui, 'Segoe UI', Roboto, sans-serif;
+
+  /* Round and friendly. */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+
+  /* Surfaces and text (warm charcoal) */
+  --bg: #171614;
+  --text: #e6e1d7;
+  --text-h: #f3efe8;
+  --text-muted: #b3ada1;
+  --border: #37332d;
+  --code-bg: #26231f;
+  --card-bg: #1f1d1a;
+  --card-backdrop-filter: none;
+  --card-shadow: none;
+  --card-hover-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  --surface-1-solid: #1f1d1a;
+  --header-bg: #1f1d1a;
+  --header-border: #2c2925;
+  --row-bg: #23201d;
+  --row-border: #2c2925;
+  --shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  --social-bg: #26231f;
+
+  /* The one accent (calm sky). --accent-strong stays a mid sky because older
+     buttons put hardcoded white text on it (white on #2f78b8 is 4.7:1);
+     .btn-primary uses the light sky with dark ink instead. */
+  --accent: #7ab8f0;
+  --accent-muted: #7ab8f0;
+  --accent-strong: #2f78b8;
+  --accent-bg: rgba(122, 184, 240, 0.14);
+  --accent-border: rgba(122, 184, 240, 0.4);
+  --link: #7ab8f0;
+  --tab-active-bg: rgba(122, 184, 240, 0.16);
+  --tab-active-text: #7ab8f0;
+  --tab-inactive-text: var(--text-muted);
+  --sort-active: #7ab8f0;
+  --card-accent-purple: var(--accent);
+  --card-accent-amber: #dcae55;
+  --card-accent-red: #e9776c;
+  --card-accent-muted: var(--border);
+  --card-tint-purple: rgba(122, 184, 240, 0.05);
+  --card-tint-amber: rgba(220, 174, 85, 0.05);
+  --card-tint-red: rgba(233, 119, 108, 0.06);
+
+  /* Buttons and inputs */
+  --btn-primary-bg: #7ab8f0;
+  --btn-primary-hover-bg: #93c6f4;
+  --btn-primary-border: #7ab8f0;
+  --btn-primary-text: #071827;
+  --btn-primary-backdrop-filter: none;
+  --btn-secondary-border: #4a453d;
+  --btn-secondary-text: #f3efe8;
+  --input-bg: #1f1d1a;
+  --input-border: #4a453d;
+  --input-text: #f3efe8;
+  --disabled-bg: #26231f;
+  --disabled-text: #7d786c;
+  --disabled-border: #2c2925;
+
+  /* Status: muted traffic lights */
+  --pill-neutral-bg: #2c2925;
+  --pill-neutral-text: #b3ada1;
+  --pill-neutral-border: #3d382f;
+  --zone-accent-neutral: #847e72;
+  --alert-red: #e9776c;
+  --badge-success-bg: rgba(120, 185, 149, 0.14);
+  --badge-success-text: #8fcfa9;
+  --badge-success-border: rgba(120, 185, 149, 0.35);
+  --badge-warning-bg: rgba(220, 174, 85, 0.14);
+  --badge-warning-text: #e6bd6e;
+  --badge-warning-border: rgba(220, 174, 85, 0.35);
+  --badge-danger-bg: rgba(233, 119, 108, 0.14);
+  --badge-danger-text: #f09186;
+  --badge-danger-border: rgba(233, 119, 108, 0.35);
+
+  /* Rail: same warm surface as cards, no frosted glass, no hairline. */
+  --rail-bg: #1f1d1a;
+  --rail-border: transparent;
+  --rail-backdrop-filter: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* Stage 2: shell and dashboard                                        */
+/* ------------------------------------------------------------------ */
+
+/* Headings */
+:root[data-theme='calmsky'] h1,
+:root[data-theme='calmsky'] h2,
+:root[data-theme='calmsky'] h3,
+:root[data-theme='calmsky'] .page-title {
+  font-family: var(--heading);
+  letter-spacing: -0.02em;
+}
+
+:root[data-theme='calmsky'] .page-title {
+  font-weight: 600;
+}
+
+:root[data-theme='calmsky'] .dashboard-greeting {
+  font-size: 28px;
+  line-height: 1.15;
+  margin-bottom: 6px;
+}
+
+:root[data-theme='calmsky'] .dashboard-subtitle {
+  color: var(--text-muted);
+  font-size: 15px;
+}
+
+/* Rail: brand, nav, avatar */
+:root[data-theme='calmsky'] .app-sidebar-brand-name {
+  font-family: var(--heading);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-h);
+}
+
+:root[data-theme='calmsky'] .brand-name-accent {
+  color: var(--accent);
+}
+
+:root[data-theme='calmsky'] .app-sidebar-tagline {
+  color: var(--text-muted);
+}
+
+:root[data-theme='calmsky'] .app-sidebar-nav-item,
+:root[data-theme='calmsky'] .project-nav-primary-item,
+:root[data-theme='calmsky'] .project-nav-secondary-item {
+  border-radius: var(--radius-md);
+}
+
+:root[data-theme='calmsky'] .app-sidebar-nav-item.selected,
+:root[data-theme='calmsky'] .project-nav-primary-item.selected,
+:root[data-theme='calmsky'] .project-nav-secondary-item.selected {
+  background: #282521;
+  color: var(--text-h);
+}
+
+:root[data-theme='calmsky'] .app-sidebar-nav-item.selected .app-sidebar-nav-icon {
+  color: var(--accent);
+}
+
+:root[data-theme='calmsky'] .account-menu {
+  border-top-color: #2c2925;
+}
+
+:root[data-theme='calmsky'] .account-menu-avatar {
+  background: #e5b79a;
+  color: #171614;
+}
+
+/* Pill buttons */
+:root[data-theme='calmsky'] .btn-primary,
+:root[data-theme='calmsky'] .btn-secondary {
+  border-radius: 999px;
+}
+
+:root[data-theme='calmsky'] .btn-primary {
+  font-weight: 600;
+}
+
+/* Project cards: round, bordered, no left accent bar or status wash. Health
+   is spelled out by the status badge, never by colour alone. */
+:root[data-theme='calmsky'] .project-list li:not(.empty) {
+  padding: 16px 18px;
+  border: 1px solid var(--row-border);
+  border-radius: var(--radius-lg);
+  background: var(--card-bg);
+}
+
+:root[data-theme='calmsky'] .project-list li.accent-purple,
+:root[data-theme='calmsky'] .project-list li.accent-amber,
+:root[data-theme='calmsky'] .project-list li.accent-red {
+  background: var(--card-bg);
+}
+
+:root[data-theme='calmsky'] .project-list li.clickable:hover {
+  border-color: var(--border);
+  transform: none;
+}
+
+:root[data-theme='calmsky'] .project-card-title {
+  font-family: var(--heading);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+:root[data-theme='calmsky'] .project-card-desc {
+  color: var(--text-muted);
+}
+
+:root[data-theme='calmsky'] .methodology-badge,
+:root[data-theme='calmsky'] .doc-status-badge {
+  border-radius: 999px;
+}
+
+:root[data-theme='calmsky'] .project-card-bottom {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 10px 12px;
+}
+
+/* Own row under the badge and avatars, so the date never runs off the card. */
+:root[data-theme='calmsky'] .project-card-deadline {
+  flex-basis: 100%;
+  color: var(--text-muted);
+}
+
+/* Course line (components/CourseLine.jsx) */
+:root[data-theme='calmsky'] .course-line {
+  position: relative;
+  height: 24px;
+  margin: 14px 8px 2px;
+}
+
+:root[data-theme='calmsky'] .course-line-solid {
+  position: absolute;
+  left: 0;
+  top: 11px;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--text-muted);
+}
+
+:root[data-theme='calmsky'] .course-line-dots {
+  position: absolute;
+  right: 0;
+  top: 11px;
+  border-top: 3px dotted #847e72;
+}
+
+:root[data-theme='calmsky'] .course-line-today {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  width: 3px;
+  margin-left: -1.5px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+:root[data-theme='calmsky'] .course-line-ms {
+  position: absolute;
+  top: 6px;
+  width: 12px;
+  height: 12px;
+  box-sizing: border-box;
+  transform: translateX(-50%) rotate(45deg);
+  border: 2px solid var(--text-muted);
+  border-radius: 4px;
+  background: var(--card-bg);
+}
+
+:root[data-theme='calmsky'] .course-line-ms.passed {
+  background: var(--text-muted);
+}
+
+:root[data-theme='calmsky'] .course-line-golive {
+  position: absolute;
+  right: 0;
+  top: 5px;
+  width: 14px;
+  height: 14px;
+  box-sizing: border-box;
+  transform: translateX(50%);
+  border: 2px solid var(--text-muted);
+  border-radius: 50%;
+  background: var(--card-bg);
+}
+
+:root[data-theme='calmsky'] .course-line.overdue .course-line-golive {
+  border-color: var(--card-accent-red);
+}
+
+/* Avatar stack (components/AvatarStack.jsx) */
+:root[data-theme='calmsky'] .avatar-stack {
+  display: inline-flex;
+  align-items: center;
+}
+
+:root[data-theme='calmsky'] .avatar-stack-item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 26px;
+  height: 26px;
+  margin-left: -4px;
+  border: 2px solid var(--card-bg);
+  border-radius: 50%;
+  color: #171614;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+:root[data-theme='calmsky'] .avatar-stack-item:first-child {
+  margin-left: 0;
+}
+
+:root[data-theme='calmsky'] .avatar-stack-more {
+  background: #282521;
+  color: var(--text-muted);
+}
+
+/* ------------------------------------------------------------------ */
+/* Stage 3: Q&A step (QaStepper.jsx, QaQuestion.jsx)                   */
+/* ------------------------------------------------------------------ */
+
+/* Segmented progress: finished steps muted, the current one in the accent. */
+:root[data-theme='calmsky'] .qa-progress {
+  display: flex;
+  gap: 5px;
+  margin: 4px 0 18px;
+}
+
+:root[data-theme='calmsky'] .qa-progress span {
+  flex: 1;
+  height: 5px;
+  border-radius: 5px;
+  background: #282521;
+}
+
+:root[data-theme='calmsky'] .qa-progress span.on {
+  background: var(--text-muted);
+}
+
+:root[data-theme='calmsky'] .qa-progress span.current {
+  background: var(--accent);
+}
+
+:root[data-theme='calmsky'] .qa-stepper .step-label {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+:root[data-theme='calmsky'] .qa-question-text {
+  display: block;
+  margin-bottom: 14px;
+  font-family: var(--heading);
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--text-h);
+}
+
+/* Answer field: rounded, accent ring on focus. Ghost text is the placeholder. */
+:root[data-theme='calmsky'] .qa-field {
+  position: relative;
+}
+
+:root[data-theme='calmsky'] .qa-answer-input {
+  min-height: 112px;
+  padding: 16px 18px 40px;
+  border: 1.5px solid var(--input-border);
+  border-radius: var(--radius-lg);
+  background: var(--card-bg);
+  font-size: 15px;
+}
+
+:root[data-theme='calmsky'] .qa-answer-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+:root[data-theme='calmsky'] .qa-answer-input::placeholder {
+  color: #847e72;
+  opacity: 1;
+}
+
+:root[data-theme='calmsky'] .qa-field-hint {
+  position: absolute;
+  right: 14px;
+  bottom: 10px;
+  display: flex;
+  gap: 14px;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+:root[data-theme='calmsky'] .qa-field-hint .qa-suggestion-link:first-of-type {
+  margin-left: 0;
+  color: var(--accent);
+}
+
+:root[data-theme='calmsky'] .qa-field-hint .qa-suggestion-link:last-of-type {
+  color: var(--text-muted);
+}
+
+:root[data-theme='calmsky'] .qa-field-hint kbd {
+  padding: 0 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Choice buttons: round pills. */
+:root[data-theme='calmsky'] .priority-buttons button {
+  border-radius: 999px;
+}
+
+:root[data-theme='calmsky'] .modal-actions {
+  margin-top: 20px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Stage 4: Gantt (GanttChart.jsx)                                     */
+/* Done is solid, not started is a dashed outline, in progress is a    */
+/* tinted outline, delayed is the one red. Today is the accent.        */
+/* ------------------------------------------------------------------ */
+
+:root[data-theme='calmsky'] .gantt-wrap {
+  border-color: var(--row-border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-1-solid);
+}
+
+:root[data-theme='calmsky'] .gantt-fullscreen .gantt-wrap {
+  background: var(--bg);
+}
+
+/* Bars: rounded pills. The base look is "not started". */
+:root[data-theme='calmsky'] .gantt-bar {
+  top: 4px;
+  bottom: 4px;
+  box-sizing: border-box;
+  border: 1.5px dashed #847e72;
+  border-radius: 999px;
+  background: transparent;
+}
+
+:root[data-theme='calmsky'] .gantt-bar.in-progress {
+  border: 1.5px solid var(--text-muted);
+  background: color-mix(in srgb, var(--text-muted) 40%, transparent);
+}
+
+:root[data-theme='calmsky'] .gantt-bar.single-date {
+  border: 1.5px solid var(--card-accent-amber);
+  background: var(--card-accent-amber);
+}
+
+:root[data-theme='calmsky'] .gantt-bar.delayed {
+  border: 1.5px solid var(--card-accent-red);
+  background: var(--card-accent-red);
+}
+
+:root[data-theme='calmsky'] .gantt-bar.completed {
+  border: 1.5px solid var(--text-muted);
+  background: var(--text-muted);
+}
+
+/* Milestones: outline diamond, filled once completed. */
+:root[data-theme='calmsky'] .gantt-milestone {
+  box-sizing: border-box;
+  width: 13px;
+  height: 13px;
+  border: 2px solid var(--text-muted);
+  border-radius: 4px;
+  background: var(--surface-1-solid);
+}
+
+:root[data-theme='calmsky'] .gantt-milestone.delayed {
+  border-color: var(--card-accent-red);
+  background: var(--card-accent-red);
+}
+
+:root[data-theme='calmsky'] .gantt-milestone.completed {
+  background: var(--text-muted);
+}
+
+/* Phases */
+:root[data-theme='calmsky'] .gantt-phase-track,
+:root[data-theme='calmsky'] .gantt-phase-band {
+  border-radius: 999px;
+}
+
+/* Today: a solid accent line (red now means delayed, nothing else). */
+:root[data-theme='calmsky'] .gantt-today-marker {
+  border-left: 3px solid var(--accent);
+  border-radius: 2px;
+}
+
+:root[data-theme='calmsky'] .gantt-today-note {
+  color: var(--accent);
+}
+
+/* Controls */
+:root[data-theme='calmsky'] .gantt-zoom-control {
+  border-radius: 999px;
+}
+
+:root[data-theme='calmsky'] .gantt-zoom-btn.active {
+  background: #282521;
+  color: var(--text-h);
+}
+
+:root[data-theme='calmsky'] .gantt-filters {
+  border-color: var(--row-border);
+  border-radius: var(--radius-lg);
+}
+
+:root[data-theme='calmsky'] .gantt-legend-item {
+  border-color: var(--row-border);
+}
+
+/* Legend swatches follow the bar and milestone looks above. */
+:root[data-theme='calmsky'] .gantt-legend-swatch {
+  box-sizing: border-box;
+}
+
+:root[data-theme='calmsky'] .gantt-legend-swatch.bar {
+  height: 10px;
+  border: 1.5px dashed #847e72;
+  border-radius: 999px;
+  background: transparent;
+}
+
+:root[data-theme='calmsky'] .gantt-legend-swatch.bar.in-progress {
+  border: 1.5px solid var(--text-muted);
+  background: color-mix(in srgb, var(--text-muted) 40%, transparent);
+}
+
+:root[data-theme='calmsky'] .gantt-legend-swatch.bar.single-date {
+  border: 1.5px solid var(--card-accent-amber);
+  background: var(--card-accent-amber);
+}
+
+:root[data-theme='calmsky'] .gantt-legend-swatch.bar.delayed {
+  border: 1.5px solid var(--card-accent-red);
+  background: var(--card-accent-red);
+}
+
+:root[data-theme='calmsky'] .gantt-legend-swatch.bar.completed {
+  border: 1.5px solid var(--text-muted);
+  background: var(--text-muted);
+}
+
+:root[data-theme='calmsky'] .gantt-legend-swatch.bar.critical-path {
+  background: transparent;
+}
+
+:root[data-theme='calmsky'] {
+  /* Critical path: muted amber, a touch deeper than the single-date fill so a
+     critical single-date bar still reads as two signals. Ring 2.5px. */
+  --highlight: #d98f2b;
+  --shadow-ring-highlight: 0 0 0 2.5px #d98f2b;
+}
+
+:root[data-theme='calmsky'] .gantt-legend-arrow-critical {
+  stroke: var(--highlight);
+  fill: var(--highlight);
+}
+
+:root[data-theme='calmsky'] .gantt-legend-arrow-critical:first-child {
+  fill: none;
+}
+
+:root[data-theme='calmsky'] .gantt-legend-arrow-critical:last-child {
+  stroke: none;
+}
+
+:root[data-theme='calmsky'] .gantt-legend-swatch.diamond {
+  border: 2px solid var(--text-muted);
+  border-radius: 3px;
+  background: transparent;
+}
+
+:root[data-theme='calmsky'] .gantt-legend-swatch.today-line {
+  border-left: 3px solid var(--accent);
+}
+
+/* Phase bands stay neutral so the accent is reserved for Today and actions. */
+:root[data-theme='calmsky'] .gantt-phase-track {
+  background: color-mix(in srgb, var(--text-muted) 10%, transparent);
+}
+
+:root[data-theme='calmsky'] .gantt-phase-band {
+  background: color-mix(in srgb, var(--text-muted) 38%, transparent);
+}
+
+/* ------------------------------------------------------------------ */
+/* Stage 5: stray navy sweep. Tokens from index.css that still carried */
+/* the slate-navy palette, re-pointed to the warm charcoal family.     */
+/* ------------------------------------------------------------------ */
+:root[data-theme='calmsky'] {
+  /* Slate neutrals -> warm neutrals (auth screens, brand name, muted text) */
+  --neutral-100: #f3efe8;
+  --neutral-200: #e6e1d7;
+  --neutral-300: #cdc7bb;
+  --neutral-400: #a39d90;
+
+  /* Login and password screens */
+  --auth-bg: #171614;
+  --auth-panel: #1f1d1a;
+
+  /* Select option chips and mobile raised surface */
+  --option-pending-bg: #2a2622;
+  --option-pending-text: #e6e1d7;
+  --option-info-bg: #1f2e3c;
+  --option-info-text: #7ab8f0;
+  --mobile-surface-raised: #282521;
+}
+
+/* Legacy solid buttons that filled with --accent-strong and hardcoded white
+   text now match .btn-primary: sky fill, dark ink, pill shape. */
+:root[data-theme='calmsky'] .toggle-group button.selected,
+:root[data-theme='calmsky'] .task-form button,
+:root[data-theme='calmsky'] .backlog-create-form button,
+:root[data-theme='calmsky'] .sprint-create-form button,
+:root[data-theme='calmsky'] .pull-forward-create-sprint button,
+:root[data-theme='calmsky'] .retro-add-form button,
+:root[data-theme='calmsky'] .mobile-risk-form button[type='submit'],
+:root[data-theme='calmsky'] .mobile-status-form button[type='submit'],
+:root[data-theme='calmsky'] .login-btn-primary,
+:root[data-theme='calmsky'] .marketing-cta {
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+:root[data-theme='calmsky'] .marketing-cta:hover {
+  background: var(--btn-primary-hover-bg);
+}
+
+/* Links with no colour rule fell back to the browser's periwinkle default. */
+:where(:root[data-theme='calmsky']) a:not([class]) {
+  color: var(--link);
+}
+
+/* ------------------------------------------------------------------ */
+/* Stage 6: mobile app (src/mobile)                                    */
+/* ------------------------------------------------------------------ */
+:root[data-theme='calmsky'] {
+  /* Dark ink on sky fills: filter chips, done marks, mobile form buttons. */
+  --on-accent: #071827;
+}
+
+:root[data-theme='calmsky'] .mobile-brand-name {
+  font-family: var(--heading);
+  letter-spacing: -0.02em;
+  color: var(--text-h);
+}
+
+:root[data-theme='calmsky'] .mobile-brand-name-accent {
+  color: var(--accent);
+}
+
+:root[data-theme='calmsky'] .mobile-screen-title {
+  font-family: var(--heading);
+  letter-spacing: -0.02em;
+}
+
+:root[data-theme='calmsky'] .mobile-app-body--root .mobile-screen-title {
+  text-align: left;
+  font-size: 26px;
+  line-height: 1.15;
+}
+
+/* Project cards on mobile home: name and methodology on top, then the course
+   line, then people and go-live date. */
+:root[data-theme='calmsky'] .mobile-project-list-item {
+  flex-wrap: wrap;
+  row-gap: 4px;
+  border-color: var(--row-border);
+}
+
+:root[data-theme='calmsky'] .mobile-project-list-meta {
+  padding: 2px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-muted);
+}
+
+:root[data-theme='calmsky'] .mobile-project-list-item .course-line {
+  flex-basis: 100%;
+  margin: 12px 8px 4px;
+}
+
+:root[data-theme='calmsky'] .mobile-project-list-foot {
+  flex-basis: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ------------------------------------------------------------------ */
+/* Stage 7: login, password and marketing pages                        */
+/* ------------------------------------------------------------------ */
+:root[data-theme='calmsky'] .login-brand-tagline {
+  color: var(--text-muted);
+}
+
+:root[data-theme='calmsky'] .login-preview-icon {
+  color: var(--accent);
+}
+
+:root[data-theme='calmsky'] .login-heading,
+:root[data-theme='calmsky'] .login-brand-name {
+  font-family: var(--heading);
+  letter-spacing: -0.02em;
+}
+
+:root[data-theme='calmsky'] .login-btn-secondary {
+  border-radius: 999px;
+}
+
+:root[data-theme='calmsky'] .login-btn-secondary + .login-btn-secondary {
+  margin-top: 10px;
+}
+
+/* index.css hardcodes #161c27 behind the login screens; on a phone it showed
+   as a navy block under the form. */
+:root[data-theme='calmsky'] body.login-route {
+  background-color: var(--auth-panel);
+}
+
+/* Danger buttons fill red on hover; the sky-tinted ink from --on-accent looked
+   navy there. */
+:root[data-theme='calmsky'] .btn-danger:hover,
+:root[data-theme='calmsky'] .mobile-btn-danger-filled:hover {
+  color: #1a1210;
+}
+
+/* Round the Risk card form fields to match the pill/18px shape language (the
+   resting border itself comes from App.css). */
+:root[data-theme='calmsky'] .risk-field .risk-cell-input {
+  border-radius: 12px;
+}
+
+/* Mobile form fields: without this, iOS Safari draws its system-blue focus ring,
+   which is a stray blue on the warm charcoal. Accent border plus a soft ring. */
+:root[data-theme='calmsky'] .mobile-app :is(input, select, textarea):focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent);
+}

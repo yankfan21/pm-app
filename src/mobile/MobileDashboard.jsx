@@ -4,6 +4,21 @@ import { supabase } from '../supabaseClient'
 import { useAuth } from '../AuthContext'
 import { METHODOLOGY_LABELS } from '../methodology'
 import MobileScreenHint from './MobileScreenHint'
+import { CALMSKY } from '../redesign'
+import CourseLine from '../components/CourseLine'
+import AvatarStack from '../components/AvatarStack'
+
+function greetingFor(hour) {
+  if (hour < 12) return 'Good morning'
+  if (hour < 18) return 'Good afternoon'
+  return 'Good evening'
+}
+
+// First name guessed from the email's local part (no profile name exists).
+function firstNameFromEmail(email) {
+  const first = (email || '').split('@')[0].split(/[.\-_+]+/).filter(Boolean)[0] || ''
+  return first ? first[0].toUpperCase() + first.slice(1) : ''
+}
 
 // Phone-mode home (/m/dashboard) - also doubles as the project switcher:
 // "active project" in phone mode is just whichever project is in the URL
@@ -24,6 +39,10 @@ function MobileDashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [tab, setTab] = useState('active')
+  // CalmSky_Redesign only: milestones and collaborator emails per project,
+  // for the course line and avatars on each card. Not fetched otherwise.
+  const [milestonesByProject, setMilestonesByProject] = useState({})
+  const [peopleByProject, setPeopleByProject] = useState({})
 
   useEffect(() => {
     let cancelled = false
@@ -61,8 +80,27 @@ function MobileDashboard() {
       }
 
       const hiddenIds = new Set((hiddenRows || []).map((r) => r.project_id))
-      setProjects(data.filter((p) => !hiddenIds.has(p.id)))
+      const visible = data.filter((p) => !hiddenIds.has(p.id))
+      setProjects(visible)
       setLoading(false)
+
+      if (CALMSKY && visible.length > 0) {
+        const ids = visible.map((p) => p.id)
+        const [{ data: ms }, { data: people }] = await Promise.all([
+          supabase.from('milestones').select('id, project_id, name, start_date, end_date').in('project_id', ids),
+          supabase.from('project_collaborators').select('project_id, email').in('project_id', ids),
+        ])
+        if (cancelled) return
+        const grouped = (rows) => {
+          const out = {}
+          ;(rows || []).forEach((r) => {
+            ;(out[r.project_id] ||= []).push(r)
+          })
+          return out
+        }
+        setMilestonesByProject(grouped(ms))
+        setPeopleByProject(grouped(people))
+      }
     }
 
     loadProjects()
@@ -77,7 +115,11 @@ function MobileDashboard() {
 
   return (
     <div>
-      <h1 className="mobile-screen-title">Home</h1>
+      <h1 className="mobile-screen-title">
+        {CALMSKY
+          ? `${greetingFor(new Date().getHours())}${firstNameFromEmail(user?.email) ? `, ${firstNameFromEmail(user.email)}` : ''}.`
+          : 'Home'}
+      </h1>
 
       <MobileScreenHint storageKey="cpm_home_hint_count">
         The mobile app gives you the pulse-check. The desktop app is where the full story unfolds.
@@ -121,6 +163,21 @@ function MobileDashboard() {
                 <span className="mobile-project-list-meta">
                   {METHODOLOGY_LABELS[project.methodology] ?? project.methodology}
                 </span>
+                {CALMSKY && (
+                  <>
+                    <CourseLine
+                      start={project.created_at}
+                      end={project.deadline}
+                      milestones={milestonesByProject[project.id]}
+                    />
+                    <span className="mobile-project-list-foot">
+                      <AvatarStack
+                        emails={[project.owner_email, ...(peopleByProject[project.id] || []).map((c) => c.email)]}
+                      />
+                      <span>Go live {project.deadline ?? 'TBD'}</span>
+                    </span>
+                  </>
+                )}
               </Link>
             </li>
           ))}

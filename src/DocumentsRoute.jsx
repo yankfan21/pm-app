@@ -38,7 +38,7 @@ function isDocDone(docType, doc) {
 }
 
 function DocumentsRoute() {
-  const { project, canEdit, tasks, docs, setDocs, docsLoading } = useOutletContext()
+  const { project, setProject, canEdit, tasks, docs, setDocs, docsLoading } = useOutletContext()
 
   const [expandedSection, setExpandedSection] = useState(null)
   const [activeFlowKey, setActiveFlowKey] = useState(null)
@@ -225,6 +225,7 @@ function DocumentsRoute() {
               project={project}
               {...modalDocType.context(docs, tasks)}
               onGenerated={(result, answerList) => handleDocGenerated(modalDocType, result, answerList)}
+              onProjectUpdated={setProject}
               onClose={() => setActiveFlowKey(null)}
             />
           )}

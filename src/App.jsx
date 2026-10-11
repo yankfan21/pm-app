@@ -1,4 +1,5 @@
 import { lazy, Suspense } from 'react'
+import { DEV_BYPASS_AUTH } from './supabaseClient'
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import Marketing from './Marketing'
 import Spinner from './Spinner'
@@ -195,7 +196,10 @@ function App() {
           boundary. It lives in a pathless layout route rather than around
           <Routes> for the hydration reason above. */}
       <Route element={<SuspenseBoundary />}>
-        <Route path="/login" element={<Login />} />
+        <Route
+          path="/login"
+          element={DEV_BYPASS_AUTH ? <Navigate to="/dashboard" replace /> : <Login />}
+        />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
 

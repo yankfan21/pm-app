@@ -2,34 +2,13 @@ import { Link, NavLink } from 'react-router-dom'
 import { useAuth } from './AuthContext'
 import ConfidantLogo from './ConfidantLogo'
 import AppStoreBadges from './components/AppStoreBadges'
+import { useBranding } from './branding/BrandingContext'
+import { initialsFromEmail } from './initials'
 
 const NAV_VIEWS = [
   { to: '/dashboard', label: 'Dashboard', icon: '▦', end: true },
   { to: '/projects', label: 'All Projects', icon: '▤', end: false },
 ]
-
-// Initials for the sidebar avatar. Moved here verbatim from the old
-// AppHeader.jsx (deleted - the top bar it owned is now this rail). The
-// Supabase auth user is the only identity this app has - there is no profile
-// row, no display-name field, nothing in user_metadata - so the email local
-// part is the only thing available to derive from. Split it on the separators
-// people actually put between first and last name (. _ - +) and take one
-// letter from each of the first two pieces; a local part with no separator has
-// no detectable name boundary ("scottsilvers" could be anything), so it falls
-// back to its first two characters. Always returns something for a non-empty
-// email, so the avatar never renders blank.
-function initialsFromEmail(email) {
-  const localPart = (email || '').split('@')[0]
-  const parts = localPart.split(/[.\-_+]+/).filter(Boolean)
-
-  if (parts.length >= 2) {
-    return (parts[0][0] + parts[1][0]).toUpperCase()
-  }
-  if (parts.length === 1) {
-    return parts[0].slice(0, 2).toUpperCase()
-  }
-  return '?'
-}
 
 // The one persistent left rail, replacing the horizontal top bar every page
 // used to render for itself. Three fixed zones - brand, swappable body,
@@ -52,16 +31,27 @@ function initialsFromEmail(email) {
 // container for it.
 function AppSidebar({ nav }) {
   const { user, signOut } = useAuth()
+  const { appName, logoUrl } = useBranding()
 
   return (
     <aside className="app-sidebar">
       <Link to="/dashboard" className="app-sidebar-brand">
         <span className="app-sidebar-brand-mark">
-          <ConfidantLogo size={28} />
+          {logoUrl ? (
+            <img className="app-sidebar-brand-logo" src={logoUrl} alt="" width={28} height={28} />
+          ) : (
+            <ConfidantLogo size={28} />
+          )}
         </span>
         <span className="app-sidebar-brand-text">
-          <span className="app-sidebar-brand-name">Confidant<span className="brand-name-accent">PM</span></span>
-          <span className="app-sidebar-tagline">Structure the chaos. One step at a time.</span>
+          {appName ? (
+            <span className="app-sidebar-brand-name">{appName}</span>
+          ) : (
+            <>
+              <span className="app-sidebar-brand-name">Confidant<span className="brand-name-accent">PM</span></span>
+              <span className="app-sidebar-tagline">Structure the chaos. One step at a time.</span>
+            </>
+          )}
         </span>
       </Link>
 
@@ -92,7 +82,8 @@ function AppSidebar({ nav }) {
           own-scroll zone, so anything inside it scrolls away with a long
           project nav. Sitting between the body and the account footer pins
           the badges to the bottom of the rail in both nav modes. */}
-      <AppStoreBadges />
+      {/* ConfidantPM's own store listings: not shown under a customer's brand. */}
+      {!appName && <AppStoreBadges />}
 
       {user ? (
         <div className="account-menu">

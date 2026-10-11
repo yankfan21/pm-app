@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ConfidantPM · Logo concepts</title>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&family=Schibsted+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#171614;--surface:#1f1d1a;--raised:#282521;--line:#37332d;--text:#f3efe8;--muted:#b3ada1;--dim:#847e72;--accent:#7ab8f0;--ink:#071827}
+*{box-sizing:border-box;margin:0}
+body{background:#0d0c0b;color:var(--text);font:15px/1.5 'Hanken Grotesk',system-ui,sans-serif;padding:28px 20px 60px}
+h1{font:600 18px 'Schibsted Grotesk',sans-serif;max-width:1300px;margin:0 auto 6px}
+.sub{color:var(--dim);max-width:1300px;margin:0 auto 22px}
+.grid{max-width:1300px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:16px}
+.c{background:var(--bg);border:1px solid var(--line);border-radius:20px;padding:22px}
+.c h2{font:600 15px 'Schibsted Grotesk',sans-serif}.c p{color:var(--muted);font-size:13px;margin:2px 0 16px}
+.big{display:flex;align-items:center;gap:22px}
+.tile{width:104px;height:104px;border-radius:26px;background:var(--accent);display:grid;place-items:center;flex:none}
+.tile svg{width:64px;height:64px}
+.word{font:700 30px 'Schibsted Grotesk',sans-serif;letter-spacing:-.02em;white-space:nowrap}.word em{font-style:normal;color:var(--accent)}
+.row{display:flex;align-items:center;gap:18px;margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
+.sm{display:flex;align-items:center;gap:8px;font:600 15px 'Schibsted Grotesk',sans-serif}
+.sm svg{width:26px;height:26px}.fav svg{width:16px;height:16px}
+.mono svg{width:30px;height:30px}
+.lite{background:#f6f4ef;color:#1b1a17;border-radius:12px;padding:8px 12px}
+.lite em{color:#2f78b8;font-style:normal}
+</style></head><body>
+<h1>Logo concepts</h1>
+<p class="sub">Each shows the app icon (sky tile), the wordmark lockup, small sizes, and on a light page for documents and email. Wordmark is Schibsted Grotesk bold.</p>
+<div class="grid" id="g"></div>
+<script>
+const ink='#071827', sky='#7ab8f0';
+// each icon is drawn in a 64x64 box using currentColor for the stroke/fill
+const L=[
+{n:'1 · Course line',d:'The product\'s own signature: solid to Today, dotted onward, a ring for go-live. Ties the logo to the dashboard.',
+ svg:c=>`<svg viewBox="0 0 64 64" fill="none"><path d="M6 44 H30" stroke="${c}" stroke-width="6" stroke-linecap="round"/><path d="M38 44 H44" stroke="${c}" stroke-width="6" stroke-linecap="round" stroke-dasharray="0.1 11"/><circle cx="54" cy="44" r="6" stroke="${c}" stroke-width="5"/><path d="M30 24 L36 30 L30 36 L24 30Z" fill="${c}"/></svg>`},
+{n:'2 · Note and tick',d:'A friendly speech note with a confirmation tick. The confidant who listens, and nothing happens until you confirm.',
+ svg:c=>`<svg viewBox="0 0 64 64" fill="none"><path d="M12 14 H52 a6 6 0 0 1 6 6 V40 a6 6 0 0 1-6 6 H30 L18 56 V46 h-6 a6 6 0 0 1-6-6 V20 a6 6 0 0 1 6-6Z" fill="${c}"/><path d="M22 32 L29 39 L43 24" stroke="${ink==c?'#7ab8f0':'#171614'}" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`},
+{n:'3 · Stacked pages',d:'An evolution of your current mark: two overlapping documents, softened and rounded, with the accent dot as the confirmed item.',
+ svg:c=>`<svg viewBox="0 0 64 64" fill="none"><rect x="20" y="14" width="34" height="42" rx="9" fill="${c}" opacity=".45"/><rect x="10" y="8" width="34" height="42" rx="9" fill="${c}"/><circle cx="44" cy="14" r="8" fill="${ink==c?'#7ab8f0':'#171614'}"/><circle cx="44" cy="14" r="4.5" fill="${c}"/></svg>`},
+{n:'4 · Stepping stones',d:'Three rising rounded steps: one question at a time, getting somewhere. Simple and very small-size friendly.',
+ svg:c=>`<svg viewBox="0 0 64 64" fill="none"><rect x="6" y="38" width="14" height="18" rx="5" fill="${c}" opacity=".5"/><rect x="25" y="26" width="14" height="30" rx="5" fill="${c}" opacity=".75"/><rect x="44" y="10" width="14" height="46" rx="5" fill="${c}"/></svg>`},
+{n:'5 · Open C',d:'A rounded C that opens like a ring, with a milestone diamond resting inside. Works as a monogram on its own.',
+ svg:c=>`<svg viewBox="0 0 64 64" fill="none"><path d="M50 18 A22 22 0 1 0 50 46" stroke="${c}" stroke-width="8" stroke-linecap="round"/><path d="M34 24 L42 32 L34 40 L26 32Z" fill="${c}"/></svg>`},
+{n:'6 · Trust ring',d:'A confident ring with a single dot, the go-live ring from the course line on its own. Calmest and most abstract.',
+ svg:c=>`<svg viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="22" stroke="${c}" stroke-width="8"/><circle cx="32" cy="32" r="7" fill="${c}"/></svg>`}
+];
+g.innerHTML=L.map(x=>`<div class="c"><h2>${x.n}</h2><p>${x.d}</p>
+<div class="big"><div class="tile">${x.svg(ink)}</div><div class="word">Confidant<em>PM</em></div></div>
+<div class="row"><span class="sm"><span style="color:var(--accent);display:flex">${x.svg(sky)}</span>ConfidantPM</span>
+<span class="fav" style="color:var(--accent);display:flex">${x.svg(sky)}</span>
+<span class="sm lite"><span style="color:#2f78b8;display:flex">${x.svg('#2f78b8')}</span>Confidant<em>PM</em></span></div></div>`).join('');
+</script></body></html>

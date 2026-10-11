@@ -297,7 +297,7 @@ function ScopingStage({ project, stage, initialAnswers, onComplete, onClose }) {
 // suggestion matching what's already set, or the call failing outright -
 // falls straight through to Risk with no UI at all, since this step is an
 // enhancement on top of the Q&A, not a gate the PM has to clear.
-function ScopingWizard({ project, onGenerated, onClose }) {
+function ScopingWizard({ project, onGenerated, onClose, onProjectUpdated }) {
   const [phase, setPhase] = useState('initiation')
   const [initiationResult, setInitiationResult] = useState(null)
   const [suggestion, setSuggestion] = useState(null)
@@ -340,10 +340,12 @@ function ScopingWizard({ project, onGenerated, onClose }) {
     // logic for exactly this kind of change; a later session should have
     // this accepted-suggestion path borrow from or route through that
     // instead of writing the column directly the way this does for now.
-    const { error } = await supabase
+    const { data: updatedProject, error } = await supabase
       .from('projects')
       .update({ methodology: suggestion.suggestedMethodology })
       .eq('id', project.id)
+      .select()
+      .single()
 
     setSwitching(false)
 
@@ -352,6 +354,8 @@ function ScopingWizard({ project, onGenerated, onClose }) {
       return
     }
 
+    // Lets the project header's methodology badge follow the DB write.
+    onProjectUpdated?.(updatedProject)
     setPhase('risk')
   }
 
@@ -445,7 +449,15 @@ function ScopingWizard({ project, onGenerated, onClose }) {
 // as RiskLogFlow.jsx, since Scoping (like Risk Log) has no document-upload
 // path. Scoping runs first in the wizard, so unlike RiskLogFlow it has no
 // prior charter/brief context to fold in.
-function ScopingFlow({ project, initialAnswers, stage, onGenerated, onClose, isWizardStep = false }) {
+function ScopingFlow({
+  project,
+  initialAnswers,
+  stage,
+  onGenerated,
+  onClose,
+  onProjectUpdated,
+  isWizardStep = false,
+}) {
   const isEditing = !!initialAnswers
 
   return (
@@ -468,7 +480,12 @@ function ScopingFlow({ project, initialAnswers, stage, onGenerated, onClose, isW
           onClose={onClose}
         />
       ) : (
-        <ScopingWizard project={project} onGenerated={onGenerated} onClose={onClose} />
+        <ScopingWizard
+          project={project}
+          onGenerated={onGenerated}
+          onClose={onClose}
+          onProjectUpdated={onProjectUpdated}
+        />
       )}
     </div>
   )
