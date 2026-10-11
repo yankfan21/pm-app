@@ -96,10 +96,13 @@ export function attentionProjects(projects) {
   return projects.some((p) => !p.is_demo) ? projects.filter((p) => !p.is_demo) : projects
 }
 
-// The single fact behind the dashboard AI note: the milestone that slipped
-// furthest - its date has passed with tasks still open. Rule-based; the note
-// only words it and never changes anything.
-export function computeAiNoteFact(projects, { tasks, milestones }, today = Date.now()) {
+// The single fact behind the dashboard AI note. First choice: the milestone
+// that slipped furthest (date passed, tasks still open). Failing that, the
+// top item of the attention list, so the note still has something true to
+// say. Rule-based; the note only words it and never changes anything.
+// Shape: { key, project, sentence, openTasks }.
+export function computeAiNoteFact(projects, data, today = Date.now()) {
+  const { tasks, milestones } = data
   const todayStr = new Date(today).toISOString().slice(0, 10)
   let best = null
   for (const project of projects) {
@@ -113,5 +116,23 @@ export function computeAiNoteFact(projects, { tasks, milestones }, today = Date.
       if (!best || days > best.days) best = { key: m.id, project, milestone: m, openTasks: left, days }
     }
   }
-  return best
+  if (best) {
+    const { project, milestone, openTasks, days } = best
+    return {
+      key: `ms-${milestone.id}`,
+      project,
+      openTasks,
+      sentence:
+        `On ${project.name}, the ${milestone.name} milestone slipped by ${plural(days, 'day')} and ` +
+        `${plural(openTasks.length, 'task')} tied to it ${openTasks.length === 1 ? 'is' : 'are'} still open.` +
+        (project.deadline ? ` The go-live is ${project.deadline}.` : ''),
+    }
+  }
+
+  const [top] = computeAttentionItems(projects, data, today)
+  if (!top) return null
+  const project = projects.find((p) => p.id === top.projectId)
+  // Dismissals of these come back weekly: the facts are ongoing, not one event.
+  const week = Math.floor(today / (7 * DAY))
+  return { key: `${top.key}:${week}`, project, openTasks: [], sentence: `${top.projectName}: ${top.text}.` }
 }
