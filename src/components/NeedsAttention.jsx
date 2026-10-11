@@ -5,7 +5,11 @@ import { computeAttentionItems } from '../needsAttention'
 
 const CAP = 3
 
-function NeedsAttention({ projects, loading }) {
+function NeedsAttention({ projects: allProjects, loading }) {
+  // Demo projects only get attention items while they're all the user has;
+  // once there is at least one real project they would just be noise.
+  const hasReal = allProjects.some((p) => !p.is_demo)
+  const projects = hasReal ? allProjects.filter((p) => !p.is_demo) : allProjects
   const [data, setData] = useState(null)
   const [showAll, setShowAll] = useState(false)
   const idsKey = projects.map((p) => p.id).join(',')
