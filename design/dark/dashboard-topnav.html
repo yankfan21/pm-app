@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ConfidantPM · Dashboard, top navigation</title>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&family=Schibsted+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#171614;--surface:#1f1d1a;--raised:#282521;--line:#37332d;--soft:#2c2925;
+  --text:#f3efe8;--muted:#b3ada1;--dim:#847e72;
+  --ok:#78b995;--risk:#dcae55;--late:#e9776c;
+  --accent:#7ab8f0;--accent-ink:#071827;--accent-soft:rgba(122,184,240,.14);
+  --head:'Schibsted Grotesk',system-ui,sans-serif;--body:'Hanken Grotesk',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0}
+body{background:#0d0c0b;color:var(--text);font:15px/1.5 var(--body);padding:24px 20px 60px}
+.bar{max-width:1280px;margin:0 auto 14px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.bar h1{font:600 16px var(--head)}
+.bar p{color:var(--dim);font-size:13px}
+.pick{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.pick button{background:transparent;color:var(--muted);border:0;padding:7px 15px;font:500 13px var(--body);cursor:pointer}
+.pick button[aria-pressed=true]{background:var(--raised);color:var(--text)}
+
+/* ---- the page ---- */
+.page{max-width:1280px;margin:0 auto;background:var(--bg);border:1px solid var(--line);border-radius:20px;overflow:hidden}
+
+/* top navigation (Dashboard only) */
+.topnav{display:flex;align-items:center;gap:20px;padding:12px 28px;background:var(--surface);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;font:600 16px var(--head);flex:none}
+.brand b{color:var(--accent);font-weight:600}
+.mark{width:28px;height:28px;border-radius:50%;border:3px solid var(--accent);border-right-color:transparent;position:relative}
+.mark::after{content:"";position:absolute;right:-4px;top:5px;width:7px;height:7px;background:var(--accent);transform:rotate(45deg);border-radius:1px}
+.links{display:flex;gap:4px;margin-left:8px}
+.links a{padding:7px 14px;border-radius:999px;color:var(--muted);font-weight:500;font-size:14px;cursor:pointer}
+.links a.on{background:var(--raised);color:var(--text)}
+.sp{flex:1}
+.search{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:7px 14px;width:300px;color:var(--dim);font-size:14px}
+.search kbd{margin-left:auto;font:500 11px var(--body);border:1px solid var(--line);border-radius:6px;padding:0 6px;color:var(--dim)}
+.btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:999px;padding:8px 16px;font:600 14px var(--body);cursor:pointer;white-space:nowrap}
+.badges{display:flex;align-items:center;gap:18px}
+.badges .lab{font-size:12px;font-weight:600;color:var(--muted)}
+.bcol{display:flex;flex-direction:column;gap:4px}
+.bst{font-size:10px;font-weight:600;line-height:1.2}
+.bst.live{color:var(--accent)}.bst.soon{color:var(--dim)}
+.bcol img.ap{height:28px;width:auto;display:block}
+.bcol .gwrap{height:28px;display:flex;align-items:center}
+.bcol img.gp{height:66px;width:auto;margin:-19px -4px;filter:grayscale(1);opacity:.55}
+.pagefoot .badges{margin-right:6px}
+.pagefoot{display:flex;align-items:center;gap:22px;padding:18px 36px;border-top:1px solid var(--line);color:var(--dim);font-size:13px}
+.pagefoot a{color:var(--muted);cursor:pointer}
+.pagefoot .sp{flex:1}
+.menu{white-space:nowrap;display:flex;align-items:center;gap:6px;padding:3px 10px 3px 3px;border-radius:999px;background:var(--raised);color:var(--muted);font-size:12px}
+.av{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font:600 11px var(--head);color:#171614;flex:none}
+
+/* body */
+.main{padding:30px 36px 40px}
+.hello{font:600 30px/1.15 var(--head);letter-spacing:-.02em}
+.hello em{font-style:normal;color:var(--accent)}
+.lead{color:var(--muted);margin:6px 0 22px}
+.tools{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.seg{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.seg span{padding:6px 14px;font-size:13px;color:var(--muted);font-weight:500}
+.seg span.on{background:var(--raised);color:var(--text)}
+.sort{margin-left:auto;font-size:13px;color:var(--dim)}
+.sort b{color:var(--muted);font-weight:500;border:1px solid var(--line);border-radius:999px;padding:5px 12px;margin-left:6px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.pc{background:var(--surface);border:1px solid var(--soft);border-radius:18px;padding:18px}
+.pc .t{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;gap:8px}
+.pn{font:600 16px var(--head)}.pm{color:var(--dim);font-size:12px;margin-top:1px}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);background:var(--raised);padding:3px 9px;border-radius:999px;white-space:nowrap}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--ok)}.dot.risk{background:var(--risk)}.dot.late{background:var(--late)}
+.cl{position:relative;height:24px;margin:0 6px 14px}
+.cl .solid{position:absolute;left:0;width:58%;top:11px;height:3px;background:var(--muted);border-radius:3px}
+.cl .dots{position:absolute;left:58%;right:0;top:11px;border-top:3px dotted var(--dim)}
+.cl .tm{position:absolute;left:58%;top:2px;bottom:2px;width:3px;margin-left:-1.5px;border-radius:2px;background:var(--accent)}
+.cl .ms{position:absolute;top:6px;width:12px;height:12px;transform:translateX(-50%) rotate(45deg);border:2px solid var(--muted);background:var(--surface);border-radius:4px}
+.cl .ms.done{background:var(--muted)}.cl .ms.late{border-color:var(--late);background:var(--late)}
+.cl .gl{position:absolute;right:0;top:5px;width:14px;height:14px;border-radius:50%;border:2px solid var(--muted);background:var(--surface);transform:translateX(50%)}
+.team{display:flex;align-items:center;justify-content:space-between;color:var(--dim);font-size:12px}
+.stack{display:flex}.stack .av{width:24px;height:24px;font-size:10px;border:2px solid var(--surface);margin-left:-7px}.stack .av:first-child{margin-left:0}
+.ainote{display:flex;gap:14px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px 18px;margin-bottom:22px}
+.ainote .spark{width:30px;height:30px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;flex:none;font-size:14px}
+.ainote p{color:var(--text)}.ainote small{color:var(--dim);display:block;margin-top:2px;font-size:12px}
+.acts{display:flex;gap:8px;margin-top:10px}
+.btn.q{background:transparent;color:var(--muted);border:1px solid var(--line)}
+.btn.s{padding:7px 14px;font-size:13px}
+.wait{margin-top:30px}
+.wait h3{font:600 15px var(--head);color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.wait h3 i{font:600 12px var(--body);font-style:normal;background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:1px 9px}
+.wlist{background:var(--surface);border:1px solid var(--soft);border-radius:18px;padding:4px 18px}
+.wi{display:flex;align-items:center;gap:14px;padding:13px 0;border-top:1px solid var(--soft)}
+.wi:first-child{border-top:0}
+.wi .what{flex:1}.wi .what b{font-weight:600}.wi .what span{color:var(--dim);margin-left:8px;font-size:13px}
+.wi .why{font-style:normal;color:var(--dim);font-size:12px;display:block;margin-top:1px}
+.wi a{color:var(--accent);font-weight:600;font-size:13px;cursor:pointer}
+.caught{display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--soft);border-radius:18px;padding:16px 18px}
+.caught .chk{width:30px;height:30px;border-radius:50%;background:rgba(120,185,149,.16);color:var(--ok);display:grid;place-items:center;font-weight:700;flex:none}
+.caught b{display:block;font:600 15px var(--head)}.caught span:not(.chk){color:var(--dim);font-size:13px}
+.foot{display:flex;justify-content:center;margin-top:22px;color:var(--dim);font-size:13px}
+.hide{display:none}
+.note{max-width:1280px;margin:16px auto 0;color:var(--dim);font-size:13px;line-height:1.6}
+.note b{color:var(--muted);font-weight:600}
+</style>
+</head>
+<body>
+<div class="bar">
+  <h1>Dashboard with top navigation</h1>
+  <div class="pick" id="pick">
+    <button data-n="3" aria-pressed="true">3 projects</button>
+    <button data-n="12" aria-pressed="false">12 projects</button>
+  </div>
+  <div class="pick" id="pick2">
+    <button data-w="3" aria-pressed="true">3 items</button>
+    <button data-w="0" aria-pressed="false">All caught up</button>
+  </div>
+  <p>Only the Dashboard uses this layout. Opening a project switches to the left rail.</p>
+</div>
+
+<div class="page">
+  <header class="topnav">
+    <div class="brand"><span class="mark"></span><span>Confidant<b>PM</b></span></div>
+        <div class="sp"></div>
+    <button class="btn">+ New project</button>
+    <div class="menu"><span class="av" style="background:#e5b79a">SS</span>Account ▾</div>
+  </header>
+
+  <section class="main">
+    <div class="hello">Good morning, Scott.</div>
+    <p class="lead" id="lead"></p>
+
+    <div class="ainote"><span class="spark">✦</span><div>
+      <p>The Customer Mobile App beta milestone slipped by 6 days. I can look at options to protect the Dec 4 go-live.</p>
+      <small>Based on the project plan and last week's status update. I won't change anything unless you say so.</small>
+      <div class="acts"><button class="btn s">Show me options</button><button class="btn s q">Not now</button></div>
+    </div></div>
+    <div class="tools" id="tools">
+      <div class="search"><span>⌕</span> Search projects</div>
+      <div class="seg"><span class="on">All</span><span>Waterfall</span><span>Agile</span><span>Hybrid</span></div>
+      <div class="seg"><span class="on">Active</span><span>Archived</span></div>
+      <div class="sort">Sort by<b>Deadline ▾</b></div>
+    </div>
+
+    <div class="grid" id="grid"></div>
+    <div class="wait">
+      <h3 id="wh">Needs your attention <i>3</i></h3>
+      <div class="wlist" id="wl">
+        <div class="wi"><div class="what"><b>Task "API sign-off" is 3 days overdue</b><span>Vendor Portal</span><em class="why">Due Oct 8 · assigned to Maya K.</em></div><a>Open</a></div>
+        <div class="wi"><div class="what"><b>Status update is due</b><span>Warehouse Mgmt System</span><em class="why">Weekly cadence · last sent 9 days ago</em></div><a>Open</a></div>
+        <div class="wi"><div class="what"><b>Milestone "Beta release" passed with 2 open tasks</b><span>Customer Mobile App</span><em class="why">Milestone date Oct 6</em></div><a>Open</a></div>
+      </div>
+      <div class="caught hide" id="caught"><span class="chk">✓</span><div><b>All caught up</b><span>Nothing needs your attention. Nice work staying on top of it.</span></div></div>
+    </div>
+    <div class="foot hide" id="foot">Showing 12 of 12 active projects</div>
+  </section>
+  <footer class="pagefoot"><a>Settings</a><a>Support</a><a>Privacy</a><span class="sp"></span><span class="badges"><span class="lab">Take ConfidantPM anywhere.</span>
+    <span class="bcol"><span class="bst live">Now available</span><img class="ap" src="../../src/assets/badges/Download_on_the_App_Store_Badge_US-UK_RGB_blk_092917.svg" alt="Download on the App Store"></span>
+    <span class="bcol"><span class="bst soon">Coming soon</span><span class="gwrap"><img class="gp" src="../../src/assets/badges/googleplay-badge-01-getit.width-1440.png" alt="Get it on Google Play"></span></span></span>
+    <span>ConfidantPM</span></footer>
+</div>
+
+<p class="note">
+  <b>What's here:</b> brand, New project and the account menu across the top (sign-out lives in the menu); Settings, Support and Privacy sit in a footer with the App Store and Google Play badges (as in the app today: Apple live, Google muted "coming soon") at the bottom of the page,
+  the greeting and summary, then the filters and the project cards. Search now sits at the start of the filter row, and the whole row is always shown at any project count. When nothing needs attention, the list becomes an "All caught up" message. Use the toggles above to compare.<br>
+  <b>New in this version:</b> the AI note (a suggestion with explicit buttons, nothing acts without a click) and the "Needs your attention" list, capped at about 3 items and limited to time-based facts (overdue tasks, passed milestones, overdue status updates), each linking to its project. It is not a risk log. Placeholder content.<br>
+  
+</p>
+
+<script>
+const C={A:'#e5b79a',B:'#a9c9e8',C:'#d9c38a',D:'#c3b0e0'};
+const BASE=[
+ {n:'Vendor Portal',m:'Waterfall · 85% done',ms:[[15,'done'],[35,'done'],[55,'done'],[78,'']],s:['At risk','risk'],t:[['MK','C'],['AP','B'],['SS','A']],due:'Go-live Oct 30'},
+ {n:'Warehouse Mgmt System',m:'Hybrid · 62% done',ms:[[12,'done'],[30,'done'],[48,'done'],[74,'']],s:['On track',''],t:[['AP','B'],['MK','C'],['SS','A']],due:'Go-live Nov 20'},
+ {n:'Customer Mobile App',m:'Agile · 41% done',ms:[[20,'done'],[45,'late'],[82,'']],s:['Late','late'],t:[['JL','D'],['SS','A']],due:'Go-live Dec 4'},
+ {n:'Finance Close Automation',m:'Waterfall · 30% done',ms:[[18,'done'],[50,''],[80,'']],s:['On track',''],t:[['SS','A'],['JL','D']],due:'Go-live Jan 15'},
+ {n:'HR Onboarding Revamp',m:'Agile · 55% done',ms:[[22,'done'],[44,'done'],[70,'']],s:['On track',''],t:[['MK','C'],['SS','A']],due:'Go-live Jan 29'},
+ {n:'Data Warehouse Migration',m:'Hybrid · 18% done',ms:[[25,'done'],[55,''],[85,'']],s:['At risk','risk'],t:[['AP','B'],['JL','D'],['SS','A']],due:'Go-live Feb 12'},
+ {n:'Partner API v2',m:'Agile · 70% done',ms:[[15,'done'],[40,'done'],[65,'done'],[88,'']],s:['On track',''],t:[['JL','D'],['MK','C']],due:'Go-live Feb 26'},
+ {n:'Office Relocation',m:'Waterfall · 12% done',ms:[[30,''],[60,''],[85,'']],s:['On track',''],t:[['SS','A']],due:'Go-live Mar 9'},
+ {n:'Security Audit Remediation',m:'Hybrid · 48% done',ms:[[20,'done'],[48,'late'],[80,'']],s:['Late','late'],t:[['AP','B'],['SS','A']],due:'Go-live Mar 20'},
+ {n:'Loyalty Program Launch',m:'Agile · 25% done',ms:[[22,'done'],[52,''],[84,'']],s:['On track',''],t:[['MK','C'],['JL','D']],due:'Go-live Apr 3'},
+ {n:'ERP Upgrade',m:'Waterfall · 8% done',ms:[[28,''],[58,''],[86,'']],s:['On track',''],t:[['AP','B'],['SS','A']],due:'Go-live Apr 24'},
+ {n:'Brand Refresh Site',m:'Agile · 15% done',ms:[[26,'done'],[56,''],[84,'']],s:['On track',''],t:[['MK','C']],due:'Go-live May 8'}
+];
+const av=([i,c])=>`<span class="av" style="background:${C[c]}">${i}</span>`;
+const line=p=>`<div class="cl"><div class="solid"></div><div class="dots"></div><div class="tm"></div>${p.ms.map(([x,c])=>`<div class="ms ${c}" style="left:${x}%"></div>`).join('')}<div class="gl"></div></div>`;
+const card=p=>`<div class="pc"><div class="t"><div><div class="pn">${p.n}</div><div class="pm">${p.m}</div></div><span class="pill"><span class="dot ${p.s[1]}"></span>${p.s[0]}</span></div>${line(p)}<div class="team"><div class="stack">${p.t.map(av).join('')}</div><span>${p.due}</span></div></div>`;
+function render(n){
+  const list=BASE.slice(0,n), many=n>8;
+  grid.innerHTML=list.map(card).join('');
+  foot.classList.toggle('hide',!many);
+  foot.textContent=`Showing ${n} of ${n} active projects`;
+  lead.textContent=`${n} active projects · 2 go-lives in the next 30 days. Soonest deadline first.`;
+}
+document.querySelectorAll('#pick button').forEach(b=>b.onclick=()=>{
+  render(+b.dataset.n);
+  document.querySelectorAll('#pick button').forEach(x=>x.setAttribute('aria-pressed',x===b));
+});
+function wait(k){
+  wl.classList.toggle('hide',k===0);
+  caught.classList.toggle('hide',k!==0);
+  wh.innerHTML=k?`Needs your attention <i>${k}</i>`:'Needs your attention';
+}
+document.querySelectorAll('#pick2 button').forEach(b=>b.onclick=()=>{
+  wait(+b.dataset.w);
+  document.querySelectorAll('#pick2 button').forEach(x=>x.setAttribute('aria-pressed',x===b));
+});
+render(3);wait(3);
+</script>
+</body></html>

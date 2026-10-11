@@ -293,3 +293,67 @@ production first. Wanted for the future, not a launch blocker.
 - "View desktop site" still shows on mobile web (`src/mobile/MobileDesktopLink.jsx`); hidden in native apps. Owner undecided on removing it for mobile web.
 - Local-only, uncommitted on the PC: `android/gradle.properties` (Windows JDK path), 5 deleted scratch SQL files, 3 untracked scratch files.
 - iOS 1.2 App Review status: check on the Mac.
+
+## Dashboard + All Projects merge (web desktop only) — design decided 2026-10-11, NOT BUILT
+
+Desktop web only; the mobile `/m/...` routes, iOS and Android are untouched.
+`Dashboard.jsx` and `AllProjects.jsx` both render the same `ProjectList` from
+the same outlet context, so they were redundant. Decision: one page, the
+Dashboard, which is the landing page after login. Approved mockup:
+`design/dark/dashboard-topnav.html` (toggles for 3/12 projects and
+items/all-caught-up; rendered PNGs in `design/dark/previews/`, uncommitted).
+
+**Layout (top to bottom):**
+- **Top navigation, Dashboard only** (project pages keep the left rail; the
+  brand links back to the Dashboard as it does now). Top bar = brand, `+ New
+  project`, account menu (Sign out). No nav links. Settings and Support are NOT
+  in the top bar.
+- Greeting + summary line (existing CalmSky copy).
+- **AI note** under the greeting: one suggestion at a time, shows its evidence
+  ("Based on the project plan and last week's status update"), explicit buttons
+  ("Show me options" / "Not now"), says it changes nothing unless the PM asks.
+  Source should be a rule-based fact (e.g. a slipped milestone) with the AI
+  writing only the wording/options. Source still to be pinned down.
+- **Filter row, always shown at any project count:** search first (name or
+  goal; reuse `AllProjects.jsx` logic: active matches first, then archived),
+  then methodology filter, Active/Archived toggle, sort (Priority / Deadline /
+  Recently Updated; default Deadline). Owner's reasoning: a visible search box
+  tells users the feature is there when they need it; no threshold logic. No
+  `/` keyboard shortcut and no `/` hint in the box.
+- Project cards (existing `ProjectList`, with course line + avatars).
+- **"Needs your attention" list** below the cards, capped at about 3 items
+  ("See all" only if more), time-based facts only, each row links to its
+  project (Open): overdue task, milestone passed with open tasks, status update
+  overdue by the project's cadence. Must NOT become a risk log or risk-focused
+  page. When empty, show "All caught up: nothing needs your attention" as a
+  small congratulation.
+- **Footer:** Settings, Support, Privacy on the left; "Take ConfidantPM
+  anywhere." + App Store badge ("Now available") + muted Google Play badge
+  ("Coming soon") on the right, via the existing `AppStoreBadges` component
+  (hidden in native builds).
+
+**Behaviour decisions:**
+- New users keep the demo projects; if they hide them, that is their action.
+  The all-hidden empty state is a rare edge case: "No projects yet" + `+ New
+  project`, plus a "Show hidden projects" link if any are hidden.
+- Redirect `/projects` to `/dashboard`; remove "All Projects" from the sidebar
+  nav; `/projects/:id` routes unchanged.
+- Hide-project behaviour (`hideProject` from outlet context) is preserved.
+
+**Data findings (schema check, 2026-10-11):** `tasks.status` has `delayed`
+but nothing auto-computes it (PM sets it), so "overdue" must be derived
+(not completed and past `due_date`). `document_versions` records accepted
+versions only; there is no stored "pending/draft" state for AI proposals
+(they appear to be reviewed inside their flows, not verified in the frontend).
+`project_collaborators` has pending/accepted for invites only.
+
+**Deliberately deferred:** a pending-proposals inbox (saving unfinished AI
+drafts as "pending" so they appear in the list). Bigger build (schema, flows,
+RLS); the list layout can take it later without a redo.
+
+**Build plan:** (1) merge `AllProjects` into `Dashboard` with search in the
+filter row; (2) top-bar layout for `/dashboard` only, with footer and badges;
+(3) "Needs your attention" list computed from existing task, milestone and
+status update data; (4) AI note, source TBD; (5) redirect + sidebar cleanup.
+Verify in the dev preview (`calmsky-dev`, port 5183) with sample data.
+Ask before pushing.
