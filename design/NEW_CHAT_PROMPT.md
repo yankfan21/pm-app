@@ -9,14 +9,14 @@ Standing rules:
 - Verify changes in the dev preview (calmsky-dev, port 5183, fake Supabase data) before saying they work, and check a deploy by its asset hash, not just Vercel's success status.
 - Keep answers short, say plainly what you did and did not test, and when you give me something to copy put it in a file or a fenced block.
 
-Where we are (2026-10-11): the CalmSky redesign is live. The Dashboard + All Projects merge is built, pushed and live: top bar and footer on /dashboard only, one filter row (search, methodology pills, Active/Archived switch, sort dropdown), project cards in an auto-fit grid with the Demo badge on the deadline row, a "Needs your attention" list (go-live passed, overdue tasks, passed milestone with open tasks, overdue status update; max 3), demo projects hidden once there are 3+ real projects (with a "Show demo projects" link), /projects redirects to /dashboard. The dashboard AI note was removed (templated wording, duplicated the list); its code is kept (AiNote.jsx, computeAiNoteFact) and CLAUDE.md says how to bring it back once there is real AI wording. If Vercel ever fails a deploy within seconds with "Git information retrieval failed", click Redeploy in the Vercel dashboard (it's a Vercel-GitHub connection fault, not the code).
+Where we are (2026-10-12): the CalmSky redesign is live and the Dashboard + All Projects merge is built, pushed and live (top bar and footer on /dashboard only, one filter row, project cards, a "Needs your attention" list, demos hidden at 3+ real projects, /projects redirects to /dashboard). The "See all" expansion and the "All caught up" state of the attention list were checked in the dev preview on 2026-10-12 and look right. The dashboard AI note is removed but its code is kept (AiNote.jsx, computeAiNoteFact); CLAUDE.md says how to bring it back once there is real AI wording. If Vercel ever fails a deploy within seconds with "Git information retrieval failed", click Redeploy in the Vercel dashboard (it's a Vercel-GitHub connection fault, not the code).
+
+iOS: 1.2 (1) was rejected on 2026-10-12 (guideline 2.1(a), launch crash on iPad Air M3, iPadOS 27.0.1) because the app had no UIScene lifecycle. Fixed with ios/App/App/SceneDelegate.swift plus a UIApplicationSceneManifest in Info.plist; build 1.2 (2) was archived, uploaded, tested on my iPad (27.0.1) and iPhone, and resubmitted on 2026-10-12 at 2:35 AM (status Waiting for Review). Everything is pushed to main (last commit faad50e, deploy verified). Capacitor 8.4.2 has no scene support of its own, so keep SceneDelegate when running cap sync or upgrading; this Mac only has an iOS 26.5 simulator, so test iOS 27 on a device.
 
 Open items, in this order unless I say otherwise:
-1. iOS 1.2 App Review status (submitted 2026-10-10; check on the Mac).
-2. Google Play 1.1 (versionCode 20) was submitted 2026-10-11. When I give you the store link, record it in CLAUDE.md and enable the muted Google Play badge in src/components/AppStoreBadges.jsx (ask before pushing).
-3. Play short description review.
-4. "View desktop site" on mobile web (src/mobile/MobileDesktopLink.jsx): I haven't decided whether to remove it.
-5. Not yet seen rendered: the "All caught up" state and "See all" in the attention list. Worth a quick check with fixture data if we touch the dashboard again.
-Deferred on purpose: a pending-proposals inbox; real AI recommendations on the dashboard (would need an Edge Function).
+1. iOS 1.2 (2) App Review result (I'll tell you; if rejected again, I'll paste the message and any new crash logs).
+2. Google Play 1.1 (versionCode 20) was submitted 2026-10-11. When it's approved and I give you the store link, record it in CLAUDE.md and enable the muted Google Play badge in src/components/AppStoreBadges.jsx (ask before pushing).
+3. Play short description review, only after Google approves 1.1 (don't edit the listing while the review is pending).
+Decided: "View desktop site" stays on mobile web (hidden in the native apps on purpose). Deferred on purpose: a pending-proposals inbox; real AI recommendations on the dashboard (would need an Edge Function).
 
 Ask me which of these I want to start with.
