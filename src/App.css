@@ -3513,8 +3513,14 @@ a.overview-hotspot-row-count:focus-visible {
 @media (min-width: 768px) {
   .project-list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     gap: 14px;
+  }
+
+  /* auto-fit lets the cards share the whole row instead of leaving empty
+     tracks at the right; the cap keeps a lone card from stretching. */
+  .project-list li:not(.empty) {
+    max-width: 480px;
   }
 
   .project-list li.empty {
@@ -3535,7 +3541,7 @@ a.overview-hotspot-row-count:focus-visible {
 
 @media (min-width: 1024px) {
   .project-list {
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 16px;
   }
 
