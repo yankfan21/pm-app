@@ -235,6 +235,16 @@ How a build is made (repeat for the next release):
    processed build, check App Review login, Submit. Test the build in
    TestFlight on the phone first.
 
+**1.2 (1) was REJECTED 2026-10-12 (guideline 2.1(a), launch crash on iPad Air M3, iPadOS 27.0.1).**
+Cause: no UIScene lifecycle (AppDelegate only, no `UIApplicationSceneManifest`); iOS 27 kills such
+apps at launch. Fixed in commit 818e332: `ios/App/App/SceneDelegate.swift` (forwards URL opens and
+universal links to `ApplicationDelegateProxy`), `UIApplicationSceneManifest` in `Info.plist`
+(`UIMainStoryboardFile` removed), build number bumped to 1.2 (2). Capacitor 8.4.2 has no scene
+support of its own, so keep this when running `cap sync`/upgrading. Build 1.2 (2) installed from
+TestFlight and logged in fine on the owner's iPad (iPadOS 27.0.1, the version that crashed in
+review) and iPhone. Mac has only an iOS 26.5 simulator runtime, so iOS 27 crashes cannot be
+reproduced locally; test on a device.
+
 Gotchas:
 - Run `npx cap open ios` from `~/pm-app-redesign`, not `~/pm-app` (old
   `ui-redesign` checkout, version 1.0, stale bundle). The Xcode status bar
