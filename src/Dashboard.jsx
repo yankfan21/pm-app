@@ -2,9 +2,8 @@ import { useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import ProjectList from './ProjectList'
 import NeedsAttention from './components/NeedsAttention'
-import AiNote, { DISMISS_KEY, readDismissed } from './components/AiNote'
 import useAttentionData from './useAttentionData'
-import { attentionProjects, computeAiNoteFact } from './needsAttention'
+import { attentionProjects } from './needsAttention'
 import MobileAppTeaserCard from './components/MobileAppTeaserCard'
 import { useAuth } from './AuthContext'
 import { CALMSKY } from './redesign'
@@ -104,22 +103,8 @@ function Dashboard() {
   const isSearching = query.trim() !== ''
   const scoped = projects.filter((p) => matchesMethodology(p, methodology) && !(demosHidden && !isSearching && p.is_demo))
 
-  const [dismissedNotes, setDismissedNotes] = useState(readDismissed)
-  function dismissNote(key) {
-    const next = [...dismissedNotes, key]
-    setDismissedNotes(next)
-    try {
-      localStorage.setItem(DISMISS_KEY, JSON.stringify(next.slice(-50)))
-    } catch {
-      // storage unavailable: dismissal lasts for this visit only
-    }
-  }
-
   const factProjects = attentionProjects(active)
   const attentionData = useAttentionData(factProjects)
-
-  const noteFact = CALMSKY && !loading && attentionData ? computeAiNoteFact(factProjects, attentionData) : null
-  const noteShown = noteFact && !dismissedNotes.includes(noteFact.key)
 
   let display
   if (isSearching) {
@@ -153,7 +138,6 @@ function Dashboard() {
           </p>
         </>
       )}
-      {noteShown && <AiNote fact={noteFact} dismissed={dismissedNotes} onDismiss={dismissNote} />}
       <MobileAppTeaserCard />
       <div className="controls-zone">
         <input
@@ -229,7 +213,6 @@ function Dashboard() {
         projects={factProjects}
         data={attentionData}
         loading={loading}
-        hideKeys={noteShown ? [noteFact.covers] : []}
       />
     </div>
   )
