@@ -137,7 +137,6 @@ function ProjectList({ projects, loading, emptyMessage, onHide }) {
                   <span className="methodology-badge">
                     {METHODOLOGY_LABELS[project.methodology] ?? project.methodology}
                   </span>
-                  {project.is_demo && <span className="demo-badge">✦ Demo</span>}
                 </div>
               </div>
               <div className="project-card-desc">{project.goal}</div>
@@ -155,7 +154,10 @@ function ProjectList({ projects, loading, emptyMessage, onHide }) {
                     emails={[project.owner_email, ...(peopleByProject[project.id] || []).map((c) => c.email)]}
                   />
                 )}
-                <span className="project-card-deadline">Target Go Live: {project.deadline ?? 'TBD'}</span>
+                <div className="project-card-foot">
+                  <span className="project-card-deadline">Target Go Live: {project.deadline ?? 'TBD'}</span>
+                  {project.is_demo && <span className="demo-badge">✦ Demo</span>}
+                </div>
               </div>
             </li>
           )

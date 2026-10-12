@@ -3598,6 +3598,13 @@ a.overview-hotspot-row-count:focus-visible {
   margin-top: 12px;
 }
 
+.project-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
 .project-card-deadline {
   flex-shrink: 0;
   font-size: 12px;
@@ -7203,7 +7210,11 @@ textarea.risk-cell-input {
 }
 
 .sort-select select {
-  padding: 6px 28px 6px 12px;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23a8a49c' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding: 6px 30px 6px 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius-pill);
   background-color: var(--card-bg);
@@ -7211,12 +7222,4 @@ textarea.risk-cell-input {
   font: inherit;
   font-size: 13px;
   cursor: pointer;
-}
-
-/* Project card header: methodology and Demo badges sit side by side so a
-   demo card's content starts at the same height as every other card. */
-.project-card-badges {
-  flex-direction: row;
-  align-items: center;
-  gap: 6px;
 }

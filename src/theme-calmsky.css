@@ -220,9 +220,13 @@
   gap: 10px 12px;
 }
 
-/* Own row under the badge and avatars, so the date never runs off the card. */
-:root[data-theme='calmsky'] .project-card-deadline {
+/* Own row under the badge and avatars, so the date never runs off the card;
+   the Demo badge sits at the right end of the same row. */
+:root[data-theme='calmsky'] .project-card-foot {
   flex-basis: 100%;
+}
+
+:root[data-theme='calmsky'] .project-card-deadline {
   color: var(--text-muted);
 }
 
