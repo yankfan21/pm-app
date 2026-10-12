@@ -243,7 +243,7 @@ universal links to `ApplicationDelegateProxy`), `UIApplicationSceneManifest` in 
 support of its own, so keep this when running `cap sync`/upgrading. Build 1.2 (2) installed from
 TestFlight and logged in fine on the owner's iPad (iPadOS 27.0.1, the version that crashed in
 review) and iPhone. Mac has only an iOS 26.5 simulator runtime, so iOS 27 crashes cannot be
-reproduced locally; test on a device.
+reproduced locally; test on a device. Resubmitted 2026-10-12 2:35 AM with build 1.2 (2) (status: Waiting for Review). In App Store Connect the Resubmit button only unlocks after adding the new build on the version page and replying to Apple's message.
 
 Gotchas:
 - Run `npx cap open ios` from `~/pm-app-redesign`, not `~/pm-app` (old
