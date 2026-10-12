@@ -372,7 +372,7 @@ RLS); the list layout can take it later without a redo.
 
 **Still open:**
 - AI note is off the Dashboard; if it returns it needs real AI-written wording and options (would need an Edge Function; deploy, JWT setting and per-view API cost to weigh).
-- Not tested: the all-caught-up state, "See all" expansion, the demo-only case, blocked localStorage, and the Account menu's Escape / click-outside close. The `devFixtures.js` sample data now has a slipped milestone, a weekly status plan and an old status update so the note and list render in the preview.
+- Checked 2026-10-12 in the dev preview (fixtures forced, then reverted): "See all N" expands to every item and flips to "Show fewer"; the all-caught-up row renders cleanly. Not tested: the demo-only case, blocked localStorage, and the Account menu's Escape / click-outside close. The `devFixtures.js` sample data now has a slipped milestone, a weekly status plan and an old status update so the note and list render in the preview.
 - Pending-proposals inbox stays deferred.
 
 **Vercel deploy gotcha (2026-10-11):** two pushes in a row failed within ~3 seconds with "Git information retrieval failed for this deployment" (Vercel could not read commit info from GitHub; not a code or build error, `vite build` passed locally). Clicking Redeploy in the Vercel dashboard fixed it and the next push deployed normally. If it recurs: Redeploy first, then Project Settings > Git (reconnect the GitHub repo). The Vercel build log needs a dashboard login; the `vercel` CLI is not logged in on the Mac. Vercel can also lag 5-40 minutes before a push starts building.
