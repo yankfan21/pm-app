@@ -245,6 +245,18 @@ TestFlight and logged in fine on the owner's iPad (iPadOS 27.0.1, the version th
 review) and iPhone. Mac has only an iOS 26.5 simulator runtime, so iOS 27 crashes cannot be
 reproduced locally; test on a device. Resubmitted 2026-10-12 2:35 AM with build 1.2 (2) (status: Waiting for Review). In App Store Connect the Resubmit button only unlocks after adding the new build on the version page and replying to Apple's message.
 
+**1.2 (2) was REJECTED again 2026-10-13 (guideline 5.1.1(v), "no account deletion option").** Deletion
+already exists: Dashboard footer Settings link, then Danger Zone, then Delete Account (desktop/iPad layout,
+`DeleteAccountFlow.jsx`); phone layout More, Settings, Danger Zone (`MobileDeleteAccount.jsx`). The reviewer
+on the iPad missed it. Decision (owner): no code change and no new build. Replied in App Review on
+2026-10-13 6:21 AM with the steps and a screen recording from the owner's iPad (throwaway account),
+asking Apple to approve 1.2 (2) as a bug-fix submission without resubmitting; the same recording
+(`account-deletion-demo.mp4`, lowercase extension, the uploader rejects `.MP4`) and a note are saved in
+App Review Information on the version. Status after that: Rejected, Resubmit greyed, waiting for Apple.
+Build 1.2 (3) (adds a Delete account item to the Dashboard Account menu and a Delete Account row on
+the phone More screen) was built, uploaded and then expired in TestFlight; the code is local commit
+`412bdd8`, reverted by `8ea8051`, not pushed. If Apple still rejects, re-apply `412bdd8` as build 1.2 (4).
+
 Gotchas:
 - Run `npx cap open ios` from `~/pm-app-redesign`, not `~/pm-app` (old
   `ui-redesign` checkout, version 1.0, stale bundle). The Xcode status bar
