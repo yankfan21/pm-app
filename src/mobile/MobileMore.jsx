@@ -25,6 +25,9 @@ function MobileMore() {
         <Link to="/m/settings#contact-support" className="mobile-more-list-item">
           Contact Support
         </Link>
+        <Link to="/m/settings#danger-zone" className="mobile-more-list-item">
+          Delete Account
+        </Link>
         <button type="button" className="mobile-more-list-item" onClick={signOut}>
           Sign out
         </button>
