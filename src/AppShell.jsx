@@ -182,12 +182,6 @@ function TopBar({ onNewProject }) {
           </button>
           {open && (
             <div className="top-bar-menu" role="menu">
-              <Link to="/settings" role="menuitem" onClick={() => setOpen(false)}>
-                Settings
-              </Link>
-              <Link to="/settings#danger-zone" role="menuitem" onClick={() => setOpen(false)}>
-                Delete account
-              </Link>
               <button type="button" role="menuitem" onClick={signOut}>
                 Sign out
               </button>
