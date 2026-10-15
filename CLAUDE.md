@@ -258,6 +258,14 @@ Build 1.2 (3) (adds a Delete account item to the Dashboard Account menu and a De
 the phone More screen) was built, uploaded and then expired in TestFlight; the code is local commit
 `412bdd8`, reverted by `8ea8051`, on main but inactive. Not needed now that 1.2 (2) is approved; re-apply `412bdd8` only if a future review asks again.
 
+**1.3 (1) submitted 2026-10-15 (Waiting for Review).** Fixes the iPad (desktop layout) drawing under the
+status bar: `viewport-fit=cover` lets the page extend under it and only the phone layout padded for it.
+Fix is `env(safe-area-inset-top)` on `.top-bar`, `.app-shell:not(.app-shell-top)` and `.app-sidebar`
+(end of `App.css`, commit `25a0a27`, not flag-gated, 0 in desktop browsers). Build 1.2 (2) was approved
+first, so the next build had to be a new version (1.3, build 1). Verified on the owner's iPad from
+TestFlight; also live on the web. Archive was made with `xcodebuild ... archive` into `build/`
+(untracked); `open` the `.xcarchive` to load it in the Organizer, then Distribute App.
+
 Gotchas:
 - Run `npx cap open ios` from `~/pm-app-redesign`, not `~/pm-app` (old
   `ui-redesign` checkout, version 1.0, stale bundle). The Xcode status bar
