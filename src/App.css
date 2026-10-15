@@ -7229,3 +7229,16 @@ textarea.risk-cell-input {
   font-size: 13px;
   cursor: pointer;
 }
+
+/* iPad / iOS native: viewport-fit=cover lets the page draw under the status
+   bar, so keep the desktop layout below it. env() is 0 in desktop browsers. */
+.app-shell:not(.app-shell-top) {
+  padding-top: env(safe-area-inset-top);
+  box-sizing: border-box;
+}
+.app-sidebar {
+  top: env(safe-area-inset-top);
+}
+.top-bar {
+  padding-top: calc(12px + env(safe-area-inset-top));
+}
