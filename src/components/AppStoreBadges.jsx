@@ -12,9 +12,8 @@ import googlePlayBadge from '../assets/badges/googleplay-badge-01-getit.width-14
 // in one place. Sizing is per-tree, not here: App.css owns the desktop
 // dimensions, mobile.css scales them down for phone width.
 //
-// Apple is live (id6800421213) and links out; Google is still Closed Testing
-// Alpha, so it stays a plain, muted, non-clickable <img> until it's publicly
-// installable - flip it to a link the same way Apple is done below.
+// Both stores are live and link out (Apple id6800421213, Google
+// com.confidantpm.app, public since 2026-10-13).
 //
 // Hidden in native (Capacitor) builds only - a user already inside the
 // installed app has no use for a "get the app" badge. Same early-return idiom
@@ -50,15 +49,20 @@ function AppStoreBadges() {
             carry very different amounts of built-in padding, so equal
             rendered heights do NOT mean equal visual size. See App.css. */}
         <div className="app-store-badge-col">
-          <span className="app-store-badge-status app-store-badge-status-soon">
-            Coming soon
+          <span className="app-store-badge-status app-store-badge-status-live">
+            Now available
           </span>
-          <img
-            className="app-store-badge app-store-badge-google app-store-badge-muted"
-            src={googlePlayBadge}
-            alt="Get it on Google Play"
-            title="Coming to Google Play soon"
-          />
+          <a
+            href="https://play.google.com/store/apps/details?id=com.confidantpm.app"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <img
+              className="app-store-badge app-store-badge-google"
+              src={googlePlayBadge}
+              alt="Get it on Google Play"
+            />
+          </a>
         </div>
       </div>
     </div>
