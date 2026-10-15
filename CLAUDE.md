@@ -253,9 +253,10 @@ on the iPad missed it. Decision (owner): no code change and no new build. Replie
 asking Apple to approve 1.2 (2) as a bug-fix submission without resubmitting; the same recording
 (`account-deletion-demo.mp4`, lowercase extension, the uploader rejects `.MP4`) and a note are saved in
 App Review Information on the version. Status after that: Rejected, Resubmit greyed, waiting for Apple.
+**Apple APPROVED 1.2 (2) (reported 2026-10-15)** after the reply and recording; no code change or new build was needed.
 Build 1.2 (3) (adds a Delete account item to the Dashboard Account menu and a Delete Account row on
 the phone More screen) was built, uploaded and then expired in TestFlight; the code is local commit
-`412bdd8`, reverted by `8ea8051`, not pushed. If Apple still rejects, re-apply `412bdd8` as build 1.2 (4).
+`412bdd8`, reverted by `8ea8051`, on main but inactive. Not needed now that 1.2 (2) is approved; re-apply `412bdd8` only if a future review asks again.
 
 Gotchas:
 - Run `npx cap open ios` from `~/pm-app-redesign`, not `~/pm-app` (old
@@ -314,7 +315,7 @@ production first. Wanted for the future, not a launch blocker.
 - Play short description not reviewed (full description is fine, pasted by owner, boutique agencies / independent PMs positioning).
 - "View desktop site" stays on mobile web (`src/mobile/MobileDesktopLink.jsx`) — DECIDED 2026-10-12: leave it. Hidden in native apps on purpose (tester feedback); on mobile web it is an emergency escape hatch (e.g. to see the Gantt on a phone). No further action.
 - Local-only, uncommitted on the PC: `android/gradle.properties` (Windows JDK path), 5 deleted scratch SQL files, 3 untracked scratch files.
-- iOS 1.2 App Review status: check on the Mac.
+- iOS 1.2 (2) approved (2026-10-15). Nothing open on iOS.
 
 ## Dashboard + All Projects merge (web desktop only) — BUILT and live 2026-10-11
 
