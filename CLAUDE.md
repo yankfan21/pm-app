@@ -258,7 +258,7 @@ Build 1.2 (3) (adds a Delete account item to the Dashboard Account menu and a De
 the phone More screen) was built, uploaded and then expired in TestFlight; the code is local commit
 `412bdd8`, reverted by `8ea8051`, on main but inactive. Not needed now that 1.2 (2) is approved; re-apply `412bdd8` only if a future review asks again.
 
-**1.3 (1) submitted 2026-10-15 (Waiting for Review).** Fixes the iPad (desktop layout) drawing under the
+**1.3 (1) submitted 2026-10-15, APPROVED and LIVE on the App Store the same day (owner downloaded it).** Fixes the iPad (desktop layout) drawing under the
 status bar: `viewport-fit=cover` lets the page extend under it and only the phone layout padded for it.
 Fix is `env(safe-area-inset-top)` on `.top-bar`, `.app-shell:not(.app-shell-top)` and `.app-sidebar`
 (end of `App.css`, commit `25a0a27`, not flag-gated, 0 in desktop browsers). Build 1.2 (2) was approved
@@ -323,7 +323,7 @@ production first. Wanted for the future, not a launch blocker.
 - Play short description reviewed 2026-10-15. Was "The project management assistant that actually knows your project." (66/80); changed to "Project management that knows your project, for independent PMs and agencies." (77/80), submitted for Google review that day. Next: confirm it shows on the live listing.
 - "View desktop site" stays on mobile web (`src/mobile/MobileDesktopLink.jsx`) — DECIDED 2026-10-12: leave it. Hidden in native apps on purpose (tester feedback); on mobile web it is an emergency escape hatch (e.g. to see the Gantt on a phone). No further action.
 - Local-only, uncommitted on the PC: `android/gradle.properties` (Windows JDK path), 5 deleted scratch SQL files, 3 untracked scratch files.
-- iOS 1.2 (2) approved (2026-10-15). Nothing open on iOS.
+- iOS 1.2 (2) approved and 1.3 (1) live (2026-10-15). Nothing open on iOS.
 
 ## Dashboard + All Projects merge (web desktop only) — BUILT and live 2026-10-11
 
