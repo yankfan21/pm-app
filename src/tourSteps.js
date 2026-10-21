@@ -11,7 +11,7 @@ import statusImg from './assets/tour/status.jpg'
 // stretched across the frame.
 export const TOUR_STEPS = [
   {
-    title: 'Create a project in four short steps',
+    title: 'Set up your project in minutes',
     body: 'Choose Waterfall, Agile or Hybrid, name it, set a priority and a go-live date. Pick Guided setup and the assistant drafts your Charter and Risk Log from a few questions.',
     img: createImg,
     alt: 'The New Project review step, offering Guided setup or Quick create',
