@@ -4,6 +4,7 @@ import ProjectList from './ProjectList'
 import NeedsAttention from './components/NeedsAttention'
 import useAttentionData from './useAttentionData'
 import { attentionProjects } from './needsAttention'
+import WelcomeTour from './components/WelcomeTour'
 import MobileAppTeaserCard from './components/MobileAppTeaserCard'
 import { useAuth } from './AuthContext'
 import { CALMSKY } from './redesign'
@@ -139,7 +140,7 @@ function Dashboard() {
         </>
       )}
       <MobileAppTeaserCard />
-      <div className="controls-zone">
+      <div className="controls-zone" data-tour="filters">
         <input
           type="text"
           className="search-input"
@@ -196,6 +197,7 @@ function Dashboard() {
         )}
       </div>
 
+      <div data-tour="projects">
       <ProjectList
         projects={display}
         loading={loading}
@@ -204,16 +206,20 @@ function Dashboard() {
         }
         onHide={hideProject}
       />
+      </div>
       {demoRuleApplies && demoCount > 0 && !isSearching && (
         <button type="button" className="demo-toggle" onClick={() => setShowDemos((v) => !v)}>
           {showDemos ? 'Hide demo projects' : `Show demo projects (${demoCount})`}
         </button>
       )}
-      <NeedsAttention
-        projects={factProjects}
-        data={attentionData}
-        loading={loading}
-      />
+      <div data-tour="attention">
+        <NeedsAttention
+          projects={factProjects}
+          data={attentionData}
+          loading={loading}
+        />
+      </div>
+      <WelcomeTour ready={!loading} />
     </div>
   )
 }

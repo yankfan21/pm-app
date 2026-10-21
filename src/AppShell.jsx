@@ -5,6 +5,7 @@ import ConfidantLogo from './ConfidantLogo'
 import AppStoreBadges from './components/AppStoreBadges'
 import { useBranding } from './branding/BrandingContext'
 import { initialsFromEmail } from './initials'
+import { START_TOUR_EVENT } from './components/WelcomeTour'
 
 const NAV_VIEWS = [
   { to: '/dashboard', label: 'Dashboard', icon: '▦', end: true },
@@ -161,11 +162,11 @@ function TopBar({ onNewProject }) {
         </span>
       </Link>
       <span className="top-bar-spacer" />
-      <button type="button" className="btn-primary" onClick={onNewProject}>
+      <button type="button" className="btn-primary" data-tour="new-project" onClick={onNewProject}>
         <span aria-hidden="true">+</span> New project
       </button>
       {user ? (
-        <div className="top-bar-account" ref={menuRef}>
+        <div className="top-bar-account" ref={menuRef} data-tour="account">
           <button
             type="button"
             className="top-bar-account-btn"
@@ -182,6 +183,16 @@ function TopBar({ onNewProject }) {
           </button>
           {open && (
             <div className="top-bar-menu" role="menu">
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setOpen(false)
+                  window.dispatchEvent(new Event(START_TOUR_EVENT))
+                }}
+              >
+                Take the tour
+              </button>
               <button type="button" role="menuitem" onClick={signOut}>
                 Sign out
               </button>

@@ -7242,3 +7242,41 @@ textarea.risk-cell-input {
 .top-bar {
   padding-top: calc(12px + env(safe-area-inset-top));
 }
+
+/* Welcome tour (Dashboard): a dimmed page with one highlighted element and a
+   card beside it. The spotlight's huge box-shadow does the dimming. */
+.welcome-tour {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+}
+.welcome-tour-dim {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+}
+.welcome-tour-spot {
+  position: absolute;
+  border-radius: 18px;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6), 0 0 0 2px var(--accent);
+  pointer-events: none;
+}
+.welcome-tour-card {
+  position: absolute;
+  box-sizing: border-box;
+  padding: 20px 22px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--card-bg);
+  color: var(--text);
+}
+.welcome-tour-title {
+  margin: 4px 0 8px;
+  color: var(--text-h);
+  font-size: 18px;
+}
+.welcome-tour-body {
+  margin: 0 0 16px;
+  font-size: 14px;
+  line-height: 1.5;
+}
