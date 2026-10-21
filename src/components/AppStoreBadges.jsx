@@ -16,8 +16,7 @@ import googlePlayBadge from '../assets/badges/googleplay-badge-01-getit.width-14
 // com.confidantpm.app, public since 2026-10-13).
 //
 // Hidden in native (Capacitor) builds only - a user already inside the
-// installed app has no use for a "get the app" badge. Same early-return idiom
-// as MobileDesktopLink.jsx. Web is web: mobile web at /m/ in a browser is
+// installed app has no use for a "get the app" badge. Web is web: mobile web at /m/ in a browser is
 // exactly the audience for these, which is why there is no /m/ path guard.
 function AppStoreBadges() {
   if (Capacitor.isNativePlatform()) return null

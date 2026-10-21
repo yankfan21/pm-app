@@ -2,7 +2,6 @@ import { Outlet } from 'react-router-dom'
 import ConfidantLogo from '../ConfidantLogo'
 import AppStoreBadges from '../components/AppStoreBadges'
 import MobileGlobalTabBar from './MobileGlobalTabBar'
-import MobileDesktopLink from './MobileDesktopLink'
 import './mobile.css'
 
 // Root layout for every /m/* route outside a project (dashboard,
@@ -27,10 +26,9 @@ function MobileShell() {
           </span>
         </div>
         <Outlet />
-        <MobileDesktopLink />
-        {/* Foot of the scrollable body, below the desktop-site link and above
-            the tab bar - the same slot MobileProjectLayout puts it in, so the
-            footer zone reads identically on root and project screens. */}
+        {/* Foot of the scrollable body, above the tab bar - the same slot
+            MobileProjectLayout puts it in, so the footer zone reads
+            identically on root and project screens. */}
         <AppStoreBadges />
       </div>
       <MobileGlobalTabBar />

@@ -12,7 +12,7 @@ function viewportMode() {
 // the tab/browser closes, auto-detect resumes fresh next session) manual
 // override. Read fresh on every render rather than cached in React state
 // (unlike useTheme.js's stored value) - this hook is called independently
-// from several places (DeviceModeGate, Settings, MobileDesktopLink), and a
+// from several places (DeviceModeGate, Settings, MobileSettings), and a
 // plain synchronous read means an override set by one instance is visible
 // to every other instance on its next render with no cross-instance sync
 // mechanism needed, since every override-setting action here is always
@@ -47,7 +47,14 @@ export function useDeviceMode() {
     sessionStorage.setItem(OVERRIDE_KEY, next)
   }, [])
 
-  return { mode: override || autoMode, autoMode, override, setOverride }
+  // A phone-width screen always gets the phone layout: the desktop layout
+  // squeezed to phone width is a poor representation of the product, so a
+  // stored 'desktop' choice (from before the phone-side switch was removed)
+  // is ignored there. 'mobile' still wins on a wide screen, which is how
+  // desktop Settings previews the phone layout.
+  const mode = override === 'desktop' && autoMode === 'mobile' ? 'mobile' : override || autoMode
+
+  return { mode, autoMode, override, setOverride }
 }
 
 export default useDeviceMode

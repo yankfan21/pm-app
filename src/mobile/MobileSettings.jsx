@@ -33,7 +33,7 @@ function formatHiddenAt(hiddenAt) {
 
 function MobileSettings() {
   const { user } = useAuth()
-  const { mode, setOverride } = useDeviceMode()
+  const { mode, autoMode, setOverride } = useDeviceMode()
   const location = useLocation()
   const navigate = useNavigate()
   const [hiddenProjects, setHiddenProjects] = useState([])
@@ -132,12 +132,12 @@ function MobileSettings() {
     <div>
       <h1 className="mobile-screen-title">Settings</h1>
 
-      {/* Hidden in native (Capacitor) builds - same reasoning as
-          MobileDesktopLink.jsx's footer link: there is no "desktop site" to
-          switch to inside the app shell, so exposing the desktop half of
-          this toggle here would just strand a native user on the desktop
-          tree at phone width. Mobile web at /m/ in a browser keeps it. */}
-      {!Capacitor.isNativePlatform() && (
+      {/* Only for a wide screen that was put into phone mode from desktop
+          Settings (the way back). A real phone never sees it: the desktop
+          layout at phone width is a poor representation of the product, so
+          phones always get this layout. Hidden in native (Capacitor) builds,
+          which have no desktop site to switch to. */}
+      {!Capacitor.isNativePlatform() && autoMode === 'desktop' && (
         <>
           <h2 className="mobile-section-title">View Mode</h2>
           <p className="mobile-screen-stub">

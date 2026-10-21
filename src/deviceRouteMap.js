@@ -1,6 +1,6 @@
 // Desktop <-> mobile route equivalence map (Phase 2 Chunk 4 investigation) -
 // consumed by DeviceModeGate.jsx for auto/override-driven redirects and by
-// the manual toggle UI (Settings.jsx, MobileDesktopLink.jsx) to land on the
+// the manual toggle UI (Settings.jsx, MobileSettings.jsx) to land on the
 // right page rather than just the mode's home.
 //
 // Desktop-only pages (Gantt editing, Backlog, Phases, List/Team views,
