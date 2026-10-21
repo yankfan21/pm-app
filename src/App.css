@@ -7396,19 +7396,6 @@ textarea.risk-cell-input {
   height: auto;
 }
 
-.tour-shot-narrow {
-  display: flex;
-  justify-content: center;
-  padding: 22px;
-}
-
-.tour-shot-narrow img {
-  width: auto;
-  max-width: 100%;
-  max-height: 520px;
-  border-radius: 14px;
-}
-
 .tour-close {
   padding: 64px 32px 72px;
   border-top: 1px solid var(--auth-border-strong);
@@ -7568,15 +7555,9 @@ textarea.risk-cell-input {
   display: block;
   width: 100%;
   height: auto;
-  max-height: 42dvh;
+  max-height: 56dvh;
   object-fit: cover;
   object-position: top;
-}
-
-.how-shot-narrow img {
-  width: auto;
-  max-width: 100%;
-  object-fit: contain;
 }
 
 .how-actions {

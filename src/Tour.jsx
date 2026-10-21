@@ -51,7 +51,7 @@ function Tour() {
                   <i /><i /><i />
                   <span>{step.label}</span>
                 </div>
-                <div className={step.narrow ? 'tour-shot tour-shot-narrow' : 'tour-shot'}>
+                <div className="tour-shot">
                   <img src={step.img} alt={step.alt} loading="lazy" />
                 </div>
               </figure>

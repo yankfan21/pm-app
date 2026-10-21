@@ -6,9 +6,8 @@ import statusImg from './assets/tour/status.jpg'
 
 // The five-step product walkthrough, shared by the home page's pop-up
 // (components/HowItWorksModal.jsx) and the standalone /tour page (Tour.jsx).
-// Screenshots come from the app itself (dev preview sample data). `narrow`
-// steps are tall modal crops, shown at a modal's natural width instead of
-// stretched across the frame.
+// Screenshots come from the app itself (dev preview sample data). All five
+// share one 3:2 landscape shape so the slides line up.
 export const TOUR_STEPS = [
   {
     title: 'Set up your project in minutes',
@@ -16,7 +15,6 @@ export const TOUR_STEPS = [
     img: createImg,
     alt: 'The New Project review step, offering Guided setup or Quick create',
     label: 'New project',
-    narrow: true,
   },
   {
     title: 'Answer one question at a time',
@@ -24,7 +22,6 @@ export const TOUR_STEPS = [
     img: qaImg,
     alt: 'A guided question screen with a progress bar and an answer box',
     label: 'Guided questions',
-    narrow: true,
   },
   {
     title: 'Review the tasks it proposes',

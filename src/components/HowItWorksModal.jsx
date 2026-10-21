@@ -74,7 +74,7 @@ function HowItWorksModal({ onClose }) {
         <h2 id="how-title" className="how-title">{current.title}</h2>
         <p className="how-body">{current.body}</p>
 
-        <div className={current.narrow ? 'how-shot how-shot-narrow' : 'how-shot'}>
+        <div className="how-shot">
           <img src={current.img} alt={current.alt} />
         </div>
 
