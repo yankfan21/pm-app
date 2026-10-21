@@ -97,6 +97,7 @@ const ResetPassword = lazy(() => import('./ResetPassword'))
 const AccountDeleted = lazy(() => import('./AccountDeleted'))
 const RequireAuth = lazy(() => import('./RequireAuth'))
 const AdminRoute = lazy(() => import('./AdminRoute'))
+const Tour = lazy(() => import('./Tour'))
 const DeviceModeGate = lazy(() => import('./DeviceModeGate'))
 
 const MobileShell = lazy(() => import('./mobile/MobileShell'))
@@ -212,6 +213,9 @@ function App() {
             the routes above are. Unlike "/" it has no Capacitor redirect:
             app-store review expects to find it inside the native build. */}
         <Route path="/privacy" element={<PrivacyPolicy />} />
+
+        {/* Public product walkthrough, linked from the marketing page. */}
+        <Route path="/tour" element={<Tour />} />
 
         <Route element={<RequireAuth />}>
           {/* Viewport-width auto-detection (<768px -> mobile) plus the

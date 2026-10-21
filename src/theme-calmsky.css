@@ -651,6 +651,22 @@
   background: var(--btn-primary-hover-bg);
 }
 
+/* Home page's second button: outlined, beside the filled sign-up CTA. */
+:root[data-theme='calmsky'] .marketing-cta.marketing-cta-ghost {
+  background: transparent;
+  border-color: var(--text-muted);
+  color: var(--text-h);
+}
+:root[data-theme='calmsky'] .marketing-cta.marketing-cta-ghost:hover {
+  background: transparent;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+:root[data-theme='calmsky'] .tour-num {
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+}
+
 /* Links with no colour rule fell back to the browser's periwinkle default. */
 :where(:root[data-theme='calmsky']) a:not([class]) {
   color: var(--link);

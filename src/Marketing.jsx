@@ -108,9 +108,14 @@ function Marketing() {
             never moves without your sign-off. Built for Waterfall, Agile, and Hybrid teams —
             it adapts to how you already work.
           </p>
-          <Link to={SIGN_UP_PATH} className="marketing-cta">
-            Try ConfidantPM free
-          </Link>
+          <div className="marketing-hero-actions">
+            <Link to={SIGN_UP_PATH} className="marketing-cta">
+              Try ConfidantPM free
+            </Link>
+            <Link to="/tour" className="marketing-cta marketing-cta-ghost">
+              See how it works
+            </Link>
+          </div>
         </section>
 
         <section className="marketing-section">
@@ -179,6 +184,7 @@ function Marketing() {
           Try ConfidantPM free
         </Link>
         <p className="marketing-footer-links">
+          <Link to="/tour">See how it works</Link>
           <Link to="/privacy">Privacy Policy</Link>
         </p>
         <p className="marketing-copyright">{COPYRIGHT_LINE}</p>
