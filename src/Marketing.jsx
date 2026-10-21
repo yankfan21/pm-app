@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { Capacitor } from '@capacitor/core'
 import ConfidantLogo from './ConfidantLogo'
 import AppStoreBadges from './components/AppStoreBadges'
+import HowItWorksModal from './components/HowItWorksModal'
 
 // Where both CTAs land. There is no /signup route in App.jsx - the Login
 // screen's "Create an account" is an in-page mode toggle - so this is the
@@ -73,6 +75,8 @@ const CAPABILITIES = [
 // inventing a marketing-only look - a visitor should not notice a seam
 // between this page and the sign-in screen it hands off to.
 function Marketing() {
+  const [showHow, setShowHow] = useState(false)
+
   // Native builds (Capacitor - see capacitor.config.json, webDir: dist)
   // ship this same bundle and boot at "/", so without this they would open
   // on the marketing page instead of the app. Send them into the authed
@@ -112,9 +116,9 @@ function Marketing() {
             <Link to={SIGN_UP_PATH} className="marketing-cta">
               Try ConfidantPM free
             </Link>
-            <Link to="/tour" className="marketing-cta marketing-cta-ghost">
+            <button type="button" className="marketing-cta marketing-cta-ghost" onClick={() => setShowHow(true)}>
               See how it works
-            </Link>
+            </button>
           </div>
         </section>
 
@@ -184,11 +188,14 @@ function Marketing() {
           Try ConfidantPM free
         </Link>
         <p className="marketing-footer-links">
-          <Link to="/tour">See how it works</Link>
+          <button type="button" className="marketing-footer-link-btn" onClick={() => setShowHow(true)}>
+            See how it works
+          </button>
           <Link to="/privacy">Privacy Policy</Link>
         </p>
         <p className="marketing-copyright">{COPYRIGHT_LINE}</p>
       </footer>
+      {showHow && <HowItWorksModal onClose={() => setShowHow(false)} />}
     </div>
   )
 }
