@@ -1,7 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 
 const OVERRIDE_KEY = 'deviceModeOverride'
-const MOBILE_QUERY = '(max-width: 767px)'
+// Phone layout when the screen is narrower than 768px, or when it is a touch
+// screen shorter than 500px. The second half is a phone held sideways: its
+// width passes 768px (about 850-930px) but it is only 390-430px tall, and the
+// desktop layout squeezed into that is a poor representation of the product.
+// Touch-only, so a short desktop browser window keeps the desktop layout;
+// iPads sideways (768px tall or more) stay on the desktop side too.
+const MOBILE_QUERY = '(max-width: 767px), (max-height: 500px) and (pointer: coarse)'
 export const availableDeviceModes = ['mobile', 'desktop']
 
 function viewportMode() {
@@ -26,10 +32,11 @@ function readOverride() {
 // Viewport-width device mode, mirroring useTheme.js's shape - live
 // matchMedia listener for the auto-detected side (here: phone vs
 // tablet/desktop viewport width, there: OS light/dark preference), plus a
-// manual override that wins while set. Threshold is 768px - the same
+// manual override that wins while set. Width threshold is 768px - the same
 // tablet-and-up breakpoint already established in App.css (see the
 // "Tablet and up" comment above its `@media (min-width: 768px)` block) -
-// puts iPad portrait (768) and landscape (1024) on the desktop side.
+// which puts iPad portrait (768) and landscape (1024) on the desktop side.
+// See MOBILE_QUERY for the landscape-phone case.
 export function useDeviceMode() {
   const [autoMode, setAutoMode] = useState(viewportMode)
 
