@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { TOUR_STEPS } from '../tourSteps'
+import TourMedia from './TourMedia'
 
 // Same destination as the home page's CTAs (see Marketing.jsx).
 const SIGN_UP_PATH = '/login?mode=signup'
@@ -75,7 +76,7 @@ function HowItWorksModal({ onClose }) {
         <p className="how-body">{current.body}</p>
 
         <div className="how-shot">
-          <img src={current.img} alt={current.alt} />
+          <TourMedia step={current} />
         </div>
 
         <div className="how-actions">

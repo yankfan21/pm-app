@@ -1,5 +1,7 @@
 import createImg from './assets/tour/create.jpg'
 import qaImg from './assets/tour/qa.jpg'
+import qaMp4 from './assets/tour/qa.mp4'
+import qaWebm from './assets/tour/qa.webm'
 import tasksImg from './assets/tour/tasks.jpg'
 import ganttImg from './assets/tour/gantt.jpg'
 import statusImg from './assets/tour/status.jpg'
@@ -7,7 +9,9 @@ import statusImg from './assets/tour/status.jpg'
 // The five-step product walkthrough, shared by the home page's pop-up
 // (components/HowItWorksModal.jsx) and the standalone /tour page (Tour.jsx).
 // Screenshots come from the app itself (dev preview sample data). All five
-// share one 3:2 landscape shape so the slides line up.
+// share one 3:2 landscape shape so the slides line up. A step may also carry a
+// `video` ({ mp4, webm }): a short silent clip (recorded from the same sample data) that plays
+// in place of the screenshot, which then serves as its poster.
 export const TOUR_STEPS = [
   {
     title: 'Set up your project in minutes',
@@ -20,6 +24,7 @@ export const TOUR_STEPS = [
     title: 'Answer one question at a time',
     body: 'No blank chat box and no long forms. One question per screen, a progress bar, and a suggested answer drawn from what you have already told it. Press Tab to accept it.',
     img: qaImg,
+    video: { mp4: qaMp4, webm: qaWebm },
     alt: 'A guided question screen with a progress bar and an answer box',
     label: 'Guided questions',
   },

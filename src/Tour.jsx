@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import ConfidantLogo from './ConfidantLogo'
 import { TOUR_STEPS } from './tourSteps'
+import TourMedia from './components/TourMedia'
 
 // Same destination as the home page's CTAs (see Marketing.jsx).
 const SIGN_UP_PATH = '/login?mode=signup'
@@ -52,7 +53,7 @@ function Tour() {
                   <span>{step.label}</span>
                 </div>
                 <div className="tour-shot">
-                  <img src={step.img} alt={step.alt} loading="lazy" />
+                  <TourMedia step={step} lazy />
                 </div>
               </figure>
             </li>

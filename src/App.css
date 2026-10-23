@@ -7390,7 +7390,8 @@ textarea.risk-cell-input {
   margin-left: 10px;
 }
 
-.tour-shot img {
+.tour-shot img,
+.tour-shot video {
   display: block;
   width: 100%;
   height: auto;
@@ -7554,7 +7555,8 @@ textarea.risk-cell-input {
   border-radius: 14px;
 }
 
-.how-shot img {
+.how-shot img,
+.how-shot video {
   display: block;
   width: auto;
   max-width: 100%;
