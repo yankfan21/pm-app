@@ -827,3 +827,23 @@
   border-color: var(--accent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent);
 }
+
+/* Dashboard footer: navy like the top bar, so the two bookend the page. Light
+   text and links re-scoped for the dark surface. */
+:root[data-theme='calmsky'] .page-footer {
+  background: #14233a;
+  border-top-color: #14233a;
+  --text: #e8eef7;
+  --text-muted: #a9b8cd;
+  --link: #8cc4f5;
+  --accent: #8cc4f5;
+  color: #a9b8cd;
+}
+
+:root[data-theme='calmsky'] .page-footer a {
+  color: #e8eef7;
+}
+
+:root[data-theme='calmsky'] .page-footer a:hover {
+  color: #ffffff;
+}
