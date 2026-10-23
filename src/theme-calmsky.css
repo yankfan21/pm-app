@@ -23,23 +23,23 @@
   --radius-lg: 18px;
 
   /* Surfaces and text (warm charcoal) */
-  --bg: #171614;
+  --bg: #2a2825;
   --text: #e6e1d7;
   --text-h: #f3efe8;
-  --text-muted: #b3ada1;
-  --border: #37332d;
-  --code-bg: #26231f;
-  --card-bg: #1f1d1a;
+  --text-muted: #c4beb2;
+  --border: #4d4943;
+  --code-bg: #3b3833;
+  --card-bg: #34312c;
   --card-backdrop-filter: none;
   --card-shadow: none;
-  --card-hover-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
-  --surface-1-solid: #1f1d1a;
-  --header-bg: #1f1d1a;
-  --header-border: #2c2925;
-  --row-bg: #23201d;
-  --row-border: #2c2925;
-  --shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
-  --social-bg: #26231f;
+  --card-hover-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+  --surface-1-solid: #34312c;
+  --header-bg: #34312c;
+  --header-border: #45413a;
+  --row-bg: #383530;
+  --row-border: #45413a;
+  --shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  --social-bg: #3b3833;
 
   /* The one accent (calm sky). --accent-strong stays a mid sky because older
      buttons put hardcoded white text on it (white on #2f78b8 is 4.7:1);
@@ -68,18 +68,18 @@
   --btn-primary-border: #7ab8f0;
   --btn-primary-text: #071827;
   --btn-primary-backdrop-filter: none;
-  --btn-secondary-border: #4a453d;
+  --btn-secondary-border: #5d584f;
   --btn-secondary-text: #f3efe8;
-  --input-bg: #1f1d1a;
-  --input-border: #4a453d;
+  --input-bg: #34312c;
+  --input-border: #5d584f;
   --input-text: #f3efe8;
-  --disabled-bg: #26231f;
-  --disabled-text: #7d786c;
-  --disabled-border: #2c2925;
+  --disabled-bg: #3b3833;
+  --disabled-text: #9a9488;
+  --disabled-border: #45413a;
 
   /* Status: muted traffic lights */
-  --pill-neutral-bg: #2c2925;
-  --pill-neutral-text: #b3ada1;
+  --pill-neutral-bg: #45413a;
+  --pill-neutral-text: #d0cabe;
   --pill-neutral-border: #3d382f;
   --zone-accent-neutral: #847e72;
   --alert-red: #e9776c;
@@ -94,7 +94,7 @@
   --badge-danger-border: rgba(233, 119, 108, 0.35);
 
   /* Rail: same warm surface as cards, no frosted glass, no hairline. */
-  --rail-bg: #1f1d1a;
+  --rail-bg: #34312c;
   --rail-border: transparent;
   --rail-backdrop-filter: none;
 }
@@ -152,7 +152,7 @@
 :root[data-theme='calmsky'] .app-sidebar-nav-item.selected,
 :root[data-theme='calmsky'] .project-nav-primary-item.selected,
 :root[data-theme='calmsky'] .project-nav-secondary-item.selected {
-  background: #282521;
+  background: #3d3a34;
   color: var(--text-h);
 }
 
@@ -161,7 +161,7 @@
 }
 
 :root[data-theme='calmsky'] .account-menu {
-  border-top-color: #2c2925;
+  border-top-color: #45413a;
 }
 
 :root[data-theme='calmsky'] .account-menu-avatar {
@@ -323,7 +323,7 @@
 }
 
 :root[data-theme='calmsky'] .avatar-stack-more {
-  background: #282521;
+  background: #3d3a34;
   color: var(--text-muted);
 }
 
@@ -342,7 +342,7 @@
   flex: 1;
   height: 5px;
   border-radius: 5px;
-  background: #282521;
+  background: #3d3a34;
 }
 
 :root[data-theme='calmsky'] .qa-progress span.on {
@@ -518,7 +518,7 @@
 }
 
 :root[data-theme='calmsky'] .gantt-zoom-btn.active {
-  background: #282521;
+  background: #3d3a34;
   color: var(--text-h);
 }
 
@@ -618,15 +618,15 @@
   --neutral-400: #a39d90;
 
   /* Login and password screens */
-  --auth-bg: #171614;
-  --auth-panel: #1f1d1a;
+  --auth-bg: #2a2825;
+  --auth-panel: #34312c;
 
   /* Select option chips and mobile raised surface */
-  --option-pending-bg: #2a2622;
+  --option-pending-bg: #403c36;
   --option-pending-text: #e6e1d7;
-  --option-info-bg: #1f2e3c;
+  --option-info-bg: #2c4258;
   --option-info-text: #7ab8f0;
-  --mobile-surface-raised: #282521;
+  --mobile-surface-raised: #3d3a34;
 }
 
 /* Legacy solid buttons that filled with --accent-strong and hardcoded white
