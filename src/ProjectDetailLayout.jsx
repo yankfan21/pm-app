@@ -376,6 +376,7 @@ function ProjectDetailLayout({ project, isOwner, canEdit }) {
   return (
     <AppShell nav={projectNav}>
       <div className="app-body">
+        <div className="project-band">
         <Link to="/dashboard" className="btn-secondary back-link">
           &larr; Back to projects
         </Link>
@@ -436,6 +437,7 @@ function ProjectDetailLayout({ project, isOwner, canEdit }) {
           {currentProject.goal && (
             <p className="project-header-goal-line">{currentProject.goal}</p>
           )}
+        </div>
         </div>
 
         {error && <p className="error">{error}</p>}
