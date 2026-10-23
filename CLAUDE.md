@@ -106,6 +106,23 @@ today). The agile demo has no task dates, so the shift does nothing for it.
 `npx supabase` needs a login in this checkout (`supabase login`, then
 `link`), and `~/.npm` is root-owned: use `npm_config_cache=<scratch dir>`.
 
+## CalmSky theme: switched to the "Professional" look — 2026-10-23
+
+The owner found the charcoal look too dark and broody and asked for a more
+professional feel. `src/theme-calmsky.css` was rewritten (the flag and file
+name are unchanged): deep navy rail and top bar (`#14233a`, re-scoped text and
+accent tokens inside `.app-sidebar` / `.top-bar`), cool-grey page `#f6f7f9`,
+white cards with 1px `#e1e5ea` borders, one navy accent `#1e4d8c`, tight corners
+(6-10px, no pill buttons), one font family (Hanken Grotesk), AA-checked status
+colours. This reverses the earlier "dark only, round shapes, no light themes"
+decisions on the owner's request; the old charcoal theme is in git history
+(commit `d445ce2` and before). The five "See how it works" screenshots in
+`src/assets/tour/` were recaptured in this look (1100px viewport at 1.27x,
+3:2) and the pop-up widened (max 1180px). Not yet re-checked: native iOS/Android
+(need a rebuild; splash screens and icons are still charcoal), the mobile `/m/`
+screens on a real phone, Comms "document" pages, and the store screenshots in
+`design/appstore` and `design/play-store` (old look).
+
 ## CalmSky_Redesign and white-label branding — status as of 2026-10-10
 
 **LIVE as of 2026-10-10.** The redesign was merged to `main` (fast-forward) and

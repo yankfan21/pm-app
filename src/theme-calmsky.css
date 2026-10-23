@@ -1,102 +1,142 @@
-/* CalmSky_Redesign - the "Friendly" dark theme (design/dark/friendly*.html).
-   Warm charcoal canvas, round shapes, one soft sky accent for actions, nav
-   and Today; status keeps muted traffic lights.
+/* CalmSky_Redesign - the "Professional" theme. A deep navy rail and top bar
+   frame a quiet cool-grey work area of white cards; one navy blue carries
+   primary actions and links; green, amber and red appear only for status.
+   Tight corners (6-10px), hairline borders, near-flat cards.
 
-   Switched on by VITE_CALMSKY_REDESIGN=true (main.jsx sets data-theme="calmsky");
-   production leaves it unset and keeps the shipped navy theme. When approved,
-   these values move into :root in index.css and the flag goes away.
-
-   Stage 1 is tokens only: no component rules live here yet. Text pairs are
-   >= 4.5:1 on their surface (--text-muted on --bg is about 8:1). */
+   Switched on by VITE_CALMSKY_REDESIGN=true (main.jsx sets data-theme="calmsky").
+   Text pairs are >= 4.5:1 on their surface (muted #5b6472 is 5.6:1 on --bg,
+   white on --accent is 8.4:1). The earlier warm-charcoal dark look is in git
+   history (commit d445ce2 and before). The navy rail and top bar re-scope the
+   text and accent tokens to light-on-navy values further down. */
 
 :root[data-theme='calmsky'] {
-  color-scheme: dark;
+  color-scheme: light;
 
-  /* Fonts, self-hosted via @fontsource-variable (main.jsx). */
+  /* Fonts, self-hosted via @fontsource-variable (main.jsx). One family. */
   --sans: 'Hanken Grotesk Variable', system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: 'Schibsted Grotesk Variable', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --heading: var(--sans);
 
-  /* Round and friendly. */
-  --radius-xs: 4px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 18px;
+  /* Tight and professional. */
+  --radius-xs: 3px;
+  --radius-sm: 5px;
+  --radius-md: 7px;
+  --radius-lg: 10px;
 
-  /* Surfaces and text (warm charcoal) */
-  --bg: #2a2825;
-  --text: #e6e1d7;
-  --text-h: #f3efe8;
-  --text-muted: #c4beb2;
-  --border: #4d4943;
-  --code-bg: #3b3833;
-  --card-bg: #34312c;
+  /* Surfaces and text */
+  --bg: #f6f7f9;
+  --text: #1f2937;
+  --text-h: #111827;
+  --text-muted: #5b6472;
+  --border: #e1e5ea;
+  --code-bg: #eef0f3;
+  --card-bg: #ffffff;
   --card-backdrop-filter: none;
-  --card-shadow: none;
-  --card-hover-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
-  --surface-1-solid: #34312c;
-  --header-bg: #34312c;
-  --header-border: #45413a;
-  --row-bg: #383530;
-  --row-border: #45413a;
-  --shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-  --social-bg: #3b3833;
+  --card-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --card-hover-shadow: 0 4px 12px rgba(16, 24, 40, 0.1);
+  --surface-1-solid: #ffffff;
+  --header-bg: #14233a;
+  --header-border: #14233a;
+  --row-bg: #f8f9fb;
+  --row-border: #e1e5ea;
+  --shadow: 0 6px 16px rgba(16, 24, 40, 0.12);
+  --social-bg: #eef0f3;
+  --surface-sunken: #e8ecf1;
 
-  /* The one accent (calm sky). --accent-strong stays a mid sky because older
-     buttons put hardcoded white text on it (white on #2f78b8 is 4.7:1);
-     .btn-primary uses the light sky with dark ink instead. */
-  --accent: #7ab8f0;
-  --accent-muted: #7ab8f0;
-  --accent-strong: #2f78b8;
-  --accent-bg: rgba(122, 184, 240, 0.14);
-  --accent-border: rgba(122, 184, 240, 0.4);
-  --link: #7ab8f0;
-  --tab-active-bg: rgba(122, 184, 240, 0.16);
-  --tab-active-text: #7ab8f0;
+  /* The one accent (deep blue). White on it is 8.4:1. */
+  --accent: #1e4d8c;
+  --accent-muted: #1e4d8c;
+  --accent-strong: #1e4d8c;
+  --accent-bg: rgba(30, 77, 140, 0.08);
+  --accent-border: rgba(30, 77, 140, 0.3);
+  --link: #1e4d8c;
+  --tab-active-bg: rgba(30, 77, 140, 0.08);
+  --tab-active-text: #1e4d8c;
   --tab-inactive-text: var(--text-muted);
-  --sort-active: #7ab8f0;
+  --sort-active: #1e4d8c;
   --card-accent-purple: var(--accent);
-  --card-accent-amber: #dcae55;
-  --card-accent-red: #e9776c;
+  --card-accent-amber: #d9982b;
+  --card-accent-red: #d9534a;
   --card-accent-muted: var(--border);
-  --card-tint-purple: rgba(122, 184, 240, 0.05);
-  --card-tint-amber: rgba(220, 174, 85, 0.05);
-  --card-tint-red: rgba(233, 119, 108, 0.06);
+  --card-tint-purple: rgba(30, 77, 140, 0.04);
+  --card-tint-amber: rgba(217, 152, 43, 0.06);
+  --card-tint-red: rgba(217, 83, 74, 0.06);
 
   /* Buttons and inputs */
-  --btn-primary-bg: #7ab8f0;
-  --btn-primary-hover-bg: #93c6f4;
-  --btn-primary-border: #7ab8f0;
-  --btn-primary-text: #071827;
+  --btn-primary-bg: #1e4d8c;
+  --btn-primary-hover-bg: #173d70;
+  --btn-primary-border: #1e4d8c;
+  --btn-primary-text: #ffffff;
   --btn-primary-backdrop-filter: none;
-  --btn-secondary-border: #5d584f;
-  --btn-secondary-text: #f3efe8;
-  --input-bg: #34312c;
-  --input-border: #5d584f;
-  --input-text: #f3efe8;
-  --disabled-bg: #3b3833;
-  --disabled-text: #9a9488;
-  --disabled-border: #45413a;
+  --btn-secondary-border: #c4cad3;
+  --btn-secondary-text: #1f2937;
+  --input-bg: #ffffff;
+  --input-border: #c4cad3;
+  --input-text: #111827;
+  --disabled-bg: #eef0f3;
+  --disabled-text: #8b93a1;
+  --disabled-border: #e1e5ea;
 
-  /* Status: muted traffic lights */
-  --pill-neutral-bg: #45413a;
-  --pill-neutral-text: #d0cabe;
-  --pill-neutral-border: #3d382f;
-  --zone-accent-neutral: #847e72;
-  --alert-red: #e9776c;
-  --badge-success-bg: rgba(120, 185, 149, 0.14);
-  --badge-success-text: #8fcfa9;
-  --badge-success-border: rgba(120, 185, 149, 0.35);
-  --badge-warning-bg: rgba(220, 174, 85, 0.14);
-  --badge-warning-text: #e6bd6e;
-  --badge-warning-border: rgba(220, 174, 85, 0.35);
-  --badge-danger-bg: rgba(233, 119, 108, 0.14);
-  --badge-danger-text: #f09186;
-  --badge-danger-border: rgba(233, 119, 108, 0.35);
+  /* Status: green / amber / red, text darkened for AA on the tints. */
+  --pill-neutral-bg: #eceff3;
+  --pill-neutral-text: #4a5362;
+  --pill-neutral-border: #d9dee5;
+  --zone-accent-neutral: #8b93a1;
+  --alert-red: #b3261e;
+  --badge-success-bg: #e6f4ec;
+  --badge-success-text: #1a6b45;
+  --badge-success-border: #b7dfc9;
+  --badge-warning-bg: #fdf1d9;
+  --badge-warning-text: #8a5300;
+  --badge-warning-border: #f0d9a3;
+  --badge-danger-bg: #fbe9e7;
+  --badge-danger-text: #b3261e;
+  --badge-danger-border: #f2c3be;
 
-  /* Rail: same warm surface as cards, no frosted glass, no hairline. */
-  --rail-bg: #34312c;
+  /* Rail: deep navy, like the top bar. */
+  --rail-bg: #14233a;
   --rail-border: transparent;
   --rail-backdrop-filter: none;
+}
+
+/* Navy surfaces: the rail and the top bar re-scope text and accent tokens to
+   light-on-navy values, so everything inside them (brand, nav, buttons,
+   badges) reads correctly without per-component rules. */
+:root[data-theme='calmsky'] :is(.app-sidebar, .top-bar) {
+  --text: #e8eef7;
+  --text-h: #ffffff;
+  --text-muted: #a9b8cd;
+  --border: rgba(255, 255, 255, 0.22);
+  --accent: #8cc4f5;
+  --link: #8cc4f5;
+  --neutral-100: rgba(255, 255, 255, 0.08);
+  --neutral-200: #e8eef7;
+  --neutral-300: #cbd6e5;
+  --neutral-400: #a9b8cd;
+  --btn-secondary-border: rgba(255, 255, 255, 0.32);
+  --btn-secondary-text: #e8eef7;
+  --btn-primary-bg: #ffffff;
+  --btn-primary-hover-bg: #e8eef7;
+  --btn-primary-border: #ffffff;
+  --btn-primary-text: #14233a;
+  color: var(--text);
+}
+
+:root[data-theme='calmsky'] .top-bar {
+  background: #14233a;
+  border-bottom-color: #14233a;
+}
+
+/* The account dropdown hangs off the navy bar but is a light card. */
+:root[data-theme='calmsky'] .top-bar-menu {
+  --text: #1f2937;
+  --text-h: #111827;
+  --text-muted: #5b6472;
+  --border: #e1e5ea;
+  --neutral-100: #eef0f3;
+  background: #ffffff;
+  border-color: #e1e5ea;
+  color: #1f2937;
+  box-shadow: var(--shadow);
 }
 
 /* ------------------------------------------------------------------ */
@@ -152,8 +192,8 @@
 :root[data-theme='calmsky'] .app-sidebar-nav-item.selected,
 :root[data-theme='calmsky'] .project-nav-primary-item.selected,
 :root[data-theme='calmsky'] .project-nav-secondary-item.selected {
-  background: #3d3a34;
-  color: var(--text-h);
+  background: rgba(140, 196, 245, 0.18);
+  color: #8cc4f5;
 }
 
 :root[data-theme='calmsky'] .app-sidebar-nav-item.selected .app-sidebar-nav-icon {
@@ -161,18 +201,18 @@
 }
 
 :root[data-theme='calmsky'] .account-menu {
-  border-top-color: #45413a;
+  border-top-color: rgba(255, 255, 255, 0.18);
 }
 
 :root[data-theme='calmsky'] .account-menu-avatar {
   background: #e5b79a;
-  color: #171614;
+  color: #111827;
 }
 
-/* Pill buttons */
+/* Buttons */
 :root[data-theme='calmsky'] .btn-primary,
 :root[data-theme='calmsky'] .btn-secondary {
-  border-radius: 999px;
+  border-radius: 6px;
 }
 
 :root[data-theme='calmsky'] .btn-primary {
@@ -250,7 +290,7 @@
   position: absolute;
   right: 0;
   top: 11px;
-  border-top: 3px dotted #847e72;
+  border-top: 3px dotted #8b93a1;
 }
 
 :root[data-theme='calmsky'] .course-line-today {
@@ -312,7 +352,7 @@
   margin-left: -4px;
   border: 2px solid var(--card-bg);
   border-radius: 50%;
-  color: #171614;
+  color: #111827;
   font-size: 10px;
   font-weight: 600;
   line-height: 1;
@@ -323,7 +363,7 @@
 }
 
 :root[data-theme='calmsky'] .avatar-stack-more {
-  background: #3d3a34;
+  background: var(--surface-sunken);
   color: var(--text-muted);
 }
 
@@ -342,7 +382,7 @@
   flex: 1;
   height: 5px;
   border-radius: 5px;
-  background: #3d3a34;
+  background: var(--surface-sunken);
 }
 
 :root[data-theme='calmsky'] .qa-progress span.on {
@@ -390,7 +430,7 @@
 }
 
 :root[data-theme='calmsky'] .qa-answer-input::placeholder {
-  color: #847e72;
+  color: #8b93a1;
   opacity: 1;
 }
 
@@ -424,7 +464,7 @@
 
 /* Choice buttons: round pills. */
 :root[data-theme='calmsky'] .priority-buttons button {
-  border-radius: 999px;
+  border-radius: 6px;
 }
 
 :root[data-theme='calmsky'] .modal-actions {
@@ -452,7 +492,7 @@
   top: 4px;
   bottom: 4px;
   box-sizing: border-box;
-  border: 1.5px dashed #847e72;
+  border: 1.5px dashed #8b93a1;
   border-radius: 999px;
   background: transparent;
 }
@@ -518,7 +558,7 @@
 }
 
 :root[data-theme='calmsky'] .gantt-zoom-btn.active {
-  background: #3d3a34;
+  background: var(--surface-sunken);
   color: var(--text-h);
 }
 
@@ -538,7 +578,7 @@
 
 :root[data-theme='calmsky'] .gantt-legend-swatch.bar {
   height: 10px;
-  border: 1.5px dashed #847e72;
+  border: 1.5px dashed #8b93a1;
   border-radius: 999px;
   background: transparent;
 }
@@ -611,26 +651,30 @@
 /* the slate-navy palette, re-pointed to the warm charcoal family.     */
 /* ------------------------------------------------------------------ */
 :root[data-theme='calmsky'] {
-  /* Slate neutrals -> warm neutrals (auth screens, brand name, muted text) */
-  --neutral-100: #f3efe8;
-  --neutral-200: #e6e1d7;
-  --neutral-300: #cdc7bb;
-  --neutral-400: #a39d90;
+  /* Neutrals (auth screens, brand name, muted text) */
+  --neutral-100: #111827;
+  --neutral-200: #1f2937;
+  --neutral-300: #4a5362;
+  --neutral-400: #5b6472;
 
   /* Login and password screens */
-  --auth-bg: #2a2825;
-  --auth-panel: #34312c;
+  --auth-bg: #f6f7f9;
+  --auth-panel: #ffffff;
+  --auth-error-text: #b3261e;
+  --auth-border: #e1e5ea;
+  --auth-border-strong: #c4cad3;
+  --auth-input-bg: #ffffff;
 
   /* Select option chips and mobile raised surface */
-  --option-pending-bg: #403c36;
-  --option-pending-text: #e6e1d7;
-  --option-info-bg: #2c4258;
-  --option-info-text: #7ab8f0;
-  --mobile-surface-raised: #3d3a34;
+  --option-pending-bg: #eceff3;
+  --option-pending-text: #1f2937;
+  --option-info-bg: #e3ecf6;
+  --option-info-text: #1e4d8c;
+  --mobile-surface-raised: #f8f9fb;
 }
 
 /* Legacy solid buttons that filled with --accent-strong and hardcoded white
-   text now match .btn-primary: sky fill, dark ink, pill shape. */
+   text now match .btn-primary: navy fill, white ink, tight corners. */
 :root[data-theme='calmsky'] .toggle-group button.selected,
 :root[data-theme='calmsky'] .task-form button,
 :root[data-theme='calmsky'] .backlog-create-form button,
@@ -643,7 +687,7 @@
 :root[data-theme='calmsky'] .marketing-cta {
   background: var(--btn-primary-bg);
   color: var(--btn-primary-text);
-  border-radius: 999px;
+  border-radius: 6px;
   font-weight: 600;
 }
 
@@ -676,8 +720,8 @@
 /* Stage 6: mobile app (src/mobile)                                    */
 /* ------------------------------------------------------------------ */
 :root[data-theme='calmsky'] {
-  /* Dark ink on sky fills: filter chips, done marks, mobile form buttons. */
-  --on-accent: #071827;
+  /* White ink on accent fills: filter chips, done marks, mobile form buttons. */
+  --on-accent: #ffffff;
 }
 
 :root[data-theme='calmsky'] .mobile-brand-name {
@@ -749,7 +793,7 @@
 }
 
 :root[data-theme='calmsky'] .login-btn-secondary {
-  border-radius: 999px;
+  border-radius: 6px;
 }
 
 :root[data-theme='calmsky'] .login-btn-secondary + .login-btn-secondary {
