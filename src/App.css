@@ -7390,6 +7390,11 @@ textarea.risk-cell-input {
   margin-left: 10px;
 }
 
+.tour-shot {
+  position: relative;
+  container-type: inline-size;
+}
+
 .tour-shot img,
 .tour-shot video {
   display: block;
@@ -7567,9 +7572,11 @@ textarea.risk-cell-input {
 .how-shot {
   display: flex;
   justify-content: center;
-  width: fit-content;
-  max-width: 100%;
+  /* Definite width (3:2 frame that fits the screen height) so callout text can
+     size from the frame with container units. */
+  width: min(100%, max(280px, calc((100dvh - 300px) * 1.5)));
   margin: 0 auto;
+  container-type: inline-size;
   overflow: hidden;
   border: 1px solid var(--auth-border-strong);
   border-radius: 14px;
@@ -7610,11 +7617,8 @@ textarea.risk-cell-input {
 .how-shot img,
 .how-shot video {
   display: block;
-  width: auto;
-  max-width: 100%;
+  width: 100%;
   height: auto;
-  max-height: calc(100dvh - 300px);
-  min-height: 200px;
   object-fit: contain;
 }
 
@@ -7651,4 +7655,110 @@ textarea.risk-cell-input {
     flex-basis: 100%;
     text-align: center;
   }
+}
+
+/* Callout bubbles over the walkthrough clips (components/TourMedia.jsx). The
+   left/top point is where the bubble's tail touches the app; place and align
+   say which side the bubble sits on. */
+.how-callout {
+  position: absolute;
+  z-index: 2;
+  width: max-content;
+  max-width: 44%;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+}
+
+.how-callout.on {
+  opacity: 1;
+}
+
+.how-callout-text {
+  position: relative;
+  display: block;
+  padding: 0.55em 0.85em;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 10px;
+  background: #14233a;
+  color: #ffffff;
+  font-size: clamp(10px, 2.1cqw, 15px);
+  font-weight: 600;
+  line-height: 1.3;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.38);
+}
+
+.how-callout-text::after {
+  content: '';
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: #14233a;
+  transform: rotate(45deg);
+}
+
+.how-callout.place-below {
+  transform: translate(-50%, 12px);
+}
+.how-callout.place-below.align-start {
+  transform: translate(-22px, 12px);
+}
+.how-callout.place-below.align-end {
+  transform: translate(calc(-100% + 22px), 12px);
+}
+.how-callout.place-below .how-callout-text::after {
+  top: -6px;
+  left: calc(50% - 5px);
+  border-top: 1px solid rgba(255, 255, 255, 0.4);
+  border-left: 1px solid rgba(255, 255, 255, 0.4);
+}
+.how-callout.place-below.align-start .how-callout-text::after {
+  left: 17px;
+}
+.how-callout.place-below.align-end .how-callout-text::after {
+  left: auto;
+  right: 17px;
+}
+
+.how-callout.place-above {
+  transform: translate(-50%, calc(-100% - 12px));
+}
+.how-callout.place-above.align-start {
+  transform: translate(-22px, calc(-100% - 12px));
+}
+.how-callout.place-above.align-end {
+  transform: translate(calc(-100% + 22px), calc(-100% - 12px));
+}
+.how-callout.place-above .how-callout-text::after {
+  bottom: -6px;
+  left: calc(50% - 5px);
+  border-right: 1px solid rgba(255, 255, 255, 0.4);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+}
+.how-callout.place-above.align-start .how-callout-text::after {
+  left: 17px;
+}
+.how-callout.place-above.align-end .how-callout-text::after {
+  left: auto;
+  right: 17px;
+}
+
+.how-callout.place-right {
+  transform: translate(12px, -50%);
+}
+.how-callout.place-right .how-callout-text::after {
+  left: -6px;
+  top: calc(50% - 5px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+  border-left: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.how-callout.place-left {
+  transform: translate(calc(-100% - 12px), -50%);
+}
+.how-callout.place-left .how-callout-text::after {
+  right: -6px;
+  top: calc(50% - 5px);
+  border-top: 1px solid rgba(255, 255, 255, 0.4);
+  border-right: 1px solid rgba(255, 255, 255, 0.4);
 }

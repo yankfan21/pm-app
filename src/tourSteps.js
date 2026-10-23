@@ -1,18 +1,23 @@
 import createImg from './assets/tour/create.jpg'
 import createMp4 from './assets/tour/create.mp4'
 import createWebm from './assets/tour/create.webm'
+import createCallouts from './assets/tour/create.callouts.json'
 import qaImg from './assets/tour/qa.jpg'
 import qaMp4 from './assets/tour/qa.mp4'
 import qaWebm from './assets/tour/qa.webm'
+import qaCallouts from './assets/tour/qa.callouts.json'
 import tasksImg from './assets/tour/tasks.jpg'
 import tasksMp4 from './assets/tour/tasks.mp4'
 import tasksWebm from './assets/tour/tasks.webm'
+import tasksCallouts from './assets/tour/tasks.callouts.json'
 import ganttImg from './assets/tour/gantt.jpg'
 import ganttMp4 from './assets/tour/gantt.mp4'
 import ganttWebm from './assets/tour/gantt.webm'
+import ganttCallouts from './assets/tour/gantt.callouts.json'
 import statusImg from './assets/tour/status.jpg'
 import statusMp4 from './assets/tour/status.mp4'
 import statusWebm from './assets/tour/status.webm'
+import statusCallouts from './assets/tour/status.callouts.json'
 
 // The five-step product walkthrough, shared by the home page's pop-up
 // (components/HowItWorksModal.jsx) and the standalone /tour page (Tour.jsx).
@@ -21,13 +26,17 @@ import statusWebm from './assets/tour/status.webm'
 // `video` ({ mp4, webm }): a short silent clip (scripted recordings of the dev
 // preview sample data, about 50 seconds in all) that plays in place of the
 // screenshot, which then serves as its poster. The pop-up plays them back to
-// back; the /tour page loops each one.
+// back; the /tour page loops each one. `callouts` are bubbles shown over the clip
+// ({ at, until } seconds into it, x/y as % of the frame, place/align); they are
+// written by design/tools/tour-clips/record.cjs and the wording can be edited
+// in the .callouts.json files.
 export const TOUR_STEPS = [
   {
     title: 'Set up your project in minutes',
     body: 'Choose Waterfall, Agile or Hybrid, name it, set a priority and a go-live date. Pick Guided setup and the assistant drafts your Charter and Risk Log from a few questions.',
     img: createImg,
     video: { mp4: createMp4, webm: createWebm },
+    callouts: createCallouts,
     alt: 'The New Project review step, offering Guided setup or Quick create',
     label: 'New project',
   },
@@ -36,6 +45,7 @@ export const TOUR_STEPS = [
     body: 'No blank chat box and no long forms. One question per screen, with a progress bar so you always know where you are. Suggestions draw on what you have already told it.',
     img: qaImg,
     video: { mp4: qaMp4, webm: qaWebm },
+    callouts: qaCallouts,
     alt: 'A guided question screen with a progress bar and an answer box',
     label: 'Guided questions',
   },
@@ -44,6 +54,7 @@ export const TOUR_STEPS = [
     body: 'The assistant turns your Charter into a task list. Filter by status, edit anything, and only the tasks you accept are saved. Accepted tasks are yours: the AI never changes them.',
     img: tasksImg,
     video: { mp4: tasksMp4, webm: tasksWebm },
+    callouts: tasksCallouts,
     alt: 'The Tasks and Milestones page with Generate Tasks and Import buttons',
     label: 'Tasks and milestones',
   },
@@ -52,6 +63,7 @@ export const TOUR_STEPS = [
     body: 'Dependencies, milestones, a Today line and the critical path in amber. Export to Excel or PDF to share with stakeholders.',
     img: ganttImg,
     video: { mp4: ganttMp4, webm: ganttWebm },
+    callouts: ganttCallouts,
     alt: 'A Gantt chart with the critical path highlighted',
     label: 'Gantt chart',
   },
@@ -60,6 +72,7 @@ export const TOUR_STEPS = [
     body: 'Log a weekly status update in three boxes, and let the assistant propose Exec and Team comms. You accept or discard every version, and old versions are kept.',
     img: statusImg,
     video: { mp4: statusMp4, webm: statusWebm },
+    callouts: statusCallouts,
     alt: 'The Status Update page with a Log Status Update button and history',
     label: 'Communications',
   },

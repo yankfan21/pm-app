@@ -24,6 +24,7 @@ export function pickVideoSrc(video) {
   return canMp4 ? video.mp4 : video.webm
 }
 
+// Callouts (step.callouts) are bubbles pointing at the app, timed to the clip.
 // loop: replay forever (the /tour page). Otherwise onEnded fires once, and
 // onProgress gets 0..1 as the clip plays. paused holds it; onBlocked fires if
 // the browser refuses to autoplay. playWhenVisible only plays while on screen.
@@ -40,7 +41,9 @@ function TourMedia({
   const reduced = useReducedMotion()
   const ref = useRef(null)
   const [visible, setVisible] = useState(!playWhenVisible)
+  const [active, setActive] = useState('')
   const hasVideo = Boolean(step.video) && !reduced
+  const callouts = step.callouts
 
   useEffect(() => {
     if (!playWhenVisible || !hasVideo || !ref.current) return undefined
@@ -69,26 +72,55 @@ function TourMedia({
     }
   }, [shouldPlay, hasVideo, step.video])
 
+  // Which callouts are showing, from the clip's own clock (a frame-rate loop,
+  // so a bubble lands on the beat rather than up to 250ms late like timeupdate).
+  useEffect(() => {
+    const v = ref.current
+    if (!v || !hasVideo || !callouts?.length) return undefined
+    let raf = 0
+    const tick = () => {
+      const t = v.currentTime
+      const next = callouts.map((c, i) => (t >= c.at && t < c.until ? i : '')).join(',')
+      setActive((prev) => (prev === next ? prev : next))
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [callouts, hasVideo, step.video])
+
   if (!hasVideo) {
     return <img src={step.img} alt={step.alt} loading={lazy ? 'lazy' : undefined} />
   }
+  const showing = new Set(active.split(',').filter(Boolean).map(Number))
   return (
-    <video
-      ref={ref}
-      key={step.video.mp4}
-      src={pickVideoSrc(step.video)}
-      poster={step.img}
-      aria-label={step.alt}
-      muted
-      playsInline
-      loop={loop}
-      preload="auto"
-      onEnded={onEnded}
-      onTimeUpdate={(e) => {
-        const v = e.currentTarget
-        if (onProgress && v.duration) onProgress(v.currentTime / v.duration)
-      }}
-    />
+    <>
+      <video
+        ref={ref}
+        key={step.video.mp4}
+        src={pickVideoSrc(step.video)}
+        poster={step.img}
+        aria-label={step.alt}
+        muted
+        playsInline
+        loop={loop}
+        preload="auto"
+        onEnded={onEnded}
+        onTimeUpdate={(e) => {
+          const v = e.currentTarget
+          if (onProgress && v.duration) onProgress(v.currentTime / v.duration)
+        }}
+      />
+      {callouts?.map((c, i) => (
+        <span
+          key={c.text}
+          className={`how-callout place-${c.place} align-${c.align}${showing.has(i) ? ' on' : ''}`}
+          style={{ left: `${c.x}%`, top: `${c.y}%` }}
+          aria-hidden="true"
+        >
+          <span className="how-callout-text">{c.text}</span>
+        </span>
+      ))}
+    </>
   )
 }
 

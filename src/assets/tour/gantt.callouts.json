@@ -1,0 +1,29 @@
+[
+  {
+    "at": 0.43,
+    "until": 2.63,
+    "x": 59.4,
+    "y": 54.9,
+    "place": "below",
+    "align": "start",
+    "text": "Switch on the critical path"
+  },
+  {
+    "at": 7.16,
+    "until": 10.02,
+    "x": 62.5,
+    "y": 82.5,
+    "place": "below",
+    "align": "center",
+    "text": "Critical path in amber, with dependencies"
+  },
+  {
+    "at": 10.59,
+    "until": 12.35,
+    "x": 89.7,
+    "y": 11.4,
+    "place": "below",
+    "align": "end",
+    "text": "Jump to today"
+  }
+]

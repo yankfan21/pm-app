@@ -1,0 +1,29 @@
+[
+  {
+    "at": 0.36,
+    "until": 2.45,
+    "x": 69.1,
+    "y": 43.6,
+    "place": "right",
+    "align": "center",
+    "text": "One question per screen"
+  },
+  {
+    "at": 2.46,
+    "until": 4.55,
+    "x": 29.6,
+    "y": 36.6,
+    "place": "left",
+    "align": "center",
+    "text": "See your progress"
+  },
+  {
+    "at": 6.05,
+    "until": 9.13,
+    "x": 50,
+    "y": 68.3,
+    "place": "below",
+    "align": "center",
+    "text": "Answer in your own words"
+  }
+]

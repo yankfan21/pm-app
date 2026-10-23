@@ -1,0 +1,29 @@
+[
+  {
+    "at": 0.44,
+    "until": 2.53,
+    "x": 50.5,
+    "y": 52.1,
+    "place": "right",
+    "align": "center",
+    "text": "A weekly update in three boxes"
+  },
+  {
+    "at": 4.26,
+    "until": 8,
+    "x": 61.7,
+    "y": 74,
+    "place": "below",
+    "align": "end",
+    "text": "What got done, what is blocked, what is next"
+  },
+  {
+    "at": 11.38,
+    "until": 13.58,
+    "x": 61.7,
+    "y": 94.5,
+    "place": "above",
+    "align": "start",
+    "text": "Every update is kept in history"
+  }
+]
