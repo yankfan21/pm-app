@@ -7546,6 +7546,9 @@ textarea.risk-cell-input {
 .how-shot {
   display: flex;
   justify-content: center;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
   overflow: hidden;
   border: 1px solid var(--auth-border-strong);
   border-radius: 14px;
@@ -7553,11 +7556,12 @@ textarea.risk-cell-input {
 
 .how-shot img {
   display: block;
-  width: 100%;
+  width: auto;
+  max-width: 100%;
   height: auto;
-  max-height: 68dvh;
-  object-fit: cover;
-  object-position: top;
+  max-height: calc(100dvh - 300px);
+  min-height: 200px;
+  object-fit: contain;
 }
 
 .how-actions {
