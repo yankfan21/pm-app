@@ -106,6 +106,7 @@
   --text-h: #ffffff;
   --text-muted: #a9b8cd;
   --border: rgba(255, 255, 255, 0.22);
+  --code-bg: rgba(255, 255, 255, 0.1);
   --accent: #8cc4f5;
   --link: #8cc4f5;
   --neutral-100: rgba(255, 255, 255, 0.08);
