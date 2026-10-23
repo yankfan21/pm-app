@@ -118,10 +118,15 @@ colours. This reverses the earlier "dark only, round shapes, no light themes"
 decisions on the owner's request; the old charcoal theme is in git history
 (commit `d445ce2` and before). The five "See how it works" screenshots in
 `src/assets/tour/` were recaptured in this look (1100px viewport at 1.27x,
-3:2) and the pop-up widened (max 1180px). Not yet re-checked: native iOS/Android
-(need a rebuild; splash screens and icons are still charcoal), the mobile `/m/`
-screens on a real phone, Comms "document" pages, and the store screenshots in
-`design/appstore` and `design/play-store` (old look).
+3:2) and the pop-up widened (up to 1180px). Web `theme-color` and manifest colours
+are now navy `#14233a` (they were charcoal). Verified 2026-10-23 by a computed
+colour scan of 27 desktop routes (no stray dark surfaces) plus screenshots of the
+Dashboard, project pages, Gantt, login and marketing. NOT yet re-checked: the
+mobile `/m/` screens, Comms "document" pages, login/marketing on a phone,
+native iOS/Android (need a rebuild; icons and splash screens are still charcoal),
+and the store screenshots in `design/appstore` and `design/play-store` (old look).
+To roll back the look: `git revert 977cee0` (theme + pop-up) — later commits
+build on it, so revert may need conflict resolution.
 
 ## CalmSky_Redesign and white-label branding — status as of 2026-10-10
 
@@ -131,15 +136,16 @@ Vercel Production, so confidantpm.com shows the CalmSky look. Latest pushed
 commit `b10a40e` (dashboard cards: Target Go Live on its own row). To roll the
 theme back, remove that Vercel env var and redeploy (the shipped navy theme is
 still in the code). Work was developed on branch `claude/wonderful-lovelace-7l64oi`
-(git worktree `~/pm-app-redesign`). Going forward the standing rule is the
-usual one: ask before pushing or deploying anything. Never run the branding
-migration against production.
+(git worktree `~/pm-app-redesign`). Standing rule: ask before pushing or
+deploying unless the owner says to push (they did for the 2026-10-23 theme and
+walkthrough work). Never run the branding migration against production.
 
+**(Superseded 2026-10-23: the owner later asked for the "Professional" light look described above; this paragraph and the "Decided look" one below are history.)**
 The earlier light "Paper" theme was removed (commit 5dccf96). The owner
 rejected light themes (tinted looked dirty, white stark), purple/magenta, ice
 white, glows and heavy effects, and the bold palettes.
 
-**Decided look ("Friendly" dark, Calm Sky accent):** warm charcoal base
+**Former look, replaced 2026-10-23 ("Friendly" dark, Calm Sky accent):** warm charcoal base
 (#171614, cards #1f1d1a), calm sky accent #7ab8f0 for primary actions, nav and
 Today only, round shapes (pill buttons, 18px cards), Schibsted Grotesk
 headings + Hanken Grotesk body, human greeting copy, muted traffic-light
@@ -339,7 +345,7 @@ production first. Wanted for the future, not a launch blocker.
 - Google Play 1.1 is LIVE (published 2026-10-13, seen in Play Console; listing checked 2026-10-15): https://play.google.com/store/apps/details?id=com.confidantpm.app . The Google Play badge in `AppStoreBadges.jsx` is now a live link ("Now available"), no longer muted. Unused `.app-store-badge-muted` / `-status-soon` CSS is left in `App.css`.
 - Play short description reviewed 2026-10-15. Was "The project management assistant that actually knows your project." (66/80); changed to "Project management that knows your project, for independent PMs and agencies." (77/80), submitted for Google review that day. Next: confirm it shows on the live listing.
 - "View desktop site" REMOVED from mobile web 2026-10-21 (reverses the 2026-10-12 decision to keep it): the desktop layout squeezed to phone width is a poor representation of the product, so phone-width screens (under 768px) always get the phone layout. The footer link (`MobileDesktopLink.jsx`) is deleted, the phone Settings View Mode picker only shows on a wide screen that desktop Settings put into phone mode (the way back), and `useDeviceMode` ignores a stored `desktop` override on a phone-width screen. Native apps were already hidden. Gantt and other desktop-only views are not reachable on a phone; a phone-friendly read-only Gantt would be separate work.
-- **TODO when the owner is home (end of week of 2026-10-21): new iOS and Android builds.** Native apps bundle `dist`, so web changes only reach them on a rebuild and store submission. Pending native-visible changes since the last submitted builds (iOS 1.3 (1), Android 1.1): (1) landscape phones keep the phone layout (`useDeviceMode.js` `MOBILE_QUERY`, 2026-10-21; before it, rotating a phone past 768px wide switched the app to the squeezed desktop layout, in the apps too); (2) the "View desktop site" link and phone View Mode picker removal (already hidden in the apps, so no visible change); (3) the Dashboard welcome tour (desktop layout, so iPad). Bundle these into the next release; follow the iOS build steps above and the Android build notes (bump `versionCode`). Not worth a separate submission on their own. Alternative to the landscape rule if ever wanted: lock iPhone to portrait in `Info.plist`.
+- **TODO when the owner is home (end of week of 2026-10-21): new iOS and Android builds.** Native apps bundle `dist`, so web changes only reach them on a rebuild and store submission. Pending native-visible changes since the last submitted builds (iOS 1.3 (1), Android 1.1): (1) landscape phones keep the phone layout (`useDeviceMode.js` `MOBILE_QUERY`, 2026-10-21; before it, rotating a phone past 768px wide switched the app to the squeezed desktop layout, in the apps too); (2) the "View desktop site" link and phone View Mode picker removal (already hidden in the apps, so no visible change); (3) the Dashboard welcome tour (desktop layout, so iPad). (4) the 2026-10-23 Professional look and the video walkthrough pop-up (the apps still show the charcoal look, charcoal icons and splash). Bundle these into the next release; follow the iOS build steps above and the Android build notes (bump `versionCode`). Not worth a separate submission on their own. Alternative to the landscape rule if ever wanted: lock iPhone to portrait in `Info.plist`.
 - Local-only, uncommitted on the PC: `android/gradle.properties` (Windows JDK path), 5 deleted scratch SQL files, 3 untracked scratch files.
 - iOS 1.2 (2) approved (2026-10-15). Nothing open on iOS.
 
@@ -421,5 +427,42 @@ RLS); the list layout can take it later without a redo.
 
 - **Dashboard welcome tour** (`components/WelcomeTour.jsx`, desktop Dashboard only): six spotlight steps targeting `data-tour` attributes on the Dashboard and top bar. Opens once per browser when the Dashboard has loaded and localStorage `cpm_welcome_tour_seen` is not `1`; Skip, Done and Esc set it. Replay from Account menu > Take the tour. Browser-based, not per account (owner is fine with this; a per-account version would need a migration).
 - **Home page "See how it works"**: a button in the hero and the footer opens `components/HowItWorksModal.jsx`, a five-slide pop-up over the marketing page with a sign-up button on every slide, so visitors never leave the page. The slides live in `tourSteps.js`, with screenshots in `src/assets/tour/` (captured from the dev preview sample data), and are shared with the standalone `/tour` page (`Tour.jsx`, in the sitemap, no longer linked from the home page). `/tour` is not prerendered.
-- **Video walkthrough (2026-10-23):** each of the five steps now has a silent ~10s clip (`src/assets/tour/<name>.mp4` + `.webm`, scripted recordings of the dev preview sample data, ~50s total, wired in `tourSteps.js`, played by `components/TourMedia.jsx`). The pop-up plays them back to back with no clicks (progress bar segments fill, tap to pause, segments jump, Back/Next/Watch again remain); `/tour` loops each clip while on screen; reduced-motion visitors get the stills. Callout bubbles (real text, timed to each clip, positioned as % of the frame) come from `src/assets/tour/<name>.callouts.json`, written by the recorder; the wording can be edited in those files. Clips are stretched 1.1x (`SLOW` in `rec-lib.cjs` / `cut.py`, keep equal). Re-record after UI changes with `design/tools/tour-clips/` (see the header of `record.cjs`); the poster screenshots (`.jpg`) are separate.
+- **Video walkthrough (2026-10-23):** each of the five steps now has a silent 13-20s clip (`src/assets/tour/<name>.mp4` + `.webm`, scripted recordings of the dev preview sample data, ~73s total, wired in `tourSteps.js`, played by `components/TourMedia.jsx`). The pop-up plays them back to back with no clicks (progress bar segments fill, tap to pause, segments jump, Back/Next/Watch again remain); `/tour` loops each clip while on screen; reduced-motion visitors get the stills. Callout bubbles (real text, timed to each clip, positioned as % of the frame) come from `src/assets/tour/<name>.callouts.json`, written by the recorder; the wording can be edited in those files. Clips are stretched 1.1x (`SLOW` in `rec-lib.cjs` / `cut.py`, keep equal). Re-record after UI changes with `design/tools/tour-clips/` (see the header of `record.cjs`); the poster screenshots (`.jpg`) are separate. The recorder needs ffmpeg (libx264, libvpx-vp9), numpy and Playwright's Chromium; that Chromium cannot play H.264, so verify clips there via the webm and on a real device for mp4. Owner verified playback on iPad 2026-10-23 and approved the result.
 - Parked: a written getting-started guide (desktop draft exists as a Claude Doc). No phone-version tour planned.
+
+## Next session: open items and working notes (written 2026-10-23)
+
+Where things stand: `main` (commit `ba42217` at time of writing) has the Professional
+theme and the auto-playing video walkthrough, both live and approved by the owner.
+The cloud branch `claude/wizardly-edison-2lh78h` mirrors `main`; start new work from
+`main`.
+
+**Open, roughly in priority order:**
+1. Check the new look on screens not yet covered: phone `/m/...` screens, Comms
+   "document" pages, login/marketing on a phone, and hunt for leftover hard-coded dark
+   colours (`design/tools/shoot.mjs` does phone screenshots plus a colour scan).
+2. New iOS and Android builds (see the TODO under Android above): they still carry the
+   charcoal look, icons and splash. Regenerate icons/splash if the logo tile changes.
+3. Redo the App Store and Play Store screenshots in the new look
+   (`design/tools/store.mjs`, `store-ipad.mjs`, `store-play.mjs`).
+4. Tidy older CalmSky notes in this file that describe the charcoal theme as current
+   (the sections are marked superseded, not rewritten).
+5. `public/og-image.png`, `design/dark/*` mock-ups and the logo files still show the
+   old look; update if the owner wants them to match.
+6. Possible follow-ups the owner floated: a real suggested-answer example in the Q&A
+   walkthrough clip (the dev sample data produces no ghost-text suggestion), and a
+   shorter walkthrough if 73s feels long.
+
+**Working notes:**
+- The owner is often on an iPad and cannot run npm or open files: show screenshots or
+  short clips, send files directly, and push to `main` only when told to.
+- `npm install` rewrites `package-lock.json`; do not commit that change.
+- Preview: `VITE_DEV_BYPASS_AUTH=true VITE_CALMSKY_REDESIGN=true npx vite --port 5183`.
+  A full local build needs dummy `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` for the
+  prerender step (`npm run build`).
+- Vercel can lag 5-40 minutes or fail with "Git information retrieval failed": click
+  Redeploy. If the owner reports a change "not showing", check that first, then
+  browser cache (close and reopen the tab).
+- To change walkthrough wording only, edit `src/assets/tour/*.callouts.json` or
+  `src/tourSteps.js`; no re-recording needed. To change what the clips show, edit
+  `design/tools/tour-clips/record.cjs` and re-run it plus `cut.py`.
