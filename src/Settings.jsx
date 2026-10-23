@@ -112,8 +112,7 @@ function Settings() {
     setHiddenProjects((prev) => prev.filter((p) => p.projectId !== projectId))
   }
 
-  // Same session-only override as the mobile footer link
-  // (MobileDesktopLink.jsx) - navigates to the mapped equivalent for
+  // Session-only override - navigates to the mapped equivalent for
   // wherever this page falls back to (/settings is a shared path, so this
   // always lands on the chosen mode's home) rather than just flipping the
   // radio and leaving the desktop-styled Settings page on screen.

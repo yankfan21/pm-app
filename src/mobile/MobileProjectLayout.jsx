@@ -6,7 +6,6 @@ import ConfidantLogo from '../ConfidantLogo'
 import AppStoreBadges from '../components/AppStoreBadges'
 import { METHODOLOGY_LABELS } from '../methodology'
 import MobileProjectTabBar from './MobileProjectTabBar'
-import MobileDesktopLink from './MobileDesktopLink'
 import './mobile.css'
 
 // Persistent layout for every /m/projects/:projectId/* route. Deliberately
@@ -136,7 +135,6 @@ function MobileProjectLayout() {
 
       <div className="mobile-app-body">
         <Outlet context={{ project, isOwner, canEdit }} />
-        <MobileDesktopLink />
         {/* See MobileShell.jsx - same footer slot, kept in sync deliberately. */}
         <AppStoreBadges />
       </div>

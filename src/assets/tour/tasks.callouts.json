@@ -1,0 +1,29 @@
+[
+  {
+    "at": 0.42,
+    "until": 3.06,
+    "x": 47,
+    "y": 57,
+    "place": "below",
+    "align": "start",
+    "text": "The assistant drafts tasks from your Charter"
+  },
+  {
+    "at": 3.39,
+    "until": 5.37,
+    "x": 51.1,
+    "y": 90.6,
+    "place": "above",
+    "align": "center",
+    "text": "Filter by status"
+  },
+  {
+    "at": 9.49,
+    "until": 12.13,
+    "x": 49.2,
+    "y": 52.9,
+    "place": "below",
+    "align": "start",
+    "text": "You accept or edit every task"
+  }
+]

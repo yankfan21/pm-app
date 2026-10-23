@@ -3,8 +3,8 @@
   "short_name": "ConfidantPM",
   "start_url": "/dashboard",
   "display": "standalone",
-  "background_color": "#171614",
-  "theme_color": "#171614",
+  "background_color": "#14233a",
+  "theme_color": "#14233a",
   "icons": [
     {
       "src": "/favicon.svg",

@@ -1,0 +1,38 @@
+[
+  {
+    "at": 0.42,
+    "until": 2.51,
+    "x": 76.3,
+    "y": 8.2,
+    "place": "below",
+    "align": "end",
+    "text": "Start a project in four short steps"
+  },
+  {
+    "at": 3.47,
+    "until": 5.56,
+    "x": 63.1,
+    "y": 62.6,
+    "place": "below",
+    "align": "end",
+    "text": "Pick Waterfall, Agile or Hybrid"
+  },
+  {
+    "at": 11.13,
+    "until": 13.22,
+    "x": 54.9,
+    "y": 47.7,
+    "place": "below",
+    "align": "center",
+    "text": "Set a priority and go-live date"
+  },
+  {
+    "at": 14.49,
+    "until": 17.35,
+    "x": 40.2,
+    "y": 42.5,
+    "place": "below",
+    "align": "start",
+    "text": "Guided setup drafts your Charter and Risk Log"
+  }
+]

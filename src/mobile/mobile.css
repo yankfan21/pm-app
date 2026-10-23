@@ -97,26 +97,8 @@ html:has(.mobile-app) body {
   color: var(--accent-strong);
 }
 
-/* Manual device-mode override (MobileDesktopLink) - deliberately
-   low-prominence, sits at the bottom of scrollable content rather than
-   living in the topbar or tab bar so it never competes with primary nav. */
-.mobile-desktop-link {
-  display: block;
-  width: 100%;
-  margin-top: 24px;
-  padding: 10px;
-  border: none;
-  background: transparent;
-  color: var(--text-muted);
-  font-family: inherit;
-  font-size: 12px;
-  text-decoration: underline;
-  text-align: center;
-  cursor: pointer;
-}
-
 /* Phone sizing for the shared "Coming soon" badges (AppStoreBadges.jsx),
-   mounted at the foot of both /m/ layouts directly below .mobile-desktop-link.
+   mounted at the foot of both /m/ layouts.
    Overrides only - App.css still supplies the base .app-store-badges rules
    (grayscale, opacity, flex column), and this is the one direction of reach
    that's allowed: phone mode overriding a component it shares with desktop,
