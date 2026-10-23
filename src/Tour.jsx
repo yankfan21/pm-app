@@ -53,7 +53,7 @@ function Tour() {
                   <span>{step.label}</span>
                 </div>
                 <div className="tour-shot">
-                  <TourMedia step={step} lazy />
+                  <TourMedia step={step} lazy loop playWhenVisible />
                 </div>
               </figure>
             </li>
