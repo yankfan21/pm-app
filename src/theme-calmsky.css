@@ -23,20 +23,20 @@
   --radius-lg: 10px;
 
   /* Surfaces and text */
-  --bg: #dfe6ee;
+  --bg: #f6f7f9;
   --text: #1f2937;
   --text-h: #111827;
   --text-muted: #5b6472;
-  --border: #c3cedb;
-  --code-bg: #e8eef4;
-  --card-bg: #fbfcfe;
+  --border: #e1e5ea;
+  --code-bg: #eef0f3;
+  --card-bg: #ffffff;
   --card-backdrop-filter: none;
-  --card-shadow: 0 1px 3px rgba(16, 24, 40, 0.12), 0 2px 6px rgba(16, 24, 40, 0.05);
+  --card-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
   --card-hover-shadow: 0 4px 12px rgba(16, 24, 40, 0.1);
-  --surface-1-solid: #fbfcfe;
+  --surface-1-solid: #ffffff;
   --header-bg: #14233a;
   --header-border: #14233a;
-  --row-bg: #f0f4f8;
+  --row-bg: #f8f9fb;
   --row-border: #e1e5ea;
   --shadow: 0 6px 16px rgba(16, 24, 40, 0.12);
   --social-bg: #eef0f3;
@@ -80,7 +80,7 @@
   --pill-neutral-bg: #eceff3;
   --pill-neutral-text: #4a5362;
   --pill-neutral-border: #d9dee5;
-  --zone-accent-neutral: #1e4d8c;
+  --zone-accent-neutral: #8b93a1;
   --alert-red: #b3261e;
   --badge-success-bg: #e6f4ec;
   --badge-success-text: #1a6b45;
@@ -826,64 +826,4 @@
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent);
-}
-
-/* Project pages: a navy-to-blue band behind the back link and project header
-   (.project-band, ProjectDetailLayout.jsx). It grows with its content and runs
-   edge to edge; the first cards overlap its lower edge. Light text on the band. */
-:root[data-theme='calmsky'] .project-band {
-  position: relative;
-  isolation: isolate;
-  padding-bottom: 3.5rem;
-  margin-bottom: -2.25rem;
-}
-
-:root[data-theme='calmsky'] .project-band::before {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  top: -3rem;
-  bottom: 0;
-  left: -100vw;
-  right: -100vw;
-  background: linear-gradient(180deg, #14233a 0, #1e4d8c 100%);
-}
-
-:root[data-theme='calmsky'] .project-nav-content {
-  position: relative;
-}
-
-:root[data-theme='calmsky'] .project-band .back-link {
-  background: transparent;
-  color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.45);
-}
-
-:root[data-theme='calmsky'] .project-band .back-link:hover {
-  background: rgba(255, 255, 255, 0.12);
-}
-
-:root[data-theme='calmsky'] .project-header {
-  border-bottom-color: transparent;
-}
-
-:root[data-theme='calmsky'] .project-header-name {
-  color: #ffffff;
-}
-
-:root[data-theme='calmsky'] .project-header-date,
-:root[data-theme='calmsky'] .project-header-goal-line {
-  color: #d5e0f0;
-}
-
-/* Translucent badge fills (low, medium) disappear on the navy band; give them
-   a solid light base there. High and critical already have solid fills. */
-:root[data-theme='calmsky'] .project-header-badges .priority-badge.low {
-  background: #e8eef7;
-  color: #3a4658;
-}
-
-:root[data-theme='calmsky'] .project-header-badges .priority-badge.medium {
-  background: #dbe8f8;
-  color: #1e4d8c;
 }
