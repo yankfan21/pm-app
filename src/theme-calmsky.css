@@ -23,17 +23,17 @@
   --radius-lg: 10px;
 
   /* Surfaces and text */
-  --bg: #f6f7f9;
+  --bg: #eceff3;
   --text: #1f2937;
   --text-h: #111827;
   --text-muted: #5b6472;
   --border: #e1e5ea;
   --code-bg: #eef0f3;
-  --card-bg: #ffffff;
+  --card-bg: #fafbfc;
   --card-backdrop-filter: none;
   --card-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
   --card-hover-shadow: 0 4px 12px rgba(16, 24, 40, 0.1);
-  --surface-1-solid: #ffffff;
+  --surface-1-solid: #fafbfc;
   --header-bg: #14233a;
   --header-border: #14233a;
   --row-bg: #f8f9fb;
