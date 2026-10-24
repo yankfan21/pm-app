@@ -847,3 +847,66 @@
 :root[data-theme='calmsky'] .page-footer a:hover {
   color: #ffffff;
 }
+
+/* ------------------------------------------------------------------ */
+/* Phone chrome in the Professional look: navy header, light tab bar   */
+/* with navy icons. Phone layout only (.mobile-app).                   */
+/* ------------------------------------------------------------------ */
+:root[data-theme='calmsky'] .mobile-app .mobile-topbar {
+  background: #14233a;
+  border-bottom: none;
+}
+:root[data-theme='calmsky'] .mobile-app .mobile-topbar,
+:root[data-theme='calmsky'] .mobile-app .mobile-topbar .mobile-topbar-back,
+:root[data-theme='calmsky'] .mobile-app .mobile-topbar .mobile-topbar-name-text {
+  color: #ffffff;
+}
+:root[data-theme='calmsky'] .mobile-app .mobile-topbar-meta-line,
+:root[data-theme='calmsky'] .mobile-app .mobile-topbar-goal {
+  color: #b4c2d6;
+}
+:root[data-theme='calmsky'] .mobile-app .mobile-topbar .mobile-demo-badge {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.35);
+}
+/* The logo mark is drawn in navy; turn it white on the navy bands. */
+:root[data-theme='calmsky'] .mobile-app .mobile-topbar-mark svg,
+:root[data-theme='calmsky'] .mobile-app .mobile-brand-row svg {
+  filter: brightness(0) invert(1);
+}
+/* Home (root screens): the brand block becomes a navy band that runs to
+   the screen edges and under the status bar. */
+:root[data-theme='calmsky'] .mobile-app .mobile-brand-row {
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: 12px;
+  background: #14233a;
+  margin: calc(-12px - env(safe-area-inset-top)) -16px 18px;
+  padding: calc(18px + env(safe-area-inset-top)) 16px 18px;
+}
+:root[data-theme='calmsky'] .mobile-app .mobile-brand-row svg {
+  width: 32px;
+  height: 32px;
+}
+:root[data-theme='calmsky'] .mobile-app .mobile-brand-row .mobile-brand-name {
+  color: #ffffff;
+}
+:root[data-theme='calmsky'] .mobile-app .mobile-brand-row .mobile-brand-name-accent {
+  color: #8fb8f0;
+}
+/* Tab bar: navy icons and labels, selected = dark navy, bold, blue top bar. */
+:root[data-theme='calmsky'] .mobile-app .mobile-tabbar-item {
+  color: #4a5d78;
+}
+:root[data-theme='calmsky'] .mobile-app .mobile-tabbar-item.selected {
+  color: #14233a;
+  font-weight: 700;
+  box-shadow: inset 0 3px 0 #1e4d8c;
+}
+/* Demo badge on phone cards: navy tint instead of mint. */
+:root[data-theme='calmsky'] .mobile-app {
+  --demo-accent: #1e4d8c;
+  --demo-accent-bg: rgba(30, 77, 140, 0.08);
+  --demo-accent-border: rgba(30, 77, 140, 0.3);
+}
