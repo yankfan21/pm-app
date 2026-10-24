@@ -882,8 +882,8 @@
   justify-content: flex-start;
   gap: 12px;
   background: #14233a;
-  margin: calc(-12px - env(safe-area-inset-top)) -16px 18px;
-  padding: calc(18px + env(safe-area-inset-top)) 16px 18px;
+  margin: calc(-12px - env(safe-area-inset-top)) calc(-1 * max(16px, env(safe-area-inset-right))) 18px calc(-1 * max(16px, env(safe-area-inset-left)));
+  padding: calc(18px + env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 18px max(16px, env(safe-area-inset-left));
 }
 :root[data-theme='calmsky'] .mobile-app .mobile-brand-row svg {
   width: 32px;

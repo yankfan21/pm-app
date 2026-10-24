@@ -1452,3 +1452,20 @@ html:has(.mobile-app) body {
   color: inherit;
   cursor: pointer;
 }
+
+/* Landscape iPhone: the notch / Dynamic Island sits on a side edge, so the
+   content, top bar and tab bar keep clear of the left and right insets
+   (viewport-fit=cover draws under them). env() is 0 in portrait and in
+   desktop browsers, so nothing changes there. */
+.mobile-app-body {
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
+}
+.mobile-topbar {
+  padding-left: max(12px, env(safe-area-inset-left));
+  padding-right: max(12px, env(safe-area-inset-right));
+}
+.mobile-tabbar {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
