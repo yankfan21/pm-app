@@ -193,9 +193,7 @@ Supabase client throws without a URL).
 - Done 2026-10-10 (pushed and live; not flag-gated): web icons in `public/` (favicon, PNGs,
   maskables, apple-touch-icon) and native iOS/Android icons plus charcoal
   splash regenerated from `design/logo/icon-tile.svg` via `@capacitor/assets`
-  (sources in `resources/`); `theme-color` and manifest colours are charcoal
-  `#171614`. Still open: `public/og-image.png` now carries the CalmSky look (draft kept at
-  `design/logo/og-image-draft.png`); no outlined wordmark file yet; native apps need
+  (sources in `resources/`; navy since 2026-10-23, the charcoal splash/icon descriptions here are history); `theme-color` and manifest colours were charcoal `#171614` then; now navy `#14233a`. `public/og-image.png` is navy as of 2026-10-24 (old draft at `design/logo/og-image-draft.png`); still open: no outlined wordmark file yet; native apps need
   `npx cap sync` and a rebuild to pick any of this up.
 - Not built because there is no data behind it: the dashboard AI note and
   "Waiting for your decision" list (needs a product decision on what the AI
@@ -430,7 +428,7 @@ RLS); the list layout can take it later without a redo.
 - **Video walkthrough (2026-10-23):** each of the five steps now has a silent 13-20s clip (`src/assets/tour/<name>.mp4` + `.webm`, scripted recordings of the dev preview sample data, ~73s total, wired in `tourSteps.js`, played by `components/TourMedia.jsx`). The pop-up plays them back to back with no clicks (progress bar segments fill, tap to pause, segments jump, Back/Next/Watch again remain); `/tour` loops each clip while on screen; reduced-motion visitors get the stills. Callout bubbles (real text, timed to each clip, positioned as % of the frame) come from `src/assets/tour/<name>.callouts.json`, written by the recorder; the wording can be edited in those files. Clips are stretched 1.1x (`SLOW` in `rec-lib.cjs` / `cut.py`, keep equal). Re-record after UI changes with `design/tools/tour-clips/` (see the header of `record.cjs`); the poster screenshots (`.jpg`) are separate. The recorder needs ffmpeg (libx264, libvpx-vp9), numpy and Playwright's Chromium; that Chromium cannot play H.264, so verify clips there via the webm and on a real device for mp4. Owner verified playback on iPad 2026-10-23 and approved the result.
 - Parked: a written getting-started guide (desktop draft exists as a Claude Doc). No phone-version tour planned.
 
-## Next session: open items and working notes (written 2026-10-23)
+## Next session: open items and working notes (written 2026-10-23; items 1-3 and 5 below were done 2026-10-23/24: phone screens, native builds and store assets are in the navy look)
 
 Where things stand: `main` (commit `ba42217` at time of writing) has the Professional
 theme and the auto-playing video walkthrough, both live and approved by the owner.
