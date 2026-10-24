@@ -10,7 +10,7 @@ A fresh, more professional look.
 
 ## Google Play 1.2 (limit 500 chars)
 - New professional navy look, app icon and launch screen
-- Phone layout now stays in place when you rotate to landscape
-- Welcome tour on the Dashboard for first-time users
-- Video walkthrough showing how ConfidantPM guides you through a project
 - Small fixes and polish
+
+(Submitted 2026-10-24. The video walkthrough and welcome tour are web/iPad
+only, so they are not listed for the Android phone app.)
