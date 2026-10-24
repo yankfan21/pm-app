@@ -484,6 +484,6 @@ live in `design/variants/` (untracked on purpose).
 
 ## Release status — 2026-10-24 (iOS 1.4, Android 1.2)
 
-- **iOS 1.4 (2)** archived on the Mac (`build/ConfidantPM-1.4-2.xcarchive`), uploaded via Organizer, tested on the owner's iPhone from TestFlight (navy look, landscape notch OK). Build 2 adds side safe-area insets for landscape phones (end of `src/mobile/mobile.css`, brand band in `theme-calmsky.css`). Next: add build 2 to the 1.4 version in App Store Connect, paste the text from `release/WHATS_NEW.md`, new screenshots from `design/appstore/upload-navy/`, submit.
+- **iOS 1.4 (2)** archived on the Mac (`build/ConfidantPM-1.4-2.xcarchive`), uploaded via Organizer, tested on the owner's iPhone from TestFlight (navy look, landscape notch OK). Build 2 adds side safe-area insets for landscape phones (end of `src/mobile/mobile.css`, brand band in `theme-calmsky.css`). **1.4 (2) SUBMITTED for App Review 2026-10-24** (What's New from `release/WHATS_NEW.md`, new navy screenshots from `design/appstore/upload-navy/`). Next: when approved, confirm it is live; nothing else open on iOS.
 - **Android 1.2 (versionCode 21)**: version bumped, build must be made on the Windows PC (keystore lives there). Steps in `release/ANDROID_PC_STEPS.md`. Feature graphic, Play screenshots and `public/og-image.png` are in the navy look (committed).
 - The charcoal notes above are history; the look is the Professional navy theme.
