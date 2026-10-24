@@ -466,3 +466,17 @@ The cloud branch `claude/wizardly-edison-2lh78h` mirrors `main`; start new work 
 - To change walkthrough wording only, edit `src/assets/tour/*.callouts.json` or
   `src/tourSteps.js`; no re-recording needed. To change what the clips show, edit
   `design/tools/tour-clips/record.cjs` and re-run it plus `cut.py`.
+
+
+## Look decision: FINAL, 2026-10-23 (supersedes the charcoal notes above)
+
+After trying charcoal, teal, graphite, slate, a header band and softer whites on
+the owner's request, the owner chose to keep the **Professional** theme (navy rail
+and top bar, cool light-grey page, white cards, one navy blue accent), plus a navy
+Dashboard footer matching the top bar (`.page-footer` in `theme-calmsky.css`).
+Last pushed commit: `9f8ed57`. The charcoal look was restored once and then
+reverted again the same day; the experiments are in git history. Rail hover fix
+(white text on light tile) is in: `--code-bg` is re-scoped inside the rail.
+Native apps still carry the charcoal look, icons and splash until the next release
+(iOS 1.4, Android versionCode 21+); see NEXT_SESSION_PROMPT.md. Scratch renders
+live in `design/variants/` (untracked on purpose).
